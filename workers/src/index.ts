@@ -24,7 +24,7 @@ app.post("/task", async (c) => {
   // Assemble Discord message
   const discordMessage = {
     title: taskName,
-    color: 65344,
+    color: status == "Done" ? 2883391 : 3093247,
     author: {
       name: status,
       icon_url: assignedToAvatarUrl,
