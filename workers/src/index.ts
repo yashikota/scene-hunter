@@ -22,9 +22,10 @@ app.post("/task", async (c) => {
   const taskUrl = data.data.url;
 
   // Assemble Discord message
+  const username = "Task";
   const discordMessage = {
     title: taskName,
-    color: status == "Done" ? 2883391 : 3093247,
+    color: status === "Done" ? 2883391 : 3093247,
     author: {
       name: status,
       icon_url: assignedToAvatarUrl,
@@ -37,7 +38,7 @@ app.post("/task", async (c) => {
   };
 
   const webhookUrl = c.env.TASK_WEBHOOK_URL;
-  return sendToDiscord(c, webhookUrl, discordMessage);
+  return sendToDiscord(c, webhookUrl, username, discordMessage);
 });
 
 app.post("/enquete", async (c) => {
@@ -45,6 +46,7 @@ app.post("/enquete", async (c) => {
   const properties = extractProperties(data);
 
   // Assemble Discord message
+  const username = "アンケート";
   const discordMessage = {
     title: "アンケート結果",
     color: 55807,
@@ -58,7 +60,7 @@ app.post("/enquete", async (c) => {
 
   // Send to Discord
   const webhookUrl = c.env.ENQUETE_WEBHOOK_URL;
-  return sendToDiscord(c, webhookUrl, discordMessage);
+  return sendToDiscord(c, webhookUrl, username, discordMessage);
 });
 
 const extractProperties = (data: any) => {
@@ -95,13 +97,19 @@ const extractProperties = (data: any) => {
   return result;
 };
 
-const sendToDiscord = async (c: any, url: string, message: any) => {
+const sendToDiscord = async (
+  c: any,
+  url: string,
+  username: string,
+  message: any,
+) => {
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      username: username,
       embeds: [message],
     }),
   });
