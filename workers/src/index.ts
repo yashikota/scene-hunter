@@ -23,7 +23,8 @@ app.post("/task", async (c) => {
 
   // Assemble Discord message
   const username = "Task";
-  const discordMessage = {
+  const flags = "4096" // silent message flag
+  const embed = {
     title: taskName,
     color: status === "Done" ? 2883391 : 3093247,
     author: {
@@ -37,8 +38,14 @@ app.post("/task", async (c) => {
     timestamp: dueDate,
   };
 
+  const message = JSON.stringify({
+    username: username,
+    flags: flags,
+    embeds: [embed],
+  });
+
   const webhookUrl = c.env.TASK_WEBHOOK_URL;
-  return sendToDiscord(c, webhookUrl, username, discordMessage);
+  return sendToDiscord(c, webhookUrl, message);
 });
 
 app.post("/enquete", async (c) => {
@@ -47,6 +54,7 @@ app.post("/enquete", async (c) => {
 
   // Assemble Discord message
   const username = "アンケート";
+  const flags = "4096" // silent message flag
   const discordMessage = {
     title: "アンケート結果",
     color: 55807,
@@ -58,9 +66,15 @@ app.post("/enquete", async (c) => {
     ],
   };
 
+  const message = JSON.stringify({
+    username: username,
+    flags: flags,
+    embeds: [discordMessage],
+  });
+
   // Send to Discord
   const webhookUrl = c.env.ENQUETE_WEBHOOK_URL;
-  return sendToDiscord(c, webhookUrl, username, discordMessage);
+  return sendToDiscord(c, webhookUrl, message);
 });
 
 const extractProperties = (data: any) => {
@@ -100,7 +114,6 @@ const extractProperties = (data: any) => {
 const sendToDiscord = async (
   c: any,
   url: string,
-  username: string,
   message: any,
 ) => {
   const response = await fetch(url, {
@@ -108,10 +121,7 @@ const sendToDiscord = async (
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      username: username,
-      embeds: [message],
-    }),
+    body: message,
   });
   if (!response.ok) {
     return c.json({ message: "Failed to send task to Discord" }, 500);
