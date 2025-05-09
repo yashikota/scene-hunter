@@ -1,0 +1,126 @@
+services:
+  db:
+    container_name: db
+    environment:
+      - POSTGRES_DB=scene-hunter
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - TZ=Asia/Tokyo
+    expose:
+      - 5432
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test:
+        - CMD
+        - pg_isready
+      timeout: 5s
+    image: postgres:16.4
+    restart: always
+    user: postgres
+    volumes:
+      - source: db-data
+        target: /var/lib/postgresql/data
+        type: volume
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:v8.12.14
+    ports:
+      - 8085:8080
+    volumes:
+      - source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        type: bind
+  minio:
+    command: server /data --console-address ":9001"
+    container_name: minio
+    environment:
+      - TZ=Asia/Tokyo
+      - MINIO_ROOT_USER=root
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
+    healthcheck:
+      interval: 5s
+      retries: 5
+      test: mc ready local
+      timeout: 5s
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    ports:
+      - 9000:9000
+      - 8083:9001
+    volumes:
+      - source: minio-data
+        target: /data
+        type: volume
+  pgweb:
+    container_name: pgweb
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - PGWEB_DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD}@db:5432/scene-hunter?sslmode=disable
+      - TZ=Asia/Tokyo
+    image: sosedoff/pgweb:0.16.1
+    ports:
+      - 8081:8081
+  redis-commander:
+    container_name: redis-commander
+    depends_on:
+      valkey:
+        condition: service_healthy
+    environment:
+      - REDIS_HOSTS=valkey
+      - TZ=Asia/Tokyo
+    image: rediscommander/redis-commander:redis-commander-210
+    ports:
+      - 8082:8081
+  redoc:
+    container_name: redoc
+    environment:
+      - SPEC_URL=/openapi/bundled.yaml
+      - TZ=Asia/Tokyo
+    image: redocly/redoc:v2.1.5
+    ports:
+      - 8086:80
+    volumes:
+      - read_only: true
+        source: api/openapi/bundled.yaml
+        target: /usr/share/nginx/html/openapi/bundled.yaml
+        type: bind
+  swagger:
+    container_name: swagger
+    environment:
+      - SWAGGER_JSON=/tmp/api/bundled.yaml
+      - TZ=Asia/Tokyo
+    image: swaggerapi/swagger-ui:v5.17.14
+    ports:
+      - 8087:8080
+    volumes:
+      - read_only: true
+        source: api/openapi/bundled.yaml
+        target: /tmp/api/bundled.yaml
+        type: bind
+  valkey:
+    container_name: valkey
+    environment:
+      - TZ=Asia/Tokyo
+      - ALLOW_EMPTY_PASSWORD=yes # for local development only
+      - VALKEY_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+    healthcheck:
+      interval: 5s
+      retries: 5
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      timeout: 5s
+    image: valkey/valkey:8.1.1
+    ports:
+      - 6379:6379
+    volumes:
+      - source: valkey-data
+        target: /data
+        type: volume
+volumes:
+  db-data:
+  minio-data:
+  valkey-data:
+    driver: local

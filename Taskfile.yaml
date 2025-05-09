@@ -1,0 +1,36 @@
+version: "3"
+
+tasks:
+  default:
+    desc: "Display this help message"
+    cmds:
+      - task -l
+
+  up:
+    desc: "Start development environment"
+    cmds:
+      - genenv -i .env.example -S -l 10 -y
+      - docker compose up -d --build
+
+  down:
+    desc: "Stop development environment"
+    cmds:
+      - docker compose down
+
+  compose/check:
+    desc: "Lint/Format Docker Compose file"
+    cmds:
+      - yq -i -P 'sort_keys(..)' compose.yaml
+      - docker run -t --rm -v ${PWD}:/app zavoloklom/dclint .
+
+  api/check:
+    desc: "Lint/Format OpenAPI specification"
+    cmds:
+      - docker run --rm -v ${PWD}:/spec redocly/cli lint api/openapi/bundled.yaml --config api/redoc.yaml
+      - docker run --rm -v {{.PWD}}:/wd --workdir="/wd" -t --user $(id -u):$(id -g) azsdkengsys.azurecr.io/typespec format "**/*.tsp"
+
+  api/compile:
+    dir: "api/spec"
+    desc: "Generate OpenAPI specification"
+    cmds:
+      - pnpm compile
