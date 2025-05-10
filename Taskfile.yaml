@@ -34,3 +34,9 @@ tasks:
     desc: "Generate OpenAPI specification"
     cmds:
       - pnpm compile
+
+  api/doc:
+    dir: "api"
+    desc: "Generate HTML documentation"
+    cmds:
+      - docker run --rm -v ${PWD}:/spec redocly/cli build-docs openapi/bundled.yaml -o index.html

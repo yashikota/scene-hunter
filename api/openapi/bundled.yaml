@@ -1,0 +1,2541 @@
+openapi: 3.0.0
+info:
+  title: Scene Hunter API
+  description: Scene Hunter API
+  version: v1
+tags:
+  - name: Rounds
+  - name: AI
+  - name: Auth
+  - name: Events
+  - name: Rooms
+  - name: Images
+  - name: Players
+  - name: Health
+paths:
+  /ai/analyze:
+    post:
+      operationId: AI_analyzeImage
+      summary: 画像を分析する
+      description: 画像を分析する
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.AnalyzeImageResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '403':
+          description: 403 Forbidden エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ForbiddenResponse'
+        '429':
+          description: 429 Too Many Requests エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.TooManyRequestsResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.AnalyzeImageRequest'
+      security:
+        - BearerAuth: []
+  /ai/info:
+    get:
+      operationId: AI_getAiInfo
+      summary: AIの情報を取得する
+      description: AIの情報を取得する
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.AiInfo'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '403':
+          description: 403 Forbidden エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ForbiddenResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ErrorResponse'
+      tags:
+        - AI
+      security:
+        - BearerAuth: []
+  /auth/login:
+    post:
+      operationId: Auth_loginPlayer
+      summary: プレイヤーとしてログインする
+      description: プレイヤーとしてログインする
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.LoginPlayerResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.LoginPlayerRequest'
+      security:
+        - {}
+  /auth/refresh:
+    post:
+      operationId: Auth_refreshToken
+      summary: トークンを更新する
+      description: トークンを更新する
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.RefreshTokenResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.RefreshTokenRequest'
+      security:
+        - BearerAuth: []
+  /auth/register:
+    post:
+      operationId: Auth_registerPlayer
+      summary: プレイヤーを登録する
+      description: プレイヤーを登録する
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.RegisterPlayerResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '409':
+          description: 409 Conflict エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ConflictResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.RegisterPlayerRequest'
+      security:
+        - {}
+  /events/{room_id}:
+    get:
+      operationId: Events_connectToEventStream
+      summary: イベントストリームに接続する
+      description: |-
+        イベントストリームに接続する
+
+        このエンドポイントは、Server-Sent Events (SSE) プロトコルを使用して、
+        リアルタイムのイベント通知をクライアントに送信します。
+
+        送信されるイベントタイプ:
+        - room.player_joined: プレイヤーがルームに参加
+        - room.player_left: プレイヤーがルームから退出
+        - room.gamemaster_changed: ゲームマスターが変更
+        - game.round_started: ラウンドが開始
+        - game.hint_revealed: ヒントが公開
+        - game.photo_submitted: 写真が提出
+        - game.score_updated: スコアが更新
+        - game.round_ended: ラウンドが終了
+        - game.timer_update: タイマーが更新
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+  /events/{room_id}/latest:
+    get:
+      operationId: Events_getLatestEvent
+      summary: 最新のイベントを取得する
+      description: 最新のイベントを取得する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Routes.EventResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+  /health:
+    get:
+      operationId: Health_checkHealth
+      summary: ヘルスチェック
+      description: ヘルスチェック
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.SuccessResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Health
+      security:
+        - {}
+  /images/match:
+    post:
+      operationId: Images_matchImages
+      summary: 画像マッチングを行う
+      description: 画像マッチングを行う
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ImageMatchResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Images
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.ImageMatchRequest'
+      security:
+        - BearerAuth: []
+  /images/upload:
+    post:
+      operationId: Images_uploadImage
+      summary: 画像をアップロードする
+      description: 画像をアップロードする
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ImageUploadResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Images
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Routes.FormDataRequest'
+      security:
+        - BearerAuth: []
+  /images/{image_id}:
+    get:
+      operationId: Images_getImage
+      summary: 画像を取得する
+      description: 画像を取得する
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Images
+      security:
+        - BearerAuth: []
+  /images/{image_id}/features:
+    get:
+      operationId: Images_getImageFeatures
+      summary: 画像特徴を取得する
+      description: 画像特徴を取得する
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ImageFeatures'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Images
+      security:
+        - BearerAuth: []
+  /images/{image_id}/info:
+    get:
+      operationId: Images_getImageInfo
+      summary: 画像情報を取得する
+      description: 画像情報を取得する
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Image'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Images
+      security:
+        - BearerAuth: []
+  /players/{player_id}:
+    get:
+      operationId: Players_getPlayer
+      summary: プレイヤー情報を取得する
+      description: プレイヤー情報を取得する
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Player'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Players
+      security:
+        - BearerAuth: []
+    put:
+      operationId: Players_updatePlayerName
+      summary: プレイヤー名を更新する
+      description: プレイヤー名を更新する
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Player'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '403':
+          description: 403 Forbidden エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ForbiddenResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Players
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdatePlayerNameRequest'
+      security:
+        - BearerAuth: []
+  /rooms:
+    post:
+      operationId: Rooms_createRoom
+      summary: ルームを作成する
+      description: ルームを作成する
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.CreateRoomResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rooms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.CreateRoomRequest'
+      security:
+        - BearerAuth: []
+  /rooms/{room_id}:
+    get:
+      operationId: Rooms_getRoom
+      summary: ルーム情報を取得する
+      description: ルーム情報を取得する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Room'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rooms
+      security:
+        - BearerAuth: []
+  /rooms/{room_id}/gamemaster:
+    put:
+      operationId: Rooms_setGameMaster
+      summary: ゲームマスターを設定する
+      description: ゲームマスターを設定する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.SuccessResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '403':
+          description: 403 Forbidden エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ForbiddenResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rooms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.SetGameMasterRequest'
+      security:
+        - BearerAuth: []
+  /rooms/{room_id}/join:
+    post:
+      operationId: Rooms_joinRoom
+      summary: ルームに参加する
+      description: ルームに参加する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.SuccessResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '409':
+          description: 409 Conflict エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ConflictResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rooms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.JoinRoomRequest'
+      security:
+        - BearerAuth: []
+  /rooms/{room_id}/leaderboard:
+    get:
+      operationId: Leaderboard_getLeaderboard
+      summary: リーダーボードを取得する
+      description: リーダーボードを取得する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Leaderboard'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rooms
+      security:
+        - BearerAuth: []
+  /rooms/{room_id}/leave:
+    post:
+      operationId: Rooms_leaveRoom
+      summary: ルームから退出する
+      description: ルームから退出する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.SuccessResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rooms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.LeaveRoomRequest'
+      security:
+        - BearerAuth: []
+  /rooms/{room_id}/rounds/{round_id}:
+    get:
+      operationId: Rounds_getRound
+      summary: ラウンド情報を取得する
+      description: ラウンド情報を取得する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.Round'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rounds
+      security:
+        - BearerAuth: []
+  /rooms/{room_id}/rounds/{round_id}/end:
+    post:
+      operationId: Rounds_endRound
+      summary: ラウンドを終了する
+      description: ラウンドを終了する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.SuccessResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '403':
+          description: 403 Forbidden エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ForbiddenResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rounds
+      security:
+        - BearerAuth: []
+  /rooms/{room_id}/rounds/{round_id}/hints:
+    get:
+      operationId: Rounds_getRoundHints
+      summary: ラウンドの公開済みヒントを取得する
+      description: ラウンドの公開済みヒントを取得する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.RoundHints'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rounds
+      security:
+        - BearerAuth: []
+  /rooms/{room_id}/rounds/{round_id}/photo:
+    post:
+      operationId: Rounds_submitMasterPhoto
+      summary: 写真を提出する
+      description: 写真を提出する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.PhotoSubmissionResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '403':
+          description: 403 Forbidden エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ForbiddenResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rounds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                player_id:
+                  $ref: '#/components/schemas/Models.UUID'
+                photo:
+                  $ref: '#/components/schemas/Routes.PhotoFormDataRequest'
+              required:
+                - player_id
+                - photo
+      security:
+        - BearerAuth: []
+  /rooms/{room_id}/rounds/{round_id}/results:
+    get:
+      operationId: Rounds_getRoundResults
+      summary: ラウンド結果を取得する
+      description: ラウンド結果を取得する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.RoundResult'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rounds
+      security:
+        - BearerAuth: []
+  /rooms/{room_id}/rounds/{round_id}/start:
+    post:
+      operationId: Rounds_startRound
+      summary: ラウンドを開始する
+      description: ラウンドを開始する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.StartRoundResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '403':
+          description: 403 Forbidden エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ForbiddenResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rounds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.StartRoundRequest'
+      security:
+        - BearerAuth: []
+  /rooms/{room_id}/settings:
+    put:
+      operationId: Rooms_updateRoomSettings
+      summary: ルーム設定を更新する
+      description: ルーム設定を更新する
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Models.UUID'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.SuccessResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '403':
+          description: 403 Forbidden エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ForbiddenResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Rooms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Models.UpdateRoomSettingsRequest'
+      security:
+        - BearerAuth: []
+components:
+  schemas:
+    ApiVersion:
+      type: string
+      enum:
+        - v1
+    Models.AiInfo:
+      type: object
+      required:
+        - model_name
+        - model_version
+        - status
+      properties:
+        model_name:
+          type: string
+          description: モデル名
+        model_version:
+          type: string
+          description: モデルバージョン
+        status:
+          type: string
+          enum:
+            - ready
+            - busy
+            - error
+          description: 状態
+      description: AI情報
+    Models.AnalyzeImageRequest:
+      type: object
+      required:
+        - image_id
+      properties:
+        image_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: 画像ID
+      description: 画像分析リクエスト
+    Models.AnalyzeImageResponse:
+      type: object
+      required:
+        - processing_time_ms
+      properties:
+        processing_time_ms:
+          type: integer
+          format: int32
+          description: 処理時間（ミリ秒）
+        hints:
+          type: array
+          items:
+            type: string
+          description: 抽出されたヒント（ゲームマスターのみ取得可能）
+      description: 画像分析レスポンス
+    Models.BadRequestResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - invalid_request
+            - invalid_parameter
+            - missing_parameter
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+      description: 400 Bad Request エラーレスポンス
+    Models.ConflictResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - conflict
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+      description: 409 Conflict エラーレスポンス
+    Models.CreateRoomRequest:
+      type: object
+      required:
+        - creator_id
+        - rounds
+      properties:
+        creator_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: 作成者ID
+        rounds:
+          type: integer
+          format: int32
+          description: ラウンド数
+      description: ルーム作成リクエスト
+    Models.CreateRoomResponse:
+      type: object
+      required:
+        - room_id
+        - room_code
+      properties:
+        room_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: ルームID
+        room_code:
+          type: string
+          description: ルームコード
+      description: ルーム作成レスポンス
+    Models.ErrorCode:
+      type: string
+      enum:
+        - invalid_request
+        - invalid_parameter
+        - missing_parameter
+        - unauthorized
+        - forbidden
+        - not_found
+        - conflict
+        - rate_limit_exceeded
+        - internal_error
+      description: |-
+        エラーコード
+
+        - `invalid_request`: リクエストの形式が不正
+        - `invalid_parameter`: パラメータの値が不正
+        - `missing_parameter`: 必須パラメータが不足
+        - `unauthorized`: 認証が必要
+        - `forbidden`: 権限がない
+        - `not_found`: リソースが見つからない
+        - `conflict`: リソースの競合
+        - `rate_limit_exceeded`: レート制限超過
+        - `internal_error`: 内部エラー
+    Models.ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          allOf:
+            - $ref: '#/components/schemas/Models.ErrorCode'
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+      description: |-
+        エラーレスポンス
+
+        各エンドポイントで発生する可能性のあるエラーコードと対応するHTTPステータスコード：
+
+        | エラーコード | HTTPステータスコード | 説明 |
+        |------------|-------------------|------|
+        | `invalid_request` | 400 | リクエストの形式が不正 |
+        | `invalid_parameter` | 400 | パラメータの値が不正 |
+        | `missing_parameter` | 400 | 必須パラメータが不足 |
+        | `unauthorized` | 401 | 認証が必要 |
+        | `forbidden` | 403 | 権限がない |
+        | `not_found` | 404 | リソースが見つからない |
+        | `conflict` | 409 | リソースの競合 |
+        | `rate_limit_exceeded` | 429 | レート制限超過 |
+        | `internal_error` | 500 | 内部エラー |
+    Models.EventBase:
+      type: object
+      required:
+        - event_type
+        - timestamp
+      properties:
+        event_type:
+          type: string
+          description: イベントタイプ
+        timestamp:
+          allOf:
+            - $ref: '#/components/schemas/Models.Timestamp'
+          description: イベント発生時刻
+      description: イベントの基本型
+    Models.EventType:
+      anyOf:
+        - $ref: '#/components/schemas/Models.PlayerJoinedEvent'
+        - $ref: '#/components/schemas/Models.PlayerLeftEvent'
+        - $ref: '#/components/schemas/Models.GamemasterChangedEvent'
+        - $ref: '#/components/schemas/Models.RoundStartedEvent'
+        - $ref: '#/components/schemas/Models.HintRevealedEvent'
+        - $ref: '#/components/schemas/Models.PhotoSubmittedEvent'
+        - $ref: '#/components/schemas/Models.ScoreUpdatedEvent'
+        - $ref: '#/components/schemas/Models.RoundEndedEvent'
+        - $ref: '#/components/schemas/Models.TimerUpdateEvent'
+      description: イベントの共用体型
+    Models.ForbiddenResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - forbidden
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+      description: 403 Forbidden エラーレスポンス
+    Models.GamemasterChangedEvent:
+      type: object
+      required:
+        - event_type
+        - player_id
+      properties:
+        event_type:
+          type: string
+          enum:
+            - room.gamemaster_changed
+          description: 'イベントタイプ (固定値: "room.gamemaster_changed")'
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+      allOf:
+        - $ref: '#/components/schemas/Models.EventBase'
+      description: ゲームマスター変更イベント
+    Models.HintRevealedEvent:
+      type: object
+      required:
+        - event_type
+        - hint
+        - hint_number
+      properties:
+        event_type:
+          type: string
+          enum:
+            - game.hint_revealed
+          description: 'イベントタイプ (固定値: "game.hint_revealed")'
+        hint:
+          type: string
+          description: ヒント内容
+        hint_number:
+          type: integer
+          format: int32
+          description: ヒント番号
+      allOf:
+        - $ref: '#/components/schemas/Models.EventBase'
+      description: ヒント公開イベント
+    Models.Image:
+      type: object
+      required:
+        - image_id
+        - uploader_id
+        - upload_time
+        - storage_path
+        - metadata
+      properties:
+        image_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: 画像ID
+        uploader_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: アップローダーID
+        upload_time:
+          allOf:
+            - $ref: '#/components/schemas/Models.Timestamp'
+          description: アップロード時間
+        storage_path:
+          type: string
+          description: ストレージパス
+        metadata:
+          allOf:
+            - $ref: '#/components/schemas/Models.ImageMetadata'
+          description: メタデータ
+      description: 画像モデル
+    Models.ImageFeatures:
+      type: object
+      required:
+        - features
+      properties:
+        features:
+          type: array
+          items:
+            type: string
+          description: 特徴リスト
+      description: 画像特徴
+    Models.ImageMatchRequest:
+      type: object
+      required:
+        - master_image_id
+        - hunter_image_id
+      properties:
+        master_image_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: マスター画像ID
+        hunter_image_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: ハンター画像ID
+      description: 画像マッチングリクエスト
+    Models.ImageMatchResponse:
+      type: object
+      required:
+        - match_score
+        - matching_points
+      properties:
+        match_score:
+          type: number
+          format: float
+          description: 一致スコア
+        matching_points:
+          type: integer
+          format: int32
+          description: マッチングポイント数
+      description: 画像マッチングレスポンス
+    Models.ImageMetadata:
+      type: object
+      required:
+        - width
+        - height
+        - format
+        - size_bytes
+      properties:
+        width:
+          type: integer
+          format: int32
+          description: 幅
+        height:
+          type: integer
+          format: int32
+          description: 高さ
+        format:
+          type: string
+          description: フォーマット
+        size_bytes:
+          type: integer
+          format: int32
+          description: サイズ（バイト）
+      description: 画像メタデータ
+    Models.ImageUploadResponse:
+      type: object
+      required:
+        - image_id
+        - url
+      properties:
+        image_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: 画像ID
+        url:
+          type: string
+          description: 画像URL
+      description: 画像アップロードレスポンス
+    Models.InternalServerErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - internal_error
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+      description: 500 Internal Server Error エラーレスポンス
+    Models.JoinRoomRequest:
+      type: object
+      required:
+        - player_id
+        - room_code
+      properties:
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+        room_code:
+          type: string
+          description: ルームコード
+      description: ルーム参加リクエスト
+    Models.Leaderboard:
+      type: object
+      required:
+        - players
+      properties:
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.LeaderboardEntry'
+          description: プレイヤーリスト
+      description: リーダーボード
+    Models.LeaderboardEntry:
+      type: object
+      required:
+        - player_id
+        - name
+        - total_score
+        - rank
+      properties:
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+        name:
+          type: string
+          description: プレイヤー名
+        total_score:
+          type: number
+          format: float
+          description: 合計スコア
+        rank:
+          type: integer
+          format: int32
+          description: 順位
+      description: リーダーボードエントリ
+    Models.LeaveRoomRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+      description: ルーム退出リクエスト
+    Models.LoginPlayerRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+      description: プレイヤーログインリクエスト
+    Models.LoginPlayerResponse:
+      type: object
+      required:
+        - access_token
+        - refresh_token
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: アクセストークン
+        refresh_token:
+          type: string
+          description: リフレッシュトークン
+        expires_in:
+          type: integer
+          format: int32
+          description: トークンの有効期限（秒）
+      description: プレイヤーログインレスポンス
+    Models.NotFoundResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - not_found
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+      description: 404 Not Found エラーレスポンス
+    Models.PhotoSubmissionResponse:
+      type: object
+      required:
+        - photo_id
+        - submission_time
+      properties:
+        photo_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: 写真ID
+        submission_time:
+          allOf:
+            - $ref: '#/components/schemas/Models.Timestamp'
+          description: 提出時間
+      description: 写真提出レスポンス
+    Models.PhotoSubmittedEvent:
+      type: object
+      required:
+        - event_type
+        - player_id
+        - submission_time
+      properties:
+        event_type:
+          type: string
+          enum:
+            - game.photo_submitted
+          description: 'イベントタイプ (固定値: "game.photo_submitted")'
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+        submission_time:
+          allOf:
+            - $ref: '#/components/schemas/Models.Timestamp'
+          description: 提出時刻
+      allOf:
+        - $ref: '#/components/schemas/Models.EventBase'
+      description: 写真提出イベント
+    Models.Player:
+      type: object
+      required:
+        - player_id
+        - name
+        - created_at
+        - total_score
+      properties:
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+        name:
+          type: string
+          description: プレイヤー名
+        created_at:
+          allOf:
+            - $ref: '#/components/schemas/Models.Timestamp'
+          description: 作成日時
+        total_score:
+          type: integer
+          format: int32
+          description: 総スコア
+      description: プレイヤー
+    Models.PlayerJoinedEvent:
+      type: object
+      required:
+        - event_type
+        - player_id
+        - name
+      properties:
+        event_type:
+          type: string
+          enum:
+            - room.player_joined
+          description: 'イベントタイプ (固定値: "room.player_joined")'
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+        name:
+          type: string
+          description: プレイヤー名
+      allOf:
+        - $ref: '#/components/schemas/Models.EventBase'
+      description: プレイヤー参加イベント
+    Models.PlayerLeftEvent:
+      type: object
+      required:
+        - event_type
+        - player_id
+      properties:
+        event_type:
+          type: string
+          enum:
+            - room.player_left
+          description: 'イベントタイプ (固定値: "room.player_left")'
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+      allOf:
+        - $ref: '#/components/schemas/Models.EventBase'
+      description: プレイヤー退出イベント
+    Models.PlayerRole:
+      type: string
+      enum:
+        - gamemaster
+        - hunter
+      description: プレイヤーの役割
+    Models.PlayerScore:
+      type: object
+      required:
+        - player_id
+        - name
+        - match_score
+        - remaining_seconds
+        - total_score
+      properties:
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+        name:
+          type: string
+          description: プレイヤー名
+        match_score:
+          type: number
+          format: float
+          description: 一致スコア
+        remaining_seconds:
+          type: integer
+          format: int32
+          description: 残り秒数
+        total_score:
+          type: number
+          format: float
+          description: 合計スコア
+      description: プレイヤースコア
+    Models.PlayerSubmission:
+      type: object
+      required:
+        - player_id
+        - photo_id
+        - submission_time
+        - remaining_seconds
+        - match_score
+        - total_score
+      properties:
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+        photo_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: 写真ID
+        submission_time:
+          allOf:
+            - $ref: '#/components/schemas/Models.Timestamp'
+          description: 提出時間
+        remaining_seconds:
+          type: integer
+          format: int32
+          description: 残り秒数
+        match_score:
+          type: number
+          format: float
+          description: 一致スコア
+        total_score:
+          type: number
+          format: float
+          description: 合計スコア
+      description: プレイヤー提出物
+    Models.RefreshTokenRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: リフレッシュトークン
+      description: トークン更新リクエスト
+    Models.RefreshTokenResponse:
+      type: object
+      required:
+        - access_token
+        - refresh_token
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: アクセストークン
+        refresh_token:
+          type: string
+          description: リフレッシュトークン
+        expires_in:
+          type: integer
+          format: int32
+          description: トークンの有効期限（秒）
+      description: トークン更新レスポンス
+    Models.RegisterPlayerRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: プレイヤー名（1-12文字）
+      description: プレイヤー登録リクエスト
+    Models.RegisterPlayerResponse:
+      type: object
+      required:
+        - player_id
+        - access_token
+        - refresh_token
+        - expires_in
+      properties:
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+        access_token:
+          type: string
+          description: アクセストークン
+        refresh_token:
+          type: string
+          description: リフレッシュトークン
+        expires_in:
+          type: integer
+          format: int32
+          description: トークンの有効期限（秒）
+      description: プレイヤー登録レスポンス
+    Models.Room:
+      type: object
+      required:
+        - room_id
+        - room_code
+        - created_at
+        - creator_id
+        - gamemaster_id
+        - state
+        - players
+        - current_round
+        - total_rounds
+      properties:
+        room_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: ルームID
+        room_code:
+          type: string
+          description: ルームコード (6桁の数字)
+        created_at:
+          allOf:
+            - $ref: '#/components/schemas/Models.Timestamp'
+          description: 作成日時
+        creator_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: 作成者ID
+        gamemaster_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: ゲームマスターID
+        state:
+          allOf:
+            - $ref: '#/components/schemas/Models.RoomState'
+          description: ルームの状態
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.RoomPlayer'
+          description: プレイヤーリスト
+        current_round:
+          type: integer
+          format: int32
+          description: 現在のラウンド
+        total_rounds:
+          type: integer
+          format: int32
+          description: 合計ラウンド数
+      description: ルームモデル
+    Models.RoomPlayer:
+      type: object
+      required:
+        - player_id
+        - name
+        - role
+        - score
+      properties:
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+        name:
+          type: string
+          description: プレイヤー名
+        role:
+          allOf:
+            - $ref: '#/components/schemas/Models.PlayerRole'
+          description: 役割
+        score:
+          type: number
+          format: float
+          description: スコア
+      description: ルーム内のプレイヤー情報
+    Models.RoomState:
+      type: string
+      enum:
+        - waiting
+        - playing
+        - finished
+      description: ルームの状態
+    Models.Round:
+      type: object
+      required:
+        - round_id
+        - room_id
+        - round_number
+        - start_time
+        - end_time
+        - state
+        - master_photo_id
+        - hints
+        - revealed_hints
+        - submissions
+      properties:
+        round_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: ラウンドID
+        room_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: ルームID
+        round_number:
+          type: integer
+          format: int32
+          description: ラウンド番号
+        start_time:
+          allOf:
+            - $ref: '#/components/schemas/Models.Timestamp'
+          description: 開始時間
+        end_time:
+          allOf:
+            - $ref: '#/components/schemas/Models.Timestamp'
+          description: 終了時間
+        state:
+          allOf:
+            - $ref: '#/components/schemas/Models.RoundState'
+          description: 状態
+        master_photo_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: マスター写真ID
+        hints:
+          type: array
+          items:
+            type: string
+          description: ヒントリスト
+        revealed_hints:
+          type: integer
+          format: int32
+          description: 公開済みヒント数
+        submissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.PlayerSubmission'
+          description: 提出物リスト
+      description: ラウンドモデル
+    Models.RoundEndedEvent:
+      type: object
+      required:
+        - event_type
+        - round_id
+        - results
+      properties:
+        event_type:
+          type: string
+          enum:
+            - game.round_ended
+          description: 'イベントタイプ (固定値: "game.round_ended")'
+        round_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: ラウンドID
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.PlayerScore'
+          description: 結果
+      allOf:
+        - $ref: '#/components/schemas/Models.EventBase'
+      description: ラウンド終了イベント
+    Models.RoundHints:
+      type: object
+      required:
+        - revealed_hints
+        - revealed_count
+        - total_count
+      properties:
+        revealed_hints:
+          type: array
+          items:
+            type: string
+          description: 公開済みヒントリスト
+        revealed_count:
+          type: integer
+          format: int32
+          description: 公開済みヒント数
+        total_count:
+          type: integer
+          format: int32
+          description: 合計ヒント数
+        next_reveal_in_seconds:
+          type: integer
+          format: int32
+          description: 次のヒント公開までの残り時間（秒）
+      description: ラウンドヒント
+    Models.RoundResult:
+      type: object
+      required:
+        - round_id
+        - scores
+        - winner
+      properties:
+        round_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: ラウンドID
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.PlayerScore'
+          description: スコアリスト
+        winner:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: 勝者ID
+      description: ラウンド結果
+    Models.RoundStartedEvent:
+      type: object
+      required:
+        - event_type
+        - round_id
+        - start_time
+      properties:
+        event_type:
+          type: string
+          enum:
+            - game.round_started
+          description: 'イベントタイプ (固定値: "game.round_started")'
+        round_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: ラウンドID
+        start_time:
+          allOf:
+            - $ref: '#/components/schemas/Models.Timestamp'
+          description: 開始時刻
+      allOf:
+        - $ref: '#/components/schemas/Models.EventBase'
+      description: ラウンド開始イベント
+    Models.RoundState:
+      type: string
+      enum:
+        - waiting
+        - master_turn
+        - hunter_turn
+        - finished
+      description: ラウンドの状態
+    Models.ScoreUpdatedEvent:
+      type: object
+      required:
+        - event_type
+        - player_id
+        - score
+      properties:
+        event_type:
+          type: string
+          enum:
+            - game.score_updated
+          description: 'イベントタイプ (固定値: "game.score_updated")'
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+        score:
+          type: number
+          format: float
+          description: スコア
+      allOf:
+        - $ref: '#/components/schemas/Models.EventBase'
+      description: スコア更新イベント
+    Models.SetGameMasterRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: プレイヤーID
+      description: ゲームマスター設定リクエスト
+    Models.StartRoundRequest:
+      type: object
+      required:
+        - gamemaster_id
+      properties:
+        gamemaster_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: ゲームマスターID
+      description: ラウンド開始リクエスト
+    Models.StartRoundResponse:
+      type: object
+      required:
+        - round_id
+        - start_time
+      properties:
+        round_id:
+          allOf:
+            - $ref: '#/components/schemas/Models.UUID'
+          description: ラウンドID
+        start_time:
+          allOf:
+            - $ref: '#/components/schemas/Models.Timestamp'
+          description: 開始時間
+      description: ラウンド開始レスポンス
+    Models.SuccessResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: 成功したかどうか
+      description: 成功レスポンス
+    Models.TimerUpdateEvent:
+      type: object
+      required:
+        - event_type
+        - remaining_seconds
+      properties:
+        event_type:
+          type: string
+          enum:
+            - game.timer_update
+          description: 'イベントタイプ (固定値: "game.timer_update")'
+        remaining_seconds:
+          type: integer
+          format: int32
+          description: 残り秒数
+      allOf:
+        - $ref: '#/components/schemas/Models.EventBase'
+      description: タイマー更新イベント
+    Models.Timestamp:
+      type: string
+      description: タイムスタンプ型
+    Models.TooManyRequestsResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - rate_limit_exceeded
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+      description: 429 Too Many Requests エラーレスポンス
+    Models.UUID:
+      type: string
+      description: UUID型
+    Models.UnauthorizedResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - unauthorized
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+      description: 401 Unauthorized エラーレスポンス
+    Models.UpdatePlayerInfoRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: プレイヤー名（1-12文字）
+      description: プレイヤー情報更新リクエスト
+    Models.UpdatePlayerNameRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: プレイヤー名（1-12文字）
+      description: プレイヤー名更新リクエスト
+    Models.UpdateRoomSettingsRequest:
+      type: object
+      required:
+        - rounds
+      properties:
+        rounds:
+          type: integer
+          format: int32
+          description: ラウンド数
+      description: ルーム設定更新リクエスト
+    Routes.EventResponse:
+      type: object
+      required:
+        - event
+      properties:
+        event:
+          allOf:
+            - $ref: '#/components/schemas/Models.EventType'
+          description: イベント
+    Routes.FormDataRequest:
+      type: object
+      required:
+        - contentType
+        - body
+      properties:
+        contentType:
+          type: string
+          enum:
+            - multipart/form-data
+        body:
+          type: object
+          properties:
+            file:
+              type: object
+          required:
+            - file
+    Routes.PhotoFormDataRequest:
+      type: object
+      required:
+        - contentType
+        - body
+      properties:
+        contentType:
+          type: string
+          enum:
+            - multipart/form-data
+        body:
+          type: object
+          properties:
+            photo:
+              type: object
+          required:
+            - photo
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: Bearer
+servers:
+  - url: https://scene-hunter.yashikota.com/api
+    description: prd
+    variables: {}
+  - url: http://localhost:4282
+    description: dev
+    variables: {}

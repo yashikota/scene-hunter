@@ -1,0 +1,11 @@
+# See https://redocly.com/docs/cli/configuration/
+# Read more about rules: https://redocly.com/docs/cli/rules/
+
+extends:
+  - recommended
+
+rules:
+  info-license: off
+  no-server-example.com: off
+  tag-description: off
+  no-unused-components: off

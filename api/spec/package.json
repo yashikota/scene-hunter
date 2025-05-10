@@ -1,0 +1,17 @@
+{
+  "name": "scene-hunter-api",
+  "version": "0.1.0",
+  "description": "Scene Hunter API Specification",
+  "scripts": {
+    "compile": "tsp compile .",
+    "compile:watch": "tsp compile . --watch"
+  },
+  "dependencies": {
+    "@typespec/compiler": "^1.0.0-rc.1",
+    "@typespec/http": "^1.0.0-rc.1",
+    "@typespec/openapi3": "^1.0.0-rc.1",
+    "@typespec/rest": "^0.69.0",
+    "@typespec/sse": "^0.69.0",
+    "@typespec/versioning": "^0.69.0"
+  }
+}
