@@ -70,7 +70,16 @@ export default function AuthPanel() {
     // ユーザーが既に匿名ログインしている場合は、OAuth IDを連携
     if (user?.app_metadata?.provider === "anonymous") {
       const { error } = await supabase.auth.linkIdentity({ provider });
-      if (error) setError(error.message);
+      if (error) {
+        setError(error.message);
+      } else {
+        // 更新されたセッション情報を取得
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          setUser(data.session.user);
+          setJwt(data.session.access_token);
+        }
+      }
     } else {
       // 通常のOAuthログイン
       const { error } = await supabase.auth.signInWithOAuth({ provider });
