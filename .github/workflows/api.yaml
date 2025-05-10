@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   check:
-    name: API Check
+    name: Check
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -48,6 +48,7 @@ jobs:
         run: git diff --name-only --exit-code
 
   deploy:
+    name: Deploy
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -78,7 +79,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "api/index.html"
+          path: "api"
 
       - name: Deploy to GitHub Pages
         id: deployment
