@@ -17,3 +17,4 @@ packages:
 - name: docker/compose@v2.35.1
 - name: yashikota/genenv@v0.5.0
 - name: pnpm/pnpm@v10.10.0
+- name: supabase/cli@v2.22.12

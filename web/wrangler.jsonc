@@ -1,0 +1,21 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "scene-hunter",
+  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2025-05-10",
+  "main": "./workers/app.ts",
+  "observability": {
+    "enabled": true
+  },
+  "assets": { "directory": "./public/", "binding": "ASSETS" },
+  "routes": [
+    {
+      "pattern": "scene-hunter.yashikota.com",
+      "custom_domain": true
+    }
+  ]
+}
