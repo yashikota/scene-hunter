@@ -8,44 +8,35 @@ import { Button } from "./ui/button";
 export default function AuthPanel() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null); // 型を User | null に変更
+  const [user, setUser] = useState<User | null>(null);
   const [jwt, setJwt] = useState<string | null>(null);
 
   useEffect(() => {
-    // 初期化時にlocalStorageからセッションを復元
-    const savedSession = localStorage.getItem("supabase.auth.session");
-    if (savedSession) {
-      try {
-        const sessionObj = JSON.parse(savedSession);
-        if (sessionObj?.user && sessionObj?.access_token) {
-          setUser(sessionObj.user);
-          setJwt(sessionObj.access_token);
-        }
-      } catch (error) {
-        console.error("Failed to parse saved session:", error);
+    // 初期状態のセッション確認
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setUser(data.session.user);
+        setJwt(data.session.access_token);
       }
-    }
-    // サブスクリプションでセッション変化を監視
+    };
+
+    checkSession();
+
+    // セッション変化を監視
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session) {
           setUser(session.user);
           setJwt(session.access_token);
-          // セッションをlocalStorageに保存
-          localStorage.setItem(
-            "supabase.auth.session",
-            JSON.stringify({
-              user: session.user,
-              access_token: session.access_token,
-            }),
-          );
+          // セッション情報はSupabaseがCookieとして自動的に管理
         } else {
           setUser(null);
           setJwt(null);
-          localStorage.removeItem("supabase.auth.session");
         }
       },
     );
+
     return () => {
       listener.subscription.unsubscribe();
     };
@@ -98,7 +89,6 @@ export default function AuthPanel() {
     } else {
       setUser(null);
       setJwt(null);
-      localStorage.removeItem("supabase.auth.session");
     }
     setLoading(false);
   };

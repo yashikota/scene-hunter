@@ -13,7 +13,8 @@
       "tsconfig*.json",
       ".react-router",
       "app.css",
-      "entry.server.tsx"
+      "entry.server.tsx",
+      "*.d.ts"
     ]
   },
   "formatter": {
