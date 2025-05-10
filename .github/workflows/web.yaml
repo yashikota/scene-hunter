@@ -1,0 +1,25 @@
+name: Web
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  Check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
+
+      - name: Check
+        run: biome ci app *.json
