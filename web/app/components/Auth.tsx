@@ -21,7 +21,9 @@ export default function AuthPanel() {
           setUser(sessionObj.user);
           setJwt(sessionObj.access_token);
         }
-      } catch {}
+      } catch (error) {
+        console.error("Failed to parse saved session:", error);
+      }
     }
     // サブスクリプションでセッション変化を監視
     const { data: listener } = supabase.auth.onAuthStateChange(
