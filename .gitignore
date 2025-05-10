@@ -167,3 +167,7 @@ dist
 
 # SvelteKit build / generate output
 .svelte-kit
+
+### Other ###
+# API doc
+api/index.html
