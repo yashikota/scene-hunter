@@ -8,6 +8,10 @@ import imgsim
 
 app = FastAPI()
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 class CompareRequest(BaseModel):
     image1_url: str
     image2_url: str
