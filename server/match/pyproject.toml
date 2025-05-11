@@ -1,0 +1,14 @@
+[project]
+name = "scene-hunter-match"
+version = "0.1.0"
+description = "Image similarity matching service for Scene Hunter"
+dependencies = [
+    "fastapi[standard]",
+    "pydantic",
+    "requests",
+    "numpy",
+    "torch",
+    "torchvision",
+    "opencv-python-headless",
+    "imgsim"
+]
