@@ -1,5 +1,7 @@
 import { Hono } from 'hono';
+import type { DurableObjectNamespace } from '@cloudflare/workers-types';
 import { z } from 'zod';
+import { randomUUID } from 'crypto';
 import { validator } from 'hono/validator';
 import type { RoomState } from '../types';
 
@@ -29,8 +31,7 @@ app.post(
     if (!auth || !auth.startsWith('Bearer ')) {
       return c.text('Unauthorized', 401);
     }
-
-    const room_id = crypto.randomUUID();
+    const room_id = randomUUID();
     const room_code = generateRoomCode();
     const room: RoomState = {
       id: room_id,
@@ -57,9 +58,9 @@ app.post(
   }
 );
 
-// 6桁のルームコード生成（例：A1B2C3）
+// 6桁のルームコード生成（例：312456）
 function generateRoomCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const chars = '0123456789';
   return Array.from({ length: 6 }, () =>
     chars.charAt(Math.floor(Math.random() * chars.length))
   ).join('');

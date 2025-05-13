@@ -1,4 +1,5 @@
 import type { RoomState } from "./types";
+import type { DurableObjectState, DurableObjectStorage } from "@cloudflare/workers-types";
 
 export class RoomObject {
   state: DurableObjectState;
