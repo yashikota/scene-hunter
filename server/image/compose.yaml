@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - type: bind
+        source: ./config/config.toml
+        target: /app/config/config.toml

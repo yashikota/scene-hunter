@@ -1,0 +1,51 @@
+[server]
+port = 8080
+debug = false
+
+[auth]
+# 認証を有効にするかどうか
+enabled = true
+
+# JWT設定
+[auth.jwt]
+secret = "${JWT_SECRET_KEY}"
+expiry = "24h"
+issuer = "image-server"
+algorithm = "HS256"
+refresh_expiry = "168h" # 7日間
+
+[storage]
+# R2設定
+endpoint = "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+access_key = "${R2_ACCESS_KEY}"
+secret_key = "${R2_SECRET_KEY}"
+use_ssl = true
+temporary_bucket = "scene-hunter-temporary"
+permanent_bucket = "scene-hunter-permanent"
+account_id = "${R2_ACCOUNT_ID}"
+
+[image]
+# 対応フォーマット
+formats = ["jpg", "png"]
+# 最大ファイルサイズ (MB)
+max_size = 10
+
+# 変換プリセット
+[[transform.preset]]
+name = "thumbnail"
+width = 200
+height = 200
+quality = 80
+format = "jpg"
+
+[[transform.preset]]
+name = "medium"
+width = 800
+height = 600
+quality = 75
+format = "jpg"
+
+[[transform.preset]]
+name = "original"
+# オリジナルサイズを保持
+preserve_original = true
