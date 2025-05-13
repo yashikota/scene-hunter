@@ -52,6 +52,37 @@ export class RoomObject {
       return Response.json(result);
     }
 
+    if (url.pathname === '/join' && request.method === 'POST') {
+        const { player_id, room_code } = await request.json() as { player_id: string; room_code: string };
+        const stored = await this.storage.get<RoomState>('room');
+        if (!stored) {
+            return new Response('Room not found', { status: 404 });
+        }
+
+        if (stored.code !== room_code) {
+            return new Response('Room code mismatch', { status: 400 });
+        }
+
+        if (stored.status !== 'waiting') {
+            return new Response('Room is not open for joining', { status: 409 });
+        }
+
+        if (stored.players.includes(player_id)) {
+            return new Response('Player already joined', { status: 409 });
+        }
+
+        if (stored.players.length >= stored.maxPlayers) {
+            return new Response('Room is full', { status: 409 });
+        }
+
+        stored.players.push(player_id);
+
+        // ここでストレージに保存
+        await this.storage.put('room', stored);
+
+        return Response.json({ success: true });
+}
+
     return new Response('Not found', { status: 404 });
   }
 }

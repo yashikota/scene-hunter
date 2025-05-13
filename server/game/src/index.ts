@@ -3,13 +3,15 @@
 import { Hono } from 'hono';
 import createRoom from '../routes/createRoom';
 import getRoom from '../handlers/getRoom';
+import joinRoom from '../routes/joinRoom';
 import { RoomObject } from '../roomObject';
 
 const app = new Hono();
 
 // ルーティング登録
 app.route('/', createRoom);
-app.route('/', getRoom); // ← 必要なら
+app.route('/', getRoom);
+app.route('/', joinRoom);
 
 export { RoomObject };
 
