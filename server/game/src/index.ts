@@ -1,22 +1,22 @@
 // server/game/index.ts
 
 import { Hono } from 'hono';
-import rooms from '../routes/createRoom';
+import createRoom from '../routes/createRoom';
+import getRoom from '../handlers/getRoom';
 import { RoomObject } from '../roomObject';
 
 const app = new Hono();
 
 // ルーティング登録
-app.route('/', rooms);
+app.route('/', createRoom);
+app.route('/', getRoom); // ← 必要なら
 
-export { RoomObject } from '../roomObject';
+export { RoomObject };
 
 export default {
   fetch: app.fetch,
-  // Durable Object のマッピング
-  async DurableObject() {
-    return {
-      RoomObject,
-    };
+  // 正しい Durable Object のマッピング
+  bindings: {
+    RoomObject,
   },
 };

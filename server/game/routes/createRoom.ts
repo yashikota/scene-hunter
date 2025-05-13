@@ -44,7 +44,7 @@ app.post(
       rounds,
     };
 
-    const durableObjectId = c.env.ROOM_OBJECT.idFromName(room_id); // ← 修正ここ
+    const durableObjectId = c.env.ROOM_OBJECT.idFromName(room_id);
     const stub = c.env.ROOM_OBJECT.get(durableObjectId);
     await stub.fetch('http://internal/init', {
       method: 'POST',
