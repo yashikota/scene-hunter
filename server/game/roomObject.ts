@@ -20,6 +20,7 @@ export class RoomObject {
       await this.storage.put('room', this.room);
       return new Response('Room initialized');
     }
+    // curl.exe -X POST http://localhost:4282/rooms -H "Authorization: Bearer dummy-token" -H "Content-Type: application/json" --data-raw "{\"creator_id\": \"host_name\", \"rounds\": 3}" 
 
     if (url.pathname === '/info') {
       if (request.method !== 'GET') {
@@ -51,6 +52,7 @@ export class RoomObject {
 
       return Response.json(result);
     }
+    //curl http://localhost:4282/rooms/<room_id> -H "Authorization: Bearer testtoken"
 
     if (url.pathname === '/join' && request.method === 'POST') {
         const { player_id, room_code } = await request.json() as { player_id: string; room_code: string };
@@ -81,8 +83,57 @@ export class RoomObject {
         await this.storage.put('room', stored);
 
         return Response.json({ success: true });
-}
+    }
+    //curl -X POST http://localhost:4282/rooms/<room_id>/join -H "Content-Type: application/json" -H "Authorization: Bearer testtoken" -d "{\"player_id\": \"tom\", \"room_code\": \"594623\"}"
 
+    if (url.pathname === '/gamemaster' && request.method === 'PUT') {
+        const { player_id } = await request.json() as { player_id: string };
+        const stored = await this.storage.get<RoomState>('room');
+
+        if (!stored) {
+            return new Response('Room not found', { status: 404 });
+        }
+
+        // プレイヤーがルームに存在するか確認
+        if (!stored.players.includes(player_id)) {
+            return new Response('Player not in room', { status: 403 });
+        }
+
+        // gamemaster_id を更新
+        stored.host = player_id;
+        await this.storage.put('room', stored);
+
+        return Response.json({ success: true });
+    }
+    //curl -X PUT https://localhost:4282/rooms/<room_id>/gamemaster -H "Authorization: Bearer testtoken" -H "Content-Type: application/json" -d "{\"player_id\": \"tom\"}"
+
+    if (url.pathname === '/leave' && request.method === 'POST') {
+        const { player_id } = await request.json() as { player_id: string };
+        const stored = await this.storage.get<RoomState>('room');
+
+        if (!stored) {
+            return new Response('Room not found', { status: 404 });
+        }
+
+        if (!stored.players.includes(player_id)) {
+            return new Response('Player not in room', { status: 404 });
+        }
+
+        // プレイヤーを削除
+        stored.players = stored.players.filter((id) => id !== player_id);
+
+        // ゲームマスターだった場合、gamemaster_id を 空白 にする
+        if (stored.host === player_id) {
+            stored.host = '';
+        }
+
+        await this.storage.put('room', stored);
+
+        return Response.json({ success: true });
+    }
+    //curl -X POST https://<your-endpoint>/rooms/<room_id>/leave -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d "{\"player_id\": \"tom\"}"
+
+    
     return new Response('Not found', { status: 404 });
   }
 }

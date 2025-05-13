@@ -4,6 +4,8 @@ import { Hono } from 'hono';
 import createRoom from '../routes/createRoom';
 import getRoom from '../handlers/getRoom';
 import joinRoom from '../routes/joinRoom';
+import setGamemaster from '../routes/setGamemaster';
+import leaveRoom from '../routes/leaveRoom';
 import { RoomObject } from '../roomObject';
 
 const app = new Hono();
@@ -12,6 +14,8 @@ const app = new Hono();
 app.route('/', createRoom);
 app.route('/', getRoom);
 app.route('/', joinRoom);
+app.route('/', setGamemaster);
+app.route('/', leaveRoom);
 
 export { RoomObject };
 
