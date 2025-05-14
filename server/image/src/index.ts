@@ -77,7 +77,7 @@ app.post("/upload", zValidator("form", imageFormSchema), async (c) => {
       (formData.get("f") as "jpeg" | "png" | "webp" | "avif" | null) || "jpeg";
 
     // サポートされていない画像形式をチェック
-    const allowedContentTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedContentTypes = ["image/jpeg", "image/png", "image/webp", "image/avif"];
     if (!imageFile.type || !allowedContentTypes.includes(imageFile.type)) {
       return c.text(
         `サポートされている画像形式は ${SUPPORTED_FORMATS.join(", ")} のみです`,
