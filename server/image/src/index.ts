@@ -25,6 +25,7 @@ const imageFormSchema = z.object({
   h: z.coerce.number().optional(),
   q: z.coerce.number().optional(),
   f: z.enum(SUPPORTED_FORMATS).optional(),
+  filename: z.string({ required_error: "ファイル名が必要です" }).min(1, { message: "ファイル名は空にできません" })
 });
 
 // アップロードレスポンスの型
