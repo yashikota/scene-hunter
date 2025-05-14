@@ -230,52 +230,6 @@ paths:
               $ref: '#/components/schemas/Models.RegisterPlayerRequest'
       security:
         - {}
-  /bucket/{prefix}:
-    delete:
-      operationId: Images_deleteBucket
-      summary: バケット内のファイルを全て削除する
-      description: バケット内のファイルを全て削除する
-      parameters:
-        - name: prefix
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: The request has succeeded.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.SuccessResponse'
-        '400':
-          description: 400 Bad Request エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.BadRequestResponse'
-        '401':
-          description: 401 Unauthorized エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.UnauthorizedResponse'
-        '404':
-          description: 404 Not Found エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.NotFoundResponse'
-        '500':
-          description: 500 Internal Server Error エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
-      tags:
-        - Images
-      security:
-        - BearerAuth: []
   /events/{room_id}:
     get:
       operationId: Events_connectToEventStream
@@ -384,7 +338,82 @@ paths:
         - Events
       security:
         - BearerAuth: []
-  /file/{path}:
+  /health:
+    get:
+      operationId: Health_checkHealth
+      summary: ヘルスチェック
+      description: ヘルスチェック
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.SuccessResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Health
+      security:
+        - {}
+  /images/bucket/{prefix}:
+    delete:
+      operationId: Images_deleteBucket
+      summary: バケット内のファイルを全て削除する
+      description: バケット内のファイルを全て削除する
+      parameters:
+        - name: prefix
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.SuccessResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Images
+      security:
+        - BearerAuth: []
+  /images/file/{path}:
     get:
       operationId: Images_getFile
       summary: ファイルを取得する
@@ -476,36 +505,7 @@ paths:
         - Images
       security:
         - BearerAuth: []
-  /health:
-    get:
-      operationId: Health_checkHealth
-      summary: ヘルスチェック
-      description: ヘルスチェック
-      parameters: []
-      responses:
-        '200':
-          description: The request has succeeded.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.SuccessResponse'
-        '400':
-          description: 400 Bad Request エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.BadRequestResponse'
-        '500':
-          description: 500 Internal Server Error エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
-      tags:
-        - Health
-      security:
-        - {}
-  /list:
+  /images/list:
     get:
       operationId: Images_listFiles
       summary: ファイル一覧を取得する
@@ -538,6 +538,47 @@ paths:
                 $ref: '#/components/schemas/Models.InternalServerErrorResponse'
       tags:
         - Images
+      security:
+        - BearerAuth: []
+  /images/upload:
+    post:
+      operationId: Images_uploadImage
+      summary: 画像をアップロードする
+      description: 画像をアップロードする
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.ImageUploadResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Images
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Routes.FormDataRequest'
       security:
         - BearerAuth: []
   /players/{player_id}:
@@ -1346,47 +1387,6 @@ paths:
               $ref: '#/components/schemas/Models.UpdateRoomSettingsRequest'
       security:
         - BearerAuth: []
-  /upload:
-    post:
-      operationId: Images_uploadImage
-      summary: 画像をアップロードする
-      description: 画像をアップロードする
-      parameters: []
-      responses:
-        '200':
-          description: The request has succeeded.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.ImageUploadResponse'
-        '400':
-          description: 400 Bad Request エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.BadRequestResponse'
-        '401':
-          description: 401 Unauthorized エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.UnauthorizedResponse'
-        '500':
-          description: 500 Internal Server Error エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
-      tags:
-        - Images
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Routes.FormDataRequest'
-      security:
-        - BearerAuth: []
 components:
   schemas:
     ApiVersion:
@@ -1649,15 +1649,6 @@ components:
       allOf:
         - $ref: '#/components/schemas/Models.EventBase'
       description: ゲームマスター変更イベント
-    Models.HealthResponse:
-      type: object
-      required:
-        - status
-      properties:
-        status:
-          type: string
-          description: ステータス
-      description: ヘルスレスポンス
     Models.HintRevealedEvent:
       type: object
       required:
