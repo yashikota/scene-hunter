@@ -3,7 +3,6 @@ import "@typespec/openapi3";
 import "../models/main.tsp";
 
 using TypeSpec.Http;
-using TypeSpec.OpenAPI;
 
 namespace SceneHunter.Routes;
 
@@ -11,10 +10,15 @@ namespace SceneHunter.Routes;
 model FormDataRequest {
   @bodyRoot contentType: "multipart/form-data";
   @multipartBody body: {
-    file: HttpPart<{
+    image: HttpPart<{
       @body content: bytes;
       @header contentType: "application/octet-stream";
     }>;
+    w?: int32;
+    h?: int32;
+    q?: int32;
+    f?: string;
+    filename: string;
   };
 }
 
@@ -41,13 +45,13 @@ interface Images {
     | Models.InternalServerErrorResponse;
 
   /**
-   * 画像を取得する
+   * ファイルを取得する
    */
   @get
-  @route("{image_id}")
-  @summary("画像を取得する")
+  @route("file/{path}")
+  @summary("ファイルを取得する")
   @useAuth(BearerAuth)
-  getImage(@path image_id: Models.UUID):
+  getFile(@path path: string):
     | JpegImageResponse
     | Models.BadRequestResponse
     | Models.UnauthorizedResponse
@@ -55,42 +59,42 @@ interface Images {
     | Models.InternalServerErrorResponse;
 
   /**
-   * 画像情報を取得する
+   * ファイルを削除する
    */
-  @get
-  @route("{image_id}/info")
-  @summary("画像情報を取得する")
+  @delete
+  @route("file/{path}")
+  @summary("ファイルを削除する")
   @useAuth(BearerAuth)
-  getImageInfo(@path image_id: Models.UUID):
-    | Models.Image
+  deleteFile(@path path: string):
+    | Models.SuccessResponse
     | Models.BadRequestResponse
     | Models.UnauthorizedResponse
     | Models.NotFoundResponse
     | Models.InternalServerErrorResponse;
 
   /**
-   * 画像特徴を取得する
+   * バケット内のファイルを全て削除する
    */
-  @get
-  @route("{image_id}/features")
-  @summary("画像特徴を取得する")
+  @delete
+  @route("bucket/{prefix}")
+  @summary("バケット内のファイルを全て削除する")
   @useAuth(BearerAuth)
-  getImageFeatures(@path image_id: Models.UUID):
-    | Models.ImageFeatures
+  deleteBucket(@path prefix: string):
+    | Models.SuccessResponse
     | Models.BadRequestResponse
     | Models.UnauthorizedResponse
     | Models.NotFoundResponse
     | Models.InternalServerErrorResponse;
 
   /**
-   * 画像マッチングを行う
+   * ファイル一覧を取得する
    */
-  @post
-  @route("match")
-  @summary("画像マッチングを行う")
+  @get
+  @route("list")
+  @summary("ファイル一覧を取得する")
   @useAuth(BearerAuth)
-  matchImages(@body request: Models.ImageMatchRequest):
-    | Models.ImageMatchResponse
+  listFiles():
+    | Models.FileListResponse
     | Models.BadRequestResponse
     | Models.UnauthorizedResponse
     | Models.InternalServerErrorResponse;

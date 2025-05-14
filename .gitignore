@@ -171,3 +171,6 @@ dist
 ### Other ###
 # API doc
 api/index.html
+
+# test data
+testdata/
