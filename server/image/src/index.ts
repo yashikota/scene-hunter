@@ -25,7 +25,9 @@ const imageFormSchema = z.object({
   h: z.coerce.number().optional(),
   q: z.coerce.number().optional(),
   f: z.enum(SUPPORTED_FORMATS).optional(),
-  filename: z.string({ required_error: "ファイル名が必要です" }).min(1, { message: "ファイル名は空にできません" })
+  filename: z
+    .string({ required_error: "ファイル名が必要です" })
+    .min(1, { message: "ファイル名は空にできません" }),
 });
 
 // アップロードレスポンスの型
@@ -78,7 +80,12 @@ app.post("/upload", zValidator("form", imageFormSchema), async (c) => {
       (formData.get("f") as "jpeg" | "png" | "webp" | "avif" | null) || "jpeg";
 
     // サポートされていない画像形式をチェック
-    const allowedContentTypes = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+    const allowedContentTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/avif",
+    ];
     if (!imageFile.type || !allowedContentTypes.includes(imageFile.type)) {
       return c.text(
         `サポートされている画像形式は ${SUPPORTED_FORMATS.join(", ")} のみです`,
