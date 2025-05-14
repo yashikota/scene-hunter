@@ -22,7 +22,8 @@ curl -X POST \
 
 ```json
 {
-  "url": "https://image.scene-hunter.yashikota.com/scene-hunter/test.jpg"
+  "path": "https://image.scene-hunter.yashikota.com/scene-hunter/test.jpg"
+}
 }
 ```
 
