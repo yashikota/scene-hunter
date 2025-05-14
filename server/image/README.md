@@ -58,7 +58,7 @@ http://localhost:8787/file/scene-hunter/test.jpg?f=webp
 バケット内のファイル一覧を取得できます:
 
 ```sh
-http://localhost:8787/list?bucket=scene-hunter
+http://localhost:8787/list
 ```
 
 パラメータ:
