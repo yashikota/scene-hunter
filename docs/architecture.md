@@ -12,8 +12,8 @@ scene-hunter/
 │   ├── game/    # ゲームロジック (TS/Hono, Workers)
 │   ├── user/    # ユーザー管理・認証 (TS/Hono, Supabase)
 │   ├── notify/  # 通知 (TS/Hono, Workers)
-│   ├── image/   # 画像処理 (Go, AppRun)
-│   └── match/   # 特徴マッチング (Python, AppRun)
+│   ├── image/   # 画像処理 (TS/Hono, Workers)
+│   └── match/   # 特徴マッチング (Python, CloudRun)
 ├── web/         # フロントエンド (TS/RR7, Workers)
 ├── vr/          # VR (C#, Unity)
 └── docs/        # ドキュメント
@@ -72,7 +72,7 @@ graph TD
 
 ### 画像処理
 - **役割**: 画像の管理と処理
-- **技術**: Go
+- **技術**: Workers, Hono, Wasm
 - **機能**: 画像アップロード、変換、保存、取得
 
 ### 特徴マッチング

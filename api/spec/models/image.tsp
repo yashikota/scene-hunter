@@ -43,11 +43,36 @@ model Image {
  * 画像アップロードレスポンス
  */
 model ImageUploadResponse {
-  /** 画像ID */
-  image_id: UUID;
+  /** ストレージパス */
+  path: string;
+}
 
-  /** 画像URL */
-  url: string;
+/**
+ * ファイル一覧レスポンス
+ */
+model FileListResponse {
+  /** オブジェクトリスト */
+  objects: FileObject[];
+
+  /** 切り捨てられたかどうか */
+  truncated: boolean;
+}
+
+/**
+ * ファイルオブジェクト
+ */
+model FileObject {
+  /** キー */
+  key: string;
+
+  /** 最終更新日時 */
+  uploaded: string;
+
+  /** サイズ */
+  size: int32;
+
+  /** etag */
+  etag: string;
 }
 
 /**

@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "scene-hunter-image",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-05-13",
+  "r2_buckets": [
+    {
+      "binding": "SCENE_HUNTER_BUCKET",
+      "bucket_name": "scene-hunter",
+      "preview_bucket_name": "scene-hunter"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
