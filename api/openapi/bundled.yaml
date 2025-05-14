@@ -367,11 +367,149 @@ paths:
         - Health
       security:
         - {}
-  /images/match:
-    post:
-      operationId: Images_matchImages
-      summary: 画像マッチングを行う
-      description: 画像マッチングを行う
+  /images/bucket/{prefix}:
+    delete:
+      operationId: Images_deleteBucket
+      summary: バケット内のファイルを全て削除する
+      description: バケット内のファイルを全て削除する
+      parameters:
+        - name: prefix
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.SuccessResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Images
+      security:
+        - BearerAuth: []
+  /images/file/{path}:
+    get:
+      operationId: Images_getFile
+      summary: ファイルを取得する
+      description: ファイルを取得する
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Images
+      security:
+        - BearerAuth: []
+    delete:
+      operationId: Images_deleteFile
+      summary: ファイルを削除する
+      description: ファイルを削除する
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.SuccessResponse'
+        '400':
+          description: 400 Bad Request エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.BadRequestResponse'
+        '401':
+          description: 401 Unauthorized エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.UnauthorizedResponse'
+        '404':
+          description: 404 Not Found エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.NotFoundResponse'
+        '500':
+          description: 500 Internal Server Error エラーレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
+      tags:
+        - Images
+      security:
+        - BearerAuth: []
+  /images/list:
+    get:
+      operationId: Images_listFiles
+      summary: ファイル一覧を取得する
+      description: ファイル一覧を取得する
       parameters: []
       responses:
         '200':
@@ -379,7 +517,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Models.ImageMatchResponse'
+                $ref: '#/components/schemas/Models.FileListResponse'
         '400':
           description: 400 Bad Request エラーレスポンス
           content:
@@ -400,12 +538,6 @@ paths:
                 $ref: '#/components/schemas/Models.InternalServerErrorResponse'
       tags:
         - Images
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Models.ImageMatchRequest'
       security:
         - BearerAuth: []
   /images/upload:
@@ -447,145 +579,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Routes.FormDataRequest'
-      security:
-        - BearerAuth: []
-  /images/{image_id}:
-    get:
-      operationId: Images_getImage
-      summary: 画像を取得する
-      description: 画像を取得する
-      parameters:
-        - name: image_id
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Models.UUID'
-      responses:
-        '200':
-          description: The request has succeeded.
-          content:
-            image/jpeg:
-              schema:
-                type: string
-                format: binary
-        '400':
-          description: 400 Bad Request エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.BadRequestResponse'
-        '401':
-          description: 401 Unauthorized エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.UnauthorizedResponse'
-        '404':
-          description: 404 Not Found エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.NotFoundResponse'
-        '500':
-          description: 500 Internal Server Error エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
-      tags:
-        - Images
-      security:
-        - BearerAuth: []
-  /images/{image_id}/features:
-    get:
-      operationId: Images_getImageFeatures
-      summary: 画像特徴を取得する
-      description: 画像特徴を取得する
-      parameters:
-        - name: image_id
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Models.UUID'
-      responses:
-        '200':
-          description: The request has succeeded.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.ImageFeatures'
-        '400':
-          description: 400 Bad Request エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.BadRequestResponse'
-        '401':
-          description: 401 Unauthorized エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.UnauthorizedResponse'
-        '404':
-          description: 404 Not Found エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.NotFoundResponse'
-        '500':
-          description: 500 Internal Server Error エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
-      tags:
-        - Images
-      security:
-        - BearerAuth: []
-  /images/{image_id}/info:
-    get:
-      operationId: Images_getImageInfo
-      summary: 画像情報を取得する
-      description: 画像情報を取得する
-      parameters:
-        - name: image_id
-          in: path
-          required: true
-          schema:
-            $ref: '#/components/schemas/Models.UUID'
-      responses:
-        '200':
-          description: The request has succeeded.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.Image'
-        '400':
-          description: 400 Bad Request エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.BadRequestResponse'
-        '401':
-          description: 401 Unauthorized エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.UnauthorizedResponse'
-        '404':
-          description: 404 Not Found エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.NotFoundResponse'
-        '500':
-          description: 500 Internal Server Error エラーレスポンス
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Models.InternalServerErrorResponse'
-      tags:
-        - Images
       security:
         - BearerAuth: []
   /players/{player_id}:
@@ -1586,6 +1579,43 @@ components:
         - $ref: '#/components/schemas/Models.RoundEndedEvent'
         - $ref: '#/components/schemas/Models.TimerUpdateEvent'
       description: イベントの共用体型
+    Models.FileListResponse:
+      type: object
+      required:
+        - objects
+        - truncated
+      properties:
+        objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/Models.FileObject'
+          description: オブジェクトリスト
+        truncated:
+          type: boolean
+          description: 切り捨てられたかどうか
+      description: ファイル一覧レスポンス
+    Models.FileObject:
+      type: object
+      required:
+        - key
+        - uploaded
+        - size
+        - etag
+      properties:
+        key:
+          type: string
+          description: キー
+        uploaded:
+          type: string
+          description: 最終更新日時
+        size:
+          type: integer
+          format: int32
+          description: サイズ
+        etag:
+          type: string
+          description: etag
+      description: ファイルオブジェクト
     Models.ForbiddenResponse:
       type: object
       required:
@@ -1738,16 +1768,11 @@ components:
     Models.ImageUploadResponse:
       type: object
       required:
-        - image_id
-        - url
+        - path
       properties:
-        image_id:
-          allOf:
-            - $ref: '#/components/schemas/Models.UUID'
-          description: 画像ID
-        url:
+        path:
           type: string
-          description: 画像URL
+          description: ストレージパス
       description: 画像アップロードレスポンス
     Models.InternalServerErrorResponse:
       type: object
@@ -2507,10 +2532,24 @@ components:
         body:
           type: object
           properties:
-            file:
+            image:
               type: object
+            w:
+              type: integer
+              format: int32
+            h:
+              type: integer
+              format: int32
+            q:
+              type: integer
+              format: int32
+            f:
+              type: string
+            filename:
+              type: string
           required:
-            - file
+            - image
+            - filename
     Routes.PhotoFormDataRequest:
       type: object
       required:
