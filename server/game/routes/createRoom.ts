@@ -37,10 +37,10 @@ app.post(
       id: room_id,
       code: room_code,
       host: creator_id,
-      players: [creator_id],
+      players: [{ player_id: creator_id, name: 'Unknown', role: 'gamemaster', score: 0 }],
       status: 'waiting',
       createdAt: new Date().toISOString(),
-      maxPlayers: 4,
+      maxPlayers: 10,
       rounds,
     };
 

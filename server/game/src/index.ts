@@ -6,6 +6,9 @@ import getRoom from '../handlers/getRoom';
 import joinRoom from '../routes/joinRoom';
 import setGamemaster from '../routes/setGamemaster';
 import leaveRoom from '../routes/leaveRoom';
+import updateRoomSettings from '../routes/updateRoomSettings';
+import getLeaderBoard from '../handlers/getLeaderBoard';
+import testRank from '../routes/testRank';
 import { RoomObject } from '../roomObject';
 
 const app = new Hono();
@@ -16,6 +19,9 @@ app.route('/', getRoom);
 app.route('/', joinRoom);
 app.route('/', setGamemaster);
 app.route('/', leaveRoom);
+app.route('/', updateRoomSettings);
+app.route('/', getLeaderBoard);
+app.route('/', testRank);
 
 export { RoomObject };
 

@@ -40,11 +40,11 @@ export class RoomObject {
         creator_id: stored.host,
         gamemaster_id: stored.host, // 仮にhost = gamemaster
         state: stored.status,
-        players: stored.players.map((playerId) => ({
-          player_id: playerId,
-          name: '', // 名前は未管理 → 後で拡張
-          role: playerId === stored.host ? 'gamemaster' : 'player',
-          score: 0, // スコア管理は今後実装
+        players: stored.players.map((player) => ({
+          player_id: player.player_id,
+          name: player.name,
+          role: player.role,
+          score: player.score,
         })),
         current_round: 0, // 仮置き
         total_rounds: stored.rounds,
@@ -69,7 +69,7 @@ export class RoomObject {
             return new Response('Room is not open for joining', { status: 409 });
         }
 
-        if (stored.players.includes(player_id)) {
+        if (stored.players.some(player => player.player_id === player_id)) {
             return new Response('Player already joined', { status: 409 });
         }
 
@@ -77,7 +77,7 @@ export class RoomObject {
             return new Response('Room is full', { status: 409 });
         }
 
-        stored.players.push(player_id);
+        stored.players.push({ player_id, name: '', role: player_id === stored.host ? 'gamemaster' : 'player', score: 0 });
 
         // ここでストレージに保存
         await this.storage.put('room', stored);
@@ -94,18 +94,23 @@ export class RoomObject {
             return new Response('Room not found', { status: 404 });
         }
 
-        // プレイヤーがルームに存在するか確認
-        if (!stored.players.includes(player_id)) {
+        const player = stored.players.find(p => p.player_id === player_id);
+        if (!player) {
             return new Response('Player not in room', { status: 403 });
         }
 
-        // gamemaster_id を更新
+        // host と role を更新
         stored.host = player_id;
+        stored.players = stored.players.map(p => ({
+            ...p,
+            role: p.player_id === player_id ? 'gamemaster' : 'player',
+        }));
+
         await this.storage.put('room', stored);
 
         return Response.json({ success: true });
     }
-    //curl -X PUT https://localhost:4282/rooms/<room_id>/gamemaster -H "Authorization: Bearer testtoken" -H "Content-Type: application/json" -d "{\"player_id\": \"tom\"}"
+    //curl -X PUT http://localhost:4282/rooms/<room_id>/gamemaster -H "Authorization: Bearer testtoken" -H "Content-Type: application/json" -d "{\"player_id\": \"tom\"}"
 
     if (url.pathname === '/leave' && request.method === 'POST') {
         const { player_id } = await request.json() as { player_id: string };
@@ -115,25 +120,100 @@ export class RoomObject {
             return new Response('Room not found', { status: 404 });
         }
 
-        if (!stored.players.includes(player_id)) {
+        const playerExists = stored.players.some(p => p.player_id === player_id);
+        if (!playerExists) {
             return new Response('Player not in room', { status: 404 });
         }
 
         // プレイヤーを削除
-        stored.players = stored.players.filter((id) => id !== player_id);
+        stored.players = stored.players.filter(p => p.player_id !== player_id);
 
-        // ゲームマスターだった場合、gamemaster_id を 空白 にする
+        // ゲームマスターだった場合、host を空に
         if (stored.host === player_id) {
             stored.host = '';
+
+            // 他のプレイヤーがいれば最初のプレイヤーを新たな gamemaster に昇格
+            if (stored.players.length > 0) {
+            const newHost = stored.players[0].player_id;
+            stored.host = newHost;
+            stored.players = stored.players.map(p => ({
+                ...p,
+                role: p.player_id === newHost ? 'gamemaster' : 'player',
+            }));
+            }
         }
 
         await this.storage.put('room', stored);
 
         return Response.json({ success: true });
     }
-    //curl -X POST https://<your-endpoint>/rooms/<room_id>/leave -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d "{\"player_id\": \"tom\"}"
+    //curl -X POST http://localhost:4282/rooms/<room_id>/leave -H "Authorization: Bearer testtoken" -H "Content-Type: application/json" -d "{\"player_id\": \"tom\"}"
 
+    if (url.pathname === '/settings' && request.method === 'PUT') {
+        const { rounds } = await request.json() as { rounds: number };
+        const stored = await this.storage.get<RoomState>('room');
+
+        if (!stored) {
+            return new Response('Room not found', { status: 404 });
+        }
+
+        // 状態チェック（例: 進行中のゲームは設定変更禁止など）
+        if (stored.status !== 'waiting') {
+            return new Response('Room settings cannot be changed after game start', { status: 403 });
+        }
+
+        stored.rounds = rounds;
+        await this.storage.put('room', stored);
+
+        return Response.json({ success: true });
+    }
+    //curl -X PUT http://localhost:4282/rooms/<room_id>/settings -H "Authorization: Bearer testtoken" -H "Content-Type: application/json" -d "{\"rounds\": 2}"
     
+    if (url.pathname === '/leaderboard') {
+        if (request.method !== 'GET') {
+            return new Response('Method Not Allowed', { status: 405 });
+        }
+
+        const stored = await this.storage.get<RoomState>('room');
+        if (!stored) {
+            return new Response('Room not found', { status: 404 });
+        }
+
+        // スコア降順でソートし、順位付け
+        const sorted = [...stored.players]
+            .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+            .map((p, index) => ({
+            player_id: p.player_id,
+            name: p.name ?? '',
+            total_score: p.score ?? 0,
+            rank: index + 1,
+            }));
+
+        return Response.json({ players: sorted });
+    }
+    //curl -X GET http://localhost:4282/rooms/<room_id>/leaderboard -H "Authorization
+
+    //テスト用：全員にランダムなスコア付与
+    if (url.pathname === '/test-rank' && request.method === 'POST') {
+        const stored = await this.storage.get<RoomState>('room');
+        if (!stored) {
+            return new Response('Room not found', { status: 404 });
+        }
+
+        // 各プレイヤーにランダムスコア（例: 0〜100）を付与
+        const updatedPlayers = stored.players.map((p) => ({
+            ...p,
+            score: Math.floor(Math.random() * 101), // 0〜100の整数
+        }));
+
+        stored.players = updatedPlayers;
+        await this.storage.put('room', stored);
+
+        return Response.json({ success: true, players: updatedPlayers });
+    }
+    //curl -X POST http://localhost:4282/rooms/<room_id>/test-rank -H "Authorization: Bearer testtoken"
+
+
     return new Response('Not found', { status: 404 });
   }
 }
