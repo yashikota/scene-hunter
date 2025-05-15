@@ -15,10 +15,29 @@ export class RoomObject {
     const url = new URL(request.url);
 
     if (url.pathname === '/init' && request.method === 'POST') {
-      const data = await request.json();
-      this.room = data as RoomState;
-      await this.storage.put('room', this.room);
-      return new Response('Room initialized');
+        const data = await request.json();
+        this.room = data as RoomState;
+        await this.storage.put('room', this.room);
+        // roundStatesの生成・保存処理
+        this.room.roundStates = {};
+        for (let i = 0; i < this.room.rounds; i++) {
+            const roundId = crypto.randomUUID();
+            this.room.roundStates[roundId] = {
+                round_id: roundId,
+                room_id: this.room.id,
+                round_number: i + 1,
+                start_time: '',
+                end_time: '',
+                state: 'waiting',
+                master_photo_id: '',
+                hints: [],
+                revealed_hints: 0,
+                submissions: [],
+            };
+        }
+        await this.storage.put('room', this.room);
+
+        return new Response('Room initialized');
     }
     // curl.exe -X POST http://localhost:4282/rooms -H "Authorization: Bearer dummy-token" -H "Content-Type: application/json" --data-raw "{\"creator_id\": \"host_name\", \"rounds\": 3}" 
 
@@ -213,6 +232,143 @@ export class RoomObject {
     }
     //curl -X POST http://localhost:4282/rooms/<room_id>/test-rank -H "Authorization: Bearer testtoken"
 
+    if (url.pathname.startsWith('/rounds/') && url.pathname.endsWith('/start') && request.method === 'POST') {
+        const match = url.pathname.match(/^\/rounds\/([^/]+)\/start$/);
+        if (!match) {
+            return new Response('Bad Request', { status: 400 });
+        }
+
+        const roundId = match[1];
+        const body = await request.json() as { gamemaster_id?: string };
+        const gamemaster_id = body.gamemaster_id;
+        if (!gamemaster_id) {
+            return new Response('Missing gamemaster_id', { status: 400 });
+        }
+
+        const room = await this.storage.get<RoomState>('room');
+        if (!room || !room.roundStates || !room.roundStates[roundId]) {
+            return new Response('Round not found', { status: 404 });
+        }
+
+        const round = room.roundStates[roundId];
+
+        // ゲームマスター検証（room.host を使用）
+        if (gamemaster_id !== room.host) {
+            return new Response('Forbidden', { status: 403 });
+        }
+
+        // ラウンド状態チェック
+        if (round.state !== 'waiting') {
+            return new Response('Round already started or ended', { status: 400 });
+        }
+
+        // ラウンド開始処理
+        const start_time = new Date().toISOString();
+        round.state = 'in_progress';
+        round.start_time = start_time;
+
+        room.roundStates[roundId] = round;
+        await this.storage.put('room', room);
+
+        return Response.json({
+            round_id: roundId,
+            start_time,
+        });
+    }
+    //curl -X POST http://localhost:4282/rooms/<room_id>/rounds/<round_id>/start -H "Authorization: Bearer test" -H "Content-Type: application/json" -d "{\"gamemaster_id\": \"host_name\"}"
+
+    if (url.pathname.startsWith('/rounds/') && url.pathname.endsWith('/end') && request.method === 'POST') {
+        const match = url.pathname.match(/^\/rounds\/([^/]+)\/end$/);
+        if (!match) {
+            return new Response('Bad Request', { status: 400 });
+        }
+
+        const roundId = match[1];
+
+        const auth = request.headers.get('Authorization');
+        if (!auth || !auth.startsWith('Bearer ')) {
+            return new Response('Unauthorized', { status: 401 });
+        }
+
+        const room = await this.storage.get<RoomState>('room');
+        if (!room || !room.roundStates || !room.roundStates[roundId]) {
+            return new Response('Round not found', { status: 404 });
+        }
+
+        const round = room.roundStates[roundId];
+
+        if (round.state !== 'in_progress') {
+            return new Response('Cannot end round not in progress', { status: 400 });
+        }
+
+        //ラウンド終了処理
+        const now = new Date().toISOString();
+        round.state = 'ended';
+        round.end_time = now;
+
+        room.roundStates[roundId] = round;
+        await this.storage.put('room', room);
+
+        return Response.json({
+            round_id: roundId,
+            end_time: now,
+            success: true,
+        });
+    }
+    //curl -X POST http://localhost:4282/rooms/<room_id>/rounds/<round_id>/end -H "Authorization: Bearer test"
+
+    if (url.pathname.startsWith('/rounds/')) {
+        if (request.method !== 'GET') {
+            return new Response('Method Not Allowed', { status: 405 });
+        }
+
+        const match = url.pathname.match(/^\/rounds\/([^/]+)$/);
+        if (!match) {
+            return new Response('Bad Request', { status: 400 });
+        }
+
+        const roundId = match[1];
+        const stored = await this.storage.get<RoomState>('room');
+        if (!stored || !stored.roundStates || !stored.roundStates[roundId]) {
+            return new Response('Round not found', { status: 404 });
+        }
+
+        const round = stored.roundStates[roundId];
+
+        const response = {
+            round_id: round.round_id,
+            room_id: round.room_id,
+            round_number: round.round_number,
+            start_time: round.start_time,
+            end_time: round.end_time,
+            state: round.state,
+            master_photo_id: round.master_photo_id,
+            hints: round.hints,
+            revealed_hints: round.revealed_hints,
+            submissions: round.submissions,
+        };
+
+        return Response.json(response);
+    }
+    //curl -X GET http://localhost:4282/rooms/<room_id>/rounds/<round_id> -H "Authorization: Bearer test"
+
+    if (url.pathname === '/rounds' && request.method === 'GET') {
+        const room = await this.storage.get<RoomState>('room');
+        if (!room || !room.roundStates) {
+            return new Response('Room not found', { status: 404 });
+        }
+
+        const rounds = Object.values(room.roundStates).map((round) => ({
+            round_id: round.round_id,
+            round_number: round.round_number,
+            state: round.state,
+            start_time: round.start_time,
+            end_time: round.end_time,
+        }));
+
+        return Response.json({ rounds });
+    }
+    //curl -X GET http://localhost:4282/rooms/<room_id>/rounds -H "Authorization: Bearer test"
 
     return new Response('Not found', { status: 404 });
   }
