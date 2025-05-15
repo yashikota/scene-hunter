@@ -42,6 +42,7 @@ app.post(
       createdAt: new Date().toISOString(),
       maxPlayers: 10,
       rounds,
+      currentRound: 0,
     };
 
     const durableObjectId = c.env.ROOM_OBJECT.idFromName(room_id);

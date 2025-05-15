@@ -5,9 +5,9 @@ import { z } from 'zod';
 
 const app = new Hono<{ Bindings: { ROOM_OBJECT: DurableObjectNamespace } }>();
 
-// POST /rooms/:room_id/rounds/:round_id/start
+// POST /api/rooms/:room_id/start
 app.post(
-  '/rooms/:room_id/rounds/:round_id/start',
+  '/rooms/:room_id/start',
   validator('json', (value, c) => {
     const schema = z.object({
       gamemaster_id: z.string(),
@@ -19,10 +19,9 @@ app.post(
     return result.data;
   }),
   async (c) => {
-    const { room_id, round_id } = c.req.param();
+    const { room_id } = c.req.param();
     const { gamemaster_id } = c.req.valid('json');
 
-    // 認証（仮）
     const auth = c.req.header('Authorization');
     if (!auth || !auth.startsWith('Bearer ')) {
       return c.text('Unauthorized', 401);
@@ -31,18 +30,21 @@ app.post(
     const id = c.env.ROOM_OBJECT.idFromName(room_id);
     const stub = c.env.ROOM_OBJECT.get(id);
 
-    const res = await stub.fetch(`http://internal/rounds/${round_id}/start`, {
+    const res = await stub.fetch(`http://internal/rooms/${room_id}/start`, {
       method: 'POST',
+      headers: {
+        'Authorization': auth,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ gamemaster_id }),
     });
 
-    const response = new Response(res.body, {
+    const body = await res.text();
+    return new Response(body, {
       status: res.status,
       statusText: res.statusText,
-      headers: Object.fromEntries(res.headers.entries()),
+      headers: { 'Content-Type': 'application/json' },
     });
-
-    return response;
   }
 );
 

@@ -14,6 +14,7 @@ export interface RoomState {
   createdAt: string;
   maxPlayers: number;
   rounds: number;
+  currentRound: number;
   roundStates?: Record<string, Round>;
 }
 
@@ -32,7 +33,7 @@ export interface Round {
   round_number: number;
   start_time: string;
   end_time: string;
-  state: 'waiting' | 'in_progress' | 'ended';
+  state: 'in_progress' | 'ended';
   master_photo_id: string;
   hints: string[];
   revealed_hints: number;

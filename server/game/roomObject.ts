@@ -13,63 +13,103 @@ export class RoomObject {
 
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
-
+    
     if (url.pathname === '/init' && request.method === 'POST') {
         const data = await request.json();
         this.room = data as RoomState;
-        await this.storage.put('room', this.room);
-        // roundStatesの生成・保存処理
-        this.room.roundStates = {};
-        for (let i = 0; i < this.room.rounds; i++) {
-            const roundId = crypto.randomUUID();
-            this.room.roundStates[roundId] = {
-                round_id: roundId,
-                room_id: this.room.id,
-                round_number: i + 1,
-                start_time: '',
-                end_time: '',
-                state: 'waiting',
-                master_photo_id: '',
-                hints: [],
-                revealed_hints: 0,
-                submissions: [],
-            };
-        }
         await this.storage.put('room', this.room);
 
         return new Response('Room initialized');
     }
     // curl.exe -X POST http://localhost:4282/rooms -H "Authorization: Bearer dummy-token" -H "Content-Type: application/json" --data-raw "{\"creator_id\": \"host_name\", \"rounds\": 3}" 
 
+    if (url.pathname.startsWith('/rooms/') && url.pathname.endsWith('/start') && request.method === 'POST') {
+        const match = url.pathname.match(/^\/rooms\/([^/]+)\/start$/);
+        if (!match) {
+            return new Response('Bad Request', { status: 400 });
+        }
+
+        const roomId = match[1];
+        const body = await request.json() as { gamemaster_id?: string };
+        const gamemaster_id = body.gamemaster_id;
+        if (!gamemaster_id) {
+            return new Response('Missing gamemaster_id', { status: 400 });
+        }
+
+        const room = await this.storage.get<RoomState>('room');
+        if (!room) {
+            return new Response('Room not found', { status: 404 });
+        }
+
+        if (gamemaster_id !== room.host) {
+            return new Response('Forbidden', { status: 403 });
+        }
+
+        const inProgress = Object.values(room.roundStates || {}).find(r => r.state === 'in_progress');
+        if (inProgress) {
+            return new Response('Another round is already in progress', { status: 400 });
+        }
+
+        const roundNumbers = new Set(Object.values(room.roundStates || {}).map(r => r.round_number));
+        // 追加: 規定ラウンド数を超えていないかチェック
+        if (room.rounds !== undefined && roundNumbers.size >= room.rounds) {
+            return new Response('All rounds have already been played', { status: 400 });
+        }
+
+        const nextRoundNumber = roundNumbers.size > 0 ? Math.max(...roundNumbers) + 1 : 1;
+
+        const newRoundId = crypto.randomUUID();
+        room.roundStates = room.roundStates || {};
+        room.roundStates[newRoundId] = {
+            round_id: newRoundId,
+            room_id: room.id,
+            round_number: nextRoundNumber,
+            start_time: new Date().toISOString(),
+            end_time: '',
+            state: 'in_progress',
+            master_photo_id: '',
+            hints: [],
+            revealed_hints: 0,
+            submissions: [],
+        };
+
+        room.currentRound = nextRoundNumber;
+        await this.storage.put('room', room);
+
+        return Response.json(room.roundStates[newRoundId]);
+
+    }
+    //curl -X POST http://localhost:4282/rooms/<room_id>/start -H "Authorization: Bearer test" -H "Content-Type: application/json" -d "{\"gamemaster_id\": \"host_name\"}"
+    
     if (url.pathname === '/info') {
-      if (request.method !== 'GET') {
-        return new Response('Method Not Allowed', { status: 405 });
-      }
+        if (request.method !== 'GET') {
+            return new Response('Method Not Allowed', { status: 405 });
+        }
 
-      const stored = await this.storage.get<RoomState>('room');
-      if (!stored) {
-        return new Response('Room not found', { status: 404 });
-      }
+        const stored = await this.storage.get<RoomState>('room');
+        if (!stored) {
+            return new Response('Room not found', { status: 404 });
+        }
 
-      // OpenAPI仕様に変換
-      const result = {
-        room_id: stored.id,
-        room_code: stored.code,
-        created_at: stored.createdAt,
-        creator_id: stored.host,
-        gamemaster_id: stored.host, // 仮にhost = gamemaster
-        state: stored.status,
-        players: stored.players.map((player) => ({
-          player_id: player.player_id,
-          name: player.name,
-          role: player.role,
-          score: player.score,
-        })),
-        current_round: 0, // 仮置き
-        total_rounds: stored.rounds,
-      };
+        const result: RoomState = {
+            id: stored.id,
+            code: stored.code,
+            host: stored.host,
+            players: stored.players.map((player) => ({
+            player_id: player.player_id,
+            name: player.name,
+            role: player.role,
+            score: player.score,
+            })),
+            status: stored.status,
+            createdAt: stored.createdAt,
+            maxPlayers: stored.maxPlayers,
+            rounds: stored.rounds,
+            currentRound: stored.currentRound,
+            roundStates: stored.roundStates ?? undefined, // optional
+        };
 
-      return Response.json(result);
+        return Response.json(result);
     }
     //curl http://localhost:4282/rooms/<room_id> -H "Authorization: Bearer testtoken"
 
@@ -231,51 +271,6 @@ export class RoomObject {
         return Response.json({ success: true, players: updatedPlayers });
     }
     //curl -X POST http://localhost:4282/rooms/<room_id>/test-rank -H "Authorization: Bearer testtoken"
-
-    if (url.pathname.startsWith('/rounds/') && url.pathname.endsWith('/start') && request.method === 'POST') {
-        const match = url.pathname.match(/^\/rounds\/([^/]+)\/start$/);
-        if (!match) {
-            return new Response('Bad Request', { status: 400 });
-        }
-
-        const roundId = match[1];
-        const body = await request.json() as { gamemaster_id?: string };
-        const gamemaster_id = body.gamemaster_id;
-        if (!gamemaster_id) {
-            return new Response('Missing gamemaster_id', { status: 400 });
-        }
-
-        const room = await this.storage.get<RoomState>('room');
-        if (!room || !room.roundStates || !room.roundStates[roundId]) {
-            return new Response('Round not found', { status: 404 });
-        }
-
-        const round = room.roundStates[roundId];
-
-        // ゲームマスター検証（room.host を使用）
-        if (gamemaster_id !== room.host) {
-            return new Response('Forbidden', { status: 403 });
-        }
-
-        // ラウンド状態チェック
-        if (round.state !== 'waiting') {
-            return new Response('Round already started or ended', { status: 400 });
-        }
-
-        // ラウンド開始処理
-        const start_time = new Date().toISOString();
-        round.state = 'in_progress';
-        round.start_time = start_time;
-
-        room.roundStates[roundId] = round;
-        await this.storage.put('room', room);
-
-        return Response.json({
-            round_id: roundId,
-            start_time,
-        });
-    }
-    //curl -X POST http://localhost:4282/rooms/<room_id>/rounds/<round_id>/start -H "Authorization: Bearer test" -H "Content-Type: application/json" -d "{\"gamemaster_id\": \"host_name\"}"
 
     if (url.pathname.startsWith('/rounds/') && url.pathname.endsWith('/end') && request.method === 'POST') {
         const match = url.pathname.match(/^\/rounds\/([^/]+)\/end$/);
