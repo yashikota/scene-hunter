@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "scene-hunter-user",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-05-14",
+  "d1_databases": [
+    {
+      "binding": "USER_DB",
+      "database_name": "scene-hunter-user-db",
+      "database_id": "824169e3-d5ec-4f6d-a25b-16ccb277ce92"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
