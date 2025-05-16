@@ -1,0 +1,60 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "game",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-05-13",
+  
+  "durable_objects": {
+    "bindings": [
+      {
+        "name" : "ROOM_OBJECT", 
+        "class_name" : "RoomObject"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "2025-05-13",
+      "new_classes": ["RoomObject"]
+    }
+  ],
+  "dev": {
+    "port": 4282,
+    "local_protocol": "http"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+  // "compatibility_flags": [
+  //   "nodejs_compat"
+  // ],
+  // "vars": {
+  //   "MY_VAR": "my-variable"
+  // },
+  // "kv_namespaces": [
+  //   {
+  //     "binding": "MY_KV_NAMESPACE",
+  //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  //   }
+  // ],
+  // "r2_buckets": [
+  //   {
+  //     "binding": "MY_BUCKET",
+  //     "bucket_name": "my-bucket"
+  //   }
+  // ],
+  // "d1_databases": [
+  //   {
+  //     "binding": "MY_DB",
+  //     "database_name": "my-database",
+  //     "database_id": ""
+  //   }
+  // ],
+  // "ai": {
+  //   "binding": "AI"
+  // },
+  // "observability": {
+  //   "enabled": true,
+  //   "head_sampling_rate": 1
+  // }
+}
