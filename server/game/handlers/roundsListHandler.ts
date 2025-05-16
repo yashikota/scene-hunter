@@ -1,13 +1,13 @@
 // handlers/roundsListHandler.ts
 import type { DurableObjectStorage } from '@cloudflare/workers-types';
-import type { RoomState, Round } from '../types';
+import type { RoomState, RoundState } from '../types';
 
 interface RoundListItem {
     round_id: string;
     round_number: number;
-    state: 'in_progress' | 'ended' | 'pending';
-    start_time: string;
-    end_time: string;
+    status: 'pending' | 'gamemaster_turn' | 'hunter_turn' | 'scoring' | 'completed' | 'cancelled';
+    turn_start_time?: string;
+    turn_expires_at?: string;
 }
 
 export async function handleRoundsList(storage: DurableObjectStorage, request: Request): Promise<Response> {
@@ -17,21 +17,18 @@ export async function handleRoundsList(storage: DurableObjectStorage, request: R
 
     try {
         const room = await storage.get<RoomState>('room');
-        if (!room || !room.roundStates) {
-            // roundStates が存在しない場合は空の配列を返すか、404を返すか選択
-            // 元のコードでは 404 だったのでそれに合わせる
+        if (!room || !room.round_states) {
             return new Response('Room or rounds not found', { status: 404 });
         }
 
-        const rounds: RoundListItem[] = Object.values(room.roundStates).map((round: Round) => ({
+        const rounds: RoundListItem[] = Object.values(room.round_states).map((round: RoundState) => ({
             round_id: round.round_id,
             round_number: round.round_number,
-            state: round.state,
-            start_time: round.start_time,
-            end_time: round.end_time,
+            status: round.status,
+            turn_start_time: round.turn_start_time,
+            turn_expires_at: round.turn_expires_at,
         }));
 
-        // 必要に応じてソート
         rounds.sort((a, b) => a.round_number - b.round_number);
 
         return Response.json({ rounds });

@@ -18,17 +18,24 @@ export async function handleGamemaster(storage: DurableObjectStorage, request: R
             return new Response('Room not found', { status: 404 });
         }
 
-        const playerExists = stored.players.find(p => p.player_id === player_id);
+        const playerExists = Array.isArray(stored.players) && stored.players.find(p => p.player_id === player_id);
         if (!playerExists) {
             return new Response('Player not in room', { status: 403 }); // 404でも良いかも
         }
 
         // 全プレイヤーのロールを更新
-        stored.host = player_id;
-        stored.players = stored.players.map(p => ({
-            ...p,
-            role: p.player_id === player_id ? 'gamemaster' : 'player',
-        }));
+        stored.host_internal_id = player_id;
+        if (stored.players && typeof stored.players === 'object') {
+            stored.players = Object.fromEntries(
+                Object.entries(stored.players).map(([internal_id, p]) => [
+                    internal_id,
+                    {
+                        ...p,
+                        role: p.player_id === player_id ? 'gamemaster' : 'player',
+                    },
+                ])
+            );
+        }
 
         await storage.put('room', stored);
 

@@ -26,17 +26,17 @@ export async function handleSettings(storage: DurableObjectStorage, request: Req
         }
 
         // ゲーム開始後は設定変更不可などのロジック
-        if (stored.status !== 'waiting') {
+        if (stored.game_status !== 'waiting') {
             return new Response('Room settings cannot be changed after game start or while in progress', { status: 403 });
         }
 
-        stored.rounds = rounds;
+        stored.total_rounds = rounds;
         // 他の設定項目があればここで更新
         // stored.maxPlayers = maxPlayers; など
 
         await storage.put('room', stored);
 
-        return Response.json({ success: true, settings: { rounds: stored.rounds }});
+        return Response.json({ success: true, settings: { rounds: stored.total_rounds }});
     } catch (e) {
         const error = e instanceof Error ? e.message : 'Unknown error';
         if (e instanceof SyntaxError) {

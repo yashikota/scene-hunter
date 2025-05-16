@@ -13,23 +13,25 @@ export async function handleRoomInfo(storage: DurableObjectStorage, request: Req
             return new Response('Room not found', { status: 404 });
         }
 
-        // レスポンスに含める情報を整形（元のコードに準拠）
-        const result: Partial<RoomState> = { // 全部返す場合は Partial 不要
-            id: stored.id,
+        // レスポンスに含める情報を整形（RoomState型に準拠）
+        const result: Partial<Omit<RoomState, 'players'>> & { players: any[] } = {
             code: stored.code,
-            host: stored.host,
-            players: stored.players.map((player) => ({
-                player_id: player.player_id,
-                name: player.name,
-                role: player.role,
-                score: player.score,
-            })),
-            status: stored.status,
-            createdAt: stored.createdAt,
-            maxPlayers: stored.maxPlayers,
-            rounds: stored.rounds,
-            currentRound: stored.currentRound,
-            roundStates: stored.roundStates ?? undefined,
+            internal_room_id: stored.internal_room_id,
+            host_internal_id: stored.host_internal_id,
+            players: stored.players
+                ? Object.values(stored.players).map((player) => ({
+                    player_id: player.player_id,
+                    name: player.name,
+                    role: player.role,
+                    score: player.points_current_round,
+                }))
+                : [],
+            game_status: stored.game_status,
+            current_round_number: stored.current_round_number,
+            total_rounds: stored.total_rounds,
+            round_states: stored.round_states ?? undefined,
+            settings: stored.settings,
+            created_at: stored.created_at,
         };
 
         return Response.json(result);

@@ -20,16 +20,16 @@ export async function handleLeaderboard(storage: DurableObjectStorage, request: 
             return new Response('Room not found', { status: 404 });
         }
 
-        if (!stored.players || stored.players.length === 0) {
+        if (!Array.isArray(stored.players) || stored.players.length === 0) {
             return Response.json({ players: [] });
         }
 
         const sortedPlayers: LeaderboardPlayer[] = [...stored.players]
-            .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+            .sort((a, b) => (b.total_points_all_rounds ?? 0) - (a.total_points_all_rounds ?? 0))
             .map((p, index) => ({
                 player_id: p.player_id,
                 name: p.name ?? '', // name がない場合を考慮
-                total_score: p.score ?? 0,
+                total_score: p.total_points_all_rounds ?? 0,
                 rank: index + 1, // 1-based rank
             }));
 

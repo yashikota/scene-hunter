@@ -18,28 +18,31 @@ export async function handleLeave(storage: DurableObjectStorage, request: Reques
             return new Response('Room not found', { status: 404 });
         }
 
-        const playerIndex = stored.players.findIndex(p => p.player_id === player_id);
+        const playerIndex = Array.isArray(stored.players)
+            ? stored.players.findIndex(p => p.player_id === player_id)
+            : -1;
         if (playerIndex === -1) {
             return new Response('Player not in room', { status: 404 });
         }
 
         // プレイヤーを削除
-        stored.players.splice(playerIndex, 1);
+        if (Array.isArray(stored.players)) {
+            stored.players.splice(playerIndex, 1);
+        }
 
         // 退出したプレイヤーがホストだった場合
-        if (stored.host === player_id) {
-            if (stored.players.length > 0) {
+        if (stored.host_internal_id === player_id) {
+            if (Array.isArray(stored.players) && stored.players.length > 0) {
                 // 残っているプレイヤーの最初のプレイヤーを新しいホストにする
                 const newHost = stored.players[0];
-                stored.host = newHost.player_id;
+                stored.host_internal_id = newHost.player_id;
                 // 新しいホストのロールを更新（他のプレイヤーのロールも必要に応じて更新）
-                stored.players = stored.players.map(p => ({
-                    ...p,
-                    role: p.player_id === newHost.player_id ? 'gamemaster' : 'player',
-                }));
+                Object.values(stored.players).forEach(p => {
+                    p.role = p.player_id === newHost.player_id ? 'gamemaster' : 'player';
+                });
             } else {
                 // 誰もいなくなった場合、ホストを空にする
-                stored.host = '';
+                stored.host_internal_id = '';
                 // 必要であればルームステータスも更新 (e.g., 'empty' or 'waiting')
             }
         }

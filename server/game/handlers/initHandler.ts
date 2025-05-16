@@ -11,7 +11,10 @@ export async function handleInit(
   }
   try {
     const data = (await request.json()) as RoomState;
-    // TODO: dataに対するバリデーションをここに追加することを推奨
+    //dataに対するバリデーション
+    if (!data.internal_room_id || !data.code || !data.host_internal_id) {
+      return { response: new Response('Invalid room data', { status: 400 }) };
+    }
     await storage.put('room', data);
     return { response: new Response('Room initialized'), roomState: data };
   } catch (e) {

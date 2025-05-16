@@ -14,15 +14,25 @@ export async function handleTestRank(storage: DurableObjectStorage, request: Req
             return new Response('Room not found', { status: 404 });
         }
 
-        const updatedPlayers = stored.players.map((p: Player) => ({
-            ...p,
-            score: Math.floor(Math.random() * 101), // 0〜100のランダムスコア
-        }));
+        const updatedPlayers = Array.isArray(stored.players)
+            ? stored.players.map((p: Player) => ({
+                ...p,
+                score: Math.floor(Math.random() * 101), // 0〜100のランダムスコア
+            }))
+            : [];
 
-        stored.players = updatedPlayers;
+        const updatedPlayersObj: { [internal_id: string]: Player } = {};
+        if (Array.isArray(stored.players)) {
+            stored.players.forEach((p: Player, idx: number) => {
+                const internal_id = (p as any).internal_id ?? idx.toString();
+                updatedPlayersObj[internal_id] = updatedPlayers[idx];
+            });
+        }
+
+        stored.players = updatedPlayersObj;
         await storage.put('room', stored);
 
-        return Response.json({ success: true, players: updatedPlayers });
+        return Response.json({ success: true, players: Object.values(updatedPlayersObj) });
     } catch (e) {
         const error = e instanceof Error ? e.message : 'Unknown error';
         return new Response(`Error applying test rank: ${error}`, { status: 500 });

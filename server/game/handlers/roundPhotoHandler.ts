@@ -21,50 +21,36 @@ export async function handleRoundPhoto(
         }
 
         const room = await storage.get<RoomState>('room');
-        if (!room || !room.roundStates || !room.roundStates[roundId]) {
+        if (!room || !room.round_states || !room.round_states[roundId]) {
             return new Response('Round not found', { status: 404 });
         }
 
-        const currentRound = room.roundStates[roundId];
-        if (currentRound.state !== 'in_progress') {
-            return new Response('Cannot submit photo when round is not in progress', { status: 400 });
+        const currentRound = room.round_states[roundId];
+        if (currentRound.status !== 'hunter_turn') {
+            return new Response('Cannot submit photo when round is not in hunter_turn', { status: 400 });
         }
 
-        // TODO: 写真をR2などに実際にアップロードする処理
-        // const photoBuffer = await photo.arrayBuffer();
-        // const photoKey = `rooms/${room.id}/rounds/${roundId}/photos/${player_id}-${photo.name}`;
-        // await env.YOUR_R2_BUCKET.put(photoKey, photoBuffer);
-        const photo_id = crypto.randomUUID(); // R2のキーやIDなど、永続化された写真のID
+        const photo_id = crypto.randomUUID();
 
         const submission_time = new Date().toISOString();
 
-        // 残り時間の計算 (元のコードでは固定値60, ここでは仮の値)
-        // 本来はラウンド開始時刻と現在時刻から計算
-        const timeSinceStart = (new Date().getTime() - new Date(currentRound.start_time).getTime()) / 1000;
-        const roundDuration = 60; // 例: ラウンドの制限時間（秒）
-        const remaining_seconds = Math.max(0, Math.floor(roundDuration - timeSinceStart));
-
-
-        const newSubmission: Submission = {
-            player_id,
-            photo_id, // R2などに保存した写真のID or Key
-            submission_time,
-            remaining_seconds, // 要計算
-            match_score: 0,    // 初期スコア
-            total_score: 0,    // 初期スコア
+        // ハンター提出物をhunter_submissionsに保存
+        if (!currentRound.hunter_submissions) currentRound.hunter_submissions = {};
+        currentRound.hunter_submissions[player_id as string] = {
+            player_internal_id: player_id as string,
+            photo_id,
+            submitted_at: submission_time,
+            image_match_score: 0,
+            time_bonus: 0,
+            points_earned: 0,
         };
-
-        currentRound.submissions = currentRound.submissions || [];
-        currentRound.submissions.push(newSubmission);
-        // room.roundStates[roundId] = currentRound; // room オブジェクト内で直接変更されているので不要かも
 
         await storage.put('room', room);
 
         return Response.json({
-            photo_id: newSubmission.photo_id,
-            submission_time: newSubmission.submission_time,
-            player_id: newSubmission.player_id,
-            // remaining_seconds: newSubmission.remaining_seconds, // 必要なら返す
+            photo_id,
+            submission_time,
+            player_id,
         });
 
     } catch (e) {
