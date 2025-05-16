@@ -1,0 +1,15 @@
+export const ROUTES = {
+  HOME: "/",
+  START: "/start",
+  INTRO: "/intro",
+  CREATE: "/create",
+  JOIN: "/join",
+  ROOM: "/room",
+  ROUNDMASTERFIRST: "/roundmasterfirst",
+  ROUNDMEMBERFIRST: "/roundmemberfirst",
+  ROUNDMASTERSECOND: "/roundmastersecond",
+  ROUNDMEMBERSECOND: "/roundmembersecond",
+  ANSWER: "/answer",
+  MIDDLERESULT: "/middle-result",
+  FINALRESULT: "/final-result",
+};
