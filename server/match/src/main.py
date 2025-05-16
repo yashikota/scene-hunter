@@ -34,8 +34,8 @@ def compute_similarity(img1, img2):
     img2 = cv2.resize(img2, (256, 256))
     # imgsimライブラリを使用した距離計算
     def custom_decay(x):
-        n = 2.17
-        k = 0.00241
+        n = 2.49
+        k = 0.000918
         return math.exp(-k * (x ** n))
     img1vector = vtr.vectorize(img1)
     img2vector = vtr.vectorize(img2)
