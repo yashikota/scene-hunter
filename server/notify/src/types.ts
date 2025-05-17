@@ -4,58 +4,11 @@ import type {
 } from "@cloudflare/workers-types";
 
 /**
- * メッセージの種類を定義する型
- */
-export type MessageType = "broadcast" | "private";
-
-/**
- * メッセージの基本構造を定義するインターフェース
- */
-export interface Message {
-  type: MessageType; // メッセージタイプ（ブロードキャストか個別か）
-  content: string; // メッセージ内容
-  sender: string; // 送信者ID（ニックネーム）
-  recipient?: string; // 受信者ID（個別メッセージの場合のみ）
-  timestamp: number; // タイムスタンプ
-}
-
-/**
- * クライアントからサーバーへのメッセージ形式
- */
-export interface ClientMessage {
-  type: MessageType; // メッセージタイプ
-  content: string; // メッセージ内容
-  recipient?: string; // 受信者ID（個別メッセージの場合のみ）
-}
-
-/**
- * サーバーからクライアントへのメッセージ形式
- */
-export interface ServerMessage extends Message {
-  roomId: string; // ルームID
-}
-
-/**
- * システムメッセージの種類
- */
-export type SystemMessageType = "user_joined" | "user_left" | "error";
-
-/**
- * システムメッセージの形式
- */
-export interface SystemMessage {
-  type: "system";
-  systemType: SystemMessageType;
-  content: string;
-  timestamp: number;
-}
-
-/**
  * ルーム内のユーザー情報
  */
 export interface User {
   id: string; // ユーザーID（ニックネーム）
-  webSocket: WebSocket; // WebSocket接続（サーバー側）
+  webSocket: any; // WebSocket接続（サーバー側）
 }
 
 /**
@@ -74,6 +27,7 @@ export interface CloudflareBindings {
 
 /**
  * イベントの基本型
+ * すべてのイベント型の基底インターフェース
  */
 export interface EventBase {
   /** イベントタイプ */

@@ -4,34 +4,10 @@ import type {
   WebSocket,
 } from "@cloudflare/workers-types";
 import type {
-  ClientMessage,
   EventType,
-  Message,
-  SystemMessage,
+  SystemErrorEvent,
   User,
 } from "./types";
-
-// WebSocketPairの定義
-interface WebSocketPair {
-  0: WebSocket;
-  1: WebSocket;
-  [key: number]: WebSocket;
-}
-
-declare global {
-  var WebSocketPair: {
-    prototype: WebSocketPair;
-    new (): WebSocketPair;
-    (): WebSocketPair;
-  };
-}
-
-// TypeScriptの型エラーを回避するための型定義
-declare global {
-  interface ResponseInit {
-    webSocket?: WebSocket;
-  }
-}
 
 /**
  * ChatRoomクラス - チャットルームのDurable Object実装
@@ -97,7 +73,7 @@ export class ChatRoom {
   private async handleWebSocket(request: CFRequest): Promise<Response> {
     // WebSocketペアの作成
     const pair = new WebSocketPair();
-    const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
+    const [client, server] = [pair[0], pair[1]];
 
     // URLからルームIDとユーザーIDを取得
     const url = new URL(request.url);
@@ -108,11 +84,10 @@ export class ChatRoom {
       server.accept();
       server.send(
         JSON.stringify({
-          type: "system",
-          systemType: "error",
+          event_type: "system.error",
+          timestamp: new Date().toISOString(),
           content: "ユーザーIDが指定されていません",
-          timestamp: Date.now(),
-        } as SystemMessage),
+        } as SystemErrorEvent),
       );
       server.close(1000, "ユーザーIDが指定されていません");
       return new Response(null, { status: 400 });
@@ -123,11 +98,10 @@ export class ChatRoom {
       server.accept();
       server.send(
         JSON.stringify({
-          type: "system",
-          systemType: "error",
+          event_type: "system.error",
+          timestamp: new Date().toISOString(),
           content: "このユーザーIDは既に使用されています",
-          timestamp: Date.now(),
-        } as SystemMessage),
+        } as SystemErrorEvent),
       );
       server.close(1000, "このユーザーIDは既に使用されています");
       return new Response(null, { status: 400 });
@@ -197,7 +171,7 @@ export class ChatRoom {
    * メッセージ処理
    */
   private async handleMessage(userId: string, wsEvent: any): Promise<void> {
-    let data: ClientMessage | any;
+    let data: any;
 
     try {
       // 受信したデータをトリミングして整形
@@ -290,64 +264,6 @@ export class ChatRoom {
     if (this.users.size === 0) {
       console.log(`ルーム ${this.roomId} は空になりました`);
       // 必要に応じてクリーンアップ処理を追加
-    }
-  }
-
-  /**
-   * ブロードキャストメッセージの送信
-   */
-  private broadcast(
-    message: Message | SystemMessage,
-    excludeUserId?: string,
-  ): void {
-    const messageStr = JSON.stringify(message);
-
-    for (const [userId, user] of this.users.entries()) {
-      // 除外するユーザーIDが指定されている場合はスキップ
-      if (excludeUserId && userId === excludeUserId) continue;
-
-      try {
-        user.webSocket.send(messageStr);
-      } catch (error) {
-        console.error(`メッセージ送信エラー (${userId}):`, error);
-      }
-    }
-  }
-
-  /**
-   * 個別メッセージの送信
-   */
-  private sendPrivateMessage(message: Message, recipientId: string): void {
-    const recipient = this.users.get(recipientId);
-    if (!recipient) {
-      // 受信者が見つからない場合は送信者にエラーを返す
-      const sender = this.users.get(message.sender);
-      if (sender) {
-        const errorEvent: EventType = {
-          event_type: "system.error",
-          timestamp: new Date().toISOString(),
-          content: `ユーザー ${recipientId} は見つかりません`,
-        };
-        sender.webSocket.send(JSON.stringify(errorEvent));
-      }
-      return;
-    }
-
-    // 受信者にメッセージを送信
-    try {
-      recipient.webSocket.send(JSON.stringify(message));
-    } catch (error) {
-      console.error("個別メッセージ送信エラー:", error);
-    }
-
-    // 送信者にも同じメッセージを送信（自分のメッセージを表示するため）
-    const sender = this.users.get(message.sender);
-    if (sender) {
-      try {
-        sender.webSocket.send(JSON.stringify(message));
-      } catch (error) {
-        console.error("個別メッセージ送信エラー (送信者):", error);
-      }
     }
   }
 
