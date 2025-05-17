@@ -7,13 +7,12 @@ export default function MakeRoom() {
 
   const handleCreateRoom = () => {
     if (!playerName) return;
-    // TODO: ルーム作成処理。プレイヤー名を状態管理やDBに保存するなど
-    navigate("/gameroom"); // ルーム作成後に遷移
+    navigate("/gameroom");
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-white text-black">
-      <h1 className="text-3xl font-bold mb-6">ルーム作成</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-[#D0E2F3] text-black">
+      <h1 className="text-4xl font-[Pacifico] mb-6">Scene Hunter</h1>
 
       <input
         type="text"
@@ -25,7 +24,7 @@ export default function MakeRoom() {
 
       <button
         onClick={handleCreateRoom}
-        className="px-6 py-3 bg-blue-500 text-white rounded-2xl shadow hover:bg-blue-600 transition"
+        className="px-6 py-3 bg-[#EEEEEE] text-black rounded-2xl shadow hover:bg-gray-300 transition"
       >
         ルームを作成する
       </button>
@@ -39,3 +38,4 @@ export default function MakeRoom() {
     </div>
   );
 }
+

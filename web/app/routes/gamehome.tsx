@@ -1,32 +1,62 @@
 import { useNavigate } from "react-router";
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
+import { useEffect } from "react";
 
 export default function GameHome() {
   const navigate = useNavigate();
 
+  // Pacifico フォント読み込み
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.href = "https://fonts.googleapis.com/css2?family=Pacifico&display=swap";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-4 p-4 bg-white text-black">
-      <h1 className="text-4xl font-bold mb-8">Scene Hunter</h1>
+    <div className="relative flex items-center justify-center min-h-screen bg-[#D0E2F3] p-4">
+      {/* 左下カメラ画像 */}
+      <img
+        src="/ChatGPT_Image_2025517_14_50_42.png" // ← パスは変更してください
+        alt="camera icon"
+        className="absolute bottom-4 left-4 w-20 h-20 object-contain"
+      />
 
-      <button
-        onClick={() => navigate("/create")}
-        className="px-6 py-3 bg-blue-500 text-white rounded-2xl shadow hover:bg-blue-600 transition"
-      >
-        ルーム作成
-      </button>
+      <Card className="w-full max-w-md shadow-xl border border-gray-300 bg-white">
+        <CardContent className="flex flex-col items-center gap-6 py-10">
+          <h1
+            className="text-4xl text-gray-800"
+            style={{ fontFamily: '"Pacifico", cursive' }}
+          >
+            Scene Hunter
+          </h1>
 
-      <button
-        onClick={() => navigate("/join")}
-        className="px-6 py-3 bg-green-500 text-white rounded-2xl shadow hover:bg-green-600 transition"
-      >
-        ルーム参加
-      </button>
+          <Button
+            className="w-64 text-lg bg-[#EEEEEE] text-black hover:bg-gray-300"
+            onClick={() => navigate("/create")}
+          >
+            ルーム作成
+          </Button>
 
-      <button
-        onClick={() => navigate("/how-to-play")}
-        className="px-6 py-3 bg-gray-500 text-white rounded-2xl shadow hover:bg-gray-600 transition"
-      >
-        ルール説明
-      </button>
+          <Button
+            className="w-64 text-lg bg-[#EEEEEE] text-black hover:bg-gray-300"
+            onClick={() => navigate("/join")}
+          >
+            ルーム参加
+          </Button>
+
+          <Button
+            className="w-64 text-lg bg-[#EEEEEE] text-black hover:bg-gray-300"
+            onClick={() => navigate("/how-to-play")}
+          >
+            ゲーム説明
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
