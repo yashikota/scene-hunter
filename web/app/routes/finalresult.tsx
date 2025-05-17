@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { cn } from "~/lib/utils";
-import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Progress } from "../components/ui/progress";
 
 type Player = {
