@@ -65,7 +65,7 @@ export default function FinalResultPage() {
 
   // 修正: ホームに戻る関数
   const handleReturnHome = () => {
-    navigate("/gamehome");
+    navigate("/room");
   };
 
   if (loading) {
