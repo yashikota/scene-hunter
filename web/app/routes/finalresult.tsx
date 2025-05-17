@@ -21,7 +21,7 @@ export default function FinalResultPage() {
   const [progress, setProgress] = useState(0);
   const [players, setPlayers] = useState<Player[]>([]);
 
-  const yourId = "4"; // ← あなたのプレイヤーID（ブランチ確認）
+  const yourId = "4"; // ← あなたのプレイヤーID
   const round = 3;
 
   const dummyPlayers: Player[] = [
