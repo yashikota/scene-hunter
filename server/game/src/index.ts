@@ -1,5 +1,3 @@
-// server/game/index.ts
-
 import { Hono } from 'hono';
 import createRoom from '../routes/createRoom';
 import getRoom from '../handlers/getRoom';
