@@ -33,7 +33,8 @@ export default function GameRoom() {
 
   useEffect(() => {
     const link = document.createElement("link");
-    link.href = "https://fonts.googleapis.com/css2?family=Pacifico&display=swap";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Pacifico&display=swap";
     link.rel = "stylesheet";
     document.head.appendChild(link);
     return () => {
@@ -75,7 +76,7 @@ export default function GameRoom() {
   const handleSelectGameMaster = (playerId: string) => {
     setGameMasterId(playerId); // 即時反映
     ws.current?.send(
-      JSON.stringify({ type: "setGameMaster", roomId, playerId })
+      JSON.stringify({ type: "setGameMaster", roomId, playerId }),
     );
   };
 
@@ -107,7 +108,12 @@ export default function GameRoom() {
       <Dialog open={showQR} onOpenChange={setShowQR}>
         <DialogTrigger asChild>
           <div className="w-20 cursor-pointer hover:scale-105 transition">
-            <QRCode value={qrUrl} size={80} bgColor="#ffffff" fgColor="#111111" />
+            <QRCode
+              value={qrUrl}
+              size={80}
+              bgColor="#ffffff"
+              fgColor="#111111"
+            />
           </div>
         </DialogTrigger>
         <DialogPortal>
@@ -115,8 +121,16 @@ export default function GameRoom() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
             onClick={() => setShowQR(false)}
           >
-            <div onClick={(e) => e.stopPropagation()} className="cursor-pointer">
-              <QRCode value={qrUrl} size={256} bgColor="#ffffff" fgColor="#111111" />
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="cursor-pointer"
+            >
+              <QRCode
+                value={qrUrl}
+                size={256}
+                bgColor="#ffffff"
+                fgColor="#111111"
+              />
             </div>
           </div>
         </DialogPortal>
@@ -168,7 +182,10 @@ export default function GameRoom() {
             <li key={p.id} className="flex items-center gap-2">
               {p.name}
               {gameMasterId === p.id && (
-                <CameraIcon className="w-4 h-4 text-blue-500" aria-label="ゲームマスター" />
+                <CameraIcon
+                  className="w-4 h-4 text-blue-500"
+                  aria-label="ゲームマスター"
+                />
               )}
             </li>
           ))}

@@ -137,8 +137,6 @@ export function Timer({ seconds, onComplete }: TimerProps) {
 //   );
 // }
 
-
-
 // import { useEffect, useRef, useState } from "react";
 // import { motion } from "framer-motion";
 
@@ -180,8 +178,6 @@ export function Timer({ seconds, onComplete }: TimerProps) {
 
 //   const progress = (seconds - time) / seconds;
 //   const dashOffset = circumference * (1 - progress);
-
-  
 
 // //   return (
 // //     <div className="absolute top-4 right-4 w-24 h-24">

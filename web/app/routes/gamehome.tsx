@@ -9,7 +9,8 @@ export default function GameHome() {
   // Pacifico フォント読み込み
   useEffect(() => {
     const link = document.createElement("link");
-    link.href = "https://fonts.googleapis.com/css2?family=Pacifico&display=swap";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Pacifico&display=swap";
     link.rel = "stylesheet";
     document.head.appendChild(link);
     return () => {

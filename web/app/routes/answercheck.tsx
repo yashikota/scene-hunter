@@ -19,7 +19,8 @@ export default function AnswerCheckPage() {
   const [players, setPlayers] = useState<PlayerResult[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const gmImageUrl = "https://scene-hunter-image.yashikota.workers.dev/file/test.jpg"; // GMの画像
+  const gmImageUrl =
+    "https://scene-hunter-image.yashikota.workers.dev/file/test.jpg"; // GMの画像
 
   // 仮の参加者データ
   const dummyResults: PlayerResult[] = [
@@ -109,7 +110,9 @@ export default function AnswerCheckPage() {
                     <span className="font-semibold">{player.name}</span>
                   </div>
                   <p className="text-sm">一致率: {player.similarity}%</p>
-                  <p className="text-sm">撮影時間: {player.time.toFixed(1)}秒</p>
+                  <p className="text-sm">
+                    撮影時間: {player.time.toFixed(1)}秒
+                  </p>
                   <p className="text-sm">得点: {player.score}点</p>
                 </div>
               </li>

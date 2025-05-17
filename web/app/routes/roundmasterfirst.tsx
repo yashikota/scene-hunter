@@ -1,7 +1,12 @@
 import React, { useRef, useState } from "react";
 import { Camera, type CameraType } from "react-camera-pro";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { useNavigate } from "react-router";
 
 const CameraPage: React.FC = () => {
@@ -48,10 +53,13 @@ const CameraPage: React.FC = () => {
       formData.append("w", "800");
       formData.append("q", "90");
 
-      const res = await fetch("https://scene-hunter-image.yashikota.workers.dev/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        "https://scene-hunter-image.yashikota.workers.dev/upload",
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
       if (!res.ok) throw new Error("アップロードに失敗しました");
 
@@ -60,7 +68,6 @@ const CameraPage: React.FC = () => {
 
       // ✅ アップロード成功後にページ遷移
       navigate("/roundmastersecond");
-
     } catch (err: any) {
       console.error("❌ アップロードエラー:", err.message);
     } finally {
@@ -71,7 +78,9 @@ const CameraPage: React.FC = () => {
   return (
     <div className="relative min-h-screen bg-sky-100 pt-16">
       {/* ヘッダー */}
-      <header className="fixed top-0 left-0 w-full h-16 bg-sky-300 shadow z-20 flex items-center justify-center"> {/* ヘッダーも水色に */}
+      <header className="fixed top-0 left-0 w-full h-16 bg-sky-300 shadow z-20 flex items-center justify-center">
+        {" "}
+        {/* ヘッダーも水色に */}
         <h1 className="text-xl font-bold text-gray-800">Scene Hunter</h1>
       </header>
 
@@ -128,7 +137,9 @@ const CameraPage: React.FC = () => {
               <CardTitle>カメラで写真を撮る</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 flex justify-center">
-              <Button onClick={() => setCameraStarted(true)}>カメラを起動する</Button>
+              <Button onClick={() => setCameraStarted(true)}>
+                カメラを起動する
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -138,4 +149,3 @@ const CameraPage: React.FC = () => {
 };
 
 export default CameraPage;
-

@@ -24,5 +24,5 @@ export default function Home() {
   return <Main />; // 画面は即座に切り替わるので、実際には表示されない
 }
 //export default function Home() {
-  //return <Main />;
+//return <Main />;
 //}
