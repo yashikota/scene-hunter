@@ -1,7 +1,5 @@
-
 import React from "react";
 import { Button } from "../components/ui/button";
-
 
 const WaitingForPlayerPage: React.FC = () => {
   return (
@@ -14,10 +12,9 @@ const WaitingForPlayerPage: React.FC = () => {
       {/* メッセージ中央表示 */}
       <div className="flex justify-center items-center min-h-screen p-4">
         <h2 className="text-3xl font-semibold text-gray-800 text-center">
-          ゲームマスターが撮影中
+          プレイヤーが撮影中
         </h2>
       </div>
-
 
       {/* フッター（非アクティブ） */}
       <div className="fixed bottom-0 w-full flex justify-center items-center space-x-4 h-20 bg-sky-300 z-[50] shadow-md">
@@ -28,7 +25,6 @@ const WaitingForPlayerPage: React.FC = () => {
           📸
         </Button>
       </div>
-
     </div>
   );
 };
