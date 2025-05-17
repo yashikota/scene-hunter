@@ -1,13 +1,9 @@
 import { CameraIcon } from "@heroicons/react/24/outline";
-import {
-  Dialog,
-  DialogPortal,
-  DialogTrigger,
-} from "@radix-ui/react-dialog";
+import { Dialog, DialogPortal, DialogTrigger } from "@radix-ui/react-dialog";
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import { useNavigate } from "react-router";
-import { useWebSocket, sendEvent } from "../contexts/WebSocketContext";
+import { sendEvent, useWebSocket } from "../contexts/WebSocketContext";
 
 type Player = {
   id: string;
@@ -20,7 +16,14 @@ export default function GameRoom() {
   const qrUrl = `https://example.com/room/${roomId}`;
   const navigate = useNavigate();
 
-  const { connect, disconnect, sendMessage, isConnected, lastEvent, connectionStatus } = useWebSocket();
+  const {
+    connect,
+    disconnect,
+    sendMessage,
+    isConnected,
+    lastEvent,
+    connectionStatus,
+  } = useWebSocket();
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [gameMasterId, setGameMasterId] = useState<string | null>(null);
@@ -42,17 +45,18 @@ export default function GameRoom() {
   // 接続状態に応じたUIを表示
   const renderConnectionStatus = () => {
     switch (connectionStatus) {
-      case 'connected':
+      case "connected":
         return <span className="text-green-500">接続済み</span>;
-      case 'connecting':
+      case "connecting":
         return <span className="text-yellow-500">接続中...</span>;
-      case 'disconnected':
+      case "disconnected":
         return <span className="text-gray-500">未接続</span>;
-      case 'error':
+      case "error":
         return (
           <div className="text-red-500">
             接続エラー
             <button
+              type="button"
               onClick={() => connect(roomId, userId)}
               className="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-sm"
             >
@@ -70,54 +74,54 @@ export default function GameRoom() {
     return () => {
       disconnect();
     };
-  }, [roomId, userId]);
+  }, [connect, disconnect, userId]);
 
   // WebSocketイベント処理
   useEffect(() => {
     if (lastEvent) {
-      console.log('イベント受信:', lastEvent);
+      console.log("イベント受信:", lastEvent);
 
       switch (lastEvent.event_type) {
-        case 'room.player_joined':
+        case "room.player_joined":
           // プレイヤー参加イベントの処理
-          setPlayers(prevPlayers => {
+          setPlayers((prevPlayers) => {
             const newPlayer = {
               id: lastEvent.player_id,
-              name: lastEvent.name || lastEvent.player_id
+              name: lastEvent.name || lastEvent.player_id,
             };
             // 既に存在する場合は追加しない
-            if (prevPlayers.some(p => p.id === newPlayer.id)) {
+            if (prevPlayers.some((p) => p.id === newPlayer.id)) {
               return prevPlayers;
             }
             return [...prevPlayers, newPlayer];
           });
           break;
 
-        case 'room.player_left':
+        case "room.player_left":
           // プレイヤー退出イベントの処理
-          setPlayers(prevPlayers =>
-            prevPlayers.filter(p => p.id !== lastEvent.player_id)
+          setPlayers((prevPlayers) =>
+            prevPlayers.filter((p) => p.id !== lastEvent.player_id),
           );
           break;
 
-        case 'room.gamemaster_changed':
+        case "room.gamemaster_changed":
           // ゲームマスター変更イベントの処理
           setGameMasterId(lastEvent.player_id);
           break;
 
-        case 'game.round_started':
+        case "game.round_started":
           // ラウンド開始イベントの処理
           navigate("/rounddisplay");
           break;
 
-        case 'system.error':
+        case "system.error":
           // エラーイベントの処理
           setErrorMessage(lastEvent.content);
           break;
 
-        case 'room.connected':
+        case "room.connected":
           // 接続完了イベントの処理
-          console.log('ルームに接続しました:', lastEvent.content);
+          console.log("ルームに接続しました:", lastEvent.content);
           break;
       }
     }
@@ -129,9 +133,9 @@ export default function GameRoom() {
     // RESTを通じてゲームマスター変更イベントを送信
     sendEvent(roomId, {
       event_type: "room.gamemaster_changed",
-      player_id: playerId
-    }).catch(error => {
-      console.error('ゲームマスター変更イベント送信エラー:', error);
+      player_id: playerId,
+    }).catch((error) => {
+      console.error("ゲームマスター変更イベント送信エラー:", error);
     });
   };
 
@@ -151,9 +155,9 @@ export default function GameRoom() {
     sendEvent(roomId, {
       event_type: "game.round_started",
       round_id: "round-1",
-      start_time: new Date().toISOString()
-    }).catch(error => {
-      console.error('ラウンド開始イベント送信エラー:', error);
+      start_time: new Date().toISOString(),
+    }).catch((error) => {
+      console.error("ラウンド開始イベント送信エラー:", error);
     });
 
     navigate("/rounddisplay");

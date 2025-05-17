@@ -1,7 +1,7 @@
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
 import { Camera, type CameraType } from "react-camera-pro";
+import { useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
-import { useWebSocket, sendEvent } from "../contexts/WebSocketContext";
+import { sendEvent, useWebSocket } from "../contexts/WebSocketContext";
 
 const CameraPage: React.FC = () => {
   const navigate = useNavigate();
@@ -104,9 +104,9 @@ const CameraPage: React.FC = () => {
       sendEvent(roomId, {
         event_type: "game.photo_submitted",
         player_id: userId,
-        submission_time: new Date().toISOString()
-      }).catch(error => {
-        console.error('写真提出イベント送信エラー:', error);
+        submission_time: new Date().toISOString(),
+      }).catch((error) => {
+        console.error("写真提出イベント送信エラー:", error);
       });
 
       // 次の画面に遷移
@@ -164,10 +164,18 @@ const CameraPage: React.FC = () => {
       <header className="fixed top-0 left-0 w-full h-16 bg-sky-300 shadow z-20 flex items-center justify-between px-4">
         <h1 className="text-xl font-bold text-gray-800">Scene Hunter</h1>
         <div>
-          {connectionStatus === 'connected' && <span className="text-green-500 text-sm">接続済み</span>}
-          {connectionStatus === 'connecting' && <span className="text-yellow-500 text-sm">接続中...</span>}
-          {connectionStatus === 'disconnected' && <span className="text-gray-500 text-sm">未接続</span>}
-          {connectionStatus === 'error' && <span className="text-red-500 text-sm">接続エラー</span>}
+          {connectionStatus === "connected" && (
+            <span className="text-green-500 text-sm">接続済み</span>
+          )}
+          {connectionStatus === "connecting" && (
+            <span className="text-yellow-500 text-sm">接続中...</span>
+          )}
+          {connectionStatus === "disconnected" && (
+            <span className="text-gray-500 text-sm">未接続</span>
+          )}
+          {connectionStatus === "error" && (
+            <span className="text-red-500 text-sm">接続エラー</span>
+          )}
         </div>
       </header>
 
@@ -265,7 +273,11 @@ const CameraPage: React.FC = () => {
                   disabled={uploading || uploadSuccess}
                   className={uploadSuccess ? "bg-green-500" : ""}
                 >
-                  {uploading ? "アップロード中..." : uploadSuccess ? "アップロード完了" : "アップロード"}
+                  {uploading
+                    ? "アップロード中..."
+                    : uploadSuccess
+                      ? "アップロード完了"
+                      : "アップロード"}
                 </Button>
               </div>
             </CardContent>

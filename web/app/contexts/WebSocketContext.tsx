@@ -1,43 +1,54 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import type { ReactNode } from 'react';
-import type { EventType } from '../types/websocket';
+import type React from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import type { EventType } from "../types/websocket";
 
 interface WebSocketContextType {
   connect: (roomId: string, userId: string) => void;
   disconnect: () => void;
   /** @deprecated Use sendEvent function instead */
-  sendMessage: (message: any) => void;
+  sendMessage: (message: Record<string, unknown>) => void;
   isConnected: boolean;
   lastEvent: EventType | null;
-  connectionStatus: 'connected' | 'connecting' | 'disconnected' | 'error';
+  connectionStatus: "connected" | "connecting" | "disconnected" | "error";
 }
 
 // RESTでイベントを送信するための関数
-export const sendEvent = async (roomId: string, event: { event_type: string } & Record<string, any>) => {
+export const sendEvent = async (
+  roomId: string,
+  event: { event_type: string } & Record<string, unknown>,
+) => {
   try {
-    const response = await fetch(`https://scene-hunter-notify.yashikota.workers.dev/api/rooms/${roomId}/events`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await fetch(
+      `https://scene-hunter-notify.yashikota.workers.dev/api/rooms/${roomId}/events`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...event,
+          timestamp: new Date().toISOString(),
+        }),
       },
-      body: JSON.stringify({
-        ...event,
-        timestamp: new Date().toISOString(),
-      }),
-    });
+    );
 
     if (!response.ok) {
-      throw new Error(`イベント送信エラー: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `イベント送信エラー: ${response.status} ${response.statusText}`,
+      );
     }
 
     return await response.json();
   } catch (error) {
-    console.error('イベント送信エラー:', error);
+    console.error("イベント送信エラー:", error);
     throw error;
   }
 };
 
-const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
+const WebSocketContext = createContext<WebSocketContextType | undefined>(
+  undefined,
+);
 
 interface WebSocketProviderProps {
   children: ReactNode;
@@ -55,7 +66,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [lastEvent, setLastEvent] = useState<EventType | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected' | 'error'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<
+    "connected" | "connecting" | "disconnected" | "error"
+  >("disconnected");
 
   // 再接続に関する状態を保持するためのRef
   const reconnectAttemptsRef = useRef(0);
@@ -67,8 +80,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   // 指数バックオフを使用して次の再接続までの待機時間を計算
   const getBackoffDelay = () => {
     const delay = Math.min(
-      initialBackoffDelay * Math.pow(2, reconnectAttemptsRef.current),
-      maxBackoffDelay
+      initialBackoffDelay * (2 ** reconnectAttemptsRef.current),
+      maxBackoffDelay,
     );
     // ジッターを追加して同時再接続を防止（0.5〜1.5倍のランダム係数）
     return delay * (0.5 + Math.random());
@@ -84,37 +97,39 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     currentRoomIdRef.current = roomId;
     currentUserIdRef.current = userId;
 
-    setConnectionStatus('connecting');
+    setConnectionStatus("connecting");
 
     // 本番環境ではwssプロトコルを使用
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = 'scene-hunter-notify.yashikota.workers.dev';
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const host = "scene-hunter-notify.yashikota.workers.dev";
     const wsUrl = `${protocol}//${host}/ws/${roomId}?userId=${encodeURIComponent(userId)}`;
 
     console.log(`WebSocket接続を試みています: ${wsUrl}`);
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      console.log('WebSocket接続が確立されました');
+      console.log("WebSocket接続が確立されました");
       setIsConnected(true);
-      setConnectionStatus('connected');
+      setConnectionStatus("connected");
       reconnectAttemptsRef.current = 0; // 接続成功したらカウンターをリセット
     };
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data) as EventType;
-        console.log('メッセージを受信しました:', data);
+        console.log("メッセージを受信しました:", data);
         setLastEvent(data);
       } catch (error) {
-        console.error('メッセージの解析に失敗しました:', error);
+        console.error("メッセージの解析に失敗しました:", error);
       }
     };
 
     ws.onclose = (event) => {
-      console.log(`WebSocket接続が閉じられました: ${event.code} ${event.reason}`);
+      console.log(
+        `WebSocket接続が閉じられました: ${event.code} ${event.reason}`,
+      );
       setIsConnected(false);
-      setConnectionStatus('disconnected');
+      setConnectionStatus("disconnected");
 
       // 手動切断の場合は再接続しない
       if (isManualDisconnectRef.current) {
@@ -125,7 +140,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       // 再接続ロジック
       if (reconnectAttemptsRef.current < maxReconnectAttempts) {
         const delay = getBackoffDelay();
-        console.log(`${delay}ms後に再接続を試みます (試行回数: ${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})`);
+        console.log(
+          `${delay}ms後に再接続を試みます (試行回数: ${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})`,
+        );
 
         // 前回のタイムアウトをクリア
         if (reconnectTimeoutRef.current !== null) {
@@ -138,18 +155,21 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
           // 保存されたroomIdとuserIdを使用して再接続
           if (currentRoomIdRef.current && currentUserIdRef.current) {
-            connectWebSocket(currentRoomIdRef.current, currentUserIdRef.current);
+            connectWebSocket(
+              currentRoomIdRef.current,
+              currentUserIdRef.current,
+            );
           }
         }, delay);
       } else {
-        console.error('最大再接続試行回数に達しました');
-        setConnectionStatus('error');
+        console.error("最大再接続試行回数に達しました");
+        setConnectionStatus("error");
       }
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocketエラー:', error);
-      setConnectionStatus('error');
+      console.error("WebSocketエラー:", error);
+      setConnectionStatus("error");
     };
 
     setSocket(ws);
@@ -178,7 +198,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       socket.close();
       setSocket(null);
       setIsConnected(false);
-      setConnectionStatus('disconnected');
+      setConnectionStatus("disconnected");
     }
 
     // 接続情報をクリア
@@ -187,16 +207,18 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   };
 
   // メッセージ送信関数 (非推奨 - RESTを使用してください)
-  const sendMessage = (message: any) => {
-    console.warn('WebSocketでのメッセージ送信は非推奨です。代わりにsendEvent関数を使用してください。');
+  const sendMessage = (message: Record<string, unknown>) => {
+    console.warn(
+      "WebSocketでのメッセージ送信は非推奨です。代わりにsendEvent関数を使用してください。",
+    );
     if (socket && isConnected) {
       try {
         socket.send(JSON.stringify(message));
       } catch (error) {
-        console.error('メッセージ送信エラー:', error);
+        console.error("メッセージ送信エラー:", error);
       }
     } else {
-      console.error('WebSocketが接続されていません');
+      console.error("WebSocketが接続されていません");
     }
   };
 
@@ -205,17 +227,19 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     return () => {
       disconnect();
     };
-  }, []);
+  }, [disconnect]);
 
   return (
-    <WebSocketContext.Provider value={{
-      connect,
-      disconnect,
-      sendMessage,
-      isConnected,
-      lastEvent,
-      connectionStatus
-    }}>
+    <WebSocketContext.Provider
+      value={{
+        connect,
+        disconnect,
+        sendMessage,
+        isConnected,
+        lastEvent,
+        connectionStatus,
+      }}
+    >
       {children}
     </WebSocketContext.Provider>
   );
@@ -224,7 +248,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 export const useWebSocket = () => {
   const context = useContext(WebSocketContext);
   if (context === undefined) {
-    throw new Error('useWebSocketはWebSocketProviderの中で使用する必要があります');
+    throw new Error(
+      "useWebSocketはWebSocketProviderの中で使用する必要があります",
+    );
   }
   return context;
 };
