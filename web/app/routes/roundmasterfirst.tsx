@@ -69,9 +69,9 @@ const CameraPage: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-gray-100 pt-16">
+    <div className="relative min-h-screen bg-sky-100 pt-16">
       {/* ヘッダー */}
-      <header className="fixed top-0 left-0 w-full h-16 bg-white shadow z-20 flex items-center justify-center">
+      <header className="fixed top-0 left-0 w-full h-16 bg-sky-300 shadow z-20 flex items-center justify-center"> {/* ヘッダーも水色に */}
         <h1 className="text-xl font-bold text-gray-800">Scene Hunter</h1>
       </header>
 
@@ -90,7 +90,7 @@ const CameraPage: React.FC = () => {
           <div className="fixed bottom-0 w-full flex justify-center items-center space-x-4 h-20 bg-white z-[50] shadow-md">
             <Button
               onClick={capture}
-              className="w-16 h-16 rounded-full text-xl shadow-md"
+              className="w-16 h-16 rounded-full text-xl shadow-md bg-white text-black hover:bg-gray-200"
             >
               📸
             </Button>
