@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { cn } from "~/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { ScrollArea } from "../components/ui/scroll-area";
 
 type Player = {
   player_id: string;
@@ -114,31 +115,33 @@ export default function InterimResult1Page() {
       {/* Leaderboard */}
       <div className="w-full max-w-xs mt-6 text-sm">
         <h4 className="font-semibold">ランキング</h4>
-        <ul className="mt-2 bg-white border rounded p-2 space-y-2">
-        {sorted.map((p) => (
-          <li
-            key={p.player_id}
-            className={cn(
-              "flex items-center justify-between gap-2",
-              p.player_id === yourId && "bg-yellow-50 font-bold"
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <Avatar>
-                <AvatarImage
-                  src={`https://api.dicebear.com/7.x/icons/svg?seed=${p.player_id}`}
-                  alt={p.name}
-                />
-                <AvatarFallback>{p.name[0]?.toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <span>
-                {p.rank}. {p.name}
-              </span>
-            </div>
-            <span>{p.total_score.toFixed(2)} pts</span>
-          </li>
-        ))}
-      </ul>
+        <ScrollArea className="mt-2 bg-white border rounded">
+          <div className="max-h-[200px] overflow-auto pr-2">
+            <ul className="space-y-2 p-2 pr-4">
+              {sorted.map((p) => (
+                <li
+                  key={p.player_id}
+                  className={cn(
+                    "flex items-center justify-between gap-2",
+                    p.player_id === yourId && "bg-yellow-50 font-bold"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <Avatar>
+                      <AvatarImage
+                        src={`https://api.dicebear.com/7.x/icons/svg?seed=${p.player_id}`}
+                        alt={p.name}
+                      />
+                      <AvatarFallback>{p.name[0]?.toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <span>{p.rank}. {p.name}</span>
+                  </div>
+                  <span>{p.total_score.toFixed(2)} pts</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </ScrollArea>
       </div>
 
       {/* 次のラウンドへ */}

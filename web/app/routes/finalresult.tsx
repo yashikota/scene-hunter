@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { cn } from "~/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Progress } from "../components/ui/progress";
+import { ScrollArea } from "../components/ui/scroll-area";
 
 type Player = {
   player_id: string;
@@ -102,45 +103,89 @@ export default function FinalResultPage() {
       <p className="mt-4 text-sm">あなたは... {yourRank} 位！</p>
 
       {/* ランキング一覧 */}
+      {/* <div className="w-full max-w-xs mt-6 text-sm">
+        <h4 className="font-semibold">ランキング</h4>
+        <ScrollArea className="max-h-[200px] mt-2 bg-white border rounded p-2">
+          <ul className="mt-2 bg-white border rounded p-2 space-y-2">
+            {sorted.map((p) => {
+              const medal =
+                p.rank === 1
+                  ? "🥇"
+                  : p.rank === 2
+                    ? "🥈"
+                    : p.rank === 3
+                      ? "🥉"
+                      : "";
+
+              return (
+                <li
+                  key={p.player_id}
+                  className={cn(
+                    "flex items-center justify-between gap-2",
+                    p.player_id === yourId && "bg-yellow-50 font-bold",
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <Avatar>
+                      <AvatarImage
+                        src={`https://api.dicebear.com/7.x/icons/svg?seed=${p.player_id}`}
+                        alt={p.name}
+                      />
+                      <AvatarFallback>{p.name[0]?.toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <span className="flex items-center gap-1">
+                      {p.rank}. {p.name}
+                      {medal && <span className="ml-1">{medal}</span>}
+                    </span>
+                  </div>
+                  <span>{p.total_score.toFixed(2)} pts</span>
+                </li>
+              );
+            })}
+          </ul>
+        </ScrollArea>
+      </div> */}
+
+      {/* ランキング一覧 */}
       <div className="w-full max-w-xs mt-6 text-sm">
         <h4 className="font-semibold">ランキング</h4>
-        <ul className="mt-2 bg-white border rounded p-2 space-y-2">
-          {sorted.map((p) => {
-            const medal =
-              p.rank === 1
-                ? "🥇"
-                : p.rank === 2
-                  ? "🥈"
-                  : p.rank === 3
-                    ? "🥉"
-                    : "";
+        <ScrollArea className="mt-2 bg-white border rounded">
+          <div className="max-h-[200px] overflow-auto pr-2">
+            <ul className="space-y-2 p-2">
+            {sorted.map((p) => {
+              const medal =
+                p.rank === 1 ? "🥇" :
+                p.rank === 2 ? "🥈" :
+                p.rank === 3 ? "🥉" : "";
 
-            return (
-              <li
-                key={p.player_id}
-                className={cn(
-                  "flex items-center justify-between gap-2",
-                  p.player_id === yourId && "bg-yellow-50 font-bold",
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <Avatar>
-                    <AvatarImage
-                      src={`https://api.dicebear.com/7.x/icons/svg?seed=${p.player_id}`}
-                      alt={p.name}
-                    />
-                    <AvatarFallback>{p.name[0]?.toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <span className="flex items-center gap-1">
-                    {p.rank}. {p.name}
-                    {medal && <span className="ml-1">{medal}</span>}
-                  </span>
-                </div>
-                <span>{p.total_score.toFixed(2)} pts</span>
-              </li>
-            );
-          })}
-        </ul>
+              return (
+                <li
+                  key={p.player_id}
+                  className={cn(
+                    "flex items-center justify-between gap-2",
+                    p.player_id === yourId && "bg-yellow-50 font-bold"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <Avatar>
+                      <AvatarImage
+                        src={`https://api.dicebear.com/7.x/icons/svg?seed=${p.player_id}`}
+                        alt={p.name}
+                      />
+                      <AvatarFallback>{p.name[0]?.toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <span className="flex items-center gap-1">
+                      {p.rank}. {p.name}
+                      {medal && <span className="ml-1">{medal}</span>}
+                    </span>
+                  </div>
+                  <span>{p.total_score.toFixed(2)} pts</span>
+                </li>
+              );
+            })}
+            </ul>
+          </div>
+        </ScrollArea>
       </div>
 
       {/* ホームへ戻る */}
