@@ -19,6 +19,24 @@ export default function AnswerCheckPage() {
   const [players, setPlayers] = useState<PlayerResult[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const round: number = 1; // ← ラウンド番号に応じて変更（後にpropsで受け取るのが理想）
+
+  const handleComplete = () => {
+    switch (round) {
+      case 1:
+        navigate("/interimresult1");
+        break;
+      case 2:
+        navigate("/interimresult2");
+        break;
+      case 3:
+        navigate("/finalresult");
+        break;
+      default:
+        navigate("/");
+    }
+  }; // ここでラウンドに応じた処理を行う
+
   const gmImageUrl =
     "https://scene-hunter-image.yashikota.workers.dev/file/test.jpg"; // GMの画像
 
@@ -79,7 +97,7 @@ export default function AnswerCheckPage() {
 
   return (
     <main className="relative flex flex-col items-center min-h-screen px-4 pt-25 bg-blue-50">
-      <Timer seconds={10} onComplete={() => navigate("/interimresult1")} />
+      <Timer seconds={10} onComplete={handleComplete} />
       <h1 className="text-3xl font-bold">Scene Hunter</h1>
       <h2 className="text-xl mt-2">答え合わせ</h2>
 
