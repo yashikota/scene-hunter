@@ -1,4 +1,5 @@
-import React, { useRef, useState } from "react";
+import type React from "react";
+import { useRef, useState } from "react";
 import { Camera, type CameraType } from "react-camera-pro";
 import { Button } from "../components/ui/button";
 import {

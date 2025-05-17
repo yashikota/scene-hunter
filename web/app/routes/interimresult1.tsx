@@ -127,6 +127,7 @@ export default function InterimResult1Page() {
           {round + 1} / 3
         </p>
         <button
+          type="button"
           onClick={handleNext}
           className="bg-orange-300 hover:bg-orange-400 px-4 py-2 rounded"
         >

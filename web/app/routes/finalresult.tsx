@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Progress } from "../components/ui/progress";
-import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
 import { cn } from "~/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
+import { Progress } from "../components/ui/progress";
 
 type Player = {
   player_id: string;
@@ -141,6 +141,7 @@ export default function FinalResultPage() {
       {/* ホームへ戻る */}
       <div className="mt-6 bg-white p-4 rounded shadow text-center">
         <button
+          type="button"
           onClick={handleReturnHome}
           className="bg-orange-300 hover:bg-orange-400 px-4 py-2 rounded"
         >
