@@ -1,6 +1,7 @@
 // handlers/leaveHandler.ts
 import type { DurableObjectStorage } from '@cloudflare/workers-types';
 import type { RoomState } from '../types';
+import { notifyRoomEvent } from '../roomObject';
 
 export async function handleLeave(storage: DurableObjectStorage, request: Request): Promise<Response> {
     if (request.method !== 'POST') {
@@ -45,6 +46,9 @@ export async function handleLeave(storage: DurableObjectStorage, request: Reques
         }
 
         await storage.put('room', stored);
+
+        // 退出通知イベント
+        await notifyRoomEvent(stored.code, 'room.player_left', `プレイヤーが退出しました: ${player_id}`);
 
         return Response.json({ success: true, message: `Player ${player_id} left the room.` });
     } catch (e) {

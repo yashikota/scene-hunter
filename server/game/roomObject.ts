@@ -16,6 +16,19 @@ import { handleRoundPhoto } from './handlers/roundPhotoHandler';
 import { handleRoundEnd } from './handlers/roundEndHandler';
 import { handleRoundInfo } from './handlers/roundInfoHandler';
 import { handleRoundsList } from './handlers/roundsListHandler';
+import { handleUpdatePlayerName } from './handlers/updatePlayerNameHandler';
+
+// 通知APIにイベントを送信するユーティリティ関数を追加
+export async function notifyRoomEvent(roomId: string, eventType: string, content: string) {
+  //JSON.stringify({ event_type: eventType, content })をログで出力
+  console.log(JSON.stringify({ event_type: eventType, content }));
+  const url = `https://scene-hunter-notify.yashikota.workers.dev/api/rooms/${roomId}/events`;
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ event_type: eventType, content })
+  });
+}
 
 export class RoomObject {
   state: DurableObjectState;
@@ -35,6 +48,19 @@ export class RoomObject {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
+    // curl -X PUT http://localhost:4282/players/<player_id>
+    const playerMatch = pathname.match(/^\/players\/([^\/]+)$/);
+    if (playerMatch && request.method === 'PUT') {
+      const playerId = playerMatch[1];
+      return handleUpdatePlayerName(this.storage, request, playerId);
+    }
+    // curl -X PUT http://localhost:4282/rooms/:room_id/players/:player_id
+    const playerMatchWithRoom = pathname.match(/^\/rooms\/([^\/]+)\/players\/([^\/]+)$/);
+    if (playerMatchWithRoom && request.method === 'PUT') {
+      const playerId = playerMatchWithRoom[2];
+      return handleUpdatePlayerName(this.storage, request, playerId);
+    }
+
     // より具体的なパスを先に評価する
     // curl.exe -X POST http://localhost:4282/rooms -H "Authorization: Bearer dummy-token" -H "Content-Type: application/json" --data-raw "{\"creator_id\": \"host_name\", \"rounds\": 3}"
     if (pathname === '/init') {
@@ -50,7 +76,8 @@ export class RoomObject {
     const roomStartMatch = pathname.match(/^\/rooms\/([^/]+)\/start$/);
     if (roomStartMatch && request.method === 'POST') {
       const roomId = roomStartMatch[1];
-      return handleRoomStart(this.storage, request, roomId);
+      const response = await handleRoomStart(this.storage, request, roomId);
+      return response;
     }
 
     // /rounds/:roundId/photo
@@ -58,7 +85,8 @@ export class RoomObject {
     const roundPhotoMatch = pathname.match(/^\/rounds\/([^/]+)\/photo$/);
     if (roundPhotoMatch && request.method === 'POST') {
       const roundId = roundPhotoMatch[1];
-      return handleRoundPhoto(this.storage, request, roundId);
+      const response = await handleRoundPhoto(this.storage, request, roundId);
+      return response;
     }
 
     // /rounds/:roundId/end
@@ -66,7 +94,8 @@ export class RoomObject {
     const roundEndMatch = pathname.match(/^\/rounds\/([^/]+)\/end$/);
     if (roundEndMatch && request.method === 'POST') {
       const roundId = roundEndMatch[1];
-      return handleRoundEnd(this.storage, request, roundId);
+      const response = await handleRoundEnd(this.storage, request, roundId);
+      return response;
     }
 
     // /rounds/:roundId (GET)
@@ -86,19 +115,37 @@ export class RoomObject {
     // /join (POST)
     //curl -X POST http://localhost:4282/rooms/<room_id>/join -H "Content-Type: application/json" -H "Authorization: Bearer testtoken" -d "{\"player_id\": \"tom\", \"room_code\": \"594623\"}"
     if (pathname === '/join' && request.method === 'POST') {
-      return handleJoin(this.storage, request);
+      const response = await handleJoin(this.storage, request);
+      let playerId = '';
+      try {
+        const body: any = await request.clone().json();
+        playerId = body.player_id;
+      } catch {}
+      return response;
     }
 
     // /gamemaster (PUT)
     //curl -X PUT http://localhost:4282/rooms/<room_id>/gamemaster -H "Authorization: Bearer testtoken" -H "Content-Type: application/json" -d "{\"player_id\": \"tom\"}"
     if (pathname === '/gamemaster' && request.method === 'PUT') {
-      return handleGamemaster(this.storage, request);
+      const response = await handleGamemaster(this.storage, request);
+      let playerId = '';
+      try {
+        const body: any = await request.clone().json();
+        playerId = body.player_id;
+      } catch {}
+      return response;
     }
 
     // /leave (POST)
     //curl -X POST http://localhost:4282/rooms/<room_id>/leave -H "Authorization: Bearer testtoken" -H "Content-Type: application/json" -d "{\"player_id\": \"tom\"}"
     if (pathname === '/leave' && request.method === 'POST') {
-      return handleLeave(this.storage, request);
+      const response = await handleLeave(this.storage, request);
+      let playerId = '';
+      try {
+        const body: any = await request.clone().json();
+        playerId = body.player_id;
+      } catch {}
+      return response;
     }
 
     // /settings (PUT)

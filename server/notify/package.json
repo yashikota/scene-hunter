@@ -1,5 +1,5 @@
 {
-  "name": "game",
+  "name": "notify",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
@@ -7,16 +7,10 @@
     "check": "biome check --write ."
   },
   "dependencies": {
-    "@google/genai": "^0.14.1",
-    "@types/crypto-js": "^4.2.2",
-    "crypto": "^1.0.1",
-    "crypto-js": "^4.2.0",
-    "hono": "^4.7.9",
-    "zod": "^3.24.4"
+    "hono": "^4.7.9"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250513.0",
-    "@types/node": "^22.15.17",
+    "@cloudflare/workers-types": "^4.20250514.0",
     "wrangler": "^4.4.0"
   }
 }

@@ -23,7 +23,6 @@ scene-hunter/
 
 ```mermaid
 graph TD
-    BFF[BFF]
     Game[ゲーム]
     User[ユーザー管理]
     Notify[リアルタイム通知]
@@ -33,17 +32,19 @@ graph TD
     Durable[Durable Objects]
     Storage[R2]
     
-    Client[クライアント] --> BFF
-    BFF --> Game
-    BFF --> User
-    BFF --> Notify
+    Client[クライアント] --> Game
+    Game <--> User
+    Game --> Notify
+    Notify --> Client
     
-    Game --> Image
+    Client --> Image
+    Image --> Client
     Game --> Match
     Game --> DB
     Game --> Durable
     User --> DB
     User --> Durable
+    Durable --> Game
     Image --> Storage
     Match --> Storage
 ```

@@ -1,6 +1,7 @@
 // handlers/roomStartHandler.ts
 import type { DurableObjectStorage } from '@cloudflare/workers-types';
 import type { RoomState, Round } from '../types';
+import { notifyRoomEvent } from '../roomObject';
 
 export async function handleRoomStart(
   storage: DurableObjectStorage,
@@ -34,7 +35,10 @@ export async function handleRoomStart(
 
     const inProgressRound = Object.values(room.roundStates || {}).find(r => r.state === 'in_progress');
     if (inProgressRound) {
-      return new Response('Another round is already in progress', { status: 400 });
+      // 既存ラウンドがin_progressでもroom.statusがwaitingなら新規ラウンドを開始できるよう修正
+      if (room.status !== 'waiting') {
+        return new Response('Another round is already in progress', { status: 400 });
+      }
     }
 
     const playedRoundNumbers = new Set(Object.values(room.roundStates || {}).map(r => r.round_number));
@@ -64,6 +68,9 @@ export async function handleRoomStart(
     // room.status = 'in_progress'; // Consider updating room status
 
     await storage.put('room', room);
+
+    // ラウンド開始通知イベント
+    await notifyRoomEvent(room.code, 'game.round_started', 'ラウンドが開始されました');
 
     return Response.json(newRound);
   } catch (e) {

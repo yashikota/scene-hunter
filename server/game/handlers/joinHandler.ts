@@ -1,6 +1,7 @@
 // handlers/joinHandler.ts
 import type { DurableObjectStorage } from '@cloudflare/workers-types';
 import type { RoomState, Player } from '../types';
+import { notifyRoomEvent } from '../roomObject';
 
 export async function handleJoin(storage: DurableObjectStorage, request: Request): Promise<Response> {
     if (request.method !== 'POST') {
@@ -44,6 +45,9 @@ export async function handleJoin(storage: DurableObjectStorage, request: Request
         stored.players.push(newPlayer);
 
         await storage.put('room', stored);
+
+        // ここで通知イベントを送信
+        await notifyRoomEvent(room_code, 'room.player_joined', 'プレイヤーが参加しました');
 
         return Response.json({ success: true, player: newPlayer }); // 参加したプレイヤー情報を返すのも良い
     } catch (e) {
