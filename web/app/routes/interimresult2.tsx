@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { cn } from "~/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { ScrollArea } from "../components/ui/scroll-area";
+import { Timer } from "../components/ui/timer";
 
 type Player = {
   player_id: string;
@@ -75,7 +76,8 @@ export default function InterimResult2Page() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen px-4 pt-15 bg-blue-50">
+    <main className="relative flex flex-col items-center justify-center min-h-screen px-4 pt-16 bg-blue-50">
+      <Timer seconds={10} onComplete={handleNext} />
       <h1 className="text-3xl font-bold">Scene Hunter</h1>
       <h2 className="text-xl mt-2">ラウンド {round}</h2>
       <h3 className="text-lg mt-2 font-semibold">中間発表</h3>
