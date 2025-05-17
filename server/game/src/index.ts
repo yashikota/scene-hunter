@@ -13,7 +13,9 @@ import endRound from '../routes/endRound';
 import testGetRounds from '../handlers/testGetRounds';
 import generateHintsFromPhoto from '../routes/generateHintsFromPhoto';
 import submitPhoto from '../routes/submitPhoto';
+import setPlayerName from '../routes/setPlayerName';
 import { RoomObject } from '../roomObject';
+import { set } from 'zod';
 
 const app = new Hono();
 
@@ -32,6 +34,7 @@ app.route('/', endRound);
 app.route('/', testGetRounds);
 app.route('/', generateHintsFromPhoto);
 app.route('/', submitPhoto);
+app.route('/', setPlayerName);
 
 export { RoomObject };
 
