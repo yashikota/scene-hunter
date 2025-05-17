@@ -151,12 +151,12 @@ export default function InterimResult1Page() {
       </div>
 
       {/* 次のラウンドへ */}
-      <div className="mt-3 bg-white p-4 rounded shadow text-center">
-        {/* <p className="text-md font-bold mb-2">
+      {/* <div className="mt-3 bg-white p-4 rounded shadow text-center">
+        <p className="text-md font-bold mb-2">
           次のラウンド
           <br />
           {round + 1} / 3
-        </p> */}
+        </p>
         <button
           type="button"
           onClick={handleNext}
@@ -164,7 +164,7 @@ export default function InterimResult1Page() {
         >
           次のラウンド
         </button>
-      </div>
+      </div> */}
     </main>
   );
 }
