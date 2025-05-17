@@ -1,7 +1,7 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
-import { useEffect } from "react";
 
 export default function GameHome() {
   const navigate = useNavigate();
@@ -9,7 +9,8 @@ export default function GameHome() {
   // Pacifico フォント読み込み
   useEffect(() => {
     const link = document.createElement("link");
-    link.href = "https://fonts.googleapis.com/css2?family=Pacifico&display=swap";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Pacifico&display=swap";
     link.rel = "stylesheet";
     document.head.appendChild(link);
     return () => {
@@ -21,7 +22,7 @@ export default function GameHome() {
     <div className="relative flex items-center justify-center min-h-screen bg-[#D0E2F3] p-4">
       {/* 左下カメラ画像 */}
       <img
-        src="/ChatGPT_Image_2025517_14_50_42.png" // ← パスは変更してください
+        src="/camera.png"
         alt="camera icon"
         className="absolute bottom-4 left-4 w-20 h-20 object-contain"
       />

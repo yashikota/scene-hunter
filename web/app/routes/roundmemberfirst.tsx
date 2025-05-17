@@ -1,7 +1,5 @@
-
-import React from "react";
+import type React from "react";
 import { Button } from "../components/ui/button";
-
 
 const WaitingForPlayerPage: React.FC = () => {
   return (
@@ -18,17 +16,15 @@ const WaitingForPlayerPage: React.FC = () => {
         </h2>
       </div>
 
-
       {/* フッター（非アクティブ） */}
       <div className="fixed bottom-0 w-full flex justify-center items-center space-x-4 h-20 bg-sky-300 z-[50] shadow-md">
-        <Button 
-          className="w-16 h-16 rounded-full text-xl shadow-md bg-white text-black opacity-50 cursor-not-allowed" 
-          disabled 
+        <Button
+          className="w-16 h-16 rounded-full text-xl shadow-md bg-white text-black opacity-50 cursor-not-allowed"
+          disabled
         >
           📸
         </Button>
       </div>
-
     </div>
   );
 };
