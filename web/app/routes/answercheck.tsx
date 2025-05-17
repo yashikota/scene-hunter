@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { Timer } from "../components/ui/timer";
 
 // 型定義
 interface PlayerResult {
@@ -72,12 +73,13 @@ export default function AnswerCheckPage() {
   }
 
   return (
-    <main className="flex flex-col items-center min-h-screen px-4 py-8 bg-blue-50">
+    <main className="relative flex flex-col items-center min-h-screen px-4 pt-25 bg-blue-50">
+      <Timer seconds={10} onComplete={() => navigate("/interimresult1")} />
       <h1 className="text-3xl font-bold">Scene Hunter</h1>
       <h2 className="text-xl mt-2">答え合わせ</h2>
 
       {/* GM画像 */}
-      <div className="mt-6">
+      <div className="mt-10">
         <h3 className="text-md font-semibold text-center mb-2">Game Master</h3>
         <img src={gmImageUrl} alt="GM" className="w-48 h-auto rounded shadow" />
       </div>
@@ -117,7 +119,7 @@ export default function AnswerCheckPage() {
       </div>
 
       {/* 中間発表へ */}
-      <div className="mt-6">
+      {/* <div className="mt-6">
         <button
           type="button"
           onClick={() => navigate("/interimresult1")}
@@ -125,7 +127,7 @@ export default function AnswerCheckPage() {
         >
           中間発表へ
         </button>
-      </div>
+      </div> */}
     </main>
   );
 }

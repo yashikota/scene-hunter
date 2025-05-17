@@ -75,14 +75,14 @@ export default function InterimResult2Page() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen px-4 bg-blue-50">
+    <main className="flex flex-col items-center justify-center min-h-screen px-4 pt-15 bg-blue-50">
       <h1 className="text-3xl font-bold">Scene Hunter</h1>
       <h2 className="text-xl mt-2">ラウンド {round}</h2>
-      <h3 className="text-lg mt-4 font-semibold">中間発表</h3>
+      <h3 className="text-lg mt-2 font-semibold">中間発表</h3>
 
       {/* Podium */}
       {podium.length >= 3 && (
-        <div className="flex justify-center items-end h-40 gap-6 mt-6">
+        <div className="flex justify-center items-end h-25 gap-6 mt-6">
           <div className="flex flex-col items-center">
             <div className="bg-teal-900 text-white w-10 h-16 flex items-center justify-center text-sm">
               3
@@ -104,10 +104,10 @@ export default function InterimResult2Page() {
         </div>
       )}
 
-      <p className="mt-4 text-sm">あなたは・・・・ {yourRank} 位！</p>
+      <p className="mt-3 text-sm">現在あなたは・・・・ {yourRank} 位！</p>
 
       {/* Leaderboard */}
-      <div className="w-full max-w-xs mt-6 text-sm">
+      <div className="w-full max-w-xs mt-3 text-sm">
         <h4 className="font-semibold">ランキング</h4>
         <ScrollArea className="mt-2 bg-white border rounded">
           <div className="max-h-[200px] overflow-auto pr-2">
@@ -143,18 +143,18 @@ export default function InterimResult2Page() {
       </div>
 
       {/* 次のラウンドへ */}
-      <div className="mt-6 bg-white p-4 rounded shadow text-center">
-        <p className="text-md font-bold mb-2">
+      <div className="mt-3 bg-white p-4 rounded shadow text-center">
+        {/* <p className="text-md font-bold mb-2">
           次のラウンド
           <br />
           {round + 1} / 3
-        </p>
+        </p> */}
         <button
           type="button"
           onClick={handleNext}
           className="bg-orange-300 hover:bg-orange-400 px-4 py-2 rounded"
         >
-          確定
+          次のラウンド
         </button>
       </div>
     </main>

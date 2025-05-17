@@ -73,13 +73,12 @@ export default function FinalResultPage() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen px-4 bg-blue-50">
+    <main className="flex flex-col items-center justify-center min-h-screen px-4 pt-15 bg-blue-50">
       <h1 className="text-3xl font-bold">Scene Hunter</h1>
-      <h2 className="text-xl mt-2">ラウンド {round}</h2>
       <h3 className="text-lg mt-4 font-semibold">最終結果発表</h3>
 
       {/* Podium */}
-      <div className="flex justify-center items-end h-40 gap-6 mt-6">
+      <div className="flex justify-center items-end h-25 gap-6 mt-6">
         <div className="flex flex-col items-center">
           <div className="bg-teal-900 text-white w-10 h-16 flex items-center justify-center text-sm">
             3
