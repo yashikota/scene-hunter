@@ -2,12 +2,15 @@ import React, { useRef, useState } from "react";
 import { Camera, type CameraType } from "react-camera-pro";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { useNavigate } from "react-router";
 
 const CameraPage: React.FC = () => {
   const camera = useRef<CameraType>(null);
   const [image, setImage] = useState<string>();
   const [cameraStarted, setCameraStarted] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  const navigate = useNavigate(); // ✅ ページ遷移のためのフック
 
   // ランダムな JPEG ファイル名を生成
   const generateRandomFilename = () => {
@@ -26,6 +29,7 @@ const CameraPage: React.FC = () => {
 
   const reset = () => {
     setImage(undefined);
+    setCameraStarted(true);
   };
 
   const uploadImage = async () => {
@@ -43,8 +47,6 @@ const CameraPage: React.FC = () => {
       formData.append("filename", filename);
       formData.append("w", "800");
       formData.append("q", "90");
-      // ⚠️ f=webp を削除してJPEGでアップロード
-      // formData.append("f", "webp"); ← 削除
 
       const res = await fetch("https://scene-hunter-image.yashikota.workers.dev/upload", {
         method: "POST",
@@ -54,7 +56,11 @@ const CameraPage: React.FC = () => {
       if (!res.ok) throw new Error("アップロードに失敗しました");
 
       const result = await res.json();
-      console.log("✅ アップロード成功:", result); // ← コンソール出力
+      console.log("✅ アップロード成功:", result);
+
+      // ✅ アップロード成功後にページ遷移
+      navigate("/roundmastersecond");
+
     } catch (err: any) {
       console.error("❌ アップロードエラー:", err.message);
     } finally {
@@ -81,7 +87,7 @@ const CameraPage: React.FC = () => {
             />
           </div>
 
-          <div className="fixed bottom-6 w-full flex justify-center z-10 space-x-4">
+          <div className="fixed bottom-0 w-full flex justify-center items-center space-x-4 h-20 bg-white z-[50] shadow-md">
             <Button
               onClick={capture}
               className="w-16 h-16 rounded-full text-xl shadow-md"
