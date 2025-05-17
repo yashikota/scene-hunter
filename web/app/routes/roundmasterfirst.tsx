@@ -87,19 +87,12 @@ const CameraPage: React.FC = () => {
             />
           </div>
 
-          <div className="fixed bottom-0 w-full flex justify-center items-center space-x-4 h-20 bg-white z-[50] shadow-md">
+          <div className="fixed bottom-0 w-full flex justify-center items-center space-x-4 h-20 bg-sky-300 z-[50] shadow-md">
             <Button
               onClick={capture}
               className="w-16 h-16 rounded-full text-xl shadow-md bg-white text-black hover:bg-gray-200"
             >
               📸
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => setCameraStarted(false)}
-              className="h-16"
-            >
-              キャンセル
             </Button>
           </div>
         </>
