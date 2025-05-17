@@ -35,7 +35,7 @@ export default function AnswerCheckPage() {
       default:
         navigate("/");
     }
-  };
+  }; // ここでラウンドに応じた処理を行う
 
   const gmImageUrl =
     "https://scene-hunter-image.yashikota.workers.dev/file/test.jpg"; // GMの画像
