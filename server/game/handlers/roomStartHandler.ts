@@ -34,7 +34,10 @@ export async function handleRoomStart(
 
     const inProgressRound = Object.values(room.roundStates || {}).find(r => r.state === 'in_progress');
     if (inProgressRound) {
-      return new Response('Another round is already in progress', { status: 400 });
+      // 既存ラウンドがin_progressでもroom.statusがwaitingなら新規ラウンドを開始できるよう修正
+      if (room.status !== 'waiting') {
+        return new Response('Another round is already in progress', { status: 400 });
+      }
     }
 
     const playedRoundNumbers = new Set(Object.values(room.roundStates || {}).map(r => r.round_number));
