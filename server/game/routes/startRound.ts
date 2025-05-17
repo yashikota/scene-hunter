@@ -11,6 +11,7 @@ app.post(
   validator('json', (value, c) => {
     const schema = z.object({
       gamemaster_id: z.string(),
+      photo_url: z.string().url(),
     });
     const result = schema.safeParse(value);
     if (!result.success) {

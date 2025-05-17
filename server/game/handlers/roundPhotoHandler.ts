@@ -23,13 +23,13 @@ export async function handleRoundPhoto(
     console.log('[DEBUG] Parsing form data');
     const formData = await request.formData();
     const player_id = formData.get('player_id') as string;
-    const photo = formData.get('photo') as File;
+    const photo_url = formData.get('photo_url') as string;
 
-    console.log(`[DEBUG] Received form data: player_id=${player_id}, photo=${photo ? photo.name : 'missing'}`);
+    console.log(`[DEBUG] Received form data: player_id=${player_id}, photo_url=${photo_url}`);
 
-    if (!player_id || !photo) {
-      console.log('[DEBUG] Missing player_id or photo');
-      return new Response('Missing player_id or photo', { status: 400 });
+    if (!player_id || !photo_url) {
+      console.log('[DEBUG] Missing player_id or photo_url');
+      return new Response('Missing player_id or photo_url', { status: 400 });
     }
 
     // ラウンド情報の取得
@@ -63,11 +63,6 @@ export async function handleRoundPhoto(
       return new Response('Player not in room', { status: 400 });
     }
 
-    // 写真のArrayBufferを取得
-    console.log('[DEBUG] Getting photo buffer');
-    const photoArrayBuffer = await photo.arrayBuffer();
-    console.log(`[DEBUG] Photo buffer size: ${photoArrayBuffer.byteLength} bytes`);
-
     // ゲームマスターの場合はマスター写真を設定し、ヒントを生成する
     if (player.role === 'gamemaster') {
       console.log('[DEBUG] Player is gamemaster, handling master photo submission');
@@ -77,23 +72,22 @@ export async function handleRoundPhoto(
         return new Response('Master photo already submitted', { status: 400 });
       }
 
-      // 写真をアップロード (実際の実装ではR2などのストレージに保存)
-      const photo_id = `master_${roundId}_${Date.now()}`;
-      console.log(`[DEBUG] Generated master photo ID: ${photo_id}`);
-      // TODO: ここで写真をストレージにアップロード
-      
-      // マスター写真IDを設定
-      round.master_photo_id = photo_id;
-      
+      // 写真URLを保存
+      round.master_photo_id = photo_url;
+      console.log(`[DEBUG] Generated master photo ID: ${round.master_photo_id}`);
+
       try {
         // Gemini APIキーがある場合はヒントを生成
         if (env && env.GEMINI_API_KEY) {
           console.log('[DEBUG] GEMINI_API_KEY found, generating hints');
-          console.log(`[DEBUG] Photo MIME type: ${photo.type}`);
-          
+          // 画像データ取得
+          const photoResponse = await fetch(photo_url);
+          const photoArrayBuffer = await photoResponse.arrayBuffer();
+          const mimeType = photoResponse.headers.get('Content-Type') || 'image/jpeg';
+
           const hints = await generateHintsFromPhoto(
             photoArrayBuffer,
-            photo.type,
+            mimeType,
             env.GEMINI_API_KEY,
             5 // 5つのヒントを生成
           );
@@ -115,7 +109,8 @@ export async function handleRoundPhoto(
       await storage.put(`round:${roundId}`, round);
       
       return new Response(JSON.stringify({
-        photo_id,
+        player_id,
+        photo_url,
         hints: round.hints || []
       }), {
         headers: { 'Content-Type': 'application/json' }
@@ -137,20 +132,19 @@ export async function handleRoundPhoto(
       return new Response('Master photo not yet submitted', { status: 400 });
     }
 
-    // 写真をアップロード (実際の実装ではR2などのストレージに保存)
+    // 写真URLを保存
     const photo_id = `${roundId}_${player_id}_${Date.now()}`;
     console.log(`[DEBUG] Generated hunter photo ID: ${photo_id}`);
-    // TODO: ここで写真をストレージにアップロード
-    
+    const playerPhotoUrl = photo_url;
+
     // 画像比較サービスへリクエスト (Python FastAPIサービス)
-    const masterPhotoUrl = `https://your-storage-url.com/${round.master_photo_id}`; // 実際のURL
-    const playerPhotoUrl = `https://your-storage-url.com/${photo_id}`; // 実際のURL
-    
+    const masterPhotoUrl = round.master_photo_id; // ここで保存したURLを利用
+
     console.log('[DEBUG] Comparing images');
     console.log(`[DEBUG] Master photo URL: ${masterPhotoUrl}`);
     console.log(`[DEBUG] Player photo URL: ${playerPhotoUrl}`);
     
-    const compareResponse = await fetch('https://your-python-service.com/compare', {
+    const compareResponse = await fetch('https://app-e2f392d6-88b6-48d8-85f6-46fb5211b218.ingress.apprun.sakura.ne.jp/compare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -187,7 +181,7 @@ export async function handleRoundPhoto(
     // 提出情報の作成
     const submission: Submission = {
       player_id,
-      photo_id,
+      photo_id: playerPhotoUrl,
       submission_time: new Date().toISOString(),
       remaining_seconds: remainingSeconds,
       match_score,
@@ -206,6 +200,7 @@ export async function handleRoundPhoto(
     
     return new Response(JSON.stringify({
       photo_id,
+      photo_url: playerPhotoUrl,
       match_score,
       remaining_seconds: remainingSeconds,
       total_score,

@@ -21,12 +21,10 @@ export class RoomObject {
   state: DurableObjectState;
   storage: DurableObjectStorage;
   room: RoomState | null = null; // Memory cache, primarily set by /init
-  env: any;
 
-  constructor(state: DurableObjectState, env: any) {
+  constructor(state: DurableObjectState) {
     this.state = state;
     this.storage = state.storage;
-    this.env = env; // 環境変数を保存
     // オプション: コンストラクタで 'room' をストレージから読み込む
     // this.state.blockConcurrencyWhile(async () => {
     //   this.room = await this.storage.get<RoomState>('room') || null;

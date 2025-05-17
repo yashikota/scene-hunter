@@ -52,7 +52,7 @@ export async function handleRoundInfo(
     // ゲームマスターが提出した写真のURL（実際の実装に合わせて調整）
     // 注: ゲームマスターの写真は、ラウンド終了後にのみハンターに見せる
     const masterPhotoUrl = round.state === 'ended' 
-      ? `https://your-storage-url.com/${round.master_photo_id}`
+      ? `https://scene-hunter-image.yashikota.workers.dev/file/${round.master_photo_id}`
       : null;
     
     // 提出状況（player_idとscoreのみ）
@@ -62,7 +62,7 @@ export async function handleRoundInfo(
       total_score: sub.total_score,
       submission_time: sub.submission_time,
       // ラウンドが終了している場合のみ写真URLを含める
-      photo_url: round.state === 'ended' ? `https://your-storage-url.com/${sub.photo_id}` : null
+      photo_url: round.state === 'ended' ? `https://scene-hunter-image.yashikota.workers.dev/file/${sub.photo_id}` : null
     }));
     
     // 返却するデータを構築
