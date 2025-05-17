@@ -80,7 +80,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   // 指数バックオフを使用して次の再接続までの待機時間を計算
   const getBackoffDelay = () => {
     const delay = Math.min(
-      initialBackoffDelay * (2 ** reconnectAttemptsRef.current),
+      initialBackoffDelay * 2 ** reconnectAttemptsRef.current,
       maxBackoffDelay,
     );
     // ジッターを追加して同時再接続を防止（0.5〜1.5倍のランダム係数）

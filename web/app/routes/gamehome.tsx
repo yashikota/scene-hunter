@@ -22,7 +22,7 @@ export default function GameHome() {
     <div className="relative flex items-center justify-center min-h-screen bg-[#D0E2F3] p-4">
       {/* 左下カメラ画像 */}
       <img
-        src="/camera.png"
+        src="/icon.png"
         alt="camera icon"
         className="absolute bottom-4 left-4 w-20 h-20 object-contain"
       />

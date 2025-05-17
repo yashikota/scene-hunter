@@ -13,7 +13,7 @@ type Player = {
 export default function GameRoom() {
   const roomId = "012345";
   const userId = `user-${Math.random().toString(36).substring(2, 8)}`;
-  const qrUrl = `https://example.com/room/${roomId}`;
+  const qrUrl = `https://scene-hunter.yashikota.com/r/${roomId}`;
   const navigate = useNavigate();
 
   const {
