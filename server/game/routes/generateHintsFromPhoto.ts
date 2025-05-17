@@ -25,8 +25,8 @@ app.post("/upload", async (c) => {
   } catch (e) {
     return c.json({ error: "リクエストボディが不正です（JSON形式で送信してください）" }, 400);
   }
-  //const imageUrl = body["image_url"] as string;
-  const imageUrl = "https://scene-hunter-image.yashikota.workers.dev/file/test.jpg";
+  const imageUrl = body["image_url"] as string;
+  //const imageUrl = "https://scene-hunter-image.yashikota.workers.dev/file/test.jpg";
   if (!imageUrl) {
     return c.json({ error: "画像URLが送信されていません" }, 400)
   }
