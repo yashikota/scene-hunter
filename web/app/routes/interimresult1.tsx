@@ -123,7 +123,7 @@ export default function InterimResult1Page() {
                   key={p.player_id}
                   className={cn(
                     "flex items-center justify-between gap-2",
-                    p.player_id === yourId && "bg-yellow-50 font-bold"
+                    p.player_id === yourId && "bg-yellow-50 font-bold",
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -132,9 +132,13 @@ export default function InterimResult1Page() {
                         src={`https://api.dicebear.com/7.x/icons/svg?seed=${p.player_id}`}
                         alt={p.name}
                       />
-                      <AvatarFallback>{p.name[0]?.toUpperCase()}</AvatarFallback>
+                      <AvatarFallback>
+                        {p.name[0]?.toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
-                    <span>{p.rank}. {p.name}</span>
+                    <span>
+                      {p.rank}. {p.name}
+                    </span>
                   </div>
                   <span>{p.total_score.toFixed(2)} pts</span>
                 </li>
