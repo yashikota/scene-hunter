@@ -138,3 +138,4 @@ const CameraPage: React.FC = () => {
 };
 
 export default CameraPage;
+
