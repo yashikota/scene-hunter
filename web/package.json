@@ -9,6 +9,7 @@
     "dev": "react-router dev",
     "preview": "pnpm run build && vite preview",
     "typecheck": "npm run cf-typegen && react-router typegen && tsc -b",
+    "format": "biome format --write .",
     "check": "biome check --write ."
   },
   "dependencies": {

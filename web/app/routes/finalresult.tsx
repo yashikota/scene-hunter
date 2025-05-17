@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Progress } from "../components/ui/progress";
-import {
-    Avatar,
-    AvatarImage,
-    AvatarFallback,
-  } from "../components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
 import { cn } from "~/lib/utils";
 
 type Player = {
@@ -79,60 +75,75 @@ export default function FinalResultPage() {
       {/* Podium */}
       <div className="flex justify-center items-end h-40 gap-6 mt-6">
         <div className="flex flex-col items-center">
-          <div className="bg-teal-900 text-white w-10 h-16 flex items-center justify-center text-sm">3</div>
+          <div className="bg-teal-900 text-white w-10 h-16 flex items-center justify-center text-sm">
+            3
+          </div>
           <span className="text-xs mt-1">{podium[2]?.name}</span>
         </div>
         <div className="flex flex-col items-center">
-          <div className="bg-teal-900 text-white w-10 h-24 flex items-center justify-center text-sm">1</div>
+          <div className="bg-teal-900 text-white w-10 h-24 flex items-center justify-center text-sm">
+            1
+          </div>
           <span className="text-xs mt-1">{podium[0]?.name}</span>
         </div>
         <div className="flex flex-col items-center">
-          <div className="bg-teal-900 text-white w-10 h-20 flex items-center justify-center text-sm">2</div>
+          <div className="bg-teal-900 text-white w-10 h-20 flex items-center justify-center text-sm">
+            2
+          </div>
           <span className="text-xs mt-1">{podium[1]?.name}</span>
         </div>
       </div>
 
       <p className="mt-4 text-sm">あなたは... {yourRank} 位！</p>
 
-    {/* ランキング一覧 */}
+      {/* ランキング一覧 */}
       <div className="w-full max-w-xs mt-6 text-sm">
         <h4 className="font-semibold">ランキング</h4>
         <ul className="mt-2 bg-white border rounded p-2 space-y-2">
-            {sorted.map((p) => {
-                const medal = p.rank === 1 ? "🥇" : p.rank === 2 ? "🥈" : p.rank === 3 ? "🥉" : "";
+          {sorted.map((p) => {
+            const medal =
+              p.rank === 1
+                ? "🥇"
+                : p.rank === 2
+                  ? "🥈"
+                  : p.rank === 3
+                    ? "🥉"
+                    : "";
 
-                return (
-                <li
-                    key={p.player_id}
-                    className={cn(
-                    "flex items-center justify-between gap-2",
-                    p.player_id === yourId && "bg-yellow-50 font-bold"
-                    )}
-                >
-                    <div className="flex items-center gap-2">
-                    <Avatar>
-                        <AvatarImage
-                        src={`https://api.dicebear.com/7.x/icons/svg?seed=${p.player_id}`}
-                        alt={p.name}
-                        />
-                        <AvatarFallback>{p.name[0]?.toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <span className="flex items-center gap-1">
-                        {p.rank}. {p.name}
-                        {medal && <span className="ml-1">{medal}</span>}
-                    </span>
-                    </div>
-                    <span>{p.total_score.toFixed(2)} pts</span>
-                </li>
-                );
-            })}
+            return (
+              <li
+                key={p.player_id}
+                className={cn(
+                  "flex items-center justify-between gap-2",
+                  p.player_id === yourId && "bg-yellow-50 font-bold",
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Avatar>
+                    <AvatarImage
+                      src={`https://api.dicebear.com/7.x/icons/svg?seed=${p.player_id}`}
+                      alt={p.name}
+                    />
+                    <AvatarFallback>{p.name[0]?.toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <span className="flex items-center gap-1">
+                    {p.rank}. {p.name}
+                    {medal && <span className="ml-1">{medal}</span>}
+                  </span>
+                </div>
+                <span>{p.total_score.toFixed(2)} pts</span>
+              </li>
+            );
+          })}
         </ul>
-
       </div>
 
       {/* ホームへ戻る */}
       <div className="mt-6 bg-white p-4 rounded shadow text-center">
-        <button onClick={handleReturnHome} className="bg-orange-300 hover:bg-orange-400 px-4 py-2 rounded">
+        <button
+          onClick={handleReturnHome}
+          className="bg-orange-300 hover:bg-orange-400 px-4 py-2 rounded"
+        >
           ホームへ戻る
         </button>
       </div>

@@ -1,7 +1,12 @@
 import React, { useRef, useState } from "react";
 import { Camera, type CameraType } from "react-camera-pro";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 
 const CameraPage: React.FC = () => {
   const camera = useRef<CameraType>(null);
@@ -55,10 +60,13 @@ const CameraPage: React.FC = () => {
       formData.append("q", "90");
       formData.append("f", "webp");
 
-      const res = await fetch("https://scene-hunter-image.yashikota.workers.dev/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        "https://scene-hunter-image.yashikota.workers.dev/upload",
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
       const json = await res.json();
       setUploadedUrl(json.path);
@@ -150,7 +158,9 @@ const CameraPage: React.FC = () => {
               <CardTitle>カメラで写真を撮る</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 flex justify-center">
-              <Button onClick={() => setCameraStarted(true)}>カメラを起動する</Button>
+              <Button onClick={() => setCameraStarted(true)}>
+                カメラを起動する
+              </Button>
             </CardContent>
           </Card>
         </div>

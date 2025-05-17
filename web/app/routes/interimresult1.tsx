@@ -110,7 +110,9 @@ export default function InterimResult1Page() {
         <ul className="mt-2 bg-white border rounded p-2 space-y-1">
           {sorted.map((p) => (
             <li key={p.player_id} className="flex justify-between">
-              <span>{p.rank}. {p.name}</span>
+              <span>
+                {p.rank}. {p.name}
+              </span>
               <span>{p.total_score.toFixed(2)} pts</span>
             </li>
           ))}
@@ -119,7 +121,11 @@ export default function InterimResult1Page() {
 
       {/* 次のラウンドへ */}
       <div className="mt-6 bg-white p-4 rounded shadow text-center">
-        <p className="text-md font-bold mb-2">次のラウンド<br />{round + 1} / 3</p>
+        <p className="text-md font-bold mb-2">
+          次のラウンド
+          <br />
+          {round + 1} / 3
+        </p>
         <button
           onClick={handleNext}
           className="bg-orange-300 hover:bg-orange-400 px-4 py-2 rounded"

@@ -1,4 +1,3 @@
-
 export default function roundmasterfirst() {
   return (
     <>
@@ -6,5 +5,5 @@ export default function roundmasterfirst() {
       <p>Round</p>
       <span>1/3</span>
     </>
-  )
+  );
 }
