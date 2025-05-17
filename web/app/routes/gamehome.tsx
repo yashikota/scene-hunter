@@ -1,7 +1,7 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
-import { useEffect } from "react";
 
 export default function GameHome() {
   const navigate = useNavigate();

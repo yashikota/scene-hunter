@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { ScrollArea } from "../components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { ScrollArea } from "../components/ui/scroll-area";
 import { Timer } from "../components/ui/timer";
 
 // 型定義

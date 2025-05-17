@@ -1,5 +1,5 @@
-import { useNavigate, useLocation } from "react-router";
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 
 export default function JoinRoom() {
   const navigate = useNavigate();

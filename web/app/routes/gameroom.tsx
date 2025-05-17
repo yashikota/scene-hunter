@@ -1,13 +1,13 @@
-import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router";
+import { CameraIcon } from "@heroicons/react/24/outline";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogPortal,
+  DialogTrigger,
 } from "@radix-ui/react-dialog";
+import { useEffect, useRef, useState } from "react";
 import QRCode from "react-qr-code";
-import { CameraIcon } from "@heroicons/react/24/outline";
+import { useNavigate } from "react-router";
 
 type Player = {
   id: string;

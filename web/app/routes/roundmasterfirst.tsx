@@ -1,5 +1,7 @@
-import React, { useRef, useState } from "react";
+import type React from "react";
+import { useRef, useState } from "react";
 import { Camera, type CameraType } from "react-camera-pro";
+import { useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -7,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
-import { useNavigate } from "react-router";
 
 const CameraPage: React.FC = () => {
   const camera = useRef<CameraType>(null);

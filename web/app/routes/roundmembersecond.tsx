@@ -1,4 +1,5 @@
-import React, { useRef, useState, useEffect } from "react";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
 import { Camera, type CameraType } from "react-camera-pro";
 import { Button } from "../components/ui/button";
 import {
@@ -91,7 +92,7 @@ const CameraPage: React.FC = () => {
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    let commentTimers: NodeJS.Timeout[] = [];
+    const commentTimers: NodeJS.Timeout[] = [];
 
     if (cameraStarted) {
       setAnimationStarted(true);
