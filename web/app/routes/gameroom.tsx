@@ -1,13 +1,13 @@
 import { CameraIcon } from "@heroicons/react/24/outline";
 import {
   Dialog,
-  DialogContent,
   DialogPortal,
   DialogTrigger,
 } from "@radix-ui/react-dialog";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import { useNavigate } from "react-router";
+import { useWebSocket, sendEvent } from "../contexts/WebSocketContext";
 
 type Player = {
   id: string;
@@ -16,16 +16,13 @@ type Player = {
 
 export default function GameRoom() {
   const roomId = "012345";
+  const userId = `user-${Math.random().toString(36).substring(2, 8)}`;
   const qrUrl = `https://example.com/room/${roomId}`;
   const navigate = useNavigate();
 
-  const ws = useRef<WebSocket | null>(null);
+  const { connect, disconnect, sendMessage, isConnected, lastEvent, connectionStatus } = useWebSocket();
 
-  const [players, setPlayers] = useState<Player[]>([
-    { id: "1", name: "りんご" },
-    { id: "2", name: "ゴリラ" },
-    { id: "3", name: "ラッパ" },
-  ]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [gameMasterId, setGameMasterId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
@@ -42,42 +39,100 @@ export default function GameRoom() {
     };
   }, []);
 
+  // 接続状態に応じたUIを表示
+  const renderConnectionStatus = () => {
+    switch (connectionStatus) {
+      case 'connected':
+        return <span className="text-green-500">接続済み</span>;
+      case 'connecting':
+        return <span className="text-yellow-500">接続中...</span>;
+      case 'disconnected':
+        return <span className="text-gray-500">未接続</span>;
+      case 'error':
+        return (
+          <div className="text-red-500">
+            接続エラー
+            <button
+              onClick={() => connect(roomId, userId)}
+              className="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-sm"
+            >
+              再接続
+            </button>
+          </div>
+        );
+    }
+  };
+
+  // WebSocket接続
   useEffect(() => {
-    ws.current = new WebSocket("ws://localhost:8080");
-
-    ws.current.onopen = () => {
-      console.log("WebSocket connected");
-      ws.current?.send(JSON.stringify({ type: "joinRoom", roomId }));
-    };
-
-    ws.current.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-
-      switch (message.type) {
-        case "updatePlayers":
-          setPlayers(message.players);
-          setGameMasterId(message.gameMasterId);
-          break;
-        case "error":
-          setErrorMessage(message.error);
-          break;
-      }
-    };
-
-    ws.current.onclose = () => {
-      console.log("WebSocket disconnected");
-    };
+    connect(roomId, userId);
 
     return () => {
-      ws.current?.close();
+      disconnect();
     };
-  }, []); // roomIdは定数なので依存配列から削除
+  }, [roomId, userId]);
+
+  // WebSocketイベント処理
+  useEffect(() => {
+    if (lastEvent) {
+      console.log('イベント受信:', lastEvent);
+
+      switch (lastEvent.event_type) {
+        case 'room.player_joined':
+          // プレイヤー参加イベントの処理
+          setPlayers(prevPlayers => {
+            const newPlayer = {
+              id: lastEvent.player_id,
+              name: lastEvent.name || lastEvent.player_id
+            };
+            // 既に存在する場合は追加しない
+            if (prevPlayers.some(p => p.id === newPlayer.id)) {
+              return prevPlayers;
+            }
+            return [...prevPlayers, newPlayer];
+          });
+          break;
+
+        case 'room.player_left':
+          // プレイヤー退出イベントの処理
+          setPlayers(prevPlayers =>
+            prevPlayers.filter(p => p.id !== lastEvent.player_id)
+          );
+          break;
+
+        case 'room.gamemaster_changed':
+          // ゲームマスター変更イベントの処理
+          setGameMasterId(lastEvent.player_id);
+          break;
+
+        case 'game.round_started':
+          // ラウンド開始イベントの処理
+          navigate("/rounddisplay");
+          break;
+
+        case 'system.error':
+          // エラーイベントの処理
+          setErrorMessage(lastEvent.content);
+          break;
+
+        case 'room.connected':
+          // 接続完了イベントの処理
+          console.log('ルームに接続しました:', lastEvent.content);
+          break;
+      }
+    }
+  }, [lastEvent, navigate]);
 
   const handleSelectGameMaster = (playerId: string) => {
     setGameMasterId(playerId); // 即時反映
-    ws.current?.send(
-      JSON.stringify({ type: "setGameMaster", roomId, playerId }),
-    );
+
+    // RESTを通じてゲームマスター変更イベントを送信
+    sendEvent(roomId, {
+      event_type: "room.gamemaster_changed",
+      player_id: playerId
+    }).catch(error => {
+      console.error('ゲームマスター変更イベント送信エラー:', error);
+    });
   };
 
   const handleGameStartClick = () => {
@@ -91,6 +146,16 @@ export default function GameRoom() {
 
   const handleConfirmYes = () => {
     setShowConfirm(false);
+
+    // RESTを通じてラウンド開始イベントを送信
+    sendEvent(roomId, {
+      event_type: "game.round_started",
+      round_id: "round-1",
+      start_time: new Date().toISOString()
+    }).catch(error => {
+      console.error('ラウンド開始イベント送信エラー:', error);
+    });
+
     navigate("/rounddisplay");
   };
 
@@ -102,7 +167,10 @@ export default function GameRoom() {
     <div className="p-6 min-h-screen bg-[#D0E2F3] text-black flex flex-col gap-6 relative">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-[Pacifico]">Scene Hunter</h1>
-        <span className="text-sm text-gray-600">ルームID: {roomId}</span>
+        <div className="flex flex-col items-end">
+          <span className="text-sm text-gray-600">ルームID: {roomId}</span>
+          <span className="text-sm">{renderConnectionStatus()}</span>
+        </div>
       </div>
 
       <Dialog open={showQR} onOpenChange={setShowQR}>
