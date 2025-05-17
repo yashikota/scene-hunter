@@ -24,14 +24,29 @@ export async function handleLeaderboard(storage: DurableObjectStorage, request: 
             return Response.json({ players: [] });
         }
 
+        // 各プレイヤーのスコアを最新のラウンド提出データから計算
+        let playerScoreMap: Record<string, number> = {};
+        if (stored.roundStates) {
+            for (const round of Object.values(stored.roundStates)) {
+                if (round.submissions && Array.isArray(round.submissions)) {
+                    for (const sub of round.submissions) {
+                        if (typeof sub.player_id === 'string' && typeof sub.total_score === 'number') {
+                            // 最新のスコアで上書き（複数ラウンドなら合計したい場合は += に変更）
+                            playerScoreMap[sub.player_id] = (playerScoreMap[sub.player_id] || 0) + sub.total_score;
+                        }
+                    }
+                }
+            }
+        }
+
         const sortedPlayers: LeaderboardPlayer[] = [...stored.players]
-            .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-            .map((p, index) => ({
+            .map((p) => ({
                 player_id: p.player_id,
-                name: p.name ?? '', // name がない場合を考慮
-                total_score: p.score ?? 0,
-                rank: index + 1, // 1-based rank
-            }));
+                name: p.name ?? '',
+                total_score: playerScoreMap[p.player_id] ?? 0,
+            }))
+            .sort((a, b) => b.total_score - a.total_score)
+            .map((p, index) => ({ ...p, rank: index + 1 }));
 
         return Response.json({ players: sortedPlayers });
     } catch (e) {

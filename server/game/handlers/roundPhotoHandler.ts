@@ -97,8 +97,8 @@ export async function handleRoundPhoto(
             match_score = 0;
         }
 
-        const total_score = parseFloat((match_score + remaining_seconds).toFixed(2));
-
+        const total_score = parseFloat((match_score + (remaining_seconds/2)).toFixed(2));
+        console.log(`total_score: ${total_score}`);
         const newSubmission: Submission = {
             player_id,
             photo_id: image_url, // image_urlをphoto_idとして保存
