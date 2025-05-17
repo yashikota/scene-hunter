@@ -47,12 +47,13 @@ k = 0.00241
 `POST /compare`
 2つの画像URLを受け取り、類似度スコアを計算する。
 
-リクエスト例
-```
-{
-  "image1_url": "https://example.com/image1.jpg",
-  "image2_url": "https://example.com/image2.jpg"
-}
+curlでのリクエスト例
+```bash
+curl -X POST https://app-e2f392d6-88b6-48d8-85f6-46fb5211b218.ingress.apprun.sakura.ne.jp/compare \
+  --json '{
+    "image1_url": "https://scene-hunter-image.yashikota.workers.dev/file/ushi.jpeg",
+    "image2_url": "https://scene-hunter-image.yashikota.workers.dev/file/ushi.jpeg"
+  }'
 ```
 レスポンス例
 ```
@@ -72,3 +73,11 @@ k = 0.00241
 入力画像はURLで指定する必要がある。
 類似度スコアは、画像の内容や解像度に依存する。
 パラメータnとkの調整は、精度向上のために重要。
+
+## ヘルスチェック
+サーバーのヘルスチェックを10秒ごとに実行するスクリプト：
+
+```bash
+# 実行方法
+./health_check.sh
+```
