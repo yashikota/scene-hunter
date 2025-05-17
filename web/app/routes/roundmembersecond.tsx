@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Camera, type CameraType } from "react-camera-pro";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -8,8 +8,17 @@ const CameraPage: React.FC = () => {
   const [image, setImage] = useState<string>();
   const [cameraStarted, setCameraStarted] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showComments, setShowComments] = useState(true);
+  const [animationStarted, setAnimationStarted] = useState(false);
 
-  // ランダムな JPEG ファイル名を生成
+  const cameraComments = [
+    "撮影対象を中央に合わせてください",
+    "光の反射に注意してください",
+    "端が切れないようにしましょう",
+    "背景が整理されているか確認しましょう",
+    "ピントを合わせてください",
+  ];
+
   const generateRandomFilename = () => {
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const random = Math.random().toString(36).substring(2, 8);
@@ -43,8 +52,6 @@ const CameraPage: React.FC = () => {
       formData.append("filename", filename);
       formData.append("w", "800");
       formData.append("q", "90");
-      // ⚠️ f=webp を削除してJPEGでアップロード
-      // formData.append("f", "webp"); ← 削除
 
       const res = await fetch("https://scene-hunter-image.yashikota.workers.dev/upload", {
         method: "POST",
@@ -54,13 +61,21 @@ const CameraPage: React.FC = () => {
       if (!res.ok) throw new Error("アップロードに失敗しました");
 
       const result = await res.json();
-      console.log("✅ アップロード成功:", result); // ← コンソール出力
+      console.log("✅ アップロード成功:", result);
     } catch (err: any) {
       console.error("❌ アップロードエラー:", err.message);
     } finally {
       setUploading(false);
     }
   };
+
+  useEffect(() => {
+    if (cameraStarted) {
+      setAnimationStarted(true);
+    } else {
+      setAnimationStarted(false);
+    }
+  }, [cameraStarted]);
 
   return (
     <div className="relative min-h-screen bg-gray-100 pt-16">
@@ -81,12 +96,49 @@ const CameraPage: React.FC = () => {
             />
           </div>
 
-          <div className="fixed bottom-6 w-full flex justify-center z-10 space-x-4">
+          {/* コメント */}
+          {showComments && (
+            <div className="fixed inset-x-0 bottom-40 px-4 space-y-2 z-10 flex flex-col items-end">
+              {cameraComments.map((comment, index) => (
+                <div
+                  key={index}
+                  className="bg-white bg-opacity-80 text-black text-sm px-3 py-1 rounded shadow max-w-xs text-right"
+                >
+                  {comment}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* シークバーとカメラアイコン */}
+          <div className="fixed bottom-24 w-full flex justify-center z-30">
+            <div className="relative w-[90%] h-2 bg-white bg-opacity-80 rounded overflow-hidden">
+              {animationStarted && (
+                <div
+                  className="absolute top-[-22px] left-0 text-xl z-40"
+                  style={{
+                    animation: "slideIcon 60s linear forwards",
+                  }}
+                >
+                  📷
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* フッター（白背景付き） */}
+          <div className="fixed bottom-0 w-full flex justify-center items-center space-x-4 h-20 bg-white z-20 shadow-md">
             <Button
               onClick={capture}
               className="w-16 h-16 rounded-full text-xl shadow-md"
             >
               📸
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setShowComments((prev) => !prev)}
+            >
+              {showComments ? "コメント非表示" : "コメント表示"}
             </Button>
             <Button
               variant="secondary"
@@ -99,7 +151,7 @@ const CameraPage: React.FC = () => {
         </>
       )}
 
-      {/* 撮影結果表示 */}
+      {/* 撮影結果 */}
       {!cameraStarted && image && (
         <div className="flex justify-center items-center min-h-screen p-4">
           <Card className="w-full max-w-md mt-4">
@@ -134,6 +186,14 @@ const CameraPage: React.FC = () => {
           </Card>
         </div>
       )}
+
+      {/* アニメーション用CSS */}
+      <style>{`
+        @keyframes slideIcon {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
     </div>
   );
 };
