@@ -1,6 +1,7 @@
 // handlers/roomStartHandler.ts
 import type { DurableObjectStorage } from '@cloudflare/workers-types';
 import type { RoomState, Round } from '../types';
+import { notifyRoomEvent } from '../roomObject';
 
 export async function handleRoomStart(
   storage: DurableObjectStorage,
@@ -67,6 +68,9 @@ export async function handleRoomStart(
     // room.status = 'in_progress'; // Consider updating room status
 
     await storage.put('room', room);
+
+    // ラウンド開始通知イベント
+    await notifyRoomEvent(room.code, 'game.round_started', 'ラウンドが開始されました');
 
     return Response.json(newRound);
   } catch (e) {

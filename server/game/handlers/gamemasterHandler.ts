@@ -1,6 +1,7 @@
 // handlers/gamemasterHandler.ts
 import type { DurableObjectStorage } from '@cloudflare/workers-types';
 import type { RoomState } from '../types';
+import { notifyRoomEvent } from '../roomObject';
 
 export async function handleGamemaster(storage: DurableObjectStorage, request: Request): Promise<Response> {
     if (request.method !== 'PUT') {
@@ -31,6 +32,9 @@ export async function handleGamemaster(storage: DurableObjectStorage, request: R
         }));
 
         await storage.put('room', stored);
+
+        // ゲームマスター変更通知
+        await notifyRoomEvent(stored.code, 'room.gamemaster_changed', 'ゲームマスターが変更されました');
 
         return Response.json({ success: true, new_host: player_id });
     } catch (e) {

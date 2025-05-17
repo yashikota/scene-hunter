@@ -19,7 +19,9 @@ import { handleRoundsList } from './handlers/roundsListHandler';
 import { handleUpdatePlayerName } from './handlers/updatePlayerNameHandler';
 
 // 通知APIにイベントを送信するユーティリティ関数を追加
-async function notifyRoomEvent(roomId: string, eventType: string, content: string) {
+export async function notifyRoomEvent(roomId: string, eventType: string, content: string) {
+  //JSON.stringify({ event_type: eventType, content })をログで出力
+  console.log(JSON.stringify({ event_type: eventType, content }));
   const url = `https://scene-hunter-notify.yashikota.workers.dev/api/rooms/${roomId}/events`;
   await fetch(url, {
     method: 'POST',
@@ -75,7 +77,6 @@ export class RoomObject {
     if (roomStartMatch && request.method === 'POST') {
       const roomId = roomStartMatch[1];
       const response = await handleRoomStart(this.storage, request, roomId);
-      await notifyRoomEvent(roomId, 'game.round_started', 'ラウンドが開始されました');
       return response;
     }
 
@@ -85,12 +86,6 @@ export class RoomObject {
     if (roundPhotoMatch && request.method === 'POST') {
       const roundId = roundPhotoMatch[1];
       const response = await handleRoundPhoto(this.storage, request, roundId);
-      const roomId = this.room?.id || '';
-      const reqForm = await request.clone().formData().catch(() => null);
-      const playerId = reqForm?.get('player_id') || '';
-      if (roomId && playerId) {
-        await notifyRoomEvent(roomId, 'game.photo_submitted', '写真が提出されました');
-      }
       return response;
     }
 
@@ -100,10 +95,6 @@ export class RoomObject {
     if (roundEndMatch && request.method === 'POST') {
       const roundId = roundEndMatch[1];
       const response = await handleRoundEnd(this.storage, request, roundId);
-      const roomId = this.room?.id || '';
-      if (roomId) {
-        await notifyRoomEvent(roomId, 'game.round_ended', 'ラウンドが終了しました');
-      }
       return response;
     }
 
@@ -125,16 +116,11 @@ export class RoomObject {
     //curl -X POST http://localhost:4282/rooms/<room_id>/join -H "Content-Type: application/json" -H "Authorization: Bearer testtoken" -d "{\"player_id\": \"tom\", \"room_code\": \"594623\"}"
     if (pathname === '/join' && request.method === 'POST') {
       const response = await handleJoin(this.storage, request);
-      // ルームIDとプレイヤー情報を取得して通知
-      const roomId = this.room?.id || '';
       let playerId = '';
       try {
         const body: any = await request.clone().json();
         playerId = body.player_id;
       } catch {}
-      if (roomId && playerId) {
-        await notifyRoomEvent(roomId, 'room.player_joined', 'プレイヤーが参加しました');
-      }
       return response;
     }
 
@@ -142,15 +128,11 @@ export class RoomObject {
     //curl -X PUT http://localhost:4282/rooms/<room_id>/gamemaster -H "Authorization: Bearer testtoken" -H "Content-Type: application/json" -d "{\"player_id\": \"tom\"}"
     if (pathname === '/gamemaster' && request.method === 'PUT') {
       const response = await handleGamemaster(this.storage, request);
-      const roomId = this.room?.id || '';
       let playerId = '';
       try {
         const body: any = await request.clone().json();
         playerId = body.player_id;
       } catch {}
-      if (roomId && playerId) {
-        await notifyRoomEvent(roomId, 'room.gamemaster_changed', 'ゲームマスターが変更されました');
-      }
       return response;
     }
 
@@ -158,15 +140,11 @@ export class RoomObject {
     //curl -X POST http://localhost:4282/rooms/<room_id>/leave -H "Authorization: Bearer testtoken" -H "Content-Type: application/json" -d "{\"player_id\": \"tom\"}"
     if (pathname === '/leave' && request.method === 'POST') {
       const response = await handleLeave(this.storage, request);
-      const roomId = this.room?.id || '';
       let playerId = '';
       try {
         const body: any = await request.clone().json();
         playerId = body.player_id;
       } catch {}
-      if (roomId && playerId) {
-        await notifyRoomEvent(roomId, 'room.player_left', 'プレイヤーが退出しました');
-      }
       return response;
     }
 

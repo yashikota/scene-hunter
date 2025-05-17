@@ -1,6 +1,7 @@
 // handlers/roundEndHandler.ts
 import type { DurableObjectStorage } from '@cloudflare/workers-types';
 import type { RoomState } from '../types';
+import { notifyRoomEvent } from '../roomObject';
 
 export async function handleRoundEnd(
     storage: DurableObjectStorage,
@@ -61,6 +62,9 @@ export async function handleRoundEnd(
 
 
         await storage.put('room', room);
+
+        // ラウンド終了通知イベント
+        await notifyRoomEvent(room.code, 'game.round_ended', 'ラウンドが終了しました');
 
         return Response.json({
             round_id: roundId,

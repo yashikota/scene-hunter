@@ -1,6 +1,7 @@
 // handlers/roundPhotoHandler.ts
 import type { DurableObjectStorage } from '@cloudflare/workers-types';
 import type { RoomState, Submission } from '../types';
+import { notifyRoomEvent } from '../roomObject';
 
 // スコア取得関数
 async function getMatchScore(image1_url: string, image2_url: string): Promise<number> {
@@ -111,6 +112,9 @@ export async function handleRoundPhoto(
         currentRound.submissions.push(newSubmission);
 
         await storage.put('room', room);
+
+        // 写真提出通知イベント
+        await notifyRoomEvent(room.code, 'game.photo_submitted', `写真が提出されました: ${player_id}`);
 
         return Response.json({
             player_id: newSubmission.player_id,
