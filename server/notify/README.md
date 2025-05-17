@@ -51,46 +51,8 @@ aqua install vi/websocat
 websocat "wss://scene-hunter-notify.yashikota.workers.dev/ws/123456?userId=test-user"
 ```
 
-#### WebSocketクライアントからのメッセージ送信方法
-
-WebSocketクライアントからメッセージを送信する際は、**1行のJSON形式**で送信する必要があります。複数行のJSONや改行を含むJSONはパースエラーの原因となります。
-
-**正しい送信方法**:
-
 ```bash
-# 1行のJSON形式で送信（推奨形式）
 {"type":"broadcast","content":"こんにちは、全員！"}
-```
-
-**代替形式**（後方互換性のためサポート）:
-
-```bash
-# event_typeを使用した形式も受け付けます
-{"event_type":"chat.message","content":"こんにちは、全員！"}
-```
-
-**誤った送信方法**:
-
-```bash
-# 複数行のJSONはエラーになります
-{
-  "type": "broadcast",
-  "content": "こんにちは、全員！"
-}
-```
-
-#### メッセージ送信例
-
-ブロードキャストメッセージ（全員に送信）:
-
-```json
-{"type":"broadcast","content":"こんにちは、全員！"}
-```
-
-プライベートメッセージ（特定のユーザーに送信）:
-
-```json
-{"type":"private","content":"こんにちは！","recipient":"user123"}
 ```
 
 ### ブラウザアプリケーションでの自動再接続
@@ -169,24 +131,6 @@ sendMessage(ws, 'こんにちは！', 'user123');
 
 ## メッセージ形式の詳細
 
-### クライアントからサーバーへのメッセージ形式
-
-クライアントからサーバーへのメッセージは以下の形式で送信します：
-
-```json
-{
-  "type": "broadcast | private",  // メッセージタイプ（必須）
-  "content": "メッセージ内容",     // メッセージ内容（必須）
-  "recipient": "user123"         // 受信者ID（typeがprivateの場合のみ必須）
-}
-```
-
-**注意**: 後方互換性のため、`event_type`フィールドを使用したメッセージも受け付けますが、新しい実装では`type`フィールドの使用を推奨します。
-
-### サーバーからクライアントへのメッセージ形式
-
-サーバーからクライアントへのメッセージは以下の形式で送信されます：
-
 ```json
 {
   "event_type": "chat.message | room.player_joined | ...",  // イベントタイプ
@@ -202,11 +146,10 @@ sendMessage(ws, 'こんにちは！', 'user123');
 ### WebSocket接続
 
 ```
-GET /ws/:roomId?userId={userId}
+GET /ws/:roomId
 ```
 
-- `:roomId`: ルームID（必須）
-- `userId`: ユーザーID（クエリパラメータ、必須）
+- `:roomId`: ルームID
 
 ### イベント送信
 
@@ -217,33 +160,10 @@ POST /api/rooms/:roomId/events
 - `:roomId`: ルームID（必須）
 - リクエストボディ: イベントオブジェクト（JSON形式）
 
-例:
-```json
-{
-  "event_type": "room.player_joined",
-  "timestamp": "2025-05-04T03:51:00Z",
-  "player_id": "123e4567-e89b-12d3-a456-426614174000",
-  "name": "Player1"
-}
-```
-
 ### イベントを送る方法
 
 ```bash
 curl -X POST "https://scene-hunter-notify.yashikota.workers.dev/api/rooms/123456/events" --json '{"event_type":"chat.message","content":"こんにちは、全員！"}'
-```
-
-### ヘルスチェック
-
-```
-GET /health
-```
-
-レスポンス例:
-```json
-{
-  "status": "ok"
-}
 ```
 
 ## イベントタイプ
@@ -262,11 +182,6 @@ GET /health
 - `game.score_updated`: スコアが更新
 - `game.round_ended`: ラウンドが終了
 - `game.timer_update`: タイマーが更新
-
-### コミュニケーション関連イベント
-
-- `chat.message`: チャットメッセージ（従来のブロードキャスト/プライベートメッセージ用）
-- `system.error`: システムエラーメッセージ
 
 ## デプロイ
 
