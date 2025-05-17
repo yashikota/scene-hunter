@@ -22,7 +22,7 @@ export default function InterimResult2Page() {
   const yourId = "4"; // 仮の自分のID（「You」に相当）
 
   const handleNext = () => {
-    navigate("/finalresult");
+    navigate("/rounddisplay");
   };
 
   const dummyPlayers: Player[] = [
