@@ -63,9 +63,9 @@ export default function FinalResultPage() {
     navigate("/gameroom");
   };
 
-  // 修正: ホームに戻る関数
+  // 修正: ホームに戻る関数 
   const handleReturnHome = () => {
-    navigate("/room");
+    navigate("/room"); 
   };
 
   if (loading) {
