@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 export default function MakeRoom() {
@@ -7,7 +7,8 @@ export default function MakeRoom() {
 
   useEffect(() => {
     const link = document.createElement("link");
-    link.href = "https://fonts.googleapis.com/css2?family=Pacifico&display=swap";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Pacifico&display=swap";
     link.rel = "stylesheet";
     document.head.appendChild(link);
     return () => {

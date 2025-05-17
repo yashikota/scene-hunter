@@ -1,5 +1,5 @@
-import { useNavigate, useLocation } from "react-router";
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 
 export default function JoinRoom() {
   const navigate = useNavigate();
@@ -19,11 +19,13 @@ export default function JoinRoom() {
     // WebSocketで joinRoom を送信（仮想コード）
     const ws = new WebSocket("ws://localhost:8080");
     ws.onopen = () => {
-      ws.send(JSON.stringify({
-        type: "joinRoom",
-        roomId,
-        playerName,
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "joinRoom",
+          roomId,
+          playerName,
+        }),
+      );
       navigate("/gameroom");
     };
   };
