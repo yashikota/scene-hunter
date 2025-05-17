@@ -3,11 +3,7 @@ import type {
   DurableObjectState,
   WebSocket,
 } from "@cloudflare/workers-types";
-import type {
-  EventType,
-  SystemErrorEvent,
-  User,
-} from "./types";
+import type { EventType, SystemErrorEvent, User } from "./types";
 
 /**
  * ChatRoomクラス - チャットルームのDurable Object実装
