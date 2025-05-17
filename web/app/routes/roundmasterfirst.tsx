@@ -16,7 +16,7 @@ const CameraPage: React.FC = () => {
   const generateRandomFilename = () => {
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const random = Math.random().toString(36).substring(2, 8);
-    return `scene-hunter/${date}-${random}.jpg`;
+    return `room_id/${date}-${random}.jpg`;
   };
 
   const capture = () => {
