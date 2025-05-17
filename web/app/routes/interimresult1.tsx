@@ -21,12 +21,16 @@ export default function InterimResult1Page() {
   const round = 1;
   const yourId = "4"; // 仮の自分のID（「You」に相当）
 
+  // const handleNext = () => {
+  //   if (round === 1) {
+  //     navigate("/interimresult2");
+  //   } else if (round === 2) {
+  //     navigate("/finalresult");
+  //   }
+  // };
+
   const handleNext = () => {
-    if (round === 1) {
-      navigate("/interimresult2");
-    } else if (round === 2) {
-      navigate("/finalresult");
-    }
+    navigate("/rounddisplay");
   };
 
   const dummyPlayers: Player[] = [
