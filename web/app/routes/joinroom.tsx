@@ -40,6 +40,7 @@ export default function JoinRoom() {
         className="border p-2 mb-4 block w-full max-w-sm"
       />
       <button
+        type="button"
         onClick={handleJoin}
         disabled={!playerName}
         className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"

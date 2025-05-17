@@ -1,5 +1,5 @@
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, type CameraType } from "react-camera-pro";
 import { Button } from "../components/ui/button";
 import {
@@ -33,10 +33,17 @@ const CameraPage: React.FC = () => {
     return `scene-hunter/${date}-${random}.jpg`;
   };
 
-  const capture = () => {
+  const capture = useCallback(() => {
     if (camera.current) {
       const photo = camera.current.takePhoto();
-      setImage(photo);
+      // ImageData型の場合の処理を追加
+      if (typeof photo === "string") {
+        setImage(photo);
+      } else {
+        // ImageDataの場合は文字列に変換するか、別の処理を行う
+        console.warn("ImageData形式の写真は処理できません");
+        return;
+      }
       setCameraStarted(false);
       setAnimationStarted(false);
 
@@ -47,7 +54,7 @@ const CameraPage: React.FC = () => {
         );
       }
     }
-  };
+  }, [cameraStartTime]); // cameraはrefなので依存配列から削除
 
   const reset = () => {
     setImage(undefined);
@@ -83,8 +90,11 @@ const CameraPage: React.FC = () => {
 
       const result = await res.json();
       console.log("✅ アップロード成功:", result);
-    } catch (err: any) {
-      console.error("❌ アップロードエラー:", err.message);
+    } catch (err: unknown) {
+      console.error(
+        "❌ アップロードエラー:",
+        err instanceof Error ? err.message : String(err),
+      );
     } finally {
       setUploading(false);
     }
@@ -102,12 +112,12 @@ const CameraPage: React.FC = () => {
         capture();
       }, 60000);
 
-      [0, 10, 20, 30, 40].forEach((sec) => {
+      for (const sec of [0, 10, 20, 30, 40]) {
         const t = setTimeout(() => {
           setVisibleCommentCount((count) => count + 1);
         }, sec * 1000);
         commentTimers.push(t);
-      });
+      }
     } else {
       setAnimationStarted(false);
       setVisibleCommentCount(0);
@@ -117,7 +127,7 @@ const CameraPage: React.FC = () => {
       if (timer) clearTimeout(timer);
       commentTimers.forEach(clearTimeout);
     };
-  }, [cameraStarted]);
+  }, [cameraStarted, capture]);
 
   // カメラ起動時刻セットを含む起動関数
   const startCamera = () => {
@@ -154,7 +164,7 @@ const CameraPage: React.FC = () => {
                 (comment, index) =>
                   index < visibleCommentCount && (
                     <div
-                      key={index}
+                      key={`comment-${comment.substring(0, 10)}-${index}`}
                       className="bg-white bg-opacity-80 text-black text-sm px-3 py-1 rounded shadow max-w-xs text-right"
                     >
                       {comment}
@@ -247,11 +257,11 @@ const CameraPage: React.FC = () => {
       )}
 
       {/* 📷アイコンアニメーション用CSS */}
-      <style>{`  
-        @keyframes slideIcon {  
-          0% { left: 0%; }  
-          100% { left: 100%; }  
-        }  
+      <style>{`
+        @keyframes slideIcon {
+          0% { left: 0%; }
+          100% { left: 100%; }
+        }
       `}</style>
     </div>
   );

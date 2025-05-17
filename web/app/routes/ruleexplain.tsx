@@ -22,6 +22,7 @@ export default function RuleExplain() {
       </div>
 
       <button
+        type="button"
         onClick={() => navigate("/room")}
         className="px-6 py-3 bg-[#EEEEEE] text-black rounded-2xl shadow hover:bg-gray-300 transition self-center"
       >

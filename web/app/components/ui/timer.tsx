@@ -25,7 +25,13 @@ export function Timer({ seconds, onComplete }: TimerProps) {
 
   return (
     <div className="absolute top-4 right-4 w-16 h-16">
-      <svg height={radius * 2} width={radius * 2}>
+      <svg
+        height={radius * 2}
+        width={radius * 2}
+        role="img"
+        aria-labelledby="timerTitle"
+      >
+        <title id="timerTitle">残り時間タイマー</title>
         <circle
           stroke="#ccc"
           fill="transparent"

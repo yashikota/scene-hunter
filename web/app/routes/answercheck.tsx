@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { ScrollArea } from "../components/ui/scroll-area";
@@ -23,47 +23,51 @@ export default function AnswerCheckPage() {
     "https://scene-hunter-image.yashikota.workers.dev/file/test.jpg"; // GMの画像
 
   // 仮の参加者データ
-  const dummyResults: PlayerResult[] = [
-    {
-      player_id: "1",
-      name: "Alice",
-      similarity: 98,
-      time: 3.0,
-      score: 100,
-      image_url: gmImageUrl,
-    },
-    {
-      player_id: "2",
-      name: "Bob",
-      similarity: 92,
-      time: 2.8,
-      score: 95,
-      image_url: gmImageUrl,
-    },
-    {
-      player_id: "3",
-      name: "Carol",
-      similarity: 85,
-      time: 4.0,
-      score: 90,
-      image_url: gmImageUrl,
-    },
-    {
-      player_id: "4",
-      name: "You",
-      similarity: 75,
-      time: 3.5,
-      score: 80,
-      image_url: gmImageUrl,
-    },
-  ];
+  const dummyResults = useMemo<PlayerResult[]>(
+    () => [
+      {
+        player_id: "1",
+        name: "Alice",
+        similarity: 98,
+        time: 3.0,
+        score: 100,
+        image_url: gmImageUrl,
+      },
+      {
+        player_id: "2",
+        name: "Bob",
+        similarity: 92,
+        time: 2.8,
+        score: 95,
+        image_url: gmImageUrl,
+      },
+      {
+        player_id: "3",
+        name: "Carol",
+        similarity: 85,
+        time: 4.0,
+        score: 90,
+        image_url: gmImageUrl,
+      },
+      {
+        player_id: "4",
+        name: "You",
+        similarity: 75,
+        time: 3.5,
+        score: 80,
+        image_url: gmImageUrl,
+      },
+    ],
+    [], // gmImageUrlは定数なので依存配列から削除
+  );
 
   useEffect(() => {
     setTimeout(() => {
-      setPlayers(dummyResults.sort((a, b) => b.score - a.score));
+      // ソート時に元の配列を変更しないようにスプレッド演算子を使用
+      setPlayers([...dummyResults].sort((a, b) => b.score - a.score));
       setLoading(false);
     }, 1000);
-  }, []);
+  }, [dummyResults]); // dummyResultsを依存配列に追加
 
   if (loading) {
     return (

@@ -39,6 +39,7 @@ export default function MakeRoom() {
       />
 
       <button
+        type="button"
         onClick={handleCreateRoom}
         className="px-6 py-3 bg-[#F6B26B] text-black rounded-2xl shadow hover:bg-[#e5a15b] transition"
       >
@@ -46,6 +47,7 @@ export default function MakeRoom() {
       </button>
 
       <button
+        type="button"
         onClick={() => navigate("/room")}
         className="mt-4 text-blue-700 underline"
       >

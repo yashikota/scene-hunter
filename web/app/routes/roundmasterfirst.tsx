@@ -28,7 +28,14 @@ const CameraPage: React.FC = () => {
   const capture = () => {
     if (camera.current) {
       const photo = camera.current.takePhoto();
-      setImage(photo);
+      // ImageData型の場合の処理を追加
+      if (typeof photo === "string") {
+        setImage(photo);
+      } else {
+        // ImageDataの場合は文字列に変換するか、別の処理を行う
+        console.warn("ImageData形式の写真は処理できません");
+        return;
+      }
       setCameraStarted(false);
     }
   };
@@ -69,8 +76,11 @@ const CameraPage: React.FC = () => {
 
       // ✅ アップロード成功後にページ遷移
       navigate("/roundmastersecond");
-    } catch (err: any) {
-      console.error("❌ アップロードエラー:", err.message);
+    } catch (err: unknown) {
+      console.error(
+        "❌ アップロードエラー:",
+        err instanceof Error ? err.message : String(err),
+      );
     } finally {
       setUploading(false);
     }
