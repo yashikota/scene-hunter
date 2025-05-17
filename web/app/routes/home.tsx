@@ -10,7 +10,6 @@ export function meta() {
       content:
         "ゲームマスターが撮影した写真からAIが特徴を抽出し、ハンターはその文章のヒントだけを頼りに同じ場所を見つけて写真を撮る。写真の一致率によってスコアが決まり、最も高いスコアを出したハンターが勝利するゲーム",
     },
-
     {
       property: "og:title",
       content: "Scene Hunter",

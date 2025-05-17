@@ -1,5 +1,5 @@
 import type React from "react";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { EventType } from "../types/websocket";
 
@@ -185,7 +185,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   };
 
   // 切断関数
-  const disconnect = () => {
+  const disconnect = useCallback(() => {
     isManualDisconnectRef.current = true; // 手動切断フラグを設定
 
     // 再接続タイマーをクリア
@@ -204,7 +204,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     // 接続情報をクリア
     currentRoomIdRef.current = null;
     currentUserIdRef.current = null;
-  };
+  }, [socket]);
 
   // メッセージ送信関数 (非推奨 - RESTを使用してください)
   const sendMessage = (message: Record<string, unknown>) => {
