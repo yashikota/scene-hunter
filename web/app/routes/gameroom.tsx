@@ -6,8 +6,7 @@ import {
 } from "@radix-ui/react-dialog";
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
-import { useNavigate } from "react-router";
-import { useWebSocket, sendEvent } from "../contexts/WebSocketContext";
+import { useNavigate, useLocation } from "react-router";
 
 type Player = {
   id: string;
@@ -17,16 +16,20 @@ type Player = {
 export default function GameRoom() {
   const roomId = "012345";
   const userId = `user-${Math.random().toString(36).substring(2, 8)}`;
+  const location = useLocation();
+  const playerName = location.state?.playerName ?? userId;
   const qrUrl = `https://example.com/room/${roomId}`;
   const navigate = useNavigate();
 
-  const { connect, disconnect, sendMessage, isConnected, lastEvent, connectionStatus } = useWebSocket();
-
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<Player[]>([
+    { id: userId, name: playerName },
+  ]);
   const [gameMasterId, setGameMasterId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showQR, setShowQR] = useState(false);
+
+  const gameMaster = players.find((p) => p.id === gameMasterId);
 
   useEffect(() => {
     const link = document.createElement("link");
@@ -39,100 +42,9 @@ export default function GameRoom() {
     };
   }, []);
 
-  // 接続状態に応じたUIを表示
-  const renderConnectionStatus = () => {
-    switch (connectionStatus) {
-      case 'connected':
-        return <span className="text-green-500">接続済み</span>;
-      case 'connecting':
-        return <span className="text-yellow-500">接続中...</span>;
-      case 'disconnected':
-        return <span className="text-gray-500">未接続</span>;
-      case 'error':
-        return (
-          <div className="text-red-500">
-            接続エラー
-            <button
-              onClick={() => connect(roomId, userId)}
-              className="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-sm"
-            >
-              再接続
-            </button>
-          </div>
-        );
-    }
-  };
-
-  // WebSocket接続
-  useEffect(() => {
-    connect(roomId, userId);
-
-    return () => {
-      disconnect();
-    };
-  }, [roomId, userId]);
-
-  // WebSocketイベント処理
-  useEffect(() => {
-    if (lastEvent) {
-      console.log('イベント受信:', lastEvent);
-
-      switch (lastEvent.event_type) {
-        case 'room.player_joined':
-          // プレイヤー参加イベントの処理
-          setPlayers(prevPlayers => {
-            const newPlayer = {
-              id: lastEvent.player_id,
-              name: lastEvent.name || lastEvent.player_id
-            };
-            // 既に存在する場合は追加しない
-            if (prevPlayers.some(p => p.id === newPlayer.id)) {
-              return prevPlayers;
-            }
-            return [...prevPlayers, newPlayer];
-          });
-          break;
-
-        case 'room.player_left':
-          // プレイヤー退出イベントの処理
-          setPlayers(prevPlayers =>
-            prevPlayers.filter(p => p.id !== lastEvent.player_id)
-          );
-          break;
-
-        case 'room.gamemaster_changed':
-          // ゲームマスター変更イベントの処理
-          setGameMasterId(lastEvent.player_id);
-          break;
-
-        case 'game.round_started':
-          // ラウンド開始イベントの処理
-          navigate("/rounddisplay");
-          break;
-
-        case 'system.error':
-          // エラーイベントの処理
-          setErrorMessage(lastEvent.content);
-          break;
-
-        case 'room.connected':
-          // 接続完了イベントの処理
-          console.log('ルームに接続しました:', lastEvent.content);
-          break;
-      }
-    }
-  }, [lastEvent, navigate]);
-
   const handleSelectGameMaster = (playerId: string) => {
-    setGameMasterId(playerId); // 即時反映
-
-    // RESTを通じてゲームマスター変更イベントを送信
-    sendEvent(roomId, {
-      event_type: "room.gamemaster_changed",
-      player_id: playerId
-    }).catch(error => {
-      console.error('ゲームマスター変更イベント送信エラー:', error);
-    });
+    setGameMasterId(playerId);
+    localStorage.setItem("gameMasterId", playerId); // ゲームマスターIDをlocalStorageに保存
   };
 
   const handleGameStartClick = () => {
@@ -146,21 +58,21 @@ export default function GameRoom() {
 
   const handleConfirmYes = () => {
     setShowConfirm(false);
-
-    // RESTを通じてラウンド開始イベントを送信
-    sendEvent(roomId, {
-      event_type: "game.round_started",
-      round_id: "round-1",
-      start_time: new Date().toISOString()
-    }).catch(error => {
-      console.error('ラウンド開始イベント送信エラー:', error);
-    });
-
-    navigate("/rounddisplay");
+    localStorage.setItem("playerId", userId); // 自分のプレイヤーIDをlocalStorageに保存
+    localStorage.setItem("gameMasterId", gameMasterId!); // ゲームマスターIDも再度保存（念のため）
+    navigate("/rounddisplay"); // ここはゲーム開始後の最初の画面（必要なら後で変える）
   };
 
   const handleConfirmNo = () => {
     setShowConfirm(false);
+  };
+
+  const handleAddDummyPlayer = () => {
+    const dummyId = `user-${Math.random().toString(36).substring(2, 8)}`;
+    setPlayers((prev) => [
+      ...prev,
+      { id: dummyId, name: `ゲスト${prev.length + 1}` },
+    ]);
   };
 
   return (
@@ -169,7 +81,6 @@ export default function GameRoom() {
         <h1 className="text-2xl font-[Pacifico]">Scene Hunter</h1>
         <div className="flex flex-col items-end">
           <span className="text-sm text-gray-600">ルームID: {roomId}</span>
-          <span className="text-sm">{renderConnectionStatus()}</span>
         </div>
       </div>
 
@@ -263,6 +174,12 @@ export default function GameRoom() {
             </li>
           ))}
         </ul>
+        <button
+          onClick={handleAddDummyPlayer}
+          className="mt-4 text-sm text-blue-600 underline"
+        >
+          プレイヤーを追加（デモ用）
+        </button>
       </div>
 
       {showConfirm && (
@@ -274,7 +191,7 @@ export default function GameRoom() {
           aria-label="確認ダイアログを閉じる"
         >
           <dialog
-            className="bg-gray-900 p-6 rounded-lg shadow-lg w-72"
+            className="bg-gray-100 p-6 rounded-lg shadow-lg w-72"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
             aria-labelledby="confirm-dialog-title"
