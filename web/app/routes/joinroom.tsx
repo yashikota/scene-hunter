@@ -14,39 +14,69 @@ export default function JoinRoom() {
     if (idFromQR) setRoomId(idFromQR);
   }, [location.search]);
 
+  // バリデーション
+  const isValidRoomId = /^\d{6}$/.test(roomId); // 数字6桁
+  const isValidPlayerName = playerName.trim().length > 0 && playerName.trim().length <= 12;
+
   const handleJoin = () => {
-    if (!playerName) return;
-    // WebSocketで joinRoom を送信（仮想コード）
-    const ws = new WebSocket("ws://localhost:8080");
-    ws.onopen = () => {
-      ws.send(
-        JSON.stringify({
-          type: "joinRoom",
-          roomId,
-          playerName,
-        }),
-      );
-      navigate("/gameroom");
-    };
+    if (!isValidRoomId || !isValidPlayerName) return;
+    navigate("/gameroom", { state: { playerName, roomId } });
   };
 
   return (
-    <div className="p-6 bg-[#D0E2F3] min-h-screen">
-      <h1 className="text-2xl mb-4">プレイヤー名を入力</h1>
-      <input
-        value={playerName}
-        onChange={(e) => setPlayerName(e.target.value)}
-        placeholder="プレイヤー名"
-        className="border p-2 mb-4 block w-full max-w-sm"
-      />
-      <button
-        type="button"
-        onClick={handleJoin}
-        disabled={!playerName}
-        className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"
-      >
-        ゲームに参加
-      </button>
+    <div className="min-h-screen bg-[#D0E2F3] flex flex-col items-center justify-center p-6">
+      <h1 className="text-3xl font-bold mb-6 font-[Pacifico] text-black">Scene Hunter</h1>
+
+      <div className="w-full max-w-md bg-white p-6 rounded-2xl shadow-md space-y-6">
+        <div>
+          <label htmlFor="roomId" className="block text-sm font-medium text-gray-700 mb-2">
+            ルームIDを入力してください
+          </label>
+          <input
+            id="roomId"
+            type="text"
+            value={roomId}
+            onChange={(e) => setRoomId(e.target.value)}
+            placeholder="ルームID（6桁の数字）"
+            className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="playerName" className="block text-sm font-medium text-gray-700 mb-2">
+            プレイヤー名を入力してください（1〜12文字）
+          </label>
+          <input
+            id="playerName"
+            type="text"
+            value={playerName}
+            onChange={(e) => setPlayerName(e.target.value)}
+            placeholder="プレイヤー名"
+            className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* ゲームに参加ボタン */}
+        <button
+          onClick={handleJoin}
+          disabled={!isValidRoomId || !isValidPlayerName}
+          className={`w-full py-3 rounded-2xl font-semibold transition ${
+            isValidRoomId && isValidPlayerName
+              ? "bg-[#F6B26B] text-black hover:bg-[#e5a15b]"
+              : "bg-[#fcd9b0] text-gray-500 cursor-not-allowed"
+          }`}
+        >
+          ゲームに参加
+        </button>
+
+        {/* 戻るボタン */}
+        <button
+          onClick={() => navigate("/room")}
+          className="w-full py-3 rounded-2xl font-semibold bg-blue-600 text-white hover:bg-blue-700 transition"
+        >
+          ゲームルームホームへ戻る
+        </button>
+      </div>
     </div>
   );
 }
