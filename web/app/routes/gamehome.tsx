@@ -19,7 +19,7 @@ export default function GameHome() {
   }, []);
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen bg-[#D0E2F3] p-4">
+    <div className="relative flex items-center justify-center min-h-screen bg-blue-100 p-4">
       {/* 左下カメラ画像 */}
       <img
         src="/icon.png"

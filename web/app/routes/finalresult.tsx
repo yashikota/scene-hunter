@@ -18,7 +18,7 @@ export default function FinalResultPage() {
   const [progress, setProgress] = useState(0);
   const [players, setPlayers] = useState<Player[]>([]);
 
-  const yourId = "4"; // ← あなたのプレイヤーID
+  const yourId = "4"; // ← あなたのプレイヤーIDよ
   const round = 3;
 
   const dummyPlayers: Player[] = [
@@ -32,6 +32,7 @@ export default function FinalResultPage() {
     { player_id: "8", name: "Grace", total_score: 225.0, rank: 8 },
     { player_id: "9", name: "Heidi", total_score: 210.3, rank: 9 },
     { player_id: "10", name: "Ivan", total_score: 199.9, rank: 10 },
+    { player_id: "11", name: "Jon", total_score: 189.9, rank: 11 },
   ];
 
   useEffect(() => {
@@ -77,7 +78,7 @@ export default function FinalResultPage() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen px-4 pt-15 bg-blue-50">
+    <main className="flex flex-col items-center justify-center min-h-screen px-4 pt-15 bg-blue-100">
       <h1 className="text-3xl font-bold">Scene Hunter</h1>
       <h3 className="text-lg mt-4 font-semibold">最終結果発表</h3>
 

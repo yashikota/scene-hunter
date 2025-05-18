@@ -168,7 +168,7 @@ export default function GameRoom() {
   };
 
   return (
-    <div className="p-6 min-h-screen bg-[#D0E2F3] text-black flex flex-col gap-6 relative">
+    <div className="p-6 min-h-screen bg-blue-100 text-black flex flex-col gap-6 relative">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-[Pacifico]">Scene Hunter</h1>
         <div className="flex flex-col items-end">
