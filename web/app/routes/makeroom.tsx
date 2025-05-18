@@ -51,7 +51,7 @@ export default function MakeRoom() {
           onClick={() => navigate("/room")}
           className="w-full py-3 rounded-2xl font-semibold bg-[#F6B26B] text-black hover:bg-[#e5a15b] transition"
         >
-          ゲームルームホームへ戻る
+          ホームへ戻る
         </button>
       </div>
     </div>

@@ -44,7 +44,7 @@ export default function RuleExplain() {
         onClick={() => navigate("/room")}
         className="bg-orange-300 hover:bg-orange-400 text-black font-semibold px-6 py-2 rounded shadow"
       >
-        ゲームホームに戻る
+        ホームへ戻る
       </button>
     </main>
   );
