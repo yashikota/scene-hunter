@@ -52,10 +52,7 @@ app.post(
       body: JSON.stringify(room),
     });
 
-    return c.json({
-      room_id,
-      room_code,
-    });
+    return c.json(room);
   }
 );
 
