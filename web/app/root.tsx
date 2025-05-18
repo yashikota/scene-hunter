@@ -7,15 +7,9 @@ import {
   isRouteErrorResponse,
 } from "react-router";
 
-import { createContext, useState } from "react";
 import type { Route } from "./+types/root";
+import { WebSocketProvider } from "./contexts/WebSocketContext";
 import "./app.css";
-
-// 認証画面の表示状態を管理するコンテキスト
-export const AuthVisibilityContext = createContext({
-  showAuth: false,
-  setShowAuth: (show: boolean) => {},
-});
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -49,12 +43,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const [showAuth, setShowAuth] = useState(false);
-
   return (
-    <AuthVisibilityContext.Provider value={{ showAuth, setShowAuth }}>
+    <WebSocketProvider
+      maxReconnectAttempts={15}
+      initialBackoffDelay={1000}
+      maxBackoffDelay={30000}
+    >
       <Outlet />
-    </AuthVisibilityContext.Provider>
+    </WebSocketProvider>
   );
 }
 
