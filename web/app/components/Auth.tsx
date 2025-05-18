@@ -148,7 +148,6 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
               </div>
             </div>
 
-
             {/* 匿名ユーザーの場合、アカウント連携オプションを表示 */}
             {(user.app_metadata?.provider === "anonymous" ||
               (user.id &&

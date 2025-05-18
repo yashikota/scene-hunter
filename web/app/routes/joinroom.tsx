@@ -16,18 +16,7 @@ export default function JoinRoom() {
 
   const handleJoin = () => {
     if (!playerName) return;
-    // WebSocketで joinRoom を送信（仮想コード）
-    const ws = new WebSocket("ws://localhost:8080");
-    ws.onopen = () => {
-      ws.send(
-        JSON.stringify({
-          type: "joinRoom",
-          roomId,
-          playerName,
-        }),
-      );
-      navigate("/gameroom");
-    };
+    navigate("/gameroom");
   };
 
   return (

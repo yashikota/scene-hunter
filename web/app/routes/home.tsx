@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Main } from "./main";
 import { supabase } from "../lib/supabase";
+import { Main } from "./main";
 
 // APIレスポンスの型定義
 interface WordItem {
@@ -68,14 +68,20 @@ export default function Home() {
         if (!data.session) {
           // ランダムなユーザー名を生成するAPIを呼び出す
           try {
-            const response = await fetch("https://hiragana-word-api.yashikota.workers.dev/random-combine");
-            const nameData = await response.json() as HiraganaWordApiResponse;
+            const response = await fetch(
+              "https://hiragana-word-api.yashikota.workers.dev/random-combine",
+            );
+            const nameData = (await response.json()) as HiraganaWordApiResponse;
 
             // APIからの応答を使用してユーザー名を生成
             let username = "";
-            if (nameData && nameData.combinations && nameData.combinations.length > 0) {
+            if (
+              nameData &&
+              nameData.combinations &&
+              nameData.combinations.length > 0
+            ) {
               const words = nameData.combinations[0];
-              username = words.map(item => item.word).join("");
+              username = words.map((item) => item.word).join("");
             } else {
               // APIからの応答がない場合はデフォルトのユーザー名を使用
               username = "ゲスト" + Math.floor(Math.random() * 10000);
@@ -85,7 +91,7 @@ export default function Home() {
             const { data: authData } = await supabase.auth.signInAnonymously();
             if (authData && authData.user) {
               await supabase.auth.updateUser({
-                data: { full_name: username }
+                data: { full_name: username },
               });
             }
           } catch (apiError) {
