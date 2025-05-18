@@ -6,7 +6,7 @@ import { Card, CardContent } from "../components/ui/card";
 export default function GameHome() {
   const navigate = useNavigate();
 
-  // Pacifico フォント読み込みよ
+  // Pacifico フォント読み込み
   useEffect(() => {
     const link = document.createElement("link");
     link.href =

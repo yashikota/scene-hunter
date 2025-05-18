@@ -32,6 +32,7 @@ export default function FinalResultPage() {
     { player_id: "8", name: "Grace", total_score: 225.0, rank: 8 },
     { player_id: "9", name: "Heidi", total_score: 210.3, rank: 9 },
     { player_id: "10", name: "Ivan", total_score: 199.9, rank: 10 },
+    { player_id: "11", name: "Jon", total_score: 189.9, rank: 11 },
   ];
 
   useEffect(() => {

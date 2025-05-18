@@ -75,6 +75,14 @@ export default function AnswerCheckPage() {
         score: 80,
         image_url: gmImageUrl,
       },
+      {
+        player_id: "5",
+        name: "Dave",
+        similarity: 70,
+        time: 3.0,
+        score: 70,
+        image_url: gmImageUrl,
+      },
     ],
     [], // gmImageUrlは定数なので依存配列から削除
   );
