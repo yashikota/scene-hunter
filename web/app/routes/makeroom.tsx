@@ -10,7 +10,7 @@ export default function MakeRoom() {
     const playerId = `user-${Math.random().toString(36).substring(2, 8)}`;
     localStorage.setItem("playerId", playerId);
     try {
-      const response = await fetch("http://https://scene-hunter.yashikota.com/api/rooms", {
+      const response = await fetch("https://scene-hunter.yashikota.com/api/rooms", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
