@@ -65,7 +65,7 @@ export async function handleRoomStart(
     room.roundStates = room.roundStates || {};
     room.roundStates[newRoundId] = newRound;
     room.currentRound = nextRoundNumber;
-    // room.status = 'in_progress'; // Consider updating room status
+    room.status = 'in_progress';
 
     await storage.put('room', room);
 

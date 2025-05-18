@@ -58,6 +58,8 @@ export async function handleRoundEnd(
         const playedRoundNumbers = new Set(Object.values(room.roundStates || {}).filter(r => r.state === 'ended').map(r => r.round_number));
         if (room.rounds !== undefined && playedRoundNumbers.size >= room.rounds) {
             room.status = 'finished'; // ルーム全体のステータスを更新
+        } else {
+            room.status = 'waiting'; // 既定ラウンド数未満ならwaitingに戻す
         }
 
 
