@@ -28,18 +28,11 @@ export default function RuleExplain() {
 
       {/* カード風 説明部分 */}
       <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-md mb-6">
-        <h2 className="text-xl font-bold text-center mb-4">ゲーム説明</h2>
-        <div className="text-sm space-y-3">
-          <p>このゲームはゲームマスターが撮った写真を当てるゲームです！</p>
-          <p>
-            ・ゲームの目的はゲームマスターの写真に最も近い写真を撮ることです。
-          </p>
-          <p>・プレイヤーは〜〜〜の手順で進行します。</p>
-          <p>
-            ・得点の計算方法は写真の精度と撮影の残り時間の総合点となります。
-          </p>
-          <p>・その他の注意事項やヒントをここに記載してください。</p>
-        </div>
+        <img
+          src="/howto.png"
+          alt="ルール説明"
+          className="w-full h-auto rounded-lg mb-4"
+        />
       </div>
 
       {/* ボタン */}

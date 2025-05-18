@@ -170,7 +170,7 @@ export default function GameHome() {
             className="w-64 text-lg bg-[#EEEEEE] text-black hover:bg-gray-300"
             onClick={() => navigate("/how-to-play")}
           >
-            ゲーム説明
+            ゲームの遊び方
           </Button>
 
           {/* ログインボタンまたはアカウント連携ボタン */}
