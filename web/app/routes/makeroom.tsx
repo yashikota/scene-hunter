@@ -7,10 +7,6 @@ export default function MakeRoom() {
 
   const handleCreateRoom = () => {
     if (!playerName.trim()) return;
-
-    // ルームIDやWebSocket連携などが必要であればここで生成・送信する
-    // ここでは仮に "012345" に遷移する前提で進めます
-
     navigate("/gameroom", { state: { playerName } });
   };
 
