@@ -5,13 +5,30 @@ export default function MakeRoom() {
   const [playerName, setPlayerName] = useState("");
   const navigate = useNavigate();
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = async () => {
     if (!playerName.trim()) return;
-
-    // ルームIDやWebSocket連携などが必要であればここで生成・送信する
-    // ここでは仮に "012345" に遷移する前提で進めます
-
-    navigate("/gameroom", { state: { playerName } });
+    const playerId = `user-${Math.random().toString(36).substring(2, 8)}`;
+    localStorage.setItem("playerId", playerId);
+    try {
+      const response = await fetch("http://https://scene-hunter.yashikota.com/api/rooms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          creator_id: playerId,
+          rounds: 3,
+        }),
+      });
+      if (response.ok) {
+        const data = (await response.json()) as { room_id: string; room_code: string };
+        navigate("/gameroom", { state: { playerName, roomId: data.room_id, roomCode: data.room_code } });
+      } else {
+        // エラー処理（必要に応じてアラート等を追加）
+      }
+    } catch (error) {
+      // ネットワークエラー等の処理
+    }
   };
 
   return (

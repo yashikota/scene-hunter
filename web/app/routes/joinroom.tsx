@@ -22,8 +22,9 @@ export default function JoinRoom() {
   const handleJoin = async () => {
     if (!playerName) return;
     const playerId = `user-${Math.random().toString(36).substring(2, 8)}`;
+    localStorage.setItem("playerId", playerId);
     try {
-      const response = await fetch(`http://localhost:4282/rooms/${roomId}/join`, {
+      const response = await fetch(`http://https://scene-hunter.yashikota.com/api/rooms/${roomId}/join`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
