@@ -22,11 +22,7 @@ export default function InterimResult1Page() {
   const yourId = "4"; // 仮の自分のID（「You」に相当）
 
   const handleNext = () => {
-    if (round === 1) {
-      navigate("/interimresult2");
-    } else if (round === 2) {
-      navigate("/finalresult");
-    }
+    navigate("/rounddisplay");
   };
 
   const dummyPlayers: Player[] = [
@@ -59,10 +55,6 @@ export default function InterimResult1Page() {
     return () => clearInterval(interval);
   }, []);
 
-  // const handleNext = () => {
-  //   navigate("/play");
-  // };
-
   const sorted = [...players].sort((a, b) => a.rank - b.rank);
   const podium = [sorted[0], sorted[1], sorted[2]];
   const yourRank = players.find((p) => p.player_id === yourId)?.rank || "-";
@@ -82,7 +74,7 @@ export default function InterimResult1Page() {
   }
 
   return (
-    <main className="relative flex flex-col items-center justify-center min-h-screen px-4 pt-16 bg-blue-50">
+    <main className="relative flex flex-col items-center justify-center min-h-screen px-4 pt-16 bg-blue-100">
       <Timer seconds={10} onComplete={handleNext} />
       <h1 className="text-3xl font-bold">Scene Hunter</h1>
       <h2 className="text-xl mt-2">ラウンド {round}</h2>
@@ -149,22 +141,6 @@ export default function InterimResult1Page() {
           </div>
         </ScrollArea>
       </div>
-
-      {/* 次のラウンドへ */}
-      {/* <div className="mt-3 bg-white p-4 rounded shadow text-center">
-        <p className="text-md font-bold mb-2">
-          次のラウンド
-          <br />
-          {round + 1} / 3
-        </p>
-        <button
-          type="button"
-          onClick={handleNext}
-          className="bg-orange-300 hover:bg-orange-400 px-4 py-2 rounded"
-        >
-          次のラウンド
-        </button>
-      </div> */}
     </main>
   );
 }

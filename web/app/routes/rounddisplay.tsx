@@ -1,64 +1,67 @@
-import React, { useEffect, useState } from 'react';
+"use client";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+import { useWebSocket } from "../contexts/WebSocketContext";
 
-// APIレスポンスの型
-interface MasterIdResponse {
-  masterId: string;
-}
+export default function RoundDisplay() {
+  const [roundNumber, setRoundNumber] = useState(1);
+  const [totalRounds, setTotalRounds] = useState(3);
+  const navigate = useNavigate();
+  const { lastEvent, connectionStatus } = useWebSocket();
 
-const RoundDisplay: React.FC = () => {
-  const [masterId, setMasterId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // 現在のゲームマスターIDを取得する関数
-  async function fetchCurrentMasterId(): Promise<string> {
-    const response = await fetch('/api/get-current-master-id');
-    if (!response.ok) {
-      throw new Error('API error');
-    }
-    const data: MasterIdResponse = await response.json();
-    return data.masterId;
-  }
-
+  // WebSocketイベント処理
   useEffect(() => {
-    fetchCurrentMasterId()
-      .then(id => {
-        setMasterId(id);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
+    if (lastEvent) {
+      console.log('RoundDisplay - イベント受信:', lastEvent);
 
-  if (loading) {
-    return <div>読み込み中...</div>;
-  }
+      switch (lastEvent.event_type) {
+        case 'game.round_started':
+          // ラウンド情報を更新
+          if (lastEvent.round_id) {
+            // round_idから数値を抽出（例: "round-1" -> 1）
+            const match = lastEvent.round_id.match(/\d+/);
+            if (match) {
+              setRoundNumber(parseInt(match[0], 10));
+            }
+          }
+          break;
 
-  if (error) {
-    return <div>エラー: {error}</div>;
-  }
+        case 'game.hint_revealed':
+          // ヒントが公開されたら次の画面に遷移
+          navigate("/roundmemberfirst");
+          break;
+      }
+    }
+  }, [lastEvent, navigate]);
 
-  // プレイヤーIDを取得（ここは適宜変更してください）
-  const currentPlayerId = localStorage.getItem('playerId') || '';
+  // フォールバックとして3秒後に自動遷移
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate("/roundmemberfirst");
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
-  // ゲームマスターならroundmasterfirst.tsxの中身を表示、それ以外はroundmemberfirst.tsxの中身を表示
-  if (currentPlayerId === masterId) {
-    return <RoundMasterFirst />;
-  } else {
-    return <RoundMemberFirst />;
-  }
-};
+  // 接続状態に応じたUIを表示
+  const renderConnectionStatus = () => {
+    switch (connectionStatus) {
+      case 'connected':
+        return <span className="text-green-500 text-sm">接続済み</span>;
+      case 'connecting':
+        return <span className="text-yellow-500 text-sm">接続中...</span>;
+      case 'disconnected':
+        return <span className="text-gray-500 text-sm">未接続</span>;
+      case 'error':
+        return <span className="text-red-500 text-sm">接続エラー</span>;
+    }
+  };
 
-// 仮のゲームマスター画面コンポーネント
-const RoundMasterFirst: React.FC = () => {
-  return <div>【ゲームマスター画面】ここにゲームマスター用UIを実装</div>;
-};
-
-// 仮のメンバー画面コンポーネント
-const RoundMemberFirst: React.FC = () => {
-  return <div>【メンバー画面】ここにメンバー用UIを実装</div>;
-};
-
-export default RoundDisplay;
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#D0E2F3] text-black">
+      <div className="absolute top-4 right-4">
+        {renderConnectionStatus()}
+      </div>
+      <h1 className="text-4xl font-[Pacifico]">ラウンド {roundNumber} / {totalRounds}</h1>
+    </div>
+  );
+}

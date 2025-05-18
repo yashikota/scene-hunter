@@ -40,7 +40,7 @@ export default function MakeRoom() {
           disabled={!playerName.trim()}
           className={`w-full py-3 rounded-2xl font-semibold transition ${
             playerName.trim()
-              ? "bg-[#E59842] text-black hover:bg-[#e5a15b]"
+              ? "bg-blue-600 text-white hover:bg-blue-700"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
@@ -49,7 +49,7 @@ export default function MakeRoom() {
 
         <button
           onClick={() => navigate("/room")}
-          className="w-full py-3 rounded-2xl font-semibold bg-blue-600 text-white hover:bg-blue-700 transition"
+          className="w-full py-3 rounded-2xl font-semibold bg-[#F6B26B] text-black hover:bg-[#e5a15b] transition"
         >
           ゲームルームホームへ戻る
         </button>

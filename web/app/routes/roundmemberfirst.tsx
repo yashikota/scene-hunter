@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
 import type React from "react";
+import { useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import { useWebSocket } from "../contexts/WebSocketContext";
 
@@ -11,15 +11,15 @@ const WaitingForPlayerPage: React.FC = () => {
   // WebSocketイベント処理
   useEffect(() => {
     if (lastEvent) {
-      console.log('RoundMemberFirst - イベント受信:', lastEvent);
+      console.log("RoundMemberFirst - イベント受信:", lastEvent);
 
       switch (lastEvent.event_type) {
-        case 'game.photo_submitted':
+        case "game.photo_submitted":
           // 写真が提出されたら次の画面に遷移
           navigate("/roundmembersecond");
           break;
 
-        case 'game.hint_revealed':
+        case "game.hint_revealed":
           // ヒントが公開されたら次の画面に遷移
           navigate("/roundmembersecond");
           break;
@@ -30,13 +30,13 @@ const WaitingForPlayerPage: React.FC = () => {
   // 接続状態に応じたUIを表示
   const renderConnectionStatus = () => {
     switch (connectionStatus) {
-      case 'connected':
+      case "connected":
         return <span className="text-green-500 text-sm">接続済み</span>;
-      case 'connecting':
+      case "connecting":
         return <span className="text-yellow-500 text-sm">接続中...</span>;
-      case 'disconnected':
+      case "disconnected":
         return <span className="text-gray-500 text-sm">未接続</span>;
-      case 'error':
+      case "error":
         return <span className="text-red-500 text-sm">接続エラー</span>;
     }
   };

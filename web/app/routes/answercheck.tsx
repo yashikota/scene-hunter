@@ -19,10 +19,28 @@ export default function AnswerCheckPage() {
   const [players, setPlayers] = useState<PlayerResult[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const round: number = 1; // ← ラウンド番号に応じて変更（後にpropsで受け取るのが理想）
+
+  const handleComplete = () => {
+    switch (round) {
+      case 1:
+        navigate("/interimresult1");
+        break;
+      case 2:
+        navigate("/interimresult2");
+        break;
+      case 3:
+        navigate("/finalresult");
+        break;
+      default:
+        navigate("/");
+    }
+  };
+
   const gmImageUrl =
     "https://scene-hunter-image.yashikota.workers.dev/file/test.jpg"; // GMの画像
 
-  // 仮の参加者データ
+  // 仮の参加者データよ
   const dummyResults = useMemo<PlayerResult[]>(
     () => [
       {
@@ -57,6 +75,14 @@ export default function AnswerCheckPage() {
         score: 80,
         image_url: gmImageUrl,
       },
+      {
+        player_id: "5",
+        name: "Dave",
+        similarity: 70,
+        time: 3.0,
+        score: 70,
+        image_url: gmImageUrl,
+      },
     ],
     [], // gmImageUrlは定数なので依存配列から削除
   );
@@ -78,8 +104,8 @@ export default function AnswerCheckPage() {
   }
 
   return (
-    <main className="relative flex flex-col items-center min-h-screen px-4 pt-25 bg-blue-50">
-      <Timer seconds={10} onComplete={() => navigate("/interimresult1")} />
+    <main className="relative flex flex-col items-center min-h-screen px-4 pt-25 bg-blue-100">
+      <Timer seconds={10} onComplete={handleComplete} />
       <h1 className="text-3xl font-bold">Scene Hunter</h1>
       <h2 className="text-xl mt-2">答え合わせ</h2>
 
@@ -124,17 +150,6 @@ export default function AnswerCheckPage() {
           </ul>
         </ScrollArea>
       </div>
-
-      {/* 中間発表へ */}
-      {/* <div className="mt-6">
-        <button
-          type="button"
-          onClick={() => navigate("/interimresult1")}
-          className="bg-orange-300 hover:bg-orange-400 px-6 py-2 rounded shadow"
-        >
-          中間発表へ
-        </button>
-      </div> */}
     </main>
   );
 }

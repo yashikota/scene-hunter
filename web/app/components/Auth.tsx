@@ -5,11 +5,14 @@ import { supabase } from "../lib/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 
-export default function AuthPanel() {
+interface AuthPanelProps {
+  onAuthSuccess?: () => void;
+}
+
+export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [jwt, setJwt] = useState<string | null>(null);
 
   useEffect(() => {
     // 初期状態のセッション確認
@@ -17,7 +20,10 @@ export default function AuthPanel() {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         setUser(data.session.user);
-        setJwt(data.session.access_token);
+        // 認証成功時にコールバックを呼び出す
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
       }
     };
 
@@ -28,11 +34,13 @@ export default function AuthPanel() {
       (_event, session) => {
         if (session) {
           setUser(session.user);
-          setJwt(session.access_token);
+          // 認証成功時にコールバックを呼び出す
+          if (onAuthSuccess) {
+            onAuthSuccess();
+          }
           // セッション情報はSupabaseがCookieとして自動的に管理
         } else {
           setUser(null);
-          setJwt(null);
         }
       },
     );
@@ -50,7 +58,6 @@ export default function AuthPanel() {
     if (current.session) {
       await supabase.auth.signOut();
       setUser(null);
-      setJwt(null);
     }
     // 匿名ログイン
     const { data, error } = await supabase.auth.signInAnonymously();
@@ -58,7 +65,10 @@ export default function AuthPanel() {
       setError(error.message);
     } else {
       setUser(data.user);
-      setJwt(data.session?.access_token ?? null);
+      // 認証成功時にコールバックを呼び出す
+      if (onAuthSuccess) {
+        onAuthSuccess();
+      }
     }
     setLoading(false);
   };
@@ -77,7 +87,10 @@ export default function AuthPanel() {
         const { data } = await supabase.auth.getSession();
         if (data.session) {
           setUser(data.session.user);
-          setJwt(data.session.access_token);
+          // 認証成功時にコールバックを呼び出す
+          if (onAuthSuccess) {
+            onAuthSuccess();
+          }
         }
       }
     } else {
@@ -97,13 +110,8 @@ export default function AuthPanel() {
       setError(error.message);
     } else {
       setUser(null);
-      setJwt(null);
     }
     setLoading(false);
-  };
-
-  const handleCopy = () => {
-    if (jwt) navigator.clipboard.writeText(jwt);
   };
 
   return (
@@ -140,27 +148,6 @@ export default function AuthPanel() {
               </div>
             </div>
 
-            {jwt && (
-              <div className="w-full mt-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-500">
-                    アクセストークン (デバッグ用 公開禁止)
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2"
-                    onClick={handleCopy}
-                  >
-                    <CopyIcon className="h-3.5 w-3.5 mr-1" />
-                    <span className="text-xs">コピー</span>
-                  </Button>
-                </div>
-                <div className="text-xs break-all bg-gray-50 p-2 rounded border border-gray-200 max-h-16 overflow-y-auto">
-                  {jwt}
-                </div>
-              </div>
-            )}
 
             {/* 匿名ユーザーの場合、アカウント連携オプションを表示 */}
             {(user.app_metadata?.provider === "anonymous" ||
