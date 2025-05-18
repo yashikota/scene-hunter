@@ -9,9 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
+import { sendEvent, useWebSocket } from "../contexts/WebSocketContext";
 
 const CameraPage: React.FC = () => {
   const navigate = useNavigate();
+  const { connectionStatus } = useWebSocket();
   const roomId = "012345"; // 実際のアプリケーションではURLパラメータなどから取得
 
   const camera = useRef<CameraType>(null);
@@ -70,15 +72,19 @@ const CameraPage: React.FC = () => {
   const uploadImage = async () => {
     if (!image) return;
     setUploading(true);
+
     try {
       const blob = await (await fetch(image)).blob();
       const file = new File([blob], "captured.jpg", { type: "image/jpeg" });
+
       const filename = generateRandomFilename();
+
       const formData = new FormData();
       formData.append("image", file);
       formData.append("filename", filename);
       formData.append("w", "800");
       formData.append("q", "90");
+
       const res = await fetch(
         "https://scene-hunter-image.yashikota.workers.dev/upload",
         {
@@ -86,10 +92,24 @@ const CameraPage: React.FC = () => {
           body: formData,
         },
       );
+
       if (!res.ok) throw new Error("アップロードに失敗しました");
+
       const result = await res.json();
       console.log("✅ アップロード成功:", result);
       setUploadSuccess(true);
+
+      // RESTを通じて写真提出イベントを送信
+      const userId = `user-${Math.random().toString(36).substring(2, 8)}`; // 実際のアプリケーションでは認証システムなどから取得
+      sendEvent(roomId, {
+        event_type: "game.photo_submitted",
+        player_id: userId,
+        submission_time: new Date().toISOString(),
+      }).catch((error) => {
+        console.error("写真提出イベント送信エラー:", error);
+      });
+
+      // 次の画面に遷移
       setTimeout(() => {
         navigate("/answercheck");
       }, 1000);
@@ -143,6 +163,20 @@ const CameraPage: React.FC = () => {
       {/* ヘッダー */}
       <header className="fixed top-0 left-0 w-full h-16 bg-sky-300 shadow z-20 flex items-center justify-between px-4">
         <h1 className="text-xl font-bold text-gray-800">Scene Hunter</h1>
+        <div>
+          {connectionStatus === "connected" && (
+            <span className="text-green-500 text-sm">接続済み</span>
+          )}
+          {connectionStatus === "connecting" && (
+            <span className="text-yellow-500 text-sm">接続中...</span>
+          )}
+          {connectionStatus === "disconnected" && (
+            <span className="text-gray-500 text-sm">未接続</span>
+          )}
+          {connectionStatus === "error" && (
+            <span className="text-red-500 text-sm">接続エラー</span>
+          )}
+        </div>
       </header>
 
       {/* カメラ起動中 */}
