@@ -40,7 +40,7 @@ export default function AnswerCheckPage() {
   const gmImageUrl =
     "https://scene-hunter-image.yashikota.workers.dev/file/test.jpg"; // GMの画像
 
-  // 仮の参加者データ
+  // 仮の参加者データよ
   const dummyResults = useMemo<PlayerResult[]>(
     () => [
       {

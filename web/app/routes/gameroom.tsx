@@ -42,7 +42,7 @@ export default function GameRoom() {
     };
   }, []);
 
-  // 接続状態に応じたUIを表示
+  // 接続状態に応じたUIを表示よ
   const renderConnectionStatus = () => {
     switch (connectionStatus) {
       case "connected":

@@ -19,7 +19,7 @@ export default function InterimResult1Page() {
   const [players, setPlayers] = useState<Player[]>([]);
 
   const round = 1;
-  const yourId = "4"; // 仮の自分のID（「You」に相当）
+  const yourId = "4"; // 仮の自分のID（「You」に相当）よ
 
   const handleNext = () => {
     navigate("/rounddisplay");

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 export default function RuleExplain() {
   const navigate = useNavigate();
 
-  // Pacifico フォント読み込み
+  // Pacifico フォント読み込みよ
   useEffect(() => {
     const link = document.createElement("link");
     link.href =
