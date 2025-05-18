@@ -1,6 +1,7 @@
 import type React from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Camera, type CameraType } from "react-camera-pro";
+import { useSearchParams } from "react-router";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -20,6 +21,17 @@ const CameraPage: React.FC = () => {
     null,
   );
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [roomId, setRoomId] = useState<string>("");
+
+  const [searchParams] = useSearchParams();
+
+  // URLからルームIDを取得
+  useEffect(() => {
+    const roomIdFromUrl = searchParams.get("roomId");
+    if (roomIdFromUrl) {
+      setRoomId(roomIdFromUrl);
+    }
+  }, [searchParams]);
 
   const capture = () => {
     if (camera.current) {
@@ -160,6 +172,22 @@ const CameraPage: React.FC = () => {
               <CardTitle>シーンを撮影しましょう</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* ルームID設定 */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">ルームID</h3>
+                <div className="grid w-full max-w-sm items-center gap-1.5 mx-auto">
+                  <Label htmlFor="roomId">ルームID</Label>
+                  <Input
+                    id="roomId"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={roomId}
+                    onChange={(e) => setRoomId(e.target.value)}
+                    placeholder="ルームIDを入力"
+                  />
+                </div>
+              </div>
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">カメラで撮影</h3>
                 <div className="flex justify-center">
