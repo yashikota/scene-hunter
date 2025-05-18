@@ -1,8 +1,8 @@
-import { useContext, useEffect, useCallback } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { useNavigate } from "react-router";
 import AuthPanel from "../components/Auth";
-import { AuthVisibilityContext } from "../root";
 import { supabase } from "../lib/supabase";
+import { AuthVisibilityContext } from "../root";
 
 export function Main() {
   const { showAuth, setShowAuth } = useContext(AuthVisibilityContext);

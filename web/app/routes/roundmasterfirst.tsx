@@ -1,7 +1,6 @@
 import type React from "react";
 import { useRef, useState } from "react";
 import { Camera, type CameraType } from "react-camera-pro";
-import { useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -9,21 +8,18 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 
 const CameraPage: React.FC = () => {
   const camera = useRef<CameraType>(null);
   const [image, setImage] = useState<string>();
   const [cameraStarted, setCameraStarted] = useState(false);
-  const [uploading, setUploading] = useState(false);
-
-  const navigate = useNavigate(); // ✅ ページ遷移のためのフック
-
-  // ランダムな JPEG ファイル名を生成
-  const generateRandomFilename = () => {
-    const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-    const random = Math.random().toString(36).substring(2, 8);
-    return `room_id/${date}-${random}.jpg`;
-  };
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadMethod, setUploadMethod] = useState<"camera" | "file" | null>(
+    null,
+  );
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const capture = () => {
     if (camera.current) {
@@ -45,53 +41,31 @@ const CameraPage: React.FC = () => {
     setCameraStarted(true);
   };
 
-  const uploadImage = async () => {
-    if (!image) return;
-    setUploading(true);
-
-    try {
-      const blob = await (await fetch(image)).blob();
-      const file = new File([blob], "captured.jpg", { type: "image/jpeg" });
-
-      const filename = generateRandomFilename();
-
-      const formData = new FormData();
-      formData.append("image", file);
-      formData.append("filename", filename);
-      formData.append("w", "800");
-      formData.append("q", "90");
-
-      const res = await fetch(
-        "https://scene-hunter-image.yashikota.workers.dev/upload",
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      if (!res.ok) throw new Error("アップロードに失敗しました");
-
-      const result = await res.json();
-      console.log("✅ アップロード成功:", result);
-
-      // ✅ アップロード成功後にページ遷移
-      navigate("/roundmastersecond");
-    } catch (err: unknown) {
-      console.error(
-        "❌ アップロードエラー:",
-        err instanceof Error ? err.message : String(err),
-      );
-    } finally {
-      setUploading(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+      setUploadMethod("file");
+      // カメラ状態をリセット
+      setImage(undefined);
+      setCameraStarted(false);
     }
+  };
+
+  const uploadImage = () => {
+    console.log("画像をアップロードしました");
+    setUploadSuccess(true);
+  };
+
+  const resetFileSelection = () => {
+    setSelectedFile(null);
+    setUploadMethod(null);
+    setUploadSuccess(false);
   };
 
   return (
     <div className="relative min-h-screen bg-sky-100 pt-16">
       {/* ヘッダー */}
       <header className="fixed top-0 left-0 w-full h-16 bg-sky-300 shadow z-20 flex items-center justify-center">
-        {" "}
-        {/* ヘッダーも水色に */}
         <h1 className="text-xl font-bold text-gray-800">Scene Hunter</h1>
       </header>
 
@@ -119,21 +93,59 @@ const CameraPage: React.FC = () => {
       )}
 
       {/* 撮影結果表示 */}
-      {!cameraStarted && image && (
+      {!cameraStarted &&
+        image &&
+        uploadMethod === "camera" &&
+        !uploadSuccess && (
+          <div className="flex justify-center items-center min-h-screen p-4">
+            <Card className="w-full max-w-md mt-4">
+              <CardHeader>
+                <CardTitle>撮影結果</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <img src={image} alt="撮影した写真" className="rounded" />
+                <div className="flex gap-2 justify-center flex-wrap">
+                  <Button onClick={reset} variant="secondary">
+                    もう一度撮る
+                  </Button>
+                  <Button onClick={uploadImage}>アップロード</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+      {/* ファイル選択結果表示 */}
+      {selectedFile && uploadMethod === "file" && !uploadSuccess && (
         <div className="flex justify-center items-center min-h-screen p-4">
           <Card className="w-full max-w-md mt-4">
             <CardHeader>
-              <CardTitle>撮影結果</CardTitle>
+              <CardTitle>選択したファイル</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <img src={image} alt="撮影した写真" className="rounded" />
+              <p className="text-center">{selectedFile.name}</p>
               <div className="flex gap-2 justify-center flex-wrap">
-                <Button onClick={reset} variant="secondary">
-                  もう一度撮る
+                <Button onClick={resetFileSelection} variant="secondary">
+                  別のファイルを選択
                 </Button>
-                <Button onClick={uploadImage} disabled={uploading}>
-                  {uploading ? "アップロード中..." : "アップロード"}
-                </Button>
+                <Button onClick={uploadImage}>アップロード</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* アップロード成功画面 */}
+      {uploadSuccess && (
+        <div className="flex justify-center items-center min-h-screen p-4">
+          <Card className="w-full max-w-md mt-4">
+            <CardHeader>
+              <CardTitle>アップロード成功</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-center">画像のアップロードに成功しました</p>
+              <div className="flex gap-2 justify-center flex-wrap">
+                <Button onClick={resetFileSelection}>トップに戻る</Button>
               </div>
             </CardContent>
           </Card>
@@ -141,16 +153,39 @@ const CameraPage: React.FC = () => {
       )}
 
       {/* 初期画面 */}
-      {!cameraStarted && !image && (
+      {!cameraStarted && !image && !selectedFile && !uploadSuccess && (
         <div className="flex justify-center items-center min-h-screen p-4">
           <Card className="w-full max-w-md mt-4">
             <CardHeader>
-              <CardTitle>カメラで写真を撮る</CardTitle>
+              <CardTitle>シーンを撮影しましょう</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 flex justify-center">
-              <Button onClick={() => setCameraStarted(true)}>
-                カメラを起動する
-              </Button>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">カメラで撮影</h3>
+                <div className="flex justify-center">
+                  <Button
+                    onClick={() => {
+                      setCameraStarted(true);
+                      setUploadMethod("camera");
+                    }}
+                  >
+                    カメラを起動する
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">ファイルを選択</h3>
+                <div className="grid w-full max-w-sm items-center gap-1.5 mx-auto">
+                  <Label htmlFor="picture">画像ファイル</Label>
+                  <Input
+                    id="picture"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
