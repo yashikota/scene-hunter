@@ -40,7 +40,7 @@ app.post(
       players: [{ player_id: creator_id, name: 'Unknown', role: 'gamemaster', score: 0 }],
       status: 'waiting',
       createdAt: new Date().toISOString(),
-      maxPlayers: 10,
+      maxPlayers: 50,
       rounds,
       currentRound: 0,
     };
