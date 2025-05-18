@@ -77,7 +77,7 @@ export default function FinalResultPage() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen px-4 pt-15 bg-blue-50">
+    <main className="flex flex-col items-center justify-center min-h-screen px-4 pt-15 bg-blue-100">
       <h1 className="text-3xl font-bold">Scene Hunter</h1>
       <h3 className="text-lg mt-4 font-semibold">最終結果発表</h3>
 

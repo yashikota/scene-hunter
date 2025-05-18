@@ -96,7 +96,7 @@ export default function AnswerCheckPage() {
   }
 
   return (
-    <main className="relative flex flex-col items-center min-h-screen px-4 pt-25 bg-blue-50">
+    <main className="relative flex flex-col items-center min-h-screen px-4 pt-25 bg-blue-100">
       <Timer seconds={10} onComplete={handleComplete} />
       <h1 className="text-3xl font-bold">Scene Hunter</h1>
       <h2 className="text-xl mt-2">答え合わせ</h2>
