@@ -19,9 +19,28 @@ export default function JoinRoom() {
   const isValidPlayerName =
     playerName.trim().length > 0 && playerName.trim().length <= 12;
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (!playerName) return;
-    navigate("/gameroom");
+    const playerId = `user-${Math.random().toString(36).substring(2, 8)}`;
+    try {
+      const response = await fetch(`http://localhost:4282/rooms/${roomId}/join`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          player_id: playerId,
+          room_code: roomId,
+        }),
+      });
+      if (response.ok) {
+        navigate("/gameroom");
+      } else {
+        // エラー処理（必要に応じてアラート等を追加）
+      }
+    } catch (error) {
+      // ネットワークエラー等の処理
+    }
   };
 
   return (
