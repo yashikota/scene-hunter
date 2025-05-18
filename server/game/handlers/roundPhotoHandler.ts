@@ -111,6 +111,12 @@ export async function handleRoundPhoto(
         currentRound.submissions = currentRound.submissions || [];
         currentRound.submissions.push(newSubmission);
 
+        // プレイヤーのスコア加算処理
+        const player = room.players.find(p => p.player_id === player_id);
+        if (player) {
+            player.score += total_score;
+        }
+
         await storage.put('room', room);
 
         // 写真提出通知イベント
