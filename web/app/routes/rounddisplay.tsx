@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-import React, { useEffect, useState } from 'react';
-
-// APIレスポンスの型
-interface MasterIdResponse {
-  masterId: string;
-=======
 "use client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -33,7 +26,6 @@ export default function RoundDisplay() {
       </h1>
     </div>
   );
->>>>>>> f7ad07bec3a82dcfdbb58a0d119b5f36c762e0ca
 }
 
 const RoundDisplay: React.FC = () => {
