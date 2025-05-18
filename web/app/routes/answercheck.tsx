@@ -188,7 +188,7 @@ export default function AnswerCheckPage() {
   const roomId = "room1"; // 仮
   const roundId = "round1"; // 仮
 
-  // APIでラウンドIDに応じた遷移先
+  // APIでラウンドIDに応じた遷移先よ
   const handleComplete = () => {
     const roundNumber = 1;
     if (roundNumber === 1) navigate("/interimresult1");
