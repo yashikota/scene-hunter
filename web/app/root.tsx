@@ -17,6 +17,46 @@ export const AuthVisibilityContext = createContext({
   setShowAuth: (show: boolean) => {},
 });
 
+export const meta = () => {
+  return [
+    { title: "Scene Hunter" },
+    {
+      name: "description",
+      content:
+        "ゲームマスターが撮影した写真からAIが特徴を抽出し、ハンターはその文章のヒントだけを頼りに同じ場所を見つけて写真を撮る。写真の一致率によってスコアが決まり、最も高いスコアを出したハンターが勝利するゲーム",
+    },
+    {
+      property: "og:title",
+      content: "Scene Hunter",
+    },
+    {
+      property: "og:description",
+      content:
+        "ゲームマスターが撮影した写真からAIが特徴を抽出し、ハンターはその文章のヒントだけを頼りに同じ場所を見つけて写真を撮る。写真の一致率によってスコアが決まり、最も高いスコアを出したハンターが勝利するゲーム",
+    },
+    {
+      property: "og:site_name",
+      content: "Scene Hunter",
+    },
+    {
+      property: "og:url",
+      content: "https://scene-hunter.yashikota.com",
+    },
+    {
+      property: "og:image",
+      content: "https://scene-hunter.yashikota.com/logo.png",
+    },
+    {
+      property: "og:type",
+      content: "website",
+    },
+    {
+      property: "twitter:card",
+      content: "summary",
+    },
+  ];
+};
+
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
