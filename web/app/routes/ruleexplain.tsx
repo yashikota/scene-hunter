@@ -35,10 +35,11 @@ export default function RuleExplain() {
             ・ゲームの目的はゲームマスターの写真に最も近い写真を撮ることです。
           </p>
           <p>・ゲームマスターは周りの好きな写真を撮影します。</p>
+          <p>・参加者はAIで抽出した写真の特徴のヒントからゲームマスターが何を撮影したのか予想して同じ写真を撮ります。</p>
           <p>
-            ・得点の計算方法は写真の精度と撮影の残り時間の総合点となります。
+            ・得点の計算方法は写真の精度と撮影の残り時間の合算が得点となります。
           </p>
-          <p>・その他の注意事項やヒントをここに記載してください。</p>
+          
         </div>
       </div>
 
@@ -48,7 +49,7 @@ export default function RuleExplain() {
         onClick={() => navigate("/room")}
         className="bg-orange-300 hover:bg-orange-400 text-black font-semibold px-6 py-2 rounded shadow"
       >
-        ゲームホームに戻る
+        ホームへ戻る
       </button>
     </main>
   );

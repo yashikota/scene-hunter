@@ -103,7 +103,7 @@ export default function JoinRoom() {
           onClick={() => navigate("/room")}
           className="w-full py-3 rounded-2xl font-semibold bg-blue-600 text-white hover:bg-blue-700 transition"
         >
-          ゲームルームホームへ戻る
+          ホームへ戻る
         </button>
       </div>
     </div>
