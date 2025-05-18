@@ -35,7 +35,7 @@ export default function AnswerCheckPage() {
       default:
         navigate("/");
     }
-  }; // ここでラウンドに応じた処理を行う
+  };
 
   const gmImageUrl =
     "https://scene-hunter-image.yashikota.workers.dev/file/test.jpg"; // GMの画像
@@ -142,17 +142,6 @@ export default function AnswerCheckPage() {
           </ul>
         </ScrollArea>
       </div>
-
-      {/* 中間発表へ */}
-      {/* <div className="mt-6">
-        <button
-          type="button"
-          onClick={() => navigate("/interimresult1")}
-          className="bg-orange-300 hover:bg-orange-400 px-6 py-2 rounded shadow"
-        >
-          中間発表へ
-        </button>
-      </div> */}
     </main>
   );
 }
