@@ -157,7 +157,7 @@ const CameraPage: React.FC = () => {
         <div className="flex justify-center items-center min-h-screen p-4">
           <Card className="w-full max-w-md mt-4">
             <CardHeader>
-              <CardTitle>画像をアップロード</CardTitle>
+              <CardTitle>シーンを撮影しましょう</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
