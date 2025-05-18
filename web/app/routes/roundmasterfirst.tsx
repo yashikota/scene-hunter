@@ -145,7 +145,7 @@ const CameraPage: React.FC = () => {
         <div className="flex justify-center items-center min-h-screen p-4">
           <Card className="w-full max-w-md mt-4">
             <CardHeader>
-              <CardTitle>カメラで写真を撮る</CardTitle>
+              <CardTitle>シーンを撮影しましょう</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 flex justify-center">
               <Button onClick={() => setCameraStarted(true)}>
