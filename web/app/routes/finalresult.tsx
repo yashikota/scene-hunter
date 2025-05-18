@@ -54,16 +54,10 @@ export default function FinalResultPage() {
   const podium = [sorted[0], sorted[1], sorted[2]];
   const yourRank = players.find((p) => p.player_id === yourId)?.rank || "-";
 
-  // const handleReturnHome = () => {
-  //   navigate("/");
-  // };
-
-  // 追加: もう一度遊ぶ用の関数
   const handlePlayAgain = () => {
     navigate("/gameroom");
   };
 
-  // 修正: ホームに戻る関数
   const handleReturnHome = () => {
     navigate("/room");
   };
@@ -159,16 +153,7 @@ export default function FinalResultPage() {
         </ScrollArea>
       </div>
 
-      {/* ホームへ戻る */}
-      {/* <div className="mt-6 bg-white p-4 rounded shadow text-center">
-        <button
-          type="button"
-          onClick={handleReturnHome}
-          className="bg-orange-300 hover:bg-orange-400 px-4 py-2 rounded"
-        >
-          ホームへ戻る
-        </button>
-      </div> */}
+      {/* もう一度遊ぶ & ホームへ戻る */}
       <div className="mt-6 bg-white p-4 rounded shadow text-center">
         <div className="flex gap-4 justify-center">
           <button

@@ -55,8 +55,6 @@ export default function InterimResult2Page() {
     return () => clearInterval(interval);
   }, []);
 
-  // ・
-
   const sorted = [...players].sort((a, b) => a.rank - b.rank);
   const podium = [sorted[0], sorted[1], sorted[2]];
   const yourRank = players.find((p) => p.player_id === yourId)?.rank || "-";
@@ -143,22 +141,6 @@ export default function InterimResult2Page() {
           </div>
         </ScrollArea>
       </div>
-
-      {/* 次のラウンドへ */}
-      {/* <div className="mt-3 bg-white p-4 rounded shadow text-center">
-        <p className="text-md font-bold mb-2">
-          次のラウンド
-          <br />
-          {round + 1} / 3
-        </p>
-        <button
-          type="button"
-          onClick={handleNext}
-          className="bg-orange-300 hover:bg-orange-400 px-4 py-2 rounded"
-        >
-          次のラウンド
-        </button>
-      </div> */}
     </main>
   );
 }
