@@ -22,7 +22,10 @@ export default function MakeRoom() {
 
       <div className="w-full max-w-md bg-white p-6 rounded-2xl shadow-md space-y-6">
         <div>
-          <label htmlFor="playerName" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="playerName"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             プレイヤー名を入力してください
           </label>
           <input

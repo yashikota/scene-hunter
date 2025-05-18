@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
-import { supabase } from "../lib/supabase";
-import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import type { User } from "@supabase/supabase-js";
 import { LogOutIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
+import { supabase } from "../lib/supabase";
 
 export default function GameHome() {
   const navigate = useNavigate();
@@ -113,13 +113,20 @@ export default function GameHome() {
             </span>
             <div className="flex items-center gap-1 text-xs">
               {user.app_metadata?.provider === "google" && (
-                <span className="bg-[#4285F4] text-white px-1 rounded">Google</span>
+                <span className="bg-[#4285F4] text-white px-1 rounded">
+                  Google
+                </span>
               )}
               {user.app_metadata?.provider === "discord" && (
-                <span className="bg-[#5865F2] text-white px-1 rounded">Discord</span>
+                <span className="bg-[#5865F2] text-white px-1 rounded">
+                  Discord
+                </span>
               )}
-              {(!user.app_metadata?.provider || user.app_metadata?.provider === "anonymous") && (
-                <span className="bg-gray-500 text-white px-1 rounded">匿名</span>
+              {(!user.app_metadata?.provider ||
+                user.app_metadata?.provider === "anonymous") && (
+                <span className="bg-gray-500 text-white px-1 rounded">
+                  匿名
+                </span>
               )}
             </div>
             <Button
@@ -173,7 +180,9 @@ export default function GameHome() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-white px-2 text-gray-500">
-                {user?.app_metadata?.provider === "anonymous" ? "アカウント連携" : "ログイン"}
+                {user?.app_metadata?.provider === "anonymous"
+                  ? "アカウント連携"
+                  : "ログイン"}
               </span>
             </div>
           </div>
@@ -199,24 +208,26 @@ export default function GameHome() {
             )}
 
             {/* 匿名ユーザーの場合は両方の連携ボタンを表示 */}
-            {user && (!user.app_metadata?.provider || user.app_metadata?.provider === "anonymous") && (
-              <>
-                <Button
-                  onClick={() => handleOAuthLogin("google")}
-                  disabled={loading}
-                  className="bg-[#4285F4] hover:bg-[#357ae8]"
-                >
-                  Googleと連携
-                </Button>
-                <Button
-                  onClick={() => handleOAuthLogin("discord")}
-                  disabled={loading}
-                  className="bg-[#5865F2] hover:bg-[#4752c4]"
-                >
-                  Discordと連携
-                </Button>
-              </>
-            )}
+            {user &&
+              (!user.app_metadata?.provider ||
+                user.app_metadata?.provider === "anonymous") && (
+                <>
+                  <Button
+                    onClick={() => handleOAuthLogin("google")}
+                    disabled={loading}
+                    className="bg-[#4285F4] hover:bg-[#357ae8]"
+                  >
+                    Googleと連携
+                  </Button>
+                  <Button
+                    onClick={() => handleOAuthLogin("discord")}
+                    disabled={loading}
+                    className="bg-[#5865F2] hover:bg-[#4752c4]"
+                  >
+                    Discordと連携
+                  </Button>
+                </>
+              )}
 
             {/* Googleでログイン済みの場合はDiscordのみ表示 */}
             {user && user.app_metadata?.provider === "google" && (

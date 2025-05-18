@@ -16,20 +16,26 @@ export default function JoinRoom() {
 
   // バリデーション
   const isValidRoomId = /^\d{6}$/.test(roomId); // 数字6桁
-  const isValidPlayerName = playerName.trim().length > 0 && playerName.trim().length <= 12;
+  const isValidPlayerName =
+    playerName.trim().length > 0 && playerName.trim().length <= 12;
 
   const handleJoin = () => {
-    if (!isValidRoomId || !isValidPlayerName) return;
-    navigate("/gameroom", { state: { playerName, roomId } });
+    if (!playerName) return;
+    navigate("/gameroom");
   };
 
   return (
     <div className="min-h-screen bg-[#D0E2F3] flex flex-col items-center justify-center p-6">
-      <h1 className="text-3xl font-bold mb-6 font-[Pacifico] text-black">Scene Hunter</h1>
+      <h1 className="text-3xl font-bold mb-6 font-[Pacifico] text-black">
+        Scene Hunter
+      </h1>
 
       <div className="w-full max-w-md bg-white p-6 rounded-2xl shadow-md space-y-6">
         <div>
-          <label htmlFor="roomId" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="roomId"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             ルームIDを入力してください
           </label>
           <input
@@ -43,7 +49,10 @@ export default function JoinRoom() {
         </div>
 
         <div>
-          <label htmlFor="playerName" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="playerName"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             プレイヤー名を入力してください（1〜12文字）
           </label>
           <input
