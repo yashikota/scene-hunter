@@ -1,16 +1,26 @@
 import { zValidator } from "@hono/zod-validator";
-import { Hono } from "hono";
+import { Hono, Context, Next } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { authMiddleware } from '../../middlewares/auth'; // Adjust path as necessary
 import { requestId } from "hono/request-id";
 import { optimizeImage } from "wasm-image-optimization";
 import { z } from "zod";
 
-type Bindings = {
+interface Bindings {
   SCENE_HUNTER_BUCKET: R2Bucket;
-};
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
+}
 
-const app = new Hono<{ Bindings: Bindings }>();
+// Define a type for the context variables
+interface AppVariables {
+  supabase?: SupabaseClient;
+  user?: any; // From authMiddleware
+}
+
+const app = new Hono<{ Bindings: Bindings; Variables: AppVariables }>();
 
 // サポートされる画像形式
 const SUPPORTED_FORMATS = ["jpeg", "png", "webp", "avif"] as const;
@@ -38,6 +48,29 @@ interface ImageUploadResponse {
 app.use("*", cors());
 app.use("*", requestId());
 app.use("*", logger());
+
+// Middleware to initialize Supabase client
+// This should run for all paths that might need Supabase, before authMiddleware
+app.use('*', async (c: Context<{ Bindings: Bindings; Variables: AppVariables }>, next: Next) => {
+  if (c.env.SUPABASE_URL && c.env.SUPABASE_ANON_KEY) {
+    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+    c.set('supabase', supabase);
+  } else {
+    // Allow paths that don't require Supabase/Auth to still function if env vars are missing (e.g. /health)
+    // Specific routes requiring auth will fail later if Supabase is not configured.
+    console.warn('Supabase URL or Anon Key not set in environment. Supabase client not initialized.');
+  }
+  await next();
+});
+
+// Apply JWT authentication middleware selectively
+// Public routes like /health or image serving GET /file/* (if public) should not use this.
+// For now, assume GET /file/* also requires auth.
+app.use('/upload', authMiddleware);
+app.use('/file/*', authMiddleware); // This protects GET, DELETE for /file/*
+app.use('/bucket/*', authMiddleware);
+app.use('/list', authMiddleware);
+
 
 app.onError((err, c) => {
   if (err instanceof z.ZodError) {

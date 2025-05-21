@@ -1,4 +1,6 @@
-import { Hono } from 'hono';
+import { Hono, Context, Next } from 'hono';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { authMiddleware } from '../../middlewares/auth'; // Adjust path as necessary
 import createRoom from '../routes/createRoom';
 import getRoom from '../handlers/getRoom';
 import joinRoom from '../routes/joinRoom';
@@ -15,11 +17,40 @@ import generateHintsFromPhoto from '../routes/generateHintsFromPhoto';
 import submitPhoto from '../routes/submitPhoto';
 import setPlayerName from '../routes/setPlayerName';
 import { RoomObject } from '../roomObject';
-import { set } from 'zod';
+// Remove import { set } from 'zod'; if not used directly for app config
 
-const app = new Hono();
+// Define Bindings interface for Hono environment variables
+interface Bindings {
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
+  // Add other bindings from your wrangler.toml if needed, like RoomObject
+  RoomObject: DurableObjectNamespace;
+}
+
+// Define a type for the context variables
+interface AppVariables {
+  supabase?: SupabaseClient;
+  user?: any; // From authMiddleware
+}
+
+const app = new Hono<{ Bindings: Bindings; Variables: AppVariables }>();
+
+// Middleware to initialize Supabase client
+app.use('*', async (c: Context<{ Bindings: Bindings; Variables: AppVariables }>, next: Next) => {
+  if (!c.env.SUPABASE_URL || !c.env.SUPABASE_ANON_KEY) {
+    console.error('Supabase URL or Anon Key not set in environment.');
+    return c.json({ error: 'Configuration error: Supabase environment variables not set.' }, 500);
+  }
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+  c.set('supabase', supabase);
+  await next();
+});
+
+// Apply JWT authentication middleware to all routes
+app.use('*', authMiddleware);
 
 // ルーティング登録
+// Ensure these routes are compatible with the new context if they use it.
 app.route('/', createRoom);
 app.route('/', getRoom);
 app.route('/', joinRoom);
@@ -40,8 +71,8 @@ export { RoomObject };
 
 export default {
   fetch: app.fetch,
-  // 正しい Durable Object のマッピング
-  bindings: {
-    RoomObject,
-  },
+  // Durable Object bindings are typically defined in wrangler.toml
+  // and accessed via c.env.BINDING_NAME in Hono.
+  // The explicit 'bindings' export here might be for a specific setup
+  // or older wrangler version. Ensure it's compatible with your deployment.
 };
