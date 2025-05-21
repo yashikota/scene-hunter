@@ -1,0 +1,19 @@
+{
+  "name": "middlewares",
+  "version": "1.0.0",
+  "description": "Authentication middleware tests",
+  "main": "auth.ts",
+  "scripts": {
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "vitest": "^1.5.0",
+    "typescript": "^5.4.5",
+    "@supabase/supabase-js": "^2.42.0",
+    "hono": "^4.2.3"
+  }
+}

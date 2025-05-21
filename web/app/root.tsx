@@ -8,6 +8,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { AuthProvider } from "./contexts/AuthContext"; // Import AuthProvider
 import { WebSocketProvider } from "./contexts/WebSocketContext";
 import "./app.css";
 
@@ -44,13 +45,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <WebSocketProvider
-      maxReconnectAttempts={15}
-      initialBackoffDelay={1000}
-      maxBackoffDelay={30000}
-    >
-      <Outlet />
-    </WebSocketProvider>
+    <AuthProvider> {/* Wrap with AuthProvider */}
+      <WebSocketProvider
+        maxReconnectAttempts={15}
+        initialBackoffDelay={1000}
+        maxBackoffDelay={30000}
+      >
+        <Outlet />
+      </WebSocketProvider>
+    </AuthProvider>
   );
 }
 

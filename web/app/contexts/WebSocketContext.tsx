@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import type { EventType } from "../types/websocket";
+import { fetchWithAuth } from "../lib/api"; // Import fetchWithAuth
 
 interface WebSocketContextType {
   connect: (roomId: string, userId: string) => void;
@@ -26,7 +27,8 @@ export const sendEvent = async (
   event: { event_type: string } & Record<string, unknown>,
 ) => {
   try {
-    const response = await fetch(
+    // Use fetchWithAuth instead of plain fetch
+    const response = await fetchWithAuth(
       `https://scene-hunter-notify.yashikota.workers.dev/api/rooms/${roomId}/events`,
       {
         method: "POST",
@@ -41,15 +43,23 @@ export const sendEvent = async (
     );
 
     if (!response.ok) {
+      // Attempt to read the error body for more context
+      let errorBody = null;
+      try {
+        errorBody = await response.json();
+      } catch (e) {
+        // Ignore if error body is not JSON or cannot be parsed
+      }
+      console.error("Event submission error details:", errorBody);
       throw new Error(
-        `イベント送信エラー: ${response.status} ${response.statusText}`,
+        `イベント送信エラー: ${response.status} ${response.statusText}${errorBody ? ` - ${JSON.stringify(errorBody)}` : ''}`,
       );
     }
 
     return await response.json();
   } catch (error) {
     console.error("イベント送信エラー:", error);
-    throw error;
+    throw error; // Re-throw the error to be caught by the caller
   }
 };
 
