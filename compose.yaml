@@ -1,20 +1,20 @@
 services:
-  api:
-    container_name: api
+  server:
+    container_name: server
     environment:
       - TZ=Asia/Tokyo
     env_file:
       - .env
     build:
-      context: .
-      dockerfile: internal/server/Dockerfile
+      context: server
+      dockerfile: Dockerfile
       target: dev
     ports:
       - "8686:8686"
     volumes:
       - type: bind
-        source: "."
-        target: "/app"
+        source: server
+        target: /app
     depends_on:
       postgres:
         condition: service_healthy
