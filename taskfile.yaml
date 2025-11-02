@@ -1,0 +1,31 @@
+version: "3"
+
+tasks:
+  default:
+    desc: "Display this help message"
+    cmds:
+      - task -l
+
+  run:
+    desc: "Run application"
+    cmds:
+      - docker compose up --build
+
+  buf/gen:
+    desc: "Generate protobuf files"
+    cmds:
+      - buf lint
+      - buf format --write
+      - buf generate
+
+  go/fmt:
+    desc: "Format Go code"
+    cmds:
+      - go fmt ./...
+      - goimports-reviser -rm-unused -set-alias -excludes internal/server/gen -format -project-name github.com/yashikota/scene-hunter ./...
+
+  go/lint:
+    desc: "Lint Go code"
+    dir: internal/server
+    cmds:
+      - golangci-lint run --fix
