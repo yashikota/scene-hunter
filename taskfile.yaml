@@ -20,12 +20,13 @@ tasks:
 
   go/fmt:
     desc: "Format Go code"
+    dir: server
     cmds:
       - go fmt ./...
-      - goimports-reviser -rm-unused -set-alias -excludes internal/server/gen -format -project-name github.com/yashikota/scene-hunter ./...
+      - goimports-reviser -rm-unused -set-alias -excludes gen -format ./...
 
   go/lint:
     desc: "Lint Go code"
-    dir: internal/server
+    dir: server
     cmds:
       - golangci-lint run --fix
