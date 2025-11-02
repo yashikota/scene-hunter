@@ -1,0 +1,6 @@
+version: "2"
+linters:
+  enable-all: true
+issues:
+  exclude-dirs:
+    - gen
