@@ -1,3 +1,4 @@
+// Package user represents a user domain.
 package user
 
 import (
@@ -6,6 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// User represents a user.
 type User struct {
 	ID        uuid.UUID
 	Code      string
@@ -15,14 +17,15 @@ type User struct {
 	DeletedAt time.Time
 }
 
+// NewUser creates a new User with the given code and name.
 func NewUser(code, name string) *User {
-	id, err := uuid.NewV7()
+	userID, err := uuid.NewV7()
 	if err != nil {
 		panic(err)
 	}
 
 	return &User{
-		ID:        id,
+		ID:        userID,
 		Code:      code,
 		Name:      name,
 		CreatedAt: time.Now(),

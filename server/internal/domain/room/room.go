@@ -1,3 +1,4 @@
+// Package room represents a game room domain.
 package room
 
 import (
@@ -6,6 +7,9 @@ import (
 	"github.com/google/uuid"
 )
 
+const expirationHours = 24
+
+// Room represents a game room.
 type Room struct {
 	ID        uuid.UUID
 	Code      string
@@ -14,17 +18,18 @@ type Room struct {
 	UpdatedAt time.Time
 }
 
+// NewRoom creates a new Room with the given code.
 func NewRoom(code string) *Room {
-	id, err := uuid.NewV7()
+	roomID, err := uuid.NewV7()
 	if err != nil {
 		panic(err)
 	}
 
 	now := time.Now()
-	expiredAt := now.Add(24 * time.Hour)
+	expiredAt := now.Add(expirationHours * time.Hour)
 
 	return &Room{
-		ID:        id,
+		ID:        roomID,
 		Code:      code,
 		ExpiredAt: expiredAt,
 		CreatedAt: now,

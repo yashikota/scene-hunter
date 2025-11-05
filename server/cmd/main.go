@@ -1,16 +1,17 @@
+// Package main is the entry point of the scene-hunter server.
 package main
 
 import (
-	"fmt"
+	"log"
 
-	"github.com/yashikota/scene-hunter/server/internal/domain/user"
 	"github.com/yashikota/scene-hunter/server/internal/domain/room"
+	"github.com/yashikota/scene-hunter/server/internal/domain/user"
 )
 
 func main() {
-	user := user.NewUser("user-code", "user-name")
-	fmt.Println(user)
+	u := user.NewUser("user-code", "user-name")
+	log.Println(u)
 
-	room := room.NewRoom("room-code")
-	fmt.Println(room)
+	r := room.NewRoom("room-code")
+	log.Println(r)
 }
