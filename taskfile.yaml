@@ -6,10 +6,15 @@ tasks:
     cmds:
       - task -l
 
-  run:
+  up:
     desc: "Run application"
     cmds:
       - docker compose up --build
+
+  setup:
+    desc: "Setup application"
+    cmds:
+      - genenv .env.example
 
   buf/gen:
     desc: "Generate protobuf files"
