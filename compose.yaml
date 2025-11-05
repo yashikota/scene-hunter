@@ -30,7 +30,7 @@ services:
     volumes:
       - type: volume
         source: postgres-data
-        target: /var/lib/postgresql/data
+        target: /var/lib/postgresql
     environment:
       - POSTGRES_DB=scene-hunter
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
