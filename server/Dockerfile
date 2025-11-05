@@ -12,7 +12,7 @@ RUN go mod download -x
 RUN go install github.com/air-verse/air@v1.63.0
 
 COPY . .
-EXPOSE 8080
+EXPOSE 8686
 
 CMD ["air"]
 
@@ -58,7 +58,7 @@ WORKDIR /app
 ENV TZ=Asia/Tokyo
 
 # Expose the port that the application listens on.
-EXPOSE 8080
+EXPOSE 8686
 
 # What the container should run when it is started.
 ENTRYPOINT ["/bin/server"]
