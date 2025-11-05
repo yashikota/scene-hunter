@@ -17,30 +17,51 @@ import (
 	slogchi "github.com/samber/slog-chi"
 )
 
+const (
+	readTimeout     = 15 * time.Second
+	writeTimeout    = 15 * time.Second
+	idleTimeout     = 60 * time.Second
+	shutdownTimeout = 10 * time.Second
+)
+
 func main() {
 	// Logger
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	config := slogchi.Config{
-		WithSpanID:  true,
-		WithTraceID: true,
+		WithSpanID:         true,
+		WithTraceID:        true,
+		DefaultLevel:       slog.LevelInfo,
+		ClientErrorLevel:   slog.LevelWarn,
+		ServerErrorLevel:   slog.LevelError,
+		WithUserAgent:      true,
+		WithRequestID:      true,
+		WithRequestBody:    false,
+		WithRequestHeader:  false,
+		WithResponseBody:   false,
+		WithResponseHeader: false,
+		Filters:            nil,
 	}
 	router := chi.NewRouter()
 	router.Use(slogchi.NewWithConfig(logger, config))
 	router.Use(middleware.Recoverer)
 
 	// Health check endpoint
-	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(time.Now().Format(time.RFC3339)))
+
+		_, err := w.Write([]byte(time.Now().Format(time.RFC3339)))
+		if err != nil {
+			logger.Error("failed to write response", "error", err)
+		}
 	})
 
 	// Create server
-	srv := &http.Server{
+	srv := &http.Server{ //nolint:exhaustruct
 		Addr:         ":8686",
 		Handler:      router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
 	}
 
 	// Start server in a goroutine
@@ -49,7 +70,7 @@ func main() {
 		err := srv.ListenAndServe()
 
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("server error: %v", err)
+			log.Printf("server error: %v", err)
 		}
 	}()
 
@@ -60,12 +81,12 @@ func main() {
 
 	log.Println("Shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
 	err := srv.Shutdown(ctx)
 	if err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		log.Printf("Server forced to shutdown: %v", err)
 	}
 
 	log.Println("Server exited")
