@@ -18,10 +18,11 @@ tasks:
 
   buf/gen:
     desc: "Generate protobuf files"
+    dir: server
     cmds:
-      - buf lint proto
-      - buf format --write proto
-      - cd proto && buf generate --template ../server/buf.gen.yaml --output ../server
+      - buf lint
+      - buf format --write
+      - buf generate
 
   go/check:
     desc: "Check Go code"
