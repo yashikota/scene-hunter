@@ -1,11 +1,11 @@
-name: check
+name: Go
 on:
   push:
   pull_request:
 
 jobs:
-  lint:
-    name: lint
+  check:
+    name: check
     runs-on: ubuntu-latest
 
     steps:
@@ -22,11 +22,11 @@ jobs:
         with:
             aqua_version: v2.55.1
 
-      - name: Run go/lint
-        run: task go/lint
+      - name: Run go/check
+        run: task go/check
 
-  format:
-    name: format
+  test:
+    name: test
     runs-on: ubuntu-latest
 
     steps:
@@ -43,5 +43,5 @@ jobs:
         with:
             aqua_version: v2.55.1
 
-      - name: Run go/fmt
-        run: task go/fmt
+      - name: Run go/test
+        run: task go/test
