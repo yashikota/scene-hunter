@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package scene_hunter.v1;
 
-option go_package = "github.com/yashikota/scene-hunter/internal/server/gen/scene_hunter/v1;scene_hunterv1";
+option go_package = "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1;scene_hunterv1";
 
 message Room {
   string id = 1;

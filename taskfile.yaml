@@ -19,19 +19,13 @@ tasks:
   buf/gen:
     desc: "Generate protobuf files"
     cmds:
-      - buf lint
-      - buf format --write
-      - buf generate
+      - buf lint proto
+      - buf format --write proto
+      - cd proto && buf generate --template ../server/buf.gen.yaml --output ../server
 
-  go/fmt:
-    desc: "Format Go code"
-    dir: server
-    cmds:
-      - go fmt ./...
-      - goimports-reviser -rm-unused -set-alias -excludes gen -format ./...
-
-  go/lint:
-    desc: "Lint Go code"
+  go/check:
+    desc: "Check Go code"
     dir: server
     cmds:
       - golangci-lint run --fix
+      - golangci-lint fmt

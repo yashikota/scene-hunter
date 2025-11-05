@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/yashikota/scene-hunter/internal/domain/user"
-	"github.com/yashikota/scene-hunter/internal/domain/room"
+	"github.com/yashikota/scene-hunter/server/internal/domain/user"
+	"github.com/yashikota/scene-hunter/server/internal/domain/room"
 )
 
 func main() {

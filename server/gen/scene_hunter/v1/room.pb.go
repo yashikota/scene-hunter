@@ -468,8 +468,8 @@ const file_scene_hunter_v1_room_proto_rawDesc = "" +
 	"\n" +
 	"UpdateRoom\x12\".scene_hunter.v1.UpdateRoomRequest\x1a#.scene_hunter.v1.UpdateRoomResponse\x12U\n" +
 	"\n" +
-	"DeleteRoom\x12\".scene_hunter.v1.DeleteRoomRequest\x1a#.scene_hunter.v1.DeleteRoomResponseB\xcf\x01\n" +
-	"\x13com.scene_hunter.v1B\tRoomProtoP\x01ZTgithub.com/yashikota/scene-hunter/internal/server/gen/scene_hunter/v1;scene_hunterv1\xa2\x02\x03SXX\xaa\x02\x0eSceneHunter.V1\xca\x02\x0eSceneHunter\\V1\xe2\x02\x1aSceneHunter\\V1\\GPBMetadata\xea\x02\x0fSceneHunter::V1b\x06proto3"
+	"DeleteRoom\x12\".scene_hunter.v1.DeleteRoomRequest\x1a#.scene_hunter.v1.DeleteRoomResponseB\xc6\x01\n" +
+	"\x13com.scene_hunter.v1B\tRoomProtoP\x01ZKgithub.com/yashikota/scene-hunter/server/gen/scene_hunter/v1;scene_hunterv1\xa2\x02\x03SXX\xaa\x02\x0eSceneHunter.V1\xca\x02\x0eSceneHunter\\V1\xe2\x02\x1aSceneHunter\\V1\\GPBMetadata\xea\x02\x0fSceneHunter::V1b\x06proto3"
 
 var (
 	file_scene_hunter_v1_room_proto_rawDescOnce sync.Once

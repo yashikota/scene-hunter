@@ -1,6 +1,15 @@
 version: "2"
 linters:
-  enable-all: true
-issues:
-  exclude-dirs:
-    - gen
+  default: all
+  exclusions:
+    generated: lax
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines
+    - swaggo
+  exclusions:
+    generated: lax

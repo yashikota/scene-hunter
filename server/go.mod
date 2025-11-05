@@ -1,4 +1,4 @@
-module github.com/yashikota/scene-hunter
+module github.com/yashikota/scene-hunter/server
 
 go 1.25.0
 

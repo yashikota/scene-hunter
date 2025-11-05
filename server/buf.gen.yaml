@@ -3,10 +3,10 @@ managed:
   enabled: true
 plugins:
   - local: protoc-gen-go
-    out: internal/server/gen
+    out: gen
     opt: paths=source_relative
   - local: protoc-gen-connect-go
-    out: internal/server/gen
+    out: gen
     opt:
       - paths=source_relative
       - simple
