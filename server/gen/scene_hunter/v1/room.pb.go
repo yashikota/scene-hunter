@@ -7,6 +7,7 @@
 package scene_hunterv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -437,9 +438,9 @@ var File_scene_hunter_v1_room_proto protoreflect.FileDescriptor
 
 const file_scene_hunter_v1_room_proto_rawDesc = "" +
 	"\n" +
-	"\x1ascene_hunter/v1/room.proto\x12\x0fscene_hunter.v1\"s\n" +
-	"\x04Room\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
+	"\x1ascene_hunter/v1/room.proto\x12\x0fscene_hunter.v1\x1a\x1bbuf/validate/validate.proto\"}\n" +
+	"\x04Room\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1d\n" +
 	"\n" +
 	"created_at\x18\x02 \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
