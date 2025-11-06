@@ -9,12 +9,17 @@ tasks:
   up:
     desc: "Run application"
     cmds:
-      - docker compose up --build
+      - docker compose up --build -d
+
+  down:
+    desc: "Stop application"
+    cmds:
+      - docker compose down -v
 
   setup:
     desc: "Setup application"
     cmds:
-      - genenv .env.example
+      - genenv -y .env.example
 
   buf/gen:
     desc: "Generate protobuf files"

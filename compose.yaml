@@ -45,6 +45,7 @@ services:
   valkey:
     image: valkey/valkey:8.1.4
     container_name: valkey
+    command: valkey-server --requirepass ${VALKEY_PASSWORD}
     volumes:
       - type: volume
         source: valkey-data
@@ -66,8 +67,7 @@ services:
       - "9001:9001"
     environment:
       - TZ=Asia/Tokyo
-      - RUSTFS_ROOT_USER=root
-      - RUSTFS_ROOT_PASSWORD=${RUSTFS_PASSWORD}
+      - RUSTFS_SECRET_KEY=${RUSTFS_PASSWORD}
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/health" ]
       interval: 5s
