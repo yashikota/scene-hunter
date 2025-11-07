@@ -3,8 +3,6 @@ services:
     container_name: server
     environment:
       - TZ=Asia/Tokyo
-    env_file:
-      - .env
     build:
       context: server
       dockerfile: Dockerfile
