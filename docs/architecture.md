@@ -8,6 +8,9 @@
 - サービス層(`service/`): ユーザーやAPIが操作する単位の振る舞いを定義する
 - インフラ層(`infra/`): DBやKVSなどの外部サービスの具体的な実装をする
 
+依存関係は `domain` -> `service` -> `infra` の順となる  
+決して `domain` は `service` に依存してはならず、 `service` も `infra` に依存してはならない  
+
 ## 技術スタック
 
 ### Server
