@@ -12,6 +12,12 @@
   "minimumReleaseAge": "7 days", // リリース後1週間経ってからインストールされるようにする
   "packageRules": [
     {
+      // minorとpathの自動マージ
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
       // aqua standard registryの更新頻度を抑える
       "matchPackageNames": ["aquaproj/aqua-registry"],
       "extends": ["schedule:earlyMondays"]
