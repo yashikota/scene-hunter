@@ -1,7 +1,7 @@
 ### ----------------- ###
 ### Development image ###
 ### ----------------- ###
-ARG GO_VERSION=1.25
+ARG GO_VERSION=1.25@sha256:516827db2015144cf91e042d1b6a3aca574d013a4705a6fdc4330444d47169d5
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS dev
 
 WORKDIR /app
@@ -19,7 +19,7 @@ CMD ["air"]
 ### ---------------- ###
 ### Production image ###
 ### ---------------- ###
-ARG GO_VERSION=1.25
+ARG GO_VERSION=1.25@sha256:516827db2015144cf91e042d1b6a3aca574d013a4705a6fdc4330444d47169d5
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS build
 
 WORKDIR /app
@@ -47,7 +47,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 ### ---------------- ###
 ### Production image ###
 ### ---------------- ###
-FROM gcr.io/distroless/static-debian13:nonroot AS final
+FROM gcr.io/distroless/static-debian13:nonroot@sha256:fedcacdbe5eb1b1ec2ab5f2e7bf2eed246eb371505c43b3c2682ff0c3870e7c3 AS final
 
 # Copy the executable from the "build" stage.
 COPY --from=build /bin/server /bin/
