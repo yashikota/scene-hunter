@@ -13,10 +13,7 @@ import (
 	domaindb "github.com/yashikota/scene-hunter/server/internal/domain/db"
 	"github.com/yashikota/scene-hunter/server/internal/domain/health"
 	domainkvs "github.com/yashikota/scene-hunter/server/internal/domain/kvs"
-	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
 	"github.com/yashikota/scene-hunter/server/internal/infra/chrono"
-	infradb "github.com/yashikota/scene-hunter/server/internal/infra/db"
-	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
 	healthsvc "github.com/yashikota/scene-hunter/server/internal/service/health"
 	imagesvc "github.com/yashikota/scene-hunter/server/internal/service/image"
 	"github.com/yashikota/scene-hunter/server/internal/service/status"
@@ -91,21 +88,30 @@ func buildHealthCheckers(deps *Dependencies) []health.Checker {
 
 	// DBクライアントのヘルスチェック
 	if deps.DBClient != nil {
-		checkers = append(checkers, infradb.NewHealthChecker(deps.DBClient))
+		// DBClient自体がhealth.Checkerを実装している
+		if checker, ok := deps.DBClient.(health.Checker); ok {
+			checkers = append(checkers, checker)
+		}
 	} else if deps.DBError != nil {
 		checkers = append(checkers, &failedChecker{name: "postgres", err: deps.DBError})
 	}
 
 	// KVSクライアントのヘルスチェック
 	if deps.KVSClient != nil {
-		checkers = append(checkers, kvs.NewHealthChecker(deps.KVSClient))
+		// KVSClient自体がhealth.Checkerを実装している
+		if checker, ok := deps.KVSClient.(health.Checker); ok {
+			checkers = append(checkers, checker)
+		}
 	} else if deps.KVSError != nil {
 		checkers = append(checkers, &failedChecker{name: "valkey", err: deps.KVSError})
 	}
 
 	// Blobクライアントのヘルスチェック
 	if deps.BlobClient != nil {
-		checkers = append(checkers, blob.NewHealthChecker(deps.BlobClient))
+		// BlobClient自体がhealth.Checkerを実装している
+		if checker, ok := deps.BlobClient.(health.Checker); ok {
+			checkers = append(checkers, checker)
+		}
 	}
 
 	return checkers

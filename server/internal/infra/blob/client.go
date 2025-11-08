@@ -58,6 +58,21 @@ func (c *Client) Ping(ctx context.Context) error {
 	return nil
 }
 
+// Check implements health.Checker interface.
+func (c *Client) Check(ctx context.Context) error {
+	err := c.Ping(ctx)
+	if err != nil {
+		return fmt.Errorf("rustfs ping failed: %w", err)
+	}
+
+	return nil
+}
+
+// Name implements health.Checker interface.
+func (c *Client) Name() string {
+	return "rustfs"
+}
+
 func (c *Client) Put(ctx context.Context, key string, data io.Reader, ttl time.Duration) error {
 	url := fmt.Sprintf("%s/objects/%s", c.baseURL, key)
 
