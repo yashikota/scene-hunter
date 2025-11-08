@@ -25,13 +25,19 @@ func NewService(blobClient domainblob.Blob, geminiClient domaingemini.Gemini) *S
 }
 
 // AnalyzeImageFromBlob analyzes an image from blob storage.
-func (s *Service) AnalyzeImageFromBlob(ctx context.Context, imageKey, prompt string) (*domaingemini.ImageAnalysisResult, error) {
+func (s *Service) AnalyzeImageFromBlob(
+	ctx context.Context,
+	imageKey, prompt string,
+) (*domaingemini.ImageAnalysisResult, error) {
 	// Get image from blob storage
 	reader, err := s.blobClient.Get(ctx, imageKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get image from blob: %w", err)
 	}
-	defer reader.Close()
+
+	defer func() {
+		_ = reader.Close()
+	}()
 
 	// Read image data
 	imageData, err := io.ReadAll(reader)
@@ -47,4 +53,3 @@ func (s *Service) AnalyzeImageFromBlob(ctx context.Context, imageKey, prompt str
 
 	return result, nil
 }
-

@@ -1,9 +1,10 @@
-// Package gemini provides Gemini AI client implementations.
-package gemini
+package gemini_test
 
 import (
 	"context"
 	"testing"
+
+	"github.com/yashikota/scene-hunter/server/internal/infra/gemini"
 )
 
 func TestNewClient(t *testing.T) {
@@ -11,46 +12,34 @@ func TestNewClient(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Test with empty API key (should succeed in creating client, but will fail on actual API calls)
-	_, err := NewClient(ctx, "", "gemini-2.0-flash")
-	if err != nil {
-		t.Errorf("NewClient() error = %v, want nil", err)
-	}
-}
-
-func TestPtr(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
-		name  string
-		value int64
+		name      string
+		apiKey    string
+		modelName string
+		wantErr   bool
 	}{
 		{
-			name:  "positive value",
-			value: 5,
+			name:      "empty API key should fail",
+			apiKey:    "",
+			modelName: "gemini-2.0-flash",
+			wantErr:   true,
 		},
 		{
-			name:  "zero value",
-			value: 0,
-		},
-		{
-			name:  "negative value",
-			value: -1,
+			name:      "valid API key and model name",
+			apiKey:    "test-api-key",
+			modelName: "gemini-2.0-flash",
+			wantErr:   false,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			result := ptr(tt.value)
-			if result == nil {
-				t.Error("ptr() returned nil")
-			}
-			if *result != tt.value {
-				t.Errorf("ptr() = %v, want %v", *result, tt.value)
+			_, err := gemini.NewClient(ctx, testCase.apiKey, testCase.modelName)
+			if (err != nil) != testCase.wantErr {
+				t.Errorf("NewClient() error = %v, wantErr %v", err, testCase.wantErr)
 			}
 		})
 	}
 }
-

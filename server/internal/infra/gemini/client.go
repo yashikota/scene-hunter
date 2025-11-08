@@ -6,9 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"google.golang.org/genai"
-
 	domaingemini "github.com/yashikota/scene-hunter/server/internal/domain/gemini"
+	"google.golang.org/genai"
 )
 
 // Client is a Gemini AI client.
@@ -38,7 +37,11 @@ func ptr[T any](v T) *T {
 }
 
 // AnalyzeImage analyzes an image and returns features.
-func (c *Client) AnalyzeImage(ctx context.Context, imageData []byte, prompt string) (*domaingemini.ImageAnalysisResult, error) {
+func (c *Client) AnalyzeImage(
+	ctx context.Context,
+	imageData []byte,
+	prompt string,
+) (*domaingemini.ImageAnalysisResult, error) {
 	schema := &genai.Schema{
 		Type: "object",
 		Properties: map[string]*genai.Schema{
@@ -70,7 +73,12 @@ func (c *Client) AnalyzeImage(ctx context.Context, imageData []byte, prompt stri
 		},
 	}
 
-	result, err := c.client.Models.GenerateContent(ctx, c.modelName, []*genai.Content{{Parts: parts}}, config)
+	result, err := c.client.Models.GenerateContent(
+		ctx,
+		c.modelName,
+		[]*genai.Content{{Parts: parts}},
+		config,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate content: %w", err)
 	}
@@ -91,4 +99,3 @@ func (c *Client) AnalyzeImage(ctx context.Context, imageData []byte, prompt stri
 		Features: response.Result,
 	}, nil
 }
-

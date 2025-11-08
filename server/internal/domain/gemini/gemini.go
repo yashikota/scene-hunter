@@ -14,4 +14,3 @@ type ImageAnalysisResult struct {
 type Gemini interface {
 	AnalyzeImage(ctx context.Context, imageData []byte, prompt string) (*ImageAnalysisResult, error)
 }
-
