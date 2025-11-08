@@ -37,8 +37,6 @@ func TestRepository_Create(t *testing.T) {
 	t.Parallel()
 	_, _ = setupTestRepository(t)
 
-	// Note: This test needs domain.Room type
-	// For now, we'll skip the actual test implementation
 	t.Skip("Test requires proper domain.Room setup")
 }
 

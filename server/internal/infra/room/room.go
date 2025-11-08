@@ -4,7 +4,6 @@ package room
 import (
 	"context"
 	"encoding/json"
-	stderrors "errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -88,7 +87,7 @@ func (r *Repository) Get(ctx context.Context, roomID uuid.UUID) (*domainroom.Roo
 
 	data, err := r.kvs.Get(ctx, key)
 	if err != nil {
-		if stderrors.Is(err, domainkvs.ErrNotFound) {
+		if errors.Is(err, domainkvs.ErrNotFound) {
 			return nil, errors.Errorf("%w: id=%s", domainroom.ErrRoomNotFound, roomID)
 		}
 
@@ -111,13 +110,9 @@ func (r *Repository) Get(ctx context.Context, roomID uuid.UUID) (*domainroom.Roo
 // the likelihood of concurrent updates is low, this approach is acceptable.
 func (r *Repository) Update(ctx context.Context, room *domainroom.Room) error {
 	// Check if room exists
-	exists, err := r.Exists(ctx, room.ID)
+	_, err := r.Get(ctx, room.ID)
 	if err != nil {
-		return errors.Errorf("failed to check room existence: %w", err)
-	}
-
-	if !exists {
-		return errors.Errorf("%w: id=%s", domainroom.ErrRoomNotFound, room.ID)
+		return err
 	}
 
 	// Update timestamp
@@ -162,22 +157,16 @@ func (r *Repository) Delete(ctx context.Context, roomID uuid.UUID) error {
 		return errors.Errorf("failed to delete room from KVS: %w", err)
 	}
 
-	// Delete room code mapping
+	// Delete room code mapping (ignore error since room data is already deleted)
 	codeKey := roomCodeKey(room.Code)
-
-	err = r.kvs.Delete(ctx, codeKey)
-	if err != nil {
-		// Log error but don't fail the operation
-		// The room data has already been deleted
-		return errors.Errorf("failed to delete room code from KVS: %w", err)
-	}
+	_ = r.kvs.Delete(ctx, codeKey)
 
 	return nil
 }
 
 // Exists checks if a room exists in KVS.
-func (r *Repository) Exists(ctx context.Context, id uuid.UUID) (bool, error) {
-	key := roomKey(id)
+func (r *Repository) Exists(ctx context.Context, roomID uuid.UUID) (bool, error) {
+	key := roomKey(roomID)
 
 	exists, err := r.kvs.Exists(ctx, key)
 	if err != nil {

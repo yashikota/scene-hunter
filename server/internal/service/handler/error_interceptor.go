@@ -2,12 +2,10 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 
 	"connectrpc.com/connect"
-	goerrors "github.com/go-errors/errors"
-	utilErrors "github.com/yashikota/scene-hunter/server/internal/util/errors"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 // errorLoggingInterceptor logs errors with stack traces.
@@ -50,13 +48,13 @@ func (i *errorLoggingInterceptor) logError(ctx context.Context, req connect.AnyR
 	}
 
 	// Try to extract stack trace from go-errors
-	goErr := &goerrors.Error{}
+	goErr := &errors.Error{}
 	if errors.As(baseErr, &goErr) {
 		frames := goErr.StackFrames()
 
-		stackFrames := make([]utilErrors.StackFrame, len(frames))
+		stackFrames := make([]errors.StackFrame, len(frames))
 		for idx, frame := range frames {
-			stackFrames[idx] = utilErrors.StackFrame{
+			stackFrames[idx] = errors.StackFrame{
 				File:           frame.File,
 				LineNumber:     frame.LineNumber,
 				Name:           frame.Name,

@@ -35,6 +35,7 @@ func NewService(repo domainroom.Repository) *Service {
 // generateRoomCode generates a random 6-digit room code.
 func generateRoomCode() (string, error) {
 	var codeSb strings.Builder
+
 	codeSb.Grow(roomCodeLength)
 
 	for range roomCodeLength {
@@ -159,8 +160,22 @@ func (s *Service) UpdateRoom(
 	}
 
 	// Update room code if provided
+	// Repository layer handles the room_code mapping update atomically
 	if protoRoom.GetRoomCode() != "" {
 		room.Code = protoRoom.GetRoomCode()
+	}
+
+	// Parse and update expiration time if provided
+	if protoRoom.GetExpiredAt() != "" {
+		expiredAt, err := time.Parse(time.RFC3339, protoRoom.GetExpiredAt())
+		if err != nil {
+			return nil, connect.NewError(
+				connect.CodeInvalidArgument,
+				errors.Errorf("invalid expired_at format: %w", err),
+			)
+		}
+
+		room.ExpiredAt = expiredAt
 	}
 
 	// Update room in repository

@@ -1,9 +1,10 @@
 version: "2"
 linters:
   default: all
+  enable:
+    - wsl_v5
   disable:
-    - wsl
-    - depguard
+    - wsl # v5を使うため
     - exhaustruct # 構造体のフィールドが不足していると警告されるので
     - mnd # マジックナンバーがあると警告されるので
     - ireturn # インターフェースを返す必要があるときに警告されるので
@@ -12,6 +13,21 @@ linters:
     - cyclop # テスト等で複雑になると警告されるので
   exclusions:
     generated: lax
+  settings:
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 2
+    depguard:
+      rules:
+        main:
+          deny:
+          - pkg: "github.com/stretchr/testify/assert"
+            desc: "Use github.com/stretchr/testify/require instead of github.com/stretchr/testify/assert"
+          - pkg: "io/ioutil"
+            desc: "Use corresponding 'os' or 'io' functions instead"
+          - pkg: "errors"
+            desc: "Use github.com/yashikota/scene-hunter/server/internal/util/errors instead of errors package"
 formatters:
   enable:
     - gci

@@ -2,13 +2,13 @@ package status_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	"github.com/yashikota/scene-hunter/server/internal/domain/health"
 	"github.com/yashikota/scene-hunter/server/internal/service/status"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 type mockChecker struct {
@@ -39,7 +39,6 @@ func (m *mockChrono) Now() time.Time {
 func TestService_Status(t *testing.T) {
 	t.Parallel()
 
-	//nolint:err113 // テストコードでは動的エラーを許容
 	tests := []struct {
 		name           string
 		checkers       []mockChecker
