@@ -158,10 +158,9 @@ func (s *Service) UpdateRoom(
 		)
 	}
 
-	// Update room code if provided
-	if protoRoom.GetRoomCode() != "" {
-		room.Code = protoRoom.GetRoomCode()
-	}
+	// Note: room.Code は不変であるべきなため、ここでは更新しません。
+	// 更新を許可すると、リポジトリ層で room_code のマッピングをアトミックに
+	// 更新する複雑な処理が必要になり、データ不整合を招く可能性があります。
 
 	// Update room in repository
 	err = s.repo.Update(ctx, room)

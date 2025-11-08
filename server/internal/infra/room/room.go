@@ -66,14 +66,14 @@ func (r *Repository) Create(ctx context.Context, room *domainroom.Room) error {
 
 	roomSet, err := r.kvs.SetNX(ctx, roomKey, string(data), ttl)
 	if err != nil {
-		// Clean up the room code reservation
+		// Clean up the room code reservation (ignore error)
 		_ = r.kvs.Delete(ctx, codeKey)
 
 		return fmt.Errorf("failed to save room to KVS: %w", err)
 	}
 
 	if !roomSet {
-		// Clean up the room code reservation
+		// Clean up the room code reservation (ignore error)
 		_ = r.kvs.Delete(ctx, codeKey)
 
 		return fmt.Errorf("%w: id=%s", domainroom.ErrRoomAlreadyExists, room.ID)
@@ -109,6 +109,7 @@ func (r *Repository) Get(ctx context.Context, roomID uuid.UUID) (*domainroom.Roo
 // Note: There is a potential race condition between Exists check and Set operation.
 // However, since updates are typically initiated by a single user/session and
 // the likelihood of concurrent updates is low, this approach is acceptable.
+// Note: room.Code is immutable and will not be updated. The room_code mapping remains unchanged.
 func (r *Repository) Update(ctx context.Context, room *domainroom.Room) error {
 	// Check if room exists
 	exists, err := r.Exists(ctx, room.ID)
@@ -162,15 +163,9 @@ func (r *Repository) Delete(ctx context.Context, roomID uuid.UUID) error {
 		return fmt.Errorf("failed to delete room from KVS: %w", err)
 	}
 
-	// Delete room code mapping
+	// Delete room code mapping (ignore error since room data is already deleted)
 	codeKey := roomCodeKey(room.Code)
-
-	err = r.kvs.Delete(ctx, codeKey)
-	if err != nil {
-		// Log error but don't fail the operation
-		// The room data has already been deleted
-		return fmt.Errorf("failed to delete room code from KVS: %w", err)
-	}
+	_ = r.kvs.Delete(ctx, codeKey)
 
 	return nil
 }
