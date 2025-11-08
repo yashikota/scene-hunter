@@ -65,6 +65,10 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 
 	val, err := result.ToString()
 	if err != nil {
+		if valkey.IsValkeyNil(err) {
+			return "", domainkvs.ErrNotFound
+		}
+
 		return "", fmt.Errorf("get failed: %w", err)
 	}
 
@@ -86,6 +90,44 @@ func (c *Client) Set(ctx context.Context, key string, value string, ttl time.Dur
 	}
 
 	return nil
+}
+
+// SetNX sets a key-value pair only if the key does not exist.
+// Returns true if the key was set, false if the key already exists.
+func (c *Client) SetNX(
+	ctx context.Context,
+	key string,
+	value string,
+	ttl time.Duration,
+) (bool, error) {
+	var cmd valkey.Completed
+
+	if ttl > 0 {
+		cmd = c.client.B().Set().Key(key).Value(value).Nx().Ex(ttl).Build()
+	} else {
+		cmd = c.client.B().Set().Key(key).Value(value).Nx().Build()
+	}
+
+	result := c.client.Do(ctx, cmd)
+
+	err := result.Error()
+	if err != nil {
+		if valkey.IsValkeyNil(err) {
+			// Key already exists
+			return false, nil
+		}
+
+		return false, fmt.Errorf("setnx failed: %w", err)
+	}
+
+	// Check if the operation succeeded
+	str, err := result.ToString()
+	if err != nil {
+		// If we can't parse the response, return error
+		return false, fmt.Errorf("failed to parse setnx response: %w", err)
+	}
+
+	return str == "OK", nil
 }
 
 func (c *Client) Delete(ctx context.Context, key string) error {

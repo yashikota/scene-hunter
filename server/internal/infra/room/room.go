@@ -4,6 +4,7 @@ package room
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -29,16 +30,17 @@ func roomKey(id uuid.UUID) string {
 	return "room:" + id.String()
 }
 
+// roomCodeKey generates the KVS key for a room code.
+func roomCodeKey(code string) string {
+	return "room_code:" + code
+}
+
 // Create saves a new room to KVS.
 func (r *Repository) Create(ctx context.Context, room *domainroom.Room) error {
-	// Check if room already exists
-	exists, err := r.Exists(ctx, room.ID)
-	if err != nil {
-		return fmt.Errorf("failed to check room existence: %w", err)
-	}
-
-	if exists {
-		return fmt.Errorf("%w: %s", domainroom.ErrRoomAlreadyExists, room.ID)
+	// Calculate TTL from expiration time
+	ttl := time.Until(room.ExpiredAt)
+	if ttl <= 0 {
+		return domainroom.ErrRoomExpired
 	}
 
 	// Serialize room to JSON
@@ -47,29 +49,49 @@ func (r *Repository) Create(ctx context.Context, room *domainroom.Room) error {
 		return fmt.Errorf("failed to marshal room: %w", err)
 	}
 
-	// Calculate TTL from expiration time
-	ttl := time.Until(room.ExpiredAt)
-	if ttl <= 0 {
-		return domainroom.ErrRoomExpired
+	// First, try to reserve the room code
+	codeKey := roomCodeKey(room.Code)
+
+	codeSet, err := r.kvs.SetNX(ctx, codeKey, room.ID.String(), ttl)
+	if err != nil {
+		return fmt.Errorf("failed to reserve room code: %w", err)
 	}
 
-	// Save to KVS with TTL
-	key := roomKey(room.ID)
+	if !codeSet {
+		return fmt.Errorf("%w: code=%s", domainroom.ErrRoomAlreadyExists, room.Code)
+	}
 
-	err = r.kvs.Set(ctx, key, string(data), ttl)
+	// Then, save the room data atomically
+	roomKey := roomKey(room.ID)
+
+	roomSet, err := r.kvs.SetNX(ctx, roomKey, string(data), ttl)
 	if err != nil {
+		// Clean up the room code reservation
+		_ = r.kvs.Delete(ctx, codeKey)
+
 		return fmt.Errorf("failed to save room to KVS: %w", err)
+	}
+
+	if !roomSet {
+		// Clean up the room code reservation
+		_ = r.kvs.Delete(ctx, codeKey)
+
+		return fmt.Errorf("%w: id=%s", domainroom.ErrRoomAlreadyExists, room.ID)
 	}
 
 	return nil
 }
 
 // Get retrieves a room from KVS by ID.
-func (r *Repository) Get(ctx context.Context, id uuid.UUID) (*domainroom.Room, error) {
-	key := roomKey(id)
+func (r *Repository) Get(ctx context.Context, roomID uuid.UUID) (*domainroom.Room, error) {
+	key := roomKey(roomID)
 
 	data, err := r.kvs.Get(ctx, key)
 	if err != nil {
+		if errors.Is(err, domainkvs.ErrNotFound) {
+			return nil, fmt.Errorf("%w: id=%s", domainroom.ErrRoomNotFound, roomID)
+		}
+
 		return nil, fmt.Errorf("failed to get room from KVS: %w", err)
 	}
 
@@ -84,6 +106,9 @@ func (r *Repository) Get(ctx context.Context, id uuid.UUID) (*domainroom.Room, e
 }
 
 // Update updates an existing room in KVS.
+// Note: There is a potential race condition between Exists check and Set operation.
+// However, since updates are typically initiated by a single user/session and
+// the likelihood of concurrent updates is low, this approach is acceptable.
 func (r *Repository) Update(ctx context.Context, room *domainroom.Room) error {
 	// Check if room exists
 	exists, err := r.Exists(ctx, room.ID)
@@ -92,7 +117,7 @@ func (r *Repository) Update(ctx context.Context, room *domainroom.Room) error {
 	}
 
 	if !exists {
-		return fmt.Errorf("%w: %s", domainroom.ErrRoomNotFound, room.ID)
+		return fmt.Errorf("%w: id=%s", domainroom.ErrRoomNotFound, room.ID)
 	}
 
 	// Update timestamp
@@ -110,7 +135,7 @@ func (r *Repository) Update(ctx context.Context, room *domainroom.Room) error {
 		return domainroom.ErrRoomExpired
 	}
 
-	// Save to KVS with TTL
+	// Save to KVS with TTL (overwrites existing key)
 	key := roomKey(room.ID)
 
 	err = r.kvs.Set(ctx, key, string(data), ttl)
@@ -122,20 +147,37 @@ func (r *Repository) Update(ctx context.Context, room *domainroom.Room) error {
 }
 
 // Delete removes a room from KVS.
-func (r *Repository) Delete(ctx context.Context, id uuid.UUID) error {
-	key := roomKey(id)
+func (r *Repository) Delete(ctx context.Context, roomID uuid.UUID) error {
+	// Get room first to retrieve the room code
+	room, err := r.Get(ctx, roomID)
+	if err != nil {
+		return err
+	}
 
-	err := r.kvs.Delete(ctx, key)
+	// Delete room data
+	key := roomKey(roomID)
+
+	err = r.kvs.Delete(ctx, key)
 	if err != nil {
 		return fmt.Errorf("failed to delete room from KVS: %w", err)
+	}
+
+	// Delete room code mapping
+	codeKey := roomCodeKey(room.Code)
+
+	err = r.kvs.Delete(ctx, codeKey)
+	if err != nil {
+		// Log error but don't fail the operation
+		// The room data has already been deleted
+		return fmt.Errorf("failed to delete room code from KVS: %w", err)
 	}
 
 	return nil
 }
 
 // Exists checks if a room exists in KVS.
-func (r *Repository) Exists(ctx context.Context, id uuid.UUID) (bool, error) {
-	key := roomKey(id)
+func (r *Repository) Exists(ctx context.Context, roomID uuid.UUID) (bool, error) {
+	key := roomKey(roomID)
 
 	exists, err := r.kvs.Exists(ctx, key)
 	if err != nil {
