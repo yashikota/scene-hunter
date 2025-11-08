@@ -7,18 +7,8 @@ import (
 
 	"connectrpc.com/connect"
 	goerrors "github.com/go-errors/errors"
+	utilErrors "github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
-
-// StackFrame represents a single stack frame for structured logging.
-//
-//nolint:tagliatelle // Use uppercase field names to match reference implementation
-type StackFrame struct {
-	File           string  `json:"File"`
-	LineNumber     int     `json:"LineNumber"`
-	Name           string  `json:"Name"`
-	Package        string  `json:"Package"`
-	ProgramCounter uintptr `json:"ProgramCounter"`
-}
 
 // errorLoggingInterceptor logs errors with stack traces.
 type errorLoggingInterceptor struct {
@@ -64,9 +54,9 @@ func (i *errorLoggingInterceptor) logError(ctx context.Context, req connect.AnyR
 	if errors.As(baseErr, &goErr) {
 		frames := goErr.StackFrames()
 
-		stackFrames := make([]StackFrame, len(frames))
+		stackFrames := make([]utilErrors.StackFrame, len(frames))
 		for idx, frame := range frames {
-			stackFrames[idx] = StackFrame{
+			stackFrames[idx] = utilErrors.StackFrame{
 				File:           frame.File,
 				LineNumber:     frame.LineNumber,
 				Name:           frame.Name,

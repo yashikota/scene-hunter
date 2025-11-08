@@ -3,7 +3,6 @@ package errors
 
 import (
 	"errors"
-	"fmt"
 
 	goerrors "github.com/go-errors/errors"
 )
@@ -40,15 +39,4 @@ func AsGoError(err error) (*goerrors.Error, bool) {
 	}
 
 	return nil, false
-}
-
-// WrapErrorf wraps an error with a formatted message and stack trace.
-func WrapErrorf(err error, format string, args ...any) error {
-	if err == nil {
-		return nil
-	}
-
-	msg := fmt.Sprintf(format, args...)
-
-	return goerrors.Wrap(fmt.Errorf("%s: %w", msg, err), 1)
 }
