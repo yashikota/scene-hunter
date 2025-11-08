@@ -2,92 +2,60 @@
 package main
 
 import (
-	"context"
-	"errors"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	slogchi "github.com/samber/slog-chi"
-)
-
-const (
-	readTimeout     = 15 * time.Second
-	writeTimeout    = 15 * time.Second
-	idleTimeout     = 60 * time.Second
-	shutdownTimeout = 10 * time.Second
+	"github.com/yashikota/scene-hunter/server/util/config"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 func main() {
-	// Logger
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	config := slogchi.Config{
-		WithSpanID:         true,
-		WithTraceID:        true,
-		DefaultLevel:       slog.LevelInfo,
-		ClientErrorLevel:   slog.LevelWarn,
-		ServerErrorLevel:   slog.LevelError,
-		WithUserAgent:      true,
-		WithRequestID:      true,
-		WithRequestBody:    false,
-		WithRequestHeader:  false,
-		WithResponseBody:   false,
-		WithResponseHeader: false,
-		Filters:            nil,
-	}
-	router := chi.NewRouter()
-	router.Use(slogchi.NewWithConfig(logger, config))
-	router.Use(middleware.Recoverer)
+	cfg := config.LoadConfig()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: cfg.Logger.Level,
+	}))
+	slog.SetDefault(logger)
 
-	// Health check endpoint
-	router.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
+	// Initialize router
+	mux := chi.NewRouter()
+	mux.Use(middleware.Recoverer)
+	mux.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+	mux.Use(slogchi.NewWithConfig(logger, slogchi.Config{
+		WithSpanID:       true,
+		WithTraceID:      true,
+		DefaultLevel:     slog.LevelInfo,
+		ClientErrorLevel: slog.LevelWarn,
+		ServerErrorLevel: slog.LevelError,
+		WithUserAgent:    true,
+		WithRequestID:    true,
+	}))
 
-		_, err := w.Write([]byte(time.Now().Format(time.RFC3339)))
-		if err != nil {
-			logger.Error("failed to write response", "error", err)
-		}
-	})
-
-	// Create server
-	srv := &http.Server{ //nolint:exhaustruct
-		Addr:         ":8686",
-		Handler:      router,
-		ReadTimeout:  readTimeout,
-		WriteTimeout: writeTimeout,
-		IdleTimeout:  idleTimeout,
+	// Start server
+	server := &http.Server{
+		Addr:         cfg.Server.Port,
+		Handler:      h2c.NewHandler(mux, &http2.Server{}),
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
-	// Start server in a goroutine
-	go func() {
-		log.Printf("Server starting on http://localhost:%s", srv.Addr)
-		err := srv.ListenAndServe()
+	logger.Info("starting scene-hunter server on http://localhost" + cfg.Server.Port)
 
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Printf("server error: %v", err)
-		}
-	}()
-
-	// Graceful shutdown
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	<-sigChan
-
-	log.Println("Shutting down server...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-	defer cancel()
-
-	err := srv.Shutdown(ctx)
+	err := server.ListenAndServe()
 	if err != nil {
-		log.Printf("Server forced to shutdown: %v", err)
+		panic(err)
 	}
-
-	log.Println("Server exited")
 }

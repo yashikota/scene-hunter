@@ -6,10 +6,12 @@ require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1
 	connectrpc.com/connect v1.19.1
 	github.com/go-chi/chi/v5 v5.2.3
+	github.com/go-chi/cors v1.2.2
 	github.com/go-errors/errors v1.5.1
 	github.com/google/uuid v1.6.0
 	github.com/samber/slog-chi v1.17.0
 	github.com/spf13/viper v1.21.0
+	golang.org/x/net v0.37.0
 	google.golang.org/protobuf v1.36.10
 )
 
@@ -27,5 +29,5 @@ require (
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 )

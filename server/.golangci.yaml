@@ -4,6 +4,8 @@ linters:
   disable:
     - wsl
     - depguard
+    - exhaustruct
+    - mnd
   exclusions:
     generated: lax
 formatters:

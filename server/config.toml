@@ -1,0 +1,14 @@
+[database]
+host = "localhost"
+port = 5432
+user = "postgres"
+dbname = "scene-hunter"
+sslmode = "disable"
+
+[kvs]
+host = "localhost"
+port = 6379
+
+[blob]
+host = "localhost"
+port = 9000
