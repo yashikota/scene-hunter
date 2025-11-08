@@ -6,27 +6,24 @@ import (
 	"time"
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
-	"k8s.io/utils/clock"
+	"github.com/yashikota/scene-hunter/server/internal/domain/chrono"
 )
 
-// Service is the health check service.
 type Service struct {
-	clock clock.Clock
+	chrono chrono.Chrono
 }
 
-// NewService creates a new health check service.
-func NewService(clk clock.Clock) *Service {
+func NewService(chrono chrono.Chrono) *Service {
 	return &Service{
-		clock: clk,
+		chrono: chrono,
 	}
 }
 
-// Health implements the health check endpoint.
 func (s *Service) Health(
 	_ context.Context,
 	_ *scene_hunterv1.HealthRequest,
 ) (*scene_hunterv1.HealthResponse, error) {
-	now := s.clock.Now().Format(time.RFC3339)
+	now := s.chrono.Now().Format(time.RFC3339)
 
 	return &scene_hunterv1.HealthResponse{
 		Status:    "ok",

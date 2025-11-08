@@ -8,13 +8,11 @@ require (
 	connectrpc.com/validate v0.6.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/cors v1.2.2
-	github.com/go-errors/errors v1.5.1
 	github.com/google/uuid v1.6.0
 	github.com/samber/slog-chi v1.17.0
 	github.com/spf13/viper v1.21.0
 	golang.org/x/net v0.46.0
 	google.golang.org/protobuf v1.36.10
-	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
 )
 
 require (
@@ -40,4 +38,5 @@ require (
 	golang.org/x/text v0.30.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250922171735-9219d122eba9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250922171735-9219d122eba9 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
