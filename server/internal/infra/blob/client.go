@@ -11,6 +11,7 @@ import (
 	"time"
 
 	domainblob "github.com/yashikota/scene-hunter/server/internal/domain/blob"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 const defaultTimeout = 5 * time.Second
@@ -38,12 +39,12 @@ func NewClient(baseURL string, timeout time.Duration) domainblob.Blob {
 func (c *Client) Ping(ctx context.Context) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/health", nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return errors.Errorf("failed to create request: %w", err)
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
+		return errors.Errorf("failed to send request: %w", err)
 	}
 
 	defer func() {
@@ -51,8 +52,7 @@ func (c *Client) Ping(ctx context.Context) error {
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		//nolint:err113 // HTTPステータスコードを含むエラーメッセージが必要
-		return fmt.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
+		return errors.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
 	}
 
 	return nil
@@ -62,7 +62,7 @@ func (c *Client) Ping(ctx context.Context) error {
 func (c *Client) Check(ctx context.Context) error {
 	err := c.Ping(ctx)
 	if err != nil {
-		return fmt.Errorf("rustfs ping failed: %w", err)
+		return errors.Errorf("rustfs ping failed: %w", err)
 	}
 
 	return nil
@@ -78,7 +78,7 @@ func (c *Client) Put(ctx context.Context, key string, data io.Reader, ttl time.D
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, data)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return errors.Errorf("failed to create request: %w", err)
 	}
 
 	// TTLが指定されている場合はヘッダーに設定
@@ -88,7 +88,7 @@ func (c *Client) Put(ctx context.Context, key string, data io.Reader, ttl time.D
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
+		return errors.Errorf("failed to send request: %w", err)
 	}
 
 	defer func() {
@@ -96,8 +96,7 @@ func (c *Client) Put(ctx context.Context, key string, data io.Reader, ttl time.D
 	}()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		//nolint:err113 // HTTPステータスコードを含むエラーメッセージが必要
-		return fmt.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
+		return errors.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
 	}
 
 	return nil
@@ -108,18 +107,18 @@ func (c *Client) Get(ctx context.Context, key string) (io.ReadCloser, error) {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, errors.Errorf("failed to create request: %w", err)
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return nil, errors.Errorf("failed to send request: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		_ = resp.Body.Close()
-		//nolint:err113 // HTTPステータスコードを含むエラーメッセージが必要
-		return nil, fmt.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
+
+		return nil, errors.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
 	}
 
 	return resp.Body, nil
@@ -130,12 +129,12 @@ func (c *Client) Delete(ctx context.Context, key string) error {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return errors.Errorf("failed to create request: %w", err)
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
+		return errors.Errorf("failed to send request: %w", err)
 	}
 
 	defer func() {
@@ -143,8 +142,7 @@ func (c *Client) Delete(ctx context.Context, key string) error {
 	}()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-		//nolint:err113 // HTTPステータスコードを含むエラーメッセージが必要
-		return fmt.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
+		return errors.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
 	}
 
 	return nil
@@ -155,12 +153,12 @@ func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
 	if err != nil {
-		return false, fmt.Errorf("failed to create request: %w", err)
+		return false, errors.Errorf("failed to create request: %w", err)
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return false, fmt.Errorf("failed to send request: %w", err)
+		return false, errors.Errorf("failed to send request: %w", err)
 	}
 
 	defer func() {
@@ -175,8 +173,7 @@ func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 		return false, nil
 	}
 
-	//nolint:err113 // HTTPステータスコードを含むエラーメッセージが必要
-	return false, fmt.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
+	return false, errors.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
 }
 
 func (c *Client) List(ctx context.Context, prefix string) ([]domainblob.ObjectInfo, error) {
@@ -184,7 +181,7 @@ func (c *Client) List(ctx context.Context, prefix string) ([]domainblob.ObjectIn
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, errors.Errorf("failed to create request: %w", err)
 	}
 
 	if prefix != "" {
@@ -195,7 +192,7 @@ func (c *Client) List(ctx context.Context, prefix string) ([]domainblob.ObjectIn
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return nil, errors.Errorf("failed to send request: %w", err)
 	}
 
 	defer func() {
@@ -203,8 +200,7 @@ func (c *Client) List(ctx context.Context, prefix string) ([]domainblob.ObjectIn
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		//nolint:err113 // HTTPステータスコードを含むエラーメッセージが必要
-		return nil, fmt.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
+		return nil, errors.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
 	}
 
 	type listResponse struct {
@@ -219,7 +215,7 @@ func (c *Client) List(ctx context.Context, prefix string) ([]domainblob.ObjectIn
 
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, errors.Errorf("failed to decode response: %w", err)
 	}
 
 	result := make([]domainblob.ObjectInfo, 0, len(response.Objects))
