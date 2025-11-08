@@ -21,4 +21,4 @@ packages:
 - name: suzuki-shunsuke/pinact@v3.4.2
 - name: yashikota/genenv@v0.5.0
 - name: ariga/atlas@v0.38.0
-- name: sqlc-dev/sqlc@v1.29.0
+- name: sqlc-dev/sqlc@v1.30.0
