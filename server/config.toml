@@ -13,3 +13,6 @@ url = "valkey:6379"
 
 [blob]
 url = "http://rustfs:9000"
+
+[gemini]
+model = "gemini-2.0-flash"

@@ -31,13 +31,28 @@ func NewPgxClient(ctx context.Context, connString string) (domaindb.DB, error) {
 	}, nil
 }
 
-func (c *PgxClient) Ping() error {
-	err := c.pool.Ping(context.Background())
+func (c *PgxClient) Ping(ctx context.Context) error {
+	err := c.pool.Ping(ctx)
 	if err != nil {
 		return fmt.Errorf("ping failed: %w", err)
 	}
 
 	return nil
+}
+
+// Check implements health.Checker interface.
+func (c *PgxClient) Check(ctx context.Context) error {
+	err := c.Ping(ctx)
+	if err != nil {
+		return fmt.Errorf("postgres ping failed: %w", err)
+	}
+
+	return nil
+}
+
+// Name implements health.Checker interface.
+func (c *PgxClient) Name() string {
+	return "postgres"
 }
 
 func (c *PgxClient) Close() error {

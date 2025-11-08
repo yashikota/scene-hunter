@@ -99,7 +99,7 @@ func TestPgxClient_Ping(t *testing.T) {
 		_ = client.Close()
 	}()
 
-	err = client.Ping()
+	err = client.Ping(ctx)
 	if err != nil {
 		t.Errorf("Ping() error = %v, want nil", err)
 	}

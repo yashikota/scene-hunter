@@ -4,7 +4,7 @@ package db
 import "context"
 
 type DB interface {
-	Ping() error
+	Ping(ctx context.Context) error
 	Close() error
 	Exec(ctx context.Context, sql string, args ...any) error
 	Query(ctx context.Context, sql string, args ...any) (Rows, error)

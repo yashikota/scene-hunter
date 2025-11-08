@@ -187,11 +187,11 @@ const file_scene_hunter_v1_status_proto_rawDesc = "" +
 	"\rServiceStatus\x12\x1b\n" +
 	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12\x18\n" +
 	"\ahealthy\x18\x02 \x01(\bR\ahealthy\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"\xd0\x01\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"\xd4\x01\n" +
 	"\x0eStatusResponse\x12'\n" +
 	"\x0foverall_healthy\x18\x01 \x01(\bR\x0eoverallHealthy\x12:\n" +
-	"\bservices\x18\x02 \x03(\v2\x1e.scene_hunter.v1.ServiceStatusR\bservices\x12Y\n" +
-	"\ttimestamp\x18\x03 \x01(\tB;\xbaH8r624^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{2}:\\d{2}$R\ttimestamp2Z\n" +
+	"\bservices\x18\x02 \x03(\v2\x1e.scene_hunter.v1.ServiceStatusR\bservices\x12]\n" +
+	"\ttimestamp\x18\x03 \x01(\tB?\xbaH<r:28^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(Z|[+-]\\d{2}:\\d{2})$R\ttimestamp2Z\n" +
 	"\rStatusService\x12I\n" +
 	"\x06Status\x12\x1e.scene_hunter.v1.StatusRequest\x1a\x1f.scene_hunter.v1.StatusResponseB\xc8\x01\n" +
 	"\x13com.scene_hunter.v1B\vStatusProtoP\x01ZKgithub.com/yashikota/scene-hunter/server/gen/scene_hunter/v1;scene_hunterv1\xa2\x02\x03SXX\xaa\x02\x0eSceneHunter.V1\xca\x02\x0eSceneHunter\\V1\xe2\x02\x1aSceneHunter\\V1\\GPBMetadata\xea\x02\x0fSceneHunter::V1b\x06proto3"

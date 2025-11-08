@@ -44,6 +44,21 @@ func (c *Client) Ping(ctx context.Context) error {
 	return nil
 }
 
+// Check implements health.Checker interface.
+func (c *Client) Check(ctx context.Context) error {
+	err := c.Ping(ctx)
+	if err != nil {
+		return fmt.Errorf("valkey health check failed: %w", err)
+	}
+
+	return nil
+}
+
+// Name implements health.Checker interface.
+func (c *Client) Name() string {
+	return "valkey"
+}
+
 func (c *Client) Get(ctx context.Context, key string) (string, error) {
 	cmd := c.client.B().Get().Key(key).Build()
 	result := c.client.Do(ctx, cmd)

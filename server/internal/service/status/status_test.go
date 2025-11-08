@@ -11,25 +11,6 @@ import (
 	"github.com/yashikota/scene-hunter/server/internal/service/status"
 )
 
-type mockCheckerInterface interface {
-	Check(ctx context.Context) error
-	Name() string
-}
-
-func convertToHealthCheckers(checkers []mockCheckerInterface) []health.Checker {
-	result := make([]health.Checker, len(checkers))
-	for index, c := range checkers {
-		checker, ok := c.(health.Checker)
-		if !ok {
-			panic("failed to convert to health.Checker")
-		}
-
-		result[index] = checker
-	}
-
-	return result
-}
-
 type mockChecker struct {
 	name    string
 	checkFn func(ctx context.Context) error
@@ -113,14 +94,13 @@ func TestService_Status(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			// Convert mockChecker to health.Checker interface
-			checkers := make([]mockCheckerInterface, len(testCase.checkers))
+			checkers := make([]health.Checker, len(testCase.checkers))
 			for i := range testCase.checkers {
 				checkers[i] = &testCase.checkers[i]
 			}
 
 			chronoProvider := &mockChrono{mockTime: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)}
-			svc := status.NewService(convertToHealthCheckers(checkers), chronoProvider)
+			svc := status.NewService(checkers, chronoProvider)
 
 			got, err := svc.Status(context.Background(), &scene_hunterv1.StatusRequest{})
 			if err != nil {

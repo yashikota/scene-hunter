@@ -24,6 +24,7 @@ func InitializeDependencies(
 	dbClient, err := infradb.NewPgxClient(ctx, cfg.Database.ConnectionString(dbPassword))
 	if err != nil {
 		logger.Warn("failed to initialize database client", "error", err)
+		deps.DBError = err
 	} else {
 		deps.DBClient = dbClient
 
@@ -36,6 +37,7 @@ func InitializeDependencies(
 	kvsClient, err := infrakvs.NewClient(cfg.Kvs.URL, kvsPassword)
 	if err != nil {
 		logger.Warn("failed to initialize KVS client", "error", err)
+		deps.KVSError = err
 	} else {
 		deps.KVSClient = kvsClient
 
@@ -43,7 +45,7 @@ func InitializeDependencies(
 	}
 
 	// RustFS client
-	blobClient := infrablob.NewClient(cfg.Blob.URL)
+	blobClient := infrablob.NewClient(cfg.Blob.URL, 0)
 	deps.BlobClient = blobClient
 
 	logger.Info("blob client initialized successfully")
