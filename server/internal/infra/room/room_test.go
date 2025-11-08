@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
+	infrachrono "github.com/yashikota/scene-hunter/server/internal/infra/chrono"
 	infrakvs "github.com/yashikota/scene-hunter/server/internal/infra/kvs"
 	infraroom "github.com/yashikota/scene-hunter/server/internal/infra/room"
 	"github.com/yashikota/scene-hunter/server/util/config"
@@ -28,7 +29,8 @@ func setupTestRepository(t *testing.T) (domainroom.Repository, context.Context) 
 		t.Skipf("KVS ping failed: %v", err)
 	}
 
-	repo := infraroom.NewRepository(kvsClient)
+	chronoProvider := infrachrono.New()
+	repo := infraroom.NewRepository(kvsClient, chronoProvider)
 
 	return repo, ctx
 }

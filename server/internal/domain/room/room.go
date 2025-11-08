@@ -31,14 +31,13 @@ type Room struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-// NewRoom creates a new Room with the given code.
-func NewRoom(code string) *Room {
+// NewRoom creates a new Room with the given code and current time.
+func NewRoom(code string, now time.Time) *Room {
 	roomID, err := uuid.NewV7()
 	if err != nil {
 		panic(err)
 	}
 
-	now := time.Now()
 	expiredAt := now.Add(expirationHours * time.Hour)
 
 	return &Room{

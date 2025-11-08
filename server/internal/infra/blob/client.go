@@ -81,7 +81,6 @@ func (c *Client) Put(ctx context.Context, key string, data io.Reader, ttl time.D
 		return errors.Errorf("failed to create request: %w", err)
 	}
 
-	// TTLが指定されている場合はヘッダーに設定
 	if ttl > 0 {
 		req.Header.Set("X-Ttl-Seconds", strconv.FormatInt(int64(ttl.Seconds()), 10))
 	}

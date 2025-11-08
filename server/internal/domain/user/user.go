@@ -17,8 +17,8 @@ type User struct {
 	DeletedAt time.Time
 }
 
-// NewUser creates a new User with the given code and name.
-func NewUser(code, name string) *User {
+// NewUser creates a new User with the given code, name, and current time.
+func NewUser(code, name string, now time.Time) *User {
 	userID, err := uuid.NewV7()
 	if err != nil {
 		panic(err)
@@ -28,8 +28,8 @@ func NewUser(code, name string) *User {
 		ID:        userID,
 		Code:      code,
 		Name:      name,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: now,
+		UpdatedAt: now,
 		DeletedAt: time.Time{},
 	}
 }

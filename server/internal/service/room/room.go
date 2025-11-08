@@ -11,6 +11,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
+	domainchrono "github.com/yashikota/scene-hunter/server/internal/domain/chrono"
 	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
@@ -22,13 +23,15 @@ const (
 
 // Service implements the RoomService handler.
 type Service struct {
-	repo domainroom.Repository
+	repo   domainroom.Repository
+	chrono domainchrono.Chrono
 }
 
 // NewService creates a new room service.
-func NewService(repo domainroom.Repository) *Service {
+func NewService(repo domainroom.Repository, chrono domainchrono.Chrono) *Service {
 	return &Service{
-		repo: repo,
+		repo:   repo,
+		chrono: chrono,
 	}
 }
 
@@ -78,7 +81,7 @@ func (s *Service) CreateRoom(
 			)
 		}
 
-		room = domainroom.NewRoom(code)
+		room = domainroom.NewRoom(code, s.chrono.Now())
 
 		// Try to create the room
 		err = s.repo.Create(ctx, room)

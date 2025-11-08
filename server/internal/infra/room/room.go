@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	domainchrono "github.com/yashikota/scene-hunter/server/internal/domain/chrono"
 	domainkvs "github.com/yashikota/scene-hunter/server/internal/domain/kvs"
 	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
@@ -14,13 +15,15 @@ import (
 
 // Repository implements the room repository using KVS.
 type Repository struct {
-	kvs domainkvs.KVS
+	kvs    domainkvs.KVS
+	chrono domainchrono.Chrono
 }
 
 // NewRepository creates a new room repository.
-func NewRepository(kvs domainkvs.KVS) domainroom.Repository {
+func NewRepository(kvs domainkvs.KVS, chrono domainchrono.Chrono) domainroom.Repository {
 	return &Repository{
-		kvs: kvs,
+		kvs:    kvs,
+		chrono: chrono,
 	}
 }
 
@@ -115,8 +118,7 @@ func (r *Repository) Update(ctx context.Context, room *domainroom.Room) error {
 		return err
 	}
 
-	// Update timestamp
-	room.UpdatedAt = time.Now()
+	room.UpdatedAt = r.chrono.Now()
 
 	// Serialize room to JSON
 	data, err := json.Marshal(room)

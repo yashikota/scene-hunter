@@ -16,7 +16,6 @@ import (
 // ErrRoomNotFound is returned when the room is not found.
 var ErrRoomNotFound = errors.New("room not found")
 
-// TTL は画像の有効期限（1時間）.
 const TTL = 1 * time.Hour
 
 type Service struct {
@@ -35,7 +34,6 @@ func (s *Service) UploadImage(
 	ctx context.Context,
 	req *scene_hunterv1.UploadImageRequest,
 ) (*scene_hunterv1.UploadImageResponse, error) {
-	// room codeの存在確認
 	exists, err := s.kvsClient.Exists(ctx, req.GetRoomCode())
 	if err != nil {
 		return nil, connect.NewError(
@@ -51,7 +49,6 @@ func (s *Service) UploadImage(
 		)
 	}
 
-	// 画像データの作成とバリデーション
 	img, err := domainimage.NewImage(
 		req.GetRoomCode(),
 		req.GetContentType(),
@@ -64,7 +61,6 @@ func (s *Service) UploadImage(
 		)
 	}
 
-	// RustFSに保存
 	path := img.Path()
 
 	err = s.blobClient.Put(ctx, path, img.Reader(), TTL)
@@ -75,7 +71,6 @@ func (s *Service) UploadImage(
 		)
 	}
 
-	// レスポンス生成
 	return &scene_hunterv1.UploadImageResponse{
 		ImageId:   img.ID.String(),
 		ImagePath: path,

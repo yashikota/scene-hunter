@@ -11,7 +11,6 @@ import (
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
-// MaxImageSize は画像の最大サイズ（10MB）.
 const MaxImageSize = 10 * 1024 * 1024
 
 var (

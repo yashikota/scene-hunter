@@ -18,7 +18,7 @@ func NewClient(addr, password string) (domainkvs.KVS, error) {
 	client, err := valkey.NewClient(valkey.ClientOption{
 		InitAddress:  []string{addr},
 		Password:     password,
-		DisableCache: true, // miniredisやRESP2との互換性のためキャッシュを無効化
+		DisableCache: true,
 	})
 	if err != nil {
 		return nil, errors.Errorf("failed to create valkey client: %w", err)
