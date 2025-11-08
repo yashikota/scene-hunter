@@ -10,10 +10,10 @@ import (
 	"github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1/scene_hunterv1connect"
 	domainblob "github.com/yashikota/scene-hunter/server/internal/domain/blob"
 	domainchrono "github.com/yashikota/scene-hunter/server/internal/domain/chrono"
-	domaindb "github.com/yashikota/scene-hunter/server/internal/domain/db"
 	"github.com/yashikota/scene-hunter/server/internal/domain/health"
 	domainkvs "github.com/yashikota/scene-hunter/server/internal/domain/kvs"
 	"github.com/yashikota/scene-hunter/server/internal/infra/chrono"
+	infradb "github.com/yashikota/scene-hunter/server/internal/infra/db"
 	healthsvc "github.com/yashikota/scene-hunter/server/internal/service/health"
 	imagesvc "github.com/yashikota/scene-hunter/server/internal/service/image"
 	"github.com/yashikota/scene-hunter/server/internal/service/status"
@@ -35,7 +35,7 @@ func (f *failedChecker) Name() string {
 
 // Dependencies は外部依存を集約する構造体.
 type Dependencies struct {
-	DBClient   domaindb.DB
+	DBClient   *infradb.Client
 	DBError    error
 	KVSClient  domainkvs.KVS
 	KVSError   error
@@ -89,9 +89,7 @@ func buildHealthCheckers(deps *Dependencies) []health.Checker {
 	// DBクライアントのヘルスチェック
 	if deps.DBClient != nil {
 		// DBClient自体がhealth.Checkerを実装している
-		if checker, ok := deps.DBClient.(health.Checker); ok {
-			checkers = append(checkers, checker)
-		}
+		checkers = append(checkers, deps.DBClient)
 	} else if deps.DBError != nil {
 		checkers = append(checkers, &failedChecker{name: "postgres", err: deps.DBError})
 	}

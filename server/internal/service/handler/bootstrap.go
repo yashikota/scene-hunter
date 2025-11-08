@@ -21,7 +21,7 @@ func InitializeDependencies(
 	// PostgreSQL client
 	dbPassword := os.Getenv("POSTGRES_PASSWORD")
 
-	dbClient, err := infradb.NewPgxClient(ctx, cfg.Database.ConnectionString(dbPassword))
+	dbClient, err := infradb.NewClient(ctx, cfg.Database.ConnectionString(dbPassword))
 	if err != nil {
 		logger.Warn("failed to initialize database client", "error", err)
 		deps.DBError = err

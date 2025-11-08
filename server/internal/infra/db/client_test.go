@@ -45,8 +45,8 @@ func setupPostgres(ctx context.Context, t *testing.T) (string, func()) {
 	return connString, cleanup
 }
 
-// TestNewPgxClient はPostgreSQLクライアントが正常に作成できることをテストする.
-func TestNewPgxClient(t *testing.T) {
+// TestNewClient はPostgreSQLクライアントが正常に作成できることをテストする.
+func TestNewClient(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -54,13 +54,13 @@ func TestNewPgxClient(t *testing.T) {
 	connString, cleanup := setupPostgres(ctx, t)
 	defer cleanup()
 
-	client, err := db.NewPgxClient(ctx, connString)
+	client, err := db.NewClient(ctx, connString)
 	if err != nil {
-		t.Fatalf("NewPgxClient() error = %v, want nil", err)
+		t.Fatalf("NewClient() error = %v, want nil", err)
 	}
 
 	if client == nil {
-		t.Error("NewPgxClient() returned nil")
+		t.Error("NewClient() returned nil")
 	}
 
 	err = client.Close()
@@ -69,20 +69,20 @@ func TestNewPgxClient(t *testing.T) {
 	}
 }
 
-// TestNewPgxClient_InvalidConnectionString は無効な接続文字列でエラーが返されることをテストする.
-func TestNewPgxClient_InvalidConnectionString(t *testing.T) {
+// TestNewClient_InvalidConnectionString は無効な接続文字列でエラーが返されることをテストする.
+func TestNewClient_InvalidConnectionString(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 
-	_, err := db.NewPgxClient(ctx, "invalid connection string")
+	_, err := db.NewClient(ctx, "invalid connection string")
 	if err == nil {
-		t.Error("NewPgxClient() with invalid connection string should return error")
+		t.Error("NewClient() with invalid connection string should return error")
 	}
 }
 
-// TestPgxClient_Ping はPostgreSQLサーバーへの疎通確認が成功することをテストする.
-func TestPgxClient_Ping(t *testing.T) {
+// TestClient_Ping はPostgreSQLサーバーへの疎通確認が成功することをテストする.
+func TestClient_Ping(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -90,9 +90,9 @@ func TestPgxClient_Ping(t *testing.T) {
 	connString, cleanup := setupPostgres(ctx, t)
 	defer cleanup()
 
-	client, err := db.NewPgxClient(ctx, connString)
+	client, err := db.NewClient(ctx, connString)
 	if err != nil {
-		t.Fatalf("NewPgxClient() error = %v", err)
+		t.Fatalf("NewClient() error = %v", err)
 	}
 
 	defer func() {
@@ -105,8 +105,8 @@ func TestPgxClient_Ping(t *testing.T) {
 	}
 }
 
-// TestPgxClient_Exec はSQL実行（テーブル作成・データ挿入）が正常に動作することをテストする.
-func TestPgxClient_Exec(t *testing.T) {
+// TestClient_Exec はSQL実行（テーブル作成・データ挿入）が正常に動作することをテストする.
+func TestClient_Exec(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -114,7 +114,7 @@ func TestPgxClient_Exec(t *testing.T) {
 	connString, cleanup := setupPostgres(ctx, t)
 	defer cleanup()
 
-	client, err := db.NewPgxClient(ctx, connString)
+	client, err := db.NewClient(ctx, connString)
 	if err != nil {
 		t.Fatalf("NewPgxClient() error = %v", err)
 	}
@@ -145,9 +145,9 @@ func TestPgxClient_Exec(t *testing.T) {
 	}
 }
 
-// TestPgxClient_Query は複数行を返すクエリが正常に動作することをテストする.
+// TestClient_Query は複数行を返すクエリが正常に動作することをテストする.
 // テーブルを作成してデータを挿入し、それらを取得して検証する.
-func TestPgxClient_Query(t *testing.T) { //nolint:funlen,cyclop // テストケースが多いため許容
+func TestClient_Query(t *testing.T) { //nolint:funlen,cyclop // テストケースが多いため許容
 	t.Parallel()
 
 	ctx := context.Background()
@@ -155,7 +155,7 @@ func TestPgxClient_Query(t *testing.T) { //nolint:funlen,cyclop // テストケ�
 	connString, cleanup := setupPostgres(ctx, t)
 	defer cleanup()
 
-	client, err := db.NewPgxClient(ctx, connString)
+	client, err := db.NewClient(ctx, connString)
 	if err != nil {
 		t.Fatalf("NewPgxClient() error = %v", err)
 	}
@@ -238,8 +238,8 @@ func TestPgxClient_Query(t *testing.T) { //nolint:funlen,cyclop // テストケ�
 	}
 }
 
-// TestPgxClient_QueryRow は単一行を返すクエリが正常に動作することをテストする.
-func TestPgxClient_QueryRow(t *testing.T) {
+// TestClient_QueryRow は単一行を返すクエリが正常に動作することをテストする.
+func TestClient_QueryRow(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -247,7 +247,7 @@ func TestPgxClient_QueryRow(t *testing.T) {
 	connString, cleanup := setupPostgres(ctx, t)
 	defer cleanup()
 
-	client, err := db.NewPgxClient(ctx, connString)
+	client, err := db.NewClient(ctx, connString)
 	if err != nil {
 		t.Fatalf("NewPgxClient() error = %v", err)
 	}
@@ -290,8 +290,8 @@ func TestPgxClient_QueryRow(t *testing.T) {
 	}
 }
 
-// TestPgxClient_QueryRow_NotFound は存在しない行を取得した際にエラーが返されることをテストする.
-func TestPgxClient_QueryRow_NotFound(t *testing.T) {
+// TestClient_QueryRow_NotFound は存在しない行を取得した際にエラーが返されることをテストする.
+func TestClient_QueryRow_NotFound(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -299,7 +299,7 @@ func TestPgxClient_QueryRow_NotFound(t *testing.T) {
 	connString, cleanup := setupPostgres(ctx, t)
 	defer cleanup()
 
-	client, err := db.NewPgxClient(ctx, connString)
+	client, err := db.NewClient(ctx, connString)
 	if err != nil {
 		t.Fatalf("NewPgxClient() error = %v", err)
 	}
@@ -323,9 +323,9 @@ func TestPgxClient_QueryRow_NotFound(t *testing.T) {
 	}
 }
 
-// TestPgxClient_Transaction_Commit はトランザクションのコミットが正常に動作することをテストする.
+// TestClient_Transaction_Commit はトランザクションのコミットが正常に動作することをテストする.
 // 複数のSQL実行をトランザクション内で行い、コミット後に変更が反映されることを確認する.
-func TestPgxClient_Transaction_Commit(t *testing.T) {
+func TestClient_Transaction_Commit(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -333,7 +333,7 @@ func TestPgxClient_Transaction_Commit(t *testing.T) {
 	connString, cleanup := setupPostgres(ctx, t)
 	defer cleanup()
 
-	client, err := db.NewPgxClient(ctx, connString)
+	client, err := db.NewClient(ctx, connString)
 	if err != nil {
 		t.Fatalf("NewPgxClient() error = %v", err)
 	}
@@ -368,7 +368,7 @@ func TestPgxClient_Transaction_Commit(t *testing.T) {
 	}
 
 	// Transfer money
-	err = transaction.Exec(
+	_, err = transaction.Exec(
 		ctx,
 		"UPDATE test_accounts SET balance = balance - $1 WHERE id = $2",
 		500,
@@ -378,7 +378,7 @@ func TestPgxClient_Transaction_Commit(t *testing.T) {
 		t.Fatalf("Exec() in transaction error = %v", err)
 	}
 
-	err = transaction.Exec(
+	_, err = transaction.Exec(
 		ctx,
 		"UPDATE test_accounts SET balance = balance + $1 WHERE id = $2",
 		500,
@@ -422,9 +422,9 @@ func TestPgxClient_Transaction_Commit(t *testing.T) {
 	}
 }
 
-// TestPgxClient_Transaction_Rollback はトランザクションのロールバックが正常に動作することをテストする.
+// TestClient_Transaction_Rollback はトランザクションのロールバックが正常に動作することをテストする.
 // トランザクション内でデータを変更後、ロールバックすることで変更が取り消されることを確認する.
-func TestPgxClient_Transaction_Rollback(t *testing.T) {
+func TestClient_Transaction_Rollback(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -432,7 +432,7 @@ func TestPgxClient_Transaction_Rollback(t *testing.T) {
 	connString, cleanup := setupPostgres(ctx, t)
 	defer cleanup()
 
-	client, err := db.NewPgxClient(ctx, connString)
+	client, err := db.NewClient(ctx, connString)
 	if err != nil {
 		t.Fatalf("NewPgxClient() error = %v", err)
 	}
@@ -467,7 +467,7 @@ func TestPgxClient_Transaction_Rollback(t *testing.T) {
 	}
 
 	// Update within transaction
-	err = transaction.Exec(ctx, "UPDATE test_balances SET amount = $1 WHERE id = $2", 5000, 1)
+	_, err = transaction.Exec(ctx, "UPDATE test_balances SET amount = $1 WHERE id = $2", 5000, 1)
 	if err != nil {
 		t.Fatalf("Exec() in transaction error = %v", err)
 	}
@@ -493,8 +493,8 @@ func TestPgxClient_Transaction_Rollback(t *testing.T) {
 	}
 }
 
-// TestPgxClient_Transaction_Query はトランザクション内でのクエリ実行が正常に動作することをテストする.
-func TestPgxClient_Transaction_Query(t *testing.T) {
+// TestClient_Transaction_Query はトランザクション内でのクエリ実行が正常に動作することをテストする.
+func TestClient_Transaction_Query(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -502,7 +502,7 @@ func TestPgxClient_Transaction_Query(t *testing.T) {
 	connString, cleanup := setupPostgres(ctx, t)
 	defer cleanup()
 
-	client, err := db.NewPgxClient(ctx, connString)
+	client, err := db.NewClient(ctx, connString)
 	if err != nil {
 		t.Fatalf("NewPgxClient() error = %v", err)
 	}
@@ -529,7 +529,7 @@ func TestPgxClient_Transaction_Query(t *testing.T) {
 	}
 
 	// Insert and query within transaction
-	err = transaction.Exec(ctx, "INSERT INTO test_items (name) VALUES ($1)", "Item 1")
+	_, err = transaction.Exec(ctx, "INSERT INTO test_items (name) VALUES ($1)", "Item 1")
 	if err != nil {
 		t.Fatalf("Exec() in transaction error = %v", err)
 	}

@@ -41,3 +41,27 @@ tasks:
     dir: server
     cmds:
       - go test -v -shuffle=on -race ./...
+
+  db/schema/apply:
+    desc: "Apply database schema using Atlas"
+    dir: server
+    cmds:
+      - atlas schema apply --env docker --auto-approve
+
+  db/schema/inspect:
+    desc: "Inspect current database schema"
+    dir: server
+    cmds:
+      - atlas schema inspect --env docker
+
+  db/schema/diff:
+    desc: "Show schema diff"
+    dir: server
+    cmds:
+      - atlas schema diff --env docker
+
+  db/sqlc/generate:
+    desc: "Generate code from SQL queries using sqlc"
+    dir: server
+    cmds:
+      - sqlc generate
