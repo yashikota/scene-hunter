@@ -10,6 +10,7 @@
   ],
   "configMigration": true, // renovate.json自体の更新を有効にする
   "minimumReleaseAge": "7 days", // リリース後1週間経ってからインストールされるようにする
+  "dependencyDashboard": false,
   "packageRules": [
     {
       // minorとpathの自動マージ
