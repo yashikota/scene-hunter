@@ -3,6 +3,7 @@ package config
 
 import (
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -47,11 +48,17 @@ type loggerConfig struct {
 
 // LoadConfig loads the configuration from the config.toml file.
 func LoadConfig() *AppConfig {
+	return LoadConfigFromPath(".")
+}
+
+// LoadConfigFromPath loads the configuration from the specified path.
+// This function is primarily for testing purposes.
+func LoadConfigFromPath(configPath string) *AppConfig {
 	var config AppConfig
 
 	viper := viper.New()
 	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath(configPath)
 
 	// Set default values
 	viper.SetDefault("server.port", ":8686")
@@ -60,7 +67,8 @@ func LoadConfig() *AppConfig {
 	viper.SetDefault("server.idle_timeout", 60*time.Second)
 	viper.SetDefault("logger.level", slog.LevelDebug)
 
-	// Load environment variables from .env file
+	// Load environment variables
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
 	// Load configuration file
