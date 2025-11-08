@@ -21,7 +21,7 @@ services:
       rustfs:
         condition: service_healthy
   postgres:
-    image: postgres:18
+    image: postgres:18@sha256:41fc5342eefba6cc2ccda736aaf034bbbb7c3df0fdb81516eba1ba33f360162c
     container_name: postgres
     restart: always
     user: postgres
@@ -41,7 +41,7 @@ services:
       timeout: 5s
       retries: 5
   valkey:
-    image: valkey/valkey:8.1.4
+    image: valkey/valkey:8.1.4@sha256:81db6d39e1bba3b3ff32bd3a1b19a6d69690f94a3954ec131277b9a26b95b3aa
     container_name: valkey
     command: valkey-server --requirepass ${VALKEY_PASSWORD}
     volumes:
@@ -58,7 +58,7 @@ services:
       timeout: 10s
       retries: 5
   rustfs:
-    image: rustfs/rustfs:1.0.0-alpha.66
+    image: rustfs/rustfs:1.0.0-alpha.66@sha256:8bdaa50a5c0bbbddd19ceb45a613141c0e64e692ddd845810f375292f08fe3d2
     container_name: rustfs
     ports:
       - "9000:9000"
@@ -79,7 +79,7 @@ services:
         source: rustfs-logs
         target: /logs
   dozzle:
-    image: amir20/dozzle:v8.14.4
+    image: amir20/dozzle:v8.14.4@sha256:e944224b30d0ac8771d7e54c5ae0dfb30859d6b7e590b65e90bafe39c15c46ce
     container_name: dozzle
     ports:
       - 8080:8080
