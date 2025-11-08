@@ -25,9 +25,11 @@ const (
 type Room struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	CreatedAt     string                 `protobuf:"bytes,2,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     string                 `protobuf:"bytes,3,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	DeletedAt     string                 `protobuf:"bytes,4,opt,name=deleted_at,json=deletedAt,proto3" json:"deleted_at,omitempty"`
+	RoomCode      string                 `protobuf:"bytes,2,opt,name=room_code,json=roomCode,proto3" json:"room_code,omitempty"`
+	ExpiredAt     string                 `protobuf:"bytes,3,opt,name=expired_at,json=expiredAt,proto3" json:"expired_at,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     string                 `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	DeletedAt     string                 `protobuf:"bytes,6,opt,name=deleted_at,json=deletedAt,proto3" json:"deleted_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -65,6 +67,20 @@ func (*Room) Descriptor() ([]byte, []int) {
 func (x *Room) GetId() string {
 	if x != nil {
 		return x.Id
+	}
+	return ""
+}
+
+func (x *Room) GetRoomCode() string {
+	if x != nil {
+		return x.RoomCode
+	}
+	return ""
+}
+
+func (x *Room) GetExpiredAt() string {
+	if x != nil {
+		return x.ExpiredAt
 	}
 	return ""
 }
@@ -438,15 +454,19 @@ var File_scene_hunter_v1_room_proto protoreflect.FileDescriptor
 
 const file_scene_hunter_v1_room_proto_rawDesc = "" +
 	"\n" +
-	"\x1ascene_hunter/v1/room.proto\x12\x0fscene_hunter.v1\x1a\x1bbuf/validate/validate.proto\"}\n" +
+	"\x1ascene_hunter/v1/room.proto\x12\x0fscene_hunter.v1\x1a\x1bbuf/validate/validate.proto\"\xcc\x01\n" +
 	"\x04Room\x12\x18\n" +
-	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1d\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12.\n" +
+	"\troom_code\x18\x02 \x01(\tB\x11\xbaH\x0er\f2\n" +
+	"^[0-9]{6}$R\broomCode\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x02 \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"expired_at\x18\x03 \x01(\tR\texpiredAt\x12\x1d\n" +
 	"\n" +
-	"updated_at\x18\x03 \x01(\tR\tupdatedAt\x12\x1d\n" +
+	"created_at\x18\x04 \x01(\tR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"deleted_at\x18\x04 \x01(\tR\tdeletedAt\"\x13\n" +
+	"updated_at\x18\x05 \x01(\tR\tupdatedAt\x12\x1d\n" +
+	"\n" +
+	"deleted_at\x18\x06 \x01(\tR\tdeletedAt\"\x13\n" +
 	"\x11CreateRoomRequest\"?\n" +
 	"\x12CreateRoomResponse\x12)\n" +
 	"\x04room\x18\x01 \x01(\v2\x15.scene_hunter.v1.RoomR\x04room\" \n" +

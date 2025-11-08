@@ -14,8 +14,10 @@ import (
 	domainkvs "github.com/yashikota/scene-hunter/server/internal/domain/kvs"
 	"github.com/yashikota/scene-hunter/server/internal/infra/chrono"
 	infradb "github.com/yashikota/scene-hunter/server/internal/infra/db"
+	infraroom "github.com/yashikota/scene-hunter/server/internal/infra/room"
 	healthsvc "github.com/yashikota/scene-hunter/server/internal/service/health"
 	imagesvc "github.com/yashikota/scene-hunter/server/internal/service/image"
+	roomsvc "github.com/yashikota/scene-hunter/server/internal/service/room"
 	"github.com/yashikota/scene-hunter/server/internal/service/status"
 )
 
@@ -65,6 +67,7 @@ func RegisterHandlers(mux *chi.Mux, deps *Dependencies) {
 
 	registerStatusService(mux, deps, chronoProvider, interceptors)
 	registerImageService(mux, deps, interceptors)
+	registerRoomService(mux, deps, interceptors)
 }
 
 func registerStatusService(
@@ -126,4 +129,18 @@ func registerImageService(mux *chi.Mux, deps *Dependencies, interceptors connect
 		interceptors,
 	)
 	mux.Mount(imagePath, imageHandler)
+}
+
+func registerRoomService(mux *chi.Mux, deps *Dependencies, interceptors connect.Option) {
+	if deps.KVSClient == nil {
+		return
+	}
+
+	roomRepo := infraroom.NewRepository(deps.KVSClient)
+	roomService := roomsvc.NewService(roomRepo)
+	roomPath, roomHandler := scene_hunterv1connect.NewRoomServiceHandler(
+		roomService,
+		interceptors,
+	)
+	mux.Mount(roomPath, roomHandler)
 }

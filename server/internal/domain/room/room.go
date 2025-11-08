@@ -2,6 +2,8 @@
 package room
 
 import (
+	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,13 +11,24 @@ import (
 
 const expirationHours = 24
 
+var (
+	// ErrRoomAlreadyExists is returned when a room already exists.
+	ErrRoomAlreadyExists = errors.New("room already exists")
+	// ErrRoomNotFound is returned when a room is not found.
+	ErrRoomNotFound = errors.New("room not found")
+	// ErrRoomExpired is returned when a room has expired.
+	ErrRoomExpired = errors.New("room already expired")
+	// ErrRoomRequired is returned when a room is required but not provided.
+	ErrRoomRequired = errors.New("room is required")
+)
+
 // Room represents a game room.
 type Room struct {
-	ID        uuid.UUID
-	Code      string
-	ExpiredAt time.Time
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        uuid.UUID `json:"id"`
+	Code      string    `json:"code"`
+	ExpiredAt time.Time `json:"expired_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // NewRoom creates a new Room with the given code.
@@ -35,4 +48,13 @@ func NewRoom(code string) *Room {
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
+}
+
+// Repository defines the interface for room persistence.
+type Repository interface {
+	Create(ctx context.Context, room *Room) error
+	Get(ctx context.Context, id uuid.UUID) (*Room, error)
+	Update(ctx context.Context, room *Room) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	Exists(ctx context.Context, id uuid.UUID) (bool, error)
 }
