@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	slogchi "github.com/samber/slog-chi"
+	"github.com/yashikota/scene-hunter/server/internal/service/handler"
 	"github.com/yashikota/scene-hunter/server/util/config"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -42,6 +43,9 @@ func main() {
 		WithUserAgent:    true,
 		WithRequestID:    true,
 	}))
+
+	// Register handlers
+	handler.RegisterHandlers(mux)
 
 	// Start server
 	server := &http.Server{

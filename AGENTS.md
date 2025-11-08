@@ -1,5 +1,9 @@
 # scene-hunter
 
+## plan
+
+プランは `docs/plan/*.md` に保存せよ  
+
 ## 参照すべきドキュメント
 
 `docs/architecture.md` にアーキテクチャや技術スタックなどを記載している。特に依存関係は守らなくてはならない。  
