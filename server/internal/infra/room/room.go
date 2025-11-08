@@ -106,19 +106,37 @@ func (r *Repository) Get(ctx context.Context, roomID uuid.UUID) (*domainroom.Roo
 }
 
 // Update updates an existing room in KVS.
-// Note: There is a potential race condition between Exists check and Set operation.
-// However, since updates are typically initiated by a single user/session and
-// the likelihood of concurrent updates is low, this approach is acceptable.
-// Note: room.Code is immutable and will not be updated. The room_code mapping remains unchanged.
+// If room code has changed, updates the room_code mapping atomically.
 func (r *Repository) Update(ctx context.Context, room *domainroom.Room) error {
-	// Check if room exists
-	exists, err := r.Exists(ctx, room.ID)
+	// Get current room to check if code has changed
+	currentRoom, err := r.Get(ctx, room.ID)
 	if err != nil {
-		return fmt.Errorf("failed to check room existence: %w", err)
+		return err
 	}
 
-	if !exists {
-		return fmt.Errorf("%w: id=%s", domainroom.ErrRoomNotFound, room.ID)
+	// Calculate TTL from expiration time
+	ttl := time.Until(room.ExpiredAt)
+	if ttl <= 0 {
+		return domainroom.ErrRoomExpired
+	}
+
+	// If code changed, update the room_code mapping
+	if currentRoom.Code != room.Code {
+		// Try to reserve new code atomically
+		newCodeKey := roomCodeKey(room.Code)
+
+		codeSet, err := r.kvs.SetNX(ctx, newCodeKey, room.ID.String(), ttl)
+		if err != nil {
+			return fmt.Errorf("failed to reserve new room code: %w", err)
+		}
+
+		if !codeSet {
+			return fmt.Errorf("%w: code=%s", domainroom.ErrRoomAlreadyExists, room.Code)
+		}
+
+		// Delete old code mapping (ignore error)
+		oldCodeKey := roomCodeKey(currentRoom.Code)
+		_ = r.kvs.Delete(ctx, oldCodeKey)
 	}
 
 	// Update timestamp
@@ -128,12 +146,6 @@ func (r *Repository) Update(ctx context.Context, room *domainroom.Room) error {
 	data, err := json.Marshal(room)
 	if err != nil {
 		return fmt.Errorf("failed to marshal room: %w", err)
-	}
-
-	// Calculate TTL from expiration time
-	ttl := time.Until(room.ExpiredAt)
-	if ttl <= 0 {
-		return domainroom.ErrRoomExpired
 	}
 
 	// Save to KVS with TTL (overwrites existing key)

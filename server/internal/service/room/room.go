@@ -3,9 +3,9 @@ package room
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
-	"strconv"
+	"math/big"
 	"strings"
 	"time"
 
@@ -38,8 +38,12 @@ func generateRoomCode() (string, error) {
 	codeSb.Grow(roomCodeLength)
 
 	for range roomCodeLength {
-		n := rand.Intn(10)
-		codeSb.WriteString(strconv.Itoa(n))
+		n, err := rand.Int(rand.Reader, big.NewInt(10))
+		if err != nil {
+			return "", fmt.Errorf("failed to generate random number: %w", err)
+		}
+
+		codeSb.WriteString(n.String())
 	}
 
 	return codeSb.String(), nil
@@ -154,9 +158,24 @@ func (s *Service) UpdateRoom(
 		)
 	}
 
-	// Note: room.Code は不変であるべきなため、ここでは更新しません。
-	// 更新を許可すると、リポジトリ層で room_code のマッピングをアトミックに
-	// 更新する複雑な処理が必要になり、データ不整合を招く可能性があります。
+	// Update room code if provided
+	// Repository layer handles the room_code mapping update atomically
+	if protoRoom.GetRoomCode() != "" {
+		room.Code = protoRoom.GetRoomCode()
+	}
+
+	// Parse and update expiration time if provided
+	if protoRoom.GetExpiredAt() != "" {
+		expiredAt, err := time.Parse(time.RFC3339, protoRoom.GetExpiredAt())
+		if err != nil {
+			return nil, connect.NewError(
+				connect.CodeInvalidArgument,
+				fmt.Errorf("invalid expired_at format: %w", err),
+			)
+		}
+
+		room.ExpiredAt = expiredAt
+	}
 
 	// Update room in repository
 	err = s.repo.Update(ctx, room)
