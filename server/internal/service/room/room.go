@@ -35,6 +35,7 @@ func NewService(repo domainroom.Repository) *Service {
 // generateRoomCode generates a random 6-digit room code.
 func generateRoomCode() (string, error) {
 	var codeSb strings.Builder
+
 	codeSb.Grow(roomCodeLength)
 
 	for range roomCodeLength {
@@ -170,7 +171,7 @@ func (s *Service) UpdateRoom(
 		if err != nil {
 			return nil, connect.NewError(
 				connect.CodeInvalidArgument,
-				fmt.Errorf("invalid expired_at format: %w", err),
+				errors.Errorf("invalid expired_at format: %w", err),
 			)
 		}
 

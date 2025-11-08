@@ -3,7 +3,6 @@ package kvs
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"

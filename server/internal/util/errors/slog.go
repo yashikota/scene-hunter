@@ -2,6 +2,7 @@ package errors
 
 import (
 	"context"
+	//nolint:depguard // errors package is deprecated
 	"errors"
 	"log/slog"
 

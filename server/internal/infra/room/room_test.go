@@ -1,7 +1,13 @@
 package room_test
 
 import (
+	"context"
 	"testing"
+
+	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
+	infrakvs "github.com/yashikota/scene-hunter/server/internal/infra/kvs"
+	infraroom "github.com/yashikota/scene-hunter/server/internal/infra/room"
+	"github.com/yashikota/scene-hunter/server/util/config"
 )
 
 //nolint:unparam // Repository is used in future test implementations
