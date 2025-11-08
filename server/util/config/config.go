@@ -11,11 +11,16 @@ import (
 
 // AppConfig represents the application configuration.
 type AppConfig struct {
+	App      appConfig      `mapstructure:"app"`
 	Server   serverConfig   `mapstructure:"server"`
 	Database databaseConfig `mapstructure:"database"`
 	Kvs      kvsConfig      `mapstructure:"kvs"`
 	Blob     blobConfig     `mapstructure:"blob"`
 	Logger   loggerConfig   `mapstructure:"logger"`
+}
+
+type appConfig struct {
+	Env string `mapstructure:"env"`
 }
 
 type serverConfig struct {
@@ -61,6 +66,7 @@ func LoadConfigFromPath(configPath string) *AppConfig {
 	viper.AddConfigPath(configPath)
 
 	// Set default values
+	viper.SetDefault("app.env", "dev")
 	viper.SetDefault("server.port", ":8686")
 	viper.SetDefault("server.read_timeout", 30*time.Second)
 	viper.SetDefault("server.write_timeout", 30*time.Second)
