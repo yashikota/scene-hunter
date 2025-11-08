@@ -3,6 +3,7 @@ package handler
 
 import (
 	"context"
+	"log/slog"
 
 	"connectrpc.com/connect"
 	"connectrpc.com/validate"
@@ -46,8 +47,11 @@ type Dependencies struct {
 
 // RegisterHandlers registers all service handlers to the router.
 func RegisterHandlers(mux *chi.Mux, deps *Dependencies) {
+	logger := slog.Default()
+
 	interceptors := connect.WithInterceptors(
 		validate.NewInterceptor(),
+		NewErrorLoggingInterceptor(logger),
 	)
 
 	chronoProvider := chrono.New()

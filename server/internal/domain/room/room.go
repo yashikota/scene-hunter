@@ -3,10 +3,10 @@ package room
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 const expirationHours = 24
@@ -26,9 +26,9 @@ var (
 type Room struct {
 	ID        uuid.UUID `json:"id"`
 	Code      string    `json:"code"`
-	ExpiredAt time.Time `json:"expired_at"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ExpiredAt time.Time `json:"expiredAt"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // NewRoom creates a new Room with the given code.

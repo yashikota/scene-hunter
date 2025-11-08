@@ -4,9 +4,9 @@ package gemini
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	domaingemini "github.com/yashikota/scene-hunter/server/internal/domain/gemini"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 	"google.golang.org/genai"
 )
 
@@ -22,7 +22,7 @@ func NewClient(ctx context.Context, apiKey, modelName string) (domaingemini.Gemi
 		APIKey: apiKey,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create genai client: %w", err)
+		return nil, errors.Errorf("failed to create genai client: %w", err)
 	}
 
 	return &Client{
@@ -81,7 +81,7 @@ func (c *Client) AnalyzeImage(
 		config,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate content: %w", err)
+		return nil, errors.Errorf("failed to generate content: %w", err)
 	}
 
 	// Parse the JSON response
@@ -93,7 +93,7 @@ func (c *Client) AnalyzeImage(
 
 	err = json.Unmarshal([]byte(responseText), &response)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+		return nil, errors.Errorf("failed to unmarshal response: %w", err)
 	}
 
 	return &domaingemini.ImageAnalysisResult{

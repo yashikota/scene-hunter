@@ -3,12 +3,12 @@ package gemini
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 
 	domainblob "github.com/yashikota/scene-hunter/server/internal/domain/blob"
 	domaingemini "github.com/yashikota/scene-hunter/server/internal/domain/gemini"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 // Service is a Gemini service.
@@ -39,7 +39,7 @@ func (s *Service) AnalyzeImageFromBlob(
 	// Get image from blob storage
 	reader, err := s.blobClient.Get(ctx, imageKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get image from blob: %w", err)
+		return nil, errors.Errorf("failed to get image from blob: %w", err)
 	}
 
 	defer func() {
@@ -49,7 +49,7 @@ func (s *Service) AnalyzeImageFromBlob(
 	// Read image data
 	imageData, err := io.ReadAll(reader)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read image data: %w", err)
+		return nil, errors.Errorf("failed to read image data: %w", err)
 	}
 
 	// Detect MIME type from image data
@@ -58,7 +58,7 @@ func (s *Service) AnalyzeImageFromBlob(
 	// Analyze image with Gemini
 	result, err := s.geminiClient.AnalyzeImage(ctx, imageData, mimeType, prompt)
 	if err != nil {
-		return nil, fmt.Errorf("failed to analyze image: %w", err)
+		return nil, errors.Errorf("failed to analyze image: %w", err)
 	}
 
 	return result, nil

@@ -3,8 +3,6 @@ package image
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -12,6 +10,7 @@ import (
 	domainblob "github.com/yashikota/scene-hunter/server/internal/domain/blob"
 	domainimage "github.com/yashikota/scene-hunter/server/internal/domain/image"
 	domainkvs "github.com/yashikota/scene-hunter/server/internal/domain/kvs"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 // ErrRoomNotFound is returned when the room is not found.
@@ -41,14 +40,14 @@ func (s *Service) UploadImage(
 	if err != nil {
 		return nil, connect.NewError(
 			connect.CodeInternal,
-			fmt.Errorf("failed to check room existence: %w", err),
+			errors.Errorf("failed to check room existence: %w", err),
 		)
 	}
 
 	if !exists {
 		return nil, connect.NewError(
 			connect.CodeNotFound,
-			fmt.Errorf("%w: code=%s", ErrRoomNotFound, req.GetRoomCode()),
+			errors.Errorf("%w: code=%s", ErrRoomNotFound, req.GetRoomCode()),
 		)
 	}
 
@@ -61,7 +60,7 @@ func (s *Service) UploadImage(
 	if err != nil {
 		return nil, connect.NewError(
 			connect.CodeInvalidArgument,
-			fmt.Errorf("invalid image data: %w", err),
+			errors.Errorf("invalid image data: %w", err),
 		)
 	}
 
@@ -72,7 +71,7 @@ func (s *Service) UploadImage(
 	if err != nil {
 		return nil, connect.NewError(
 			connect.CodeInternal,
-			fmt.Errorf("failed to save image: %w", err),
+			errors.Errorf("failed to save image: %w", err),
 		)
 	}
 

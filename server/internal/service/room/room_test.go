@@ -35,6 +35,7 @@ func setupTestService(t *testing.T) (*roomsvc.Service, context.Context) {
 }
 
 func TestService_CreateRoom(t *testing.T) {
+	t.Parallel()
 	service, ctx := setupTestService(t)
 
 	req := &scene_hunterv1.CreateRoomRequest{}
@@ -62,6 +63,7 @@ func TestService_CreateRoom(t *testing.T) {
 }
 
 func TestService_GetRoom(t *testing.T) {
+	t.Parallel()
 	service, ctx := setupTestService(t)
 
 	// Create a room first
@@ -98,6 +100,7 @@ func TestService_GetRoom(t *testing.T) {
 }
 
 func TestService_UpdateRoom(t *testing.T) {
+	t.Parallel()
 	service, ctx := setupTestService(t)
 
 	// Create a room first
@@ -130,6 +133,7 @@ func TestService_UpdateRoom(t *testing.T) {
 }
 
 func TestService_DeleteRoom(t *testing.T) {
+	t.Parallel()
 	service, ctx := setupTestService(t)
 
 	// Create a room first

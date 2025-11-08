@@ -3,12 +3,12 @@ package image
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"slices"
 
 	"github.com/google/uuid"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 // MaxImageSize は画像の最大サイズ（10MB）.
@@ -45,7 +45,7 @@ type Image struct {
 func NewImage(roomCode string, contentType string, data []byte) (*Image, error) {
 	imageID, err := uuid.NewV7()
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate image ID: %w", err)
+		return nil, errors.Errorf("failed to generate image ID: %w", err)
 	}
 
 	img := &Image{
@@ -71,18 +71,18 @@ func (i *Image) Validate() error {
 	}
 
 	if len(i.Data) > MaxImageSize {
-		return fmt.Errorf("%w: %d bytes", ErrSizeTooLarge, len(i.Data))
+		return errors.Errorf("%w: %d bytes", ErrSizeTooLarge, len(i.Data))
 	}
 
 	// Check content type
 	if !isValidContentType(i.ContentType) {
-		return fmt.Errorf("%w: %s", ErrUnsupportedContentType, i.ContentType)
+		return errors.Errorf("%w: %s", ErrUnsupportedContentType, i.ContentType)
 	}
 
 	// Verify image format matches content type
 	err := verifyImageFormat(i.Data, i.ContentType)
 	if err != nil {
-		return fmt.Errorf("image format verification failed: %w", err)
+		return errors.Errorf("image format verification failed: %w", err)
 	}
 
 	return nil
@@ -147,7 +147,7 @@ func verifyImageFormat(data []byte, contentType string) error {
 			return ErrInvalidWebP
 		}
 	default:
-		return fmt.Errorf("%w: %s", ErrUnknownContentType, contentType)
+		return errors.Errorf("%w: %s", ErrUnknownContentType, contentType)
 	}
 
 	return nil

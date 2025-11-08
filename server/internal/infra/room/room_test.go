@@ -10,6 +10,7 @@ import (
 	"github.com/yashikota/scene-hunter/server/util/config"
 )
 
+//nolint:unparam // Repository is used in future test implementations
 func setupTestRepository(t *testing.T) (domainroom.Repository, context.Context) {
 	t.Helper()
 
@@ -33,6 +34,7 @@ func setupTestRepository(t *testing.T) (domainroom.Repository, context.Context) 
 }
 
 func TestRepository_Create(t *testing.T) {
+	t.Parallel()
 	_, _ = setupTestRepository(t)
 
 	// Note: This test needs domain.Room type
@@ -41,24 +43,28 @@ func TestRepository_Create(t *testing.T) {
 }
 
 func TestRepository_Get(t *testing.T) {
+	t.Parallel()
 	_, _ = setupTestRepository(t)
 
 	t.Skip("Test requires proper domain.Room setup")
 }
 
 func TestRepository_Update(t *testing.T) {
+	t.Parallel()
 	_, _ = setupTestRepository(t)
 
 	t.Skip("Test requires proper domain.Room setup")
 }
 
 func TestRepository_Delete(t *testing.T) {
+	t.Parallel()
 	_, _ = setupTestRepository(t)
 
 	t.Skip("Test requires proper domain.Room setup")
 }
 
 func TestRepository_Exists(t *testing.T) {
+	t.Parallel()
 	_, _ = setupTestRepository(t)
 
 	t.Skip("Test requires proper domain.Room setup")
