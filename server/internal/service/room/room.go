@@ -1,4 +1,3 @@
-// Package room represents room service.
 package room
 
 import (
@@ -11,6 +10,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
+	domainchrono "github.com/yashikota/scene-hunter/server/internal/domain/chrono"
 	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
@@ -20,19 +20,18 @@ const (
 	roomCodeLength = 6
 )
 
-// Service implements the RoomService handler.
 type Service struct {
-	repo domainroom.Repository
+	repo   domainroom.Repository
+	chrono domainchrono.Chrono
 }
 
-// NewService creates a new room service.
-func NewService(repo domainroom.Repository) *Service {
+func NewService(repo domainroom.Repository, chrono domainchrono.Chrono) *Service {
 	return &Service{
-		repo: repo,
+		repo:   repo,
+		chrono: chrono,
 	}
 }
 
-// generateRoomCode generates a random 6-digit room code.
 func generateRoomCode() (string, error) {
 	var codeSb strings.Builder
 
@@ -50,7 +49,6 @@ func generateRoomCode() (string, error) {
 	return codeSb.String(), nil
 }
 
-// toProtoRoom converts domain room to proto room.
 func toProtoRoom(room *domainroom.Room) *scene_hunterv1.Room {
 	return &scene_hunterv1.Room{
 		Id:        room.ID.String(),
@@ -61,12 +59,10 @@ func toProtoRoom(room *domainroom.Room) *scene_hunterv1.Room {
 	}
 }
 
-// CreateRoom creates a new room.
 func (s *Service) CreateRoom(
 	ctx context.Context,
 	req *scene_hunterv1.CreateRoomRequest,
 ) (*scene_hunterv1.CreateRoomResponse, error) {
-	// Generate unique room code with retry logic
 	var room *domainroom.Room
 
 	for attempt := range maxRetries {
@@ -78,15 +74,13 @@ func (s *Service) CreateRoom(
 			)
 		}
 
-		room = domainroom.NewRoom(code)
+		room = domainroom.NewRoom(code, s.chrono.Now())
 
-		// Try to create the room
 		err = s.repo.Create(ctx, room)
 		if err == nil {
 			break
 		}
 
-		// If it's the last retry, return error
 		if attempt == maxRetries-1 {
 			return nil, connect.NewError(
 				connect.CodeInternal,
@@ -100,12 +94,10 @@ func (s *Service) CreateRoom(
 	}, nil
 }
 
-// GetRoom retrieves a room by ID.
 func (s *Service) GetRoom(
 	ctx context.Context,
 	req *scene_hunterv1.GetRoomRequest,
 ) (*scene_hunterv1.GetRoomResponse, error) {
-	// Parse room ID
 	roomID, err := uuid.Parse(req.GetId())
 	if err != nil {
 		return nil, connect.NewError(
@@ -114,7 +106,6 @@ func (s *Service) GetRoom(
 		)
 	}
 
-	// Get room from repository
 	room, err := s.repo.Get(ctx, roomID)
 	if err != nil {
 		return nil, connect.NewError(
@@ -128,7 +119,6 @@ func (s *Service) GetRoom(
 	}, nil
 }
 
-// UpdateRoom updates an existing room.
 func (s *Service) UpdateRoom(
 	ctx context.Context,
 	req *scene_hunterv1.UpdateRoomRequest,
@@ -141,7 +131,6 @@ func (s *Service) UpdateRoom(
 		)
 	}
 
-	// Parse room ID
 	roomID, err := uuid.Parse(protoRoom.GetId())
 	if err != nil {
 		return nil, connect.NewError(
@@ -150,7 +139,6 @@ func (s *Service) UpdateRoom(
 		)
 	}
 
-	// Get existing room
 	room, err := s.repo.Get(ctx, roomID)
 	if err != nil {
 		return nil, connect.NewError(
@@ -159,13 +147,10 @@ func (s *Service) UpdateRoom(
 		)
 	}
 
-	// Update room code if provided
-	// Repository layer handles the room_code mapping update atomically
 	if protoRoom.GetRoomCode() != "" {
 		room.Code = protoRoom.GetRoomCode()
 	}
 
-	// Parse and update expiration time if provided
 	if protoRoom.GetExpiredAt() != "" {
 		expiredAt, err := time.Parse(time.RFC3339, protoRoom.GetExpiredAt())
 		if err != nil {
@@ -178,7 +163,6 @@ func (s *Service) UpdateRoom(
 		room.ExpiredAt = expiredAt
 	}
 
-	// Update room in repository
 	err = s.repo.Update(ctx, room)
 	if err != nil {
 		return nil, connect.NewError(
@@ -192,12 +176,10 @@ func (s *Service) UpdateRoom(
 	}, nil
 }
 
-// DeleteRoom deletes a room.
 func (s *Service) DeleteRoom(
 	ctx context.Context,
 	req *scene_hunterv1.DeleteRoomRequest,
 ) (*scene_hunterv1.DeleteRoomResponse, error) {
-	// Parse room ID
 	roomID, err := uuid.Parse(req.GetId())
 	if err != nil {
 		return nil, connect.NewError(
@@ -206,7 +188,6 @@ func (s *Service) DeleteRoom(
 		)
 	}
 
-	// Get room before deletion (for response)
 	room, err := s.repo.Get(ctx, roomID)
 	if err != nil {
 		return nil, connect.NewError(
@@ -215,7 +196,6 @@ func (s *Service) DeleteRoom(
 		)
 	}
 
-	// Delete room from repository
 	err = s.repo.Delete(ctx, roomID)
 	if err != nil {
 		return nil, connect.NewError(

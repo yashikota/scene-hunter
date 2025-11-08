@@ -1,4 +1,3 @@
-// Package status provides status check service implementation.
 package status
 
 import (

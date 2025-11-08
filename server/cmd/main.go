@@ -1,4 +1,3 @@
-// Package main is the entry point of the scene-hunter server.
 package main
 
 import (
@@ -29,7 +28,6 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Initialize router
 	mux := chi.NewRouter()
 	mux.Use(middleware.Recoverer)
 	mux.Use(cors.Handler(cors.Options{
@@ -50,13 +48,10 @@ func main() {
 		WithRequestID:    true,
 	}))
 
-	// Initialize dependencies
 	deps := handler.InitializeDependencies(ctx, cfg, logger)
 
-	// Register handlers
 	handler.RegisterHandlers(mux, deps)
 
-	// Start server
 	server := &http.Server{
 		Addr:         cfg.Server.Port,
 		Handler:      h2c.NewHandler(mux, &http2.Server{}),
@@ -67,7 +62,6 @@ func main() {
 
 	logger.Info("starting scene-hunter server on http://localhost" + cfg.Server.Port)
 
-	// Cleanup
 	if deps.DBClient != nil {
 		defer func() {
 			err := deps.DBClient.Close()

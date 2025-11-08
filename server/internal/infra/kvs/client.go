@@ -1,4 +1,3 @@
-// Package kvs provides Valkey client implementations.
 package kvs
 
 import (
@@ -18,7 +17,7 @@ func NewClient(addr, password string) (domainkvs.KVS, error) {
 	client, err := valkey.NewClient(valkey.ClientOption{
 		InitAddress:  []string{addr},
 		Password:     password,
-		DisableCache: true, // miniredisやRESP2との互換性のためキャッシュを無効化
+		DisableCache: true,
 	})
 	if err != nil {
 		return nil, errors.Errorf("failed to create valkey client: %w", err)
@@ -44,7 +43,6 @@ func (c *Client) Ping(ctx context.Context) error {
 	return nil
 }
 
-// Check implements health.Checker interface.
 func (c *Client) Check(ctx context.Context) error {
 	err := c.Ping(ctx)
 	if err != nil {
@@ -54,7 +52,6 @@ func (c *Client) Check(ctx context.Context) error {
 	return nil
 }
 
-// Name implements health.Checker interface.
 func (c *Client) Name() string {
 	return "valkey"
 }
@@ -92,8 +89,6 @@ func (c *Client) Set(ctx context.Context, key string, value string, ttl time.Dur
 	return nil
 }
 
-// SetNX sets a key-value pair only if the key does not exist.
-// Returns true if the key was set, false if the key already exists.
 func (c *Client) SetNX(
 	ctx context.Context,
 	key string,
@@ -113,17 +108,14 @@ func (c *Client) SetNX(
 	resultErr := result.Error()
 	if resultErr != nil {
 		if valkey.IsValkeyNil(resultErr) {
-			// Key already exists
 			return false, nil
 		}
 
 		return false, errors.Errorf("setnx failed: %w", resultErr)
 	}
 
-	// Check if the operation succeeded
 	str, err := result.ToString()
 	if err != nil {
-		// If we can't parse the response, the operation may have failed
 		return false, errors.Errorf("failed to parse setnx response: %w", err)
 	}
 

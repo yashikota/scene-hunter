@@ -1,4 +1,3 @@
-// Package handler provides HTTP handler registration for all services.
 package handler
 
 import (
@@ -22,7 +21,6 @@ import (
 	"github.com/yashikota/scene-hunter/server/internal/service/status"
 )
 
-// failedChecker は初期化に失敗した依存を表すヘルスチェッカー.
 type failedChecker struct {
 	name string
 	err  error
@@ -36,7 +34,6 @@ func (f *failedChecker) Name() string {
 	return f.name
 }
 
-// Dependencies は外部依存を集約する構造体.
 type Dependencies struct {
 	DBClient   *infradb.Client
 	DBError    error
@@ -45,7 +42,6 @@ type Dependencies struct {
 	BlobClient domainblob.Blob
 }
 
-// RegisterHandlers registers all service handlers to the router.
 func RegisterHandlers(mux *chi.Mux, deps *Dependencies) {
 	logger := slog.Default()
 
@@ -56,7 +52,6 @@ func RegisterHandlers(mux *chi.Mux, deps *Dependencies) {
 
 	chronoProvider := chrono.New()
 
-	// Health service
 	healthService := healthsvc.NewService(chronoProvider)
 	healthPath, healthHandler := scene_hunterv1connect.NewHealthServiceHandler(
 		healthService,
@@ -64,14 +59,13 @@ func RegisterHandlers(mux *chi.Mux, deps *Dependencies) {
 	)
 	mux.Mount(healthPath, healthHandler)
 
-	// Status service
 	if deps == nil {
 		return
 	}
 
 	registerStatusService(mux, deps, chronoProvider, interceptors)
 	registerImageService(mux, deps, interceptors)
-	registerRoomService(mux, deps, interceptors)
+	registerRoomService(mux, deps, chronoProvider, interceptors)
 }
 
 func registerStatusService(
@@ -93,17 +87,13 @@ func registerStatusService(
 func buildHealthCheckers(deps *Dependencies) []health.Checker {
 	checkers := []health.Checker{}
 
-	// DBクライアントのヘルスチェック
 	if deps.DBClient != nil {
-		// DBClient自体がhealth.Checkerを実装している
 		checkers = append(checkers, deps.DBClient)
 	} else if deps.DBError != nil {
 		checkers = append(checkers, &failedChecker{name: "postgres", err: deps.DBError})
 	}
 
-	// KVSクライアントのヘルスチェック
 	if deps.KVSClient != nil {
-		// KVSClient自体がhealth.Checkerを実装している
 		if checker, ok := deps.KVSClient.(health.Checker); ok {
 			checkers = append(checkers, checker)
 		}
@@ -111,9 +101,7 @@ func buildHealthCheckers(deps *Dependencies) []health.Checker {
 		checkers = append(checkers, &failedChecker{name: "valkey", err: deps.KVSError})
 	}
 
-	// Blobクライアントのヘルスチェック
 	if deps.BlobClient != nil {
-		// BlobClient自体がhealth.Checkerを実装している
 		if checker, ok := deps.BlobClient.(health.Checker); ok {
 			checkers = append(checkers, checker)
 		}
@@ -135,13 +123,18 @@ func registerImageService(mux *chi.Mux, deps *Dependencies, interceptors connect
 	mux.Mount(imagePath, imageHandler)
 }
 
-func registerRoomService(mux *chi.Mux, deps *Dependencies, interceptors connect.Option) {
+func registerRoomService(
+	mux *chi.Mux,
+	deps *Dependencies,
+	chronoProvider domainchrono.Chrono,
+	interceptors connect.Option,
+) {
 	if deps.KVSClient == nil {
 		return
 	}
 
-	roomRepo := infraroom.NewRepository(deps.KVSClient)
-	roomService := roomsvc.NewService(roomRepo)
+	roomRepo := infraroom.NewRepository(deps.KVSClient, chronoProvider)
+	roomService := roomsvc.NewService(roomRepo, chronoProvider)
 	roomPath, roomHandler := scene_hunterv1connect.NewRoomServiceHandler(
 		roomService,
 		interceptors,

@@ -1,4 +1,3 @@
-// Package kvs provides KVS domain interfaces.
 package kvs
 
 import (
@@ -8,7 +7,6 @@ import (
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
-// ErrNotFound is returned when a key is not found.
 var ErrNotFound = errors.New("key not found")
 
 type KVS interface {

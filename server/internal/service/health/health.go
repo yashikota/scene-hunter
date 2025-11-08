@@ -1,4 +1,3 @@
-// Package health provides health check service implementation.
 package health
 
 import (

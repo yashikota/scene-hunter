@@ -1,4 +1,3 @@
-// Package blob provides blob storage client implementations.
 package blob
 
 import (
@@ -21,8 +20,6 @@ type Client struct {
 	httpClient *http.Client
 }
 
-// NewClient creates a new Client with the specified baseURL and timeout.
-// If timeout is 0, the defaultTimeout is used.
 func NewClient(baseURL string, timeout time.Duration) domainblob.Blob {
 	if timeout == 0 {
 		timeout = defaultTimeout
@@ -58,7 +55,6 @@ func (c *Client) Ping(ctx context.Context) error {
 	return nil
 }
 
-// Check implements health.Checker interface.
 func (c *Client) Check(ctx context.Context) error {
 	err := c.Ping(ctx)
 	if err != nil {
@@ -68,7 +64,6 @@ func (c *Client) Check(ctx context.Context) error {
 	return nil
 }
 
-// Name implements health.Checker interface.
 func (c *Client) Name() string {
 	return "rustfs"
 }
@@ -81,7 +76,6 @@ func (c *Client) Put(ctx context.Context, key string, data io.Reader, ttl time.D
 		return errors.Errorf("failed to create request: %w", err)
 	}
 
-	// TTLが指定されている場合はヘッダーに設定
 	if ttl > 0 {
 		req.Header.Set("X-Ttl-Seconds", strconv.FormatInt(int64(ttl.Seconds()), 10))
 	}

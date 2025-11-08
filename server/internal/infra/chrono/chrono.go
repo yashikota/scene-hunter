@@ -1,4 +1,3 @@
-// Package chrono provides time-related infrastructure implementations.
 package chrono
 
 import (

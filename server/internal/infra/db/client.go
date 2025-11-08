@@ -42,7 +42,6 @@ func (c *Client) Ping(ctx context.Context) error {
 	return nil
 }
 
-// Check implements health.Checker interface.
 func (c *Client) Check(ctx context.Context) error {
 	err := c.Ping(ctx)
 	if err != nil {
@@ -52,7 +51,6 @@ func (c *Client) Check(ctx context.Context) error {
 	return nil
 }
 
-// Name implements health.Checker interface.
 func (c *Client) Name() string {
 	return "postgres"
 }
@@ -63,12 +61,9 @@ func (c *Client) Close() error {
 	return nil
 }
 
-// Pool returns the underlying pgxpool.Pool for direct access when needed.
 func (c *Client) Pool() *pgxpool.Pool {
 	return c.pool
 }
-
-// Direct SQL execution methods for testing and advanced use cases
 
 func (c *Client) Exec(ctx context.Context, sql string, args ...any) error {
 	_, err := c.pool.Exec(ctx, sql, args...)

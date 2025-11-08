@@ -1,4 +1,3 @@
-// Package gemini provides Gemini AI client implementations.
 package gemini
 
 import (
@@ -10,13 +9,11 @@ import (
 	"google.golang.org/genai"
 )
 
-// Client is a Gemini AI client.
 type Client struct {
 	client    *genai.Client
 	modelName string
 }
 
-// NewClient creates a new Gemini client.
 func NewClient(ctx context.Context, apiKey, modelName string) (domaingemini.Gemini, error) {
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
 		APIKey: apiKey,
@@ -31,12 +28,10 @@ func NewClient(ctx context.Context, apiKey, modelName string) (domaingemini.Gemi
 	}, nil
 }
 
-// ptr is a helper function to get a pointer to a value.
 func ptr[T any](v T) *T {
 	return &v
 }
 
-// AnalyzeImage analyzes an image and returns features.
 func (c *Client) AnalyzeImage(
 	ctx context.Context,
 	imageData []byte,

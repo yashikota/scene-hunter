@@ -1,4 +1,3 @@
-// Package chrono provides time-related domain interfaces.
 package chrono
 
 import "time"

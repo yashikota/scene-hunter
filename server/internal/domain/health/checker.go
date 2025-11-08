@@ -1,4 +1,3 @@
-// Package health provides health check domain interfaces.
 package health
 
 import "context"
