@@ -79,7 +79,7 @@ services:
         source: rustfs-logs
         target: /logs
   dozzle:
-    image: amir20/dozzle:v8.14.4@sha256:e944224b30d0ac8771d7e54c5ae0dfb30859d6b7e590b65e90bafe39c15c46ce
+    image: amir20/dozzle:v8.14.6@sha256:a53cabe919f87b39d07a5ced17cf28bbe3f01a47b2cd0f37864bdf1f562a205a
     container_name: dozzle
     ports:
       - 8080:8080
