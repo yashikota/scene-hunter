@@ -4,8 +4,12 @@ linters:
   disable:
     - wsl
     - depguard
-    - exhaustruct
-    - mnd
+    - exhaustruct # 構造体のフィールドが不足していると警告されるので
+    - mnd # マジックナンバーがあると警告されるので
+    - ireturn # インターフェースを返す必要があるときに警告されるので
+    - revive # コメント書いてないと警告されるので
+    - funlen # テスト等で行数が多くなるので
+    - cyclop # テスト等で複雑になると警告されるので
   exclusions:
     generated: lax
 formatters:

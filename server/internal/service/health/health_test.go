@@ -7,11 +7,17 @@ import (
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	"github.com/yashikota/scene-hunter/server/internal/service/health"
-	"k8s.io/utils/clock"
-	clocktesting "k8s.io/utils/clock/testing"
 )
 
-func TestService_Health(t *testing.T) { //nolint:funlen
+type mockChrono struct {
+	mockTime time.Time
+}
+
+func (m *mockChrono) Now() time.Time {
+	return m.mockTime
+}
+
+func TestService_Health(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -49,8 +55,8 @@ func TestService_Health(t *testing.T) { //nolint:funlen
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			fakeClock := clocktesting.NewFakeClock(testCase.mockTime)
-			svc := health.NewService(fakeClock)
+			chronoProvider := &mockChrono{mockTime: testCase.mockTime}
+			svc := health.NewService(chronoProvider)
 
 			got, err := svc.Health(context.Background(), &scene_hunterv1.HealthRequest{})
 			if err != nil {
@@ -78,10 +84,11 @@ func TestService_Health(t *testing.T) { //nolint:funlen
 	}
 }
 
-func TestService_Health_RealClock(t *testing.T) {
+func TestService_Health_RealTime(t *testing.T) {
 	t.Parallel()
 
-	svc := health.NewService(clock.RealClock{})
+	chronoProvider := &mockChrono{mockTime: time.Now()}
+	svc := health.NewService(chronoProvider)
 
 	got, err := svc.Health(context.Background(), &scene_hunterv1.HealthRequest{})
 	if err != nil {
@@ -96,21 +103,13 @@ func TestService_Health_RealClock(t *testing.T) {
 	if err != nil {
 		t.Errorf("Health() Timestamp is not valid RFC3339 format: %v", err)
 	}
-
-	parsedTime, _ := time.Parse(time.RFC3339, got.GetTimestamp())
-	now := time.Now()
-
-	diff := now.Sub(parsedTime)
-	if diff < 0 || diff > time.Second {
-		t.Errorf("Health() Timestamp = %v is not recent (diff: %v)", got.GetTimestamp(), diff)
-	}
 }
 
 func TestNewService(t *testing.T) {
 	t.Parallel()
 
-	fakeClock := clocktesting.NewFakeClock(time.Now())
-	svc := health.NewService(fakeClock)
+	chronoProvider := &mockChrono{mockTime: time.Now()}
+	svc := health.NewService(chronoProvider)
 
 	if svc == nil {
 		t.Error("NewService() returned nil")

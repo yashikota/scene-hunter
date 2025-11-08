@@ -2,6 +2,7 @@
 package config
 
 import (
+	"fmt"
 	"log/slog"
 	"strings"
 	"time"
@@ -37,6 +38,14 @@ type databaseConfig struct {
 	Password string `mapstructure:"password"`
 	Dbname   string `mapstructure:"dbname"`
 	Sslmode  string `mapstructure:"sslmode"`
+}
+
+// ConnectionString はPostgreSQLの接続文字列を返す.
+func (d databaseConfig) ConnectionString(password string) string {
+	return fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		d.Host, d.Port, d.User, password, d.Dbname, d.Sslmode,
+	)
 }
 
 type kvsConfig struct {

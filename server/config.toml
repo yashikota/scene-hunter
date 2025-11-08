@@ -1,14 +1,15 @@
+[app]
+env = "dev"
+
 [database]
-host = "localhost"
+host = "postgres"
 port = 5432
 user = "postgres"
 dbname = "scene-hunter"
 sslmode = "disable"
 
 [kvs]
-host = "localhost"
-port = 6379
+url = "valkey:6379"
 
 [blob]
-host = "localhost"
-port = 9000
+url = "http://rustfs:9000"
