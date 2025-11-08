@@ -3,10 +3,10 @@ package room
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 const expirationHours = 24

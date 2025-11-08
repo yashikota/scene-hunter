@@ -8,6 +8,7 @@ import (
 	infrablob "github.com/yashikota/scene-hunter/server/internal/infra/blob"
 	infradb "github.com/yashikota/scene-hunter/server/internal/infra/db"
 	infrakvs "github.com/yashikota/scene-hunter/server/internal/infra/kvs"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 	"github.com/yashikota/scene-hunter/server/util/config"
 )
 
@@ -23,7 +24,7 @@ func InitializeDependencies(
 
 	dbClient, err := infradb.NewClient(ctx, cfg.Database.ConnectionString(dbPassword))
 	if err != nil {
-		logger.Warn("failed to initialize database client", "error", err)
+		errors.LogError(ctx, logger, "failed to initialize database client", err)
 		deps.DBError = err
 	} else {
 		deps.DBClient = dbClient
@@ -36,7 +37,7 @@ func InitializeDependencies(
 
 	kvsClient, err := infrakvs.NewClient(cfg.Kvs.URL, kvsPassword)
 	if err != nil {
-		logger.Warn("failed to initialize KVS client", "error", err)
+		errors.LogError(ctx, logger, "failed to initialize KVS client", err)
 		deps.KVSError = err
 	} else {
 		deps.KVSClient = kvsClient

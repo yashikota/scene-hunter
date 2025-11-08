@@ -4,7 +4,6 @@ package room
 import (
 	"context"
 	"crypto/rand"
-	"fmt"
 	"math/big"
 	"strings"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 const (
@@ -40,7 +40,7 @@ func generateRoomCode() (string, error) {
 	for range roomCodeLength {
 		n, err := rand.Int(rand.Reader, big.NewInt(10))
 		if err != nil {
-			return "", fmt.Errorf("failed to generate random number: %w", err)
+			return "", errors.Errorf("failed to generate random number: %w", err)
 		}
 
 		codeSb.WriteString(n.String())
@@ -73,7 +73,7 @@ func (s *Service) CreateRoom(
 		if err != nil {
 			return nil, connect.NewError(
 				connect.CodeInternal,
-				fmt.Errorf("failed to generate room code: %w", err),
+				errors.Errorf("failed to generate room code: %w", err),
 			)
 		}
 
@@ -89,7 +89,7 @@ func (s *Service) CreateRoom(
 		if attempt == maxRetries-1 {
 			return nil, connect.NewError(
 				connect.CodeInternal,
-				fmt.Errorf("failed to create room after %d retries: %w", maxRetries, err),
+				errors.Errorf("failed to create room after %d retries: %w", maxRetries, err),
 			)
 		}
 	}
@@ -109,7 +109,7 @@ func (s *Service) GetRoom(
 	if err != nil {
 		return nil, connect.NewError(
 			connect.CodeInvalidArgument,
-			fmt.Errorf("invalid room ID: %w", err),
+			errors.Errorf("invalid room ID: %w", err),
 		)
 	}
 
@@ -118,7 +118,7 @@ func (s *Service) GetRoom(
 	if err != nil {
 		return nil, connect.NewError(
 			connect.CodeNotFound,
-			fmt.Errorf("room not found: %w", err),
+			errors.Errorf("room not found: %w", err),
 		)
 	}
 
@@ -145,7 +145,7 @@ func (s *Service) UpdateRoom(
 	if err != nil {
 		return nil, connect.NewError(
 			connect.CodeInvalidArgument,
-			fmt.Errorf("invalid room ID: %w", err),
+			errors.Errorf("invalid room ID: %w", err),
 		)
 	}
 
@@ -154,7 +154,7 @@ func (s *Service) UpdateRoom(
 	if err != nil {
 		return nil, connect.NewError(
 			connect.CodeNotFound,
-			fmt.Errorf("room not found: %w", err),
+			errors.Errorf("room not found: %w", err),
 		)
 	}
 
@@ -182,7 +182,7 @@ func (s *Service) UpdateRoom(
 	if err != nil {
 		return nil, connect.NewError(
 			connect.CodeInternal,
-			fmt.Errorf("failed to update room: %w", err),
+			errors.Errorf("failed to update room: %w", err),
 		)
 	}
 
@@ -201,7 +201,7 @@ func (s *Service) DeleteRoom(
 	if err != nil {
 		return nil, connect.NewError(
 			connect.CodeInvalidArgument,
-			fmt.Errorf("invalid room ID: %w", err),
+			errors.Errorf("invalid room ID: %w", err),
 		)
 	}
 
@@ -210,7 +210,7 @@ func (s *Service) DeleteRoom(
 	if err != nil {
 		return nil, connect.NewError(
 			connect.CodeNotFound,
-			fmt.Errorf("room not found: %w", err),
+			errors.Errorf("room not found: %w", err),
 		)
 	}
 
@@ -219,7 +219,7 @@ func (s *Service) DeleteRoom(
 	if err != nil {
 		return nil, connect.NewError(
 			connect.CodeInternal,
-			fmt.Errorf("failed to delete room: %w", err),
+			errors.Errorf("failed to delete room: %w", err),
 		)
 	}
 

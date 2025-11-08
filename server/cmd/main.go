@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/cors"
 	slogchi "github.com/samber/slog-chi"
 	"github.com/yashikota/scene-hunter/server/internal/service/handler"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 	"github.com/yashikota/scene-hunter/server/util/config"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -71,7 +72,12 @@ func main() {
 		defer func() {
 			err := deps.DBClient.Close()
 			if err != nil {
-				logger.Error("failed to close database connection", "error", err)
+				errors.LogError(
+					context.Background(),
+					logger,
+					"failed to close database connection",
+					err,
+				)
 			}
 		}()
 	}

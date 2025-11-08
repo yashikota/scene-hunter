@@ -3,11 +3,11 @@ package kvs
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/valkey-io/valkey-go"
 	domainkvs "github.com/yashikota/scene-hunter/server/internal/domain/kvs"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 type Client struct {
@@ -21,7 +21,7 @@ func NewClient(addr, password string) (domainkvs.KVS, error) {
 		DisableCache: true, // miniredisやRESP2との互換性のためキャッシュを無効化
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create valkey client: %w", err)
+		return nil, errors.Errorf("failed to create valkey client: %w", err)
 	}
 
 	return &Client{
@@ -38,7 +38,7 @@ func (c *Client) Ping(ctx context.Context) error {
 
 	err := c.client.Do(ctx, cmd).Error()
 	if err != nil {
-		return fmt.Errorf("valkey ping failed: %w", err)
+		return errors.Errorf("valkey ping failed: %w", err)
 	}
 
 	return nil
@@ -48,7 +48,7 @@ func (c *Client) Ping(ctx context.Context) error {
 func (c *Client) Check(ctx context.Context) error {
 	err := c.Ping(ctx)
 	if err != nil {
-		return fmt.Errorf("valkey health check failed: %w", err)
+		return errors.Errorf("valkey health check failed: %w", err)
 	}
 
 	return nil
@@ -69,7 +69,7 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 			return "", domainkvs.ErrNotFound
 		}
 
-		return "", fmt.Errorf("get failed: %w", err)
+		return "", errors.Errorf("get failed: %w", err)
 	}
 
 	return val, nil
@@ -86,7 +86,7 @@ func (c *Client) Set(ctx context.Context, key string, value string, ttl time.Dur
 
 	err := c.client.Do(ctx, cmd).Error()
 	if err != nil {
-		return fmt.Errorf("set failed: %w", err)
+		return errors.Errorf("set failed: %w", err)
 	}
 
 	return nil
@@ -110,21 +110,21 @@ func (c *Client) SetNX(
 
 	result := c.client.Do(ctx, cmd)
 
-	err := result.Error()
-	if err != nil {
-		if valkey.IsValkeyNil(err) {
+	resultErr := result.Error()
+	if resultErr != nil {
+		if valkey.IsValkeyNil(resultErr) {
 			// Key already exists
 			return false, nil
 		}
 
-		return false, fmt.Errorf("setnx failed: %w", err)
+		return false, errors.Errorf("setnx failed: %w", resultErr)
 	}
 
 	// Check if the operation succeeded
 	str, err := result.ToString()
 	if err != nil {
-		// If we can't parse the response, return error
-		return false, fmt.Errorf("failed to parse setnx response: %w", err)
+		// If we can't parse the response, the operation may have failed
+		return false, errors.Errorf("failed to parse setnx response: %w", err)
 	}
 
 	return str == "OK", nil
@@ -135,7 +135,7 @@ func (c *Client) Delete(ctx context.Context, key string) error {
 
 	err := c.client.Do(ctx, cmd).Error()
 	if err != nil {
-		return fmt.Errorf("delete failed: %w", err)
+		return errors.Errorf("delete failed: %w", err)
 	}
 
 	return nil
@@ -147,7 +147,7 @@ func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 
 	count, err := result.AsInt64()
 	if err != nil {
-		return false, fmt.Errorf("exists failed: %w", err)
+		return false, errors.Errorf("exists failed: %w", err)
 	}
 
 	return count > 0, nil

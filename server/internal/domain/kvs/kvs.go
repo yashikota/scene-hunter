@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 // ErrNotFound is returned when a key is not found.
