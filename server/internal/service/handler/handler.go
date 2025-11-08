@@ -15,6 +15,7 @@ import (
 	infradb "github.com/yashikota/scene-hunter/server/internal/infra/db"
 	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
 	healthsvc "github.com/yashikota/scene-hunter/server/internal/service/health"
+	imagesvc "github.com/yashikota/scene-hunter/server/internal/service/image"
 	"github.com/yashikota/scene-hunter/server/internal/service/status"
 )
 
@@ -62,5 +63,15 @@ func RegisterHandlers(mux *chi.Mux, deps *Dependencies) {
 			interceptors,
 		)
 		mux.Mount(statusPath, statusHandler)
+
+		// Image service
+		if deps.BlobClient != nil && deps.KVSClient != nil {
+			imageService := imagesvc.NewService(deps.BlobClient, deps.KVSClient)
+			imagePath, imageHandler := scene_hunterv1connect.NewImageServiceHandler(
+				imageService,
+				interceptors,
+			)
+			mux.Mount(imagePath, imageHandler)
+		}
 	}
 }
