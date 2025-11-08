@@ -1,0 +1,394 @@
+package kvs_test
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/alicebob/miniredis/v2"
+	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
+)
+
+// setupMiniredis はテスト用のminiredisサーバーをセットアップする.
+func setupMiniredis(t *testing.T) (*miniredis.Miniredis, string) {
+	t.Helper()
+
+	server := miniredis.RunT(t)
+
+	return server, server.Addr()
+}
+
+// TestNewClient はKVSクライアントが正常に作成できることをテストする.
+func TestNewClient(t *testing.T) {
+	t.Parallel()
+
+	server, addr := setupMiniredis(t)
+	defer server.Close()
+
+	client, err := kvs.NewClient(addr, "")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v, want nil", err)
+	}
+
+	if client == nil {
+		t.Error("NewClient() returned nil")
+	}
+
+	client.Close()
+}
+
+// TestNewClient_InvalidAddress は無効なアドレスでエラーが返されることをテストする.
+func TestNewClient_InvalidAddress(t *testing.T) {
+	t.Parallel()
+
+	_, err := kvs.NewClient("invalid:address:format", "")
+	if err == nil {
+		t.Error("NewClient() with invalid address should return error")
+	}
+}
+
+// TestClient_Ping はKVSサーバーへの疎通確認が成功することをテストする.
+func TestClient_Ping(t *testing.T) {
+	t.Parallel()
+
+	server, addr := setupMiniredis(t)
+	defer server.Close()
+
+	client, err := kvs.NewClient(addr, "")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	defer client.Close()
+
+	err = client.Ping(context.Background())
+	if err != nil {
+		t.Errorf("Ping() error = %v, want nil", err)
+	}
+}
+
+// TestClient_Set_Get はキーと値の設定と取得が正常に動作することをテストする.
+// TTLあり・なし、空文字列、長い文字列など様々なケースを検証する.
+func TestClient_Set_Get(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		key   string
+		value string
+		ttl   time.Duration
+	}{
+		{
+			name:  "simple key-value without ttl", // TTLなしのシンプルなキー・バリュー
+			key:   "test_key",
+			value: "test_value",
+			ttl:   0,
+		},
+		{
+			name:  "key-value with ttl", // TTL付きのキー・バリュー
+			key:   "temp_key",
+			value: "temp_value",
+			ttl:   1 * time.Hour,
+		},
+		{
+			name:  "empty value", // 空文字列の値
+			key:   "empty_key",
+			value: "",
+			ttl:   0,
+		},
+		{
+			name:  "long value", // 長い文字列の値
+			key:   "long_key",
+			value: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+			ttl:   0,
+		},
+	}
+
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			server, addr := setupMiniredis(t)
+			defer server.Close()
+
+			client, err := kvs.NewClient(addr, "")
+			if err != nil {
+				t.Fatalf("NewClient() error = %v", err)
+			}
+			defer client.Close()
+
+			// Set
+			err = client.Set(context.Background(), testCase.key, testCase.value, testCase.ttl)
+			if err != nil {
+				t.Errorf("Set() error = %v, want nil", err)
+
+				return
+			}
+
+			// Get
+			got, err := client.Get(context.Background(), testCase.key)
+			if err != nil {
+				t.Errorf("Get() error = %v, want nil", err)
+
+				return
+			}
+
+			if got != testCase.value {
+				t.Errorf("Get() = %v, want %v", got, testCase.value)
+			}
+		})
+	}
+}
+
+// TestClient_Get_NonExistentKey は存在しないキーを取得した際にエラーが返されることをテストする.
+func TestClient_Get_NonExistentKey(t *testing.T) {
+	t.Parallel()
+
+	server, addr := setupMiniredis(t)
+	defer server.Close()
+
+	client, err := kvs.NewClient(addr, "")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	defer client.Close()
+
+	_, err = client.Get(context.Background(), "non_existent_key")
+	if err == nil {
+		t.Error("Get() with non-existent key should return error")
+	}
+}
+
+// TestClient_Delete はキーが正常に削除できることをテストする.
+// 削除前にキーが存在し、削除後に存在しないことを確認する.
+func TestClient_Delete(t *testing.T) {
+	t.Parallel()
+
+	server, addr := setupMiniredis(t)
+	defer server.Close()
+
+	client, err := kvs.NewClient(addr, "")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	defer client.Close()
+
+	ctx := context.Background()
+	key := "test_key"
+	value := "test_value"
+
+	// Set a key
+	err = client.Set(ctx, key, value, 0)
+	if err != nil {
+		t.Fatalf("Set() error = %v", err)
+	}
+
+	// Verify it exists
+	exists, err := client.Exists(ctx, key)
+	if err != nil {
+		t.Fatalf("Exists() error = %v", err)
+	}
+
+	if !exists {
+		t.Error("Key should exist before deletion")
+	}
+
+	// Delete the key
+	err = client.Delete(ctx, key)
+	if err != nil {
+		t.Errorf("Delete() error = %v, want nil", err)
+	}
+
+	// Verify it no longer exists
+	exists, err = client.Exists(ctx, key)
+	if err != nil {
+		t.Fatalf("Exists() after delete error = %v", err)
+	}
+
+	if exists {
+		t.Error("Key should not exist after deletion")
+	}
+}
+
+// TestClient_Delete_NonExistentKey は存在しないキーを削除してもエラーにならないこと（冪等性）をテストする.
+func TestClient_Delete_NonExistentKey(t *testing.T) {
+	t.Parallel()
+
+	server, addr := setupMiniredis(t)
+	defer server.Close()
+
+	client, err := kvs.NewClient(addr, "")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	defer client.Close()
+
+	// Deleting a non-existent key should not return an error
+	err = client.Delete(context.Background(), "non_existent_key")
+	if err != nil {
+		t.Errorf("Delete() non-existent key error = %v, want nil", err)
+	}
+}
+
+// TestClient_Exists はキーの存在確認が正常に動作することをテストする.
+// 存在するキーと存在しないキーの両方のケースを検証する.
+func TestClient_Exists(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		setupKey  bool
+		key       string
+		value     string
+		wantExist bool
+	}{
+		{
+			name:      "key exists", // キーが存在する場合
+			setupKey:  true,
+			key:       "existing_key",
+			value:     "value",
+			wantExist: true,
+		},
+		{
+			name:      "key does not exist", // キーが存在しない場合
+			setupKey:  false,
+			key:       "non_existing_key",
+			value:     "",
+			wantExist: false,
+		},
+	}
+
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			server, addr := setupMiniredis(t)
+			defer server.Close()
+
+			client, err := kvs.NewClient(addr, "")
+			if err != nil {
+				t.Fatalf("NewClient() error = %v", err)
+			}
+			defer client.Close()
+
+			ctx := context.Background()
+
+			if testCase.setupKey {
+				err = client.Set(ctx, testCase.key, testCase.value, 0)
+				if err != nil {
+					t.Fatalf("Set() error = %v", err)
+				}
+			}
+
+			exists, err := client.Exists(ctx, testCase.key)
+			if err != nil {
+				t.Errorf("Exists() error = %v, want nil", err)
+
+				return
+			}
+
+			if exists != testCase.wantExist {
+				t.Errorf("Exists() = %v, want %v", exists, testCase.wantExist)
+			}
+		})
+	}
+}
+
+// TestClient_SetWithTTL_Expiration はTTL（有効期限）が正常に機能することをテストする.
+// 設定直後はキーが存在し、TTL経過後には自動削除されることを確認する.
+func TestClient_SetWithTTL_Expiration(t *testing.T) {
+	t.Parallel()
+
+	server, addr := setupMiniredis(t)
+	defer server.Close()
+
+	client, err := kvs.NewClient(addr, "")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	defer client.Close()
+
+	ctx := context.Background()
+	key := "ttl_key"
+	value := "ttl_value"
+	ttl := 1 * time.Second
+
+	// Set with TTL
+	err = client.Set(ctx, key, value, ttl)
+	if err != nil {
+		t.Fatalf("Set() with TTL error = %v", err)
+	}
+
+	// Verify key exists
+	exists, err := client.Exists(ctx, key)
+	if err != nil {
+		t.Fatalf("Exists() error = %v", err)
+	}
+
+	if !exists {
+		t.Error("Key should exist immediately after setting")
+	}
+
+	// Fast forward time in miniredis
+	server.FastForward(2 * time.Second)
+
+	// Verify key has expired
+	exists, err = client.Exists(ctx, key)
+	if err != nil {
+		t.Fatalf("Exists() after TTL error = %v", err)
+	}
+
+	if exists {
+		t.Error("Key should not exist after TTL expiration")
+	}
+}
+
+// TestClient_UpdateExistingKey は既存のキーの値を上書き更新できることをテストする.
+func TestClient_UpdateExistingKey(t *testing.T) {
+	t.Parallel()
+
+	server, addr := setupMiniredis(t)
+	defer server.Close()
+
+	client, err := kvs.NewClient(addr, "")
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	defer client.Close()
+
+	ctx := context.Background()
+	key := "update_key"
+	value1 := "value1"
+	value2 := "value2"
+
+	// Set initial value
+	err = client.Set(ctx, key, value1, 0)
+	if err != nil {
+		t.Fatalf("Set() first value error = %v", err)
+	}
+
+	// Get and verify initial value
+	got, err := client.Get(ctx, key)
+	if err != nil {
+		t.Fatalf("Get() first value error = %v", err)
+	}
+
+	if got != value1 {
+		t.Errorf("Get() first value = %v, want %v", got, value1)
+	}
+
+	// Update to new value
+	err = client.Set(ctx, key, value2, 0)
+	if err != nil {
+		t.Fatalf("Set() second value error = %v", err)
+	}
+
+	// Get and verify updated value
+	got, err = client.Get(ctx, key)
+	if err != nil {
+		t.Fatalf("Get() second value error = %v", err)
+	}
+
+	if got != value2 {
+		t.Errorf("Get() second value = %v, want %v", got, value2)
+	}
+}

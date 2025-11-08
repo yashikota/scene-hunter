@@ -17,7 +17,7 @@ func (m *mockChrono) Now() time.Time {
 	return m.mockTime
 }
 
-func TestService_Health(t *testing.T) { //nolint:funlen
+func TestService_Health(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

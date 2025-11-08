@@ -2,9 +2,11 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -22,6 +24,9 @@ func main() {
 		Level: cfg.Logger.Level,
 	}))
 	slog.SetDefault(logger)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	// Initialize router
 	mux := chi.NewRouter()
@@ -44,8 +49,11 @@ func main() {
 		WithRequestID:    true,
 	}))
 
+	// Initialize dependencies
+	deps := handler.InitializeDependencies(ctx, cfg, logger)
+
 	// Register handlers
-	handler.RegisterHandlers(mux)
+	handler.RegisterHandlers(mux, deps)
 
 	// Start server
 	server := &http.Server{
@@ -57,6 +65,20 @@ func main() {
 	}
 
 	logger.Info("starting scene-hunter server on http://localhost" + cfg.Server.Port)
+
+	// Cleanup
+	if deps.DBClient != nil {
+		defer func() {
+			err := deps.DBClient.Close()
+			if err != nil {
+				logger.Error("failed to close database connection", "error", err)
+			}
+		}()
+	}
+
+	if deps.KVSClient != nil {
+		defer deps.KVSClient.Close()
+	}
 
 	err := server.ListenAndServe()
 	if err != nil {
