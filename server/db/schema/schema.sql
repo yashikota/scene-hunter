@@ -1,9 +1,9 @@
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Add new schema named "public"
+CREATE SCHEMA IF NOT EXISTS "public";
 
 -- Users table
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     code VARCHAR(20) NOT NULL UNIQUE,
     name VARCHAR(20) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -13,16 +13,3 @@ CREATE TABLE users (
 
 CREATE INDEX idx_users_code ON users(code);
 CREATE INDEX idx_users_deleted_at ON users(deleted_at);
-
--- Rooms table
-CREATE TABLE rooms (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
-    code VARCHAR(6) NOT NULL UNIQUE,
-    expired_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_rooms_code ON rooms(code);
-CREATE INDEX idx_rooms_expired_at ON rooms(expired_at);
-

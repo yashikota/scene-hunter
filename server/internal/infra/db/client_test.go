@@ -116,7 +116,7 @@ func TestClient_Exec(t *testing.T) {
 
 	client, err := db.NewClient(ctx, connString)
 	if err != nil {
-		t.Fatalf("NewPgxClient() error = %v", err)
+		t.Fatalf("NewClient() error = %v", err)
 	}
 
 	defer func() {
@@ -157,7 +157,7 @@ func TestClient_Query(t *testing.T) { //nolint:funlen,cyclop // テストケー�
 
 	client, err := db.NewClient(ctx, connString)
 	if err != nil {
-		t.Fatalf("NewPgxClient() error = %v", err)
+		t.Fatalf("NewClient() error = %v", err)
 	}
 
 	defer func() {
@@ -249,7 +249,7 @@ func TestClient_QueryRow(t *testing.T) {
 
 	client, err := db.NewClient(ctx, connString)
 	if err != nil {
-		t.Fatalf("NewPgxClient() error = %v", err)
+		t.Fatalf("NewClient() error = %v", err)
 	}
 
 	defer func() {
@@ -301,7 +301,7 @@ func TestClient_QueryRow_NotFound(t *testing.T) {
 
 	client, err := db.NewClient(ctx, connString)
 	if err != nil {
-		t.Fatalf("NewPgxClient() error = %v", err)
+		t.Fatalf("NewClient() error = %v", err)
 	}
 
 	defer func() {
@@ -335,7 +335,7 @@ func TestClient_Transaction_Commit(t *testing.T) {
 
 	client, err := db.NewClient(ctx, connString)
 	if err != nil {
-		t.Fatalf("NewPgxClient() error = %v", err)
+		t.Fatalf("NewClient() error = %v", err)
 	}
 
 	defer func() {
@@ -434,7 +434,7 @@ func TestClient_Transaction_Rollback(t *testing.T) {
 
 	client, err := db.NewClient(ctx, connString)
 	if err != nil {
-		t.Fatalf("NewPgxClient() error = %v", err)
+		t.Fatalf("NewClient() error = %v", err)
 	}
 
 	defer func() {
@@ -504,7 +504,7 @@ func TestClient_Transaction_Query(t *testing.T) {
 
 	client, err := db.NewClient(ctx, connString)
 	if err != nil {
-		t.Fatalf("NewPgxClient() error = %v", err)
+		t.Fatalf("NewClient() error = %v", err)
 	}
 
 	defer func() {
