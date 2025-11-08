@@ -3,9 +3,9 @@ package room
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
-	"math/big"
+	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,12 +38,8 @@ func generateRoomCode() (string, error) {
 	codeSb.Grow(roomCodeLength)
 
 	for range roomCodeLength {
-		n, err := rand.Int(rand.Reader, big.NewInt(10))
-		if err != nil {
-			return "", fmt.Errorf("failed to generate random number: %w", err)
-		}
-
-		codeSb.WriteString(n.String())
+		n := rand.Intn(10)
+		codeSb.WriteString(strconv.Itoa(n))
 	}
 
 	return codeSb.String(), nil
