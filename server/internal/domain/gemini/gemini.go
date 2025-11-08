@@ -12,5 +12,10 @@ type ImageAnalysisResult struct {
 
 // Gemini is an interface for Gemini AI operations.
 type Gemini interface {
-	AnalyzeImage(ctx context.Context, imageData []byte, prompt string) (*ImageAnalysisResult, error)
+	AnalyzeImage(
+		ctx context.Context,
+		imageData []byte,
+		mimeType string,
+		prompt string,
+	) (*ImageAnalysisResult, error)
 }

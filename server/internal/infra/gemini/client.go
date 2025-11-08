@@ -40,6 +40,7 @@ func ptr[T any](v T) *T {
 func (c *Client) AnalyzeImage(
 	ctx context.Context,
 	imageData []byte,
+	mimeType string,
 	prompt string,
 ) (*domaingemini.ImageAnalysisResult, error) {
 	schema := &genai.Schema{
@@ -68,7 +69,7 @@ func (c *Client) AnalyzeImage(
 		{
 			InlineData: &genai.Blob{
 				Data:     imageData,
-				MIMEType: "image/jpeg",
+				MIMEType: mimeType,
 			},
 		},
 	}

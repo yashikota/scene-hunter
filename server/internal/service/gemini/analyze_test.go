@@ -56,6 +56,7 @@ func (m *mockGeminiClient) AnalyzeImage(
 	_ context.Context,
 	_ []byte,
 	_ string,
+	_ string,
 ) (*domaingemini.ImageAnalysisResult, error) {
 	if m.analyzeError != nil {
 		return nil, m.analyzeError
