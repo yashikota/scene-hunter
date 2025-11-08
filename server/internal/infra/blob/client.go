@@ -13,16 +13,24 @@ import (
 	domainblob "github.com/yashikota/scene-hunter/server/internal/domain/blob"
 )
 
+const defaultTimeout = 5 * time.Second
+
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
 }
 
-func NewClient(baseURL string) domainblob.Blob {
+// NewClient creates a new Client with the specified baseURL and timeout.
+// If timeout is 0, the defaultTimeout is used.
+func NewClient(baseURL string, timeout time.Duration) domainblob.Blob {
+	if timeout == 0 {
+		timeout = defaultTimeout
+	}
+
 	return &Client{
 		baseURL: baseURL,
 		httpClient: &http.Client{
-			Timeout: 5 * time.Second,
+			Timeout: timeout,
 		},
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
+	"github.com/yashikota/scene-hunter/server/internal/infra/chrono"
 	"github.com/yashikota/scene-hunter/server/internal/service/health"
 )
 
@@ -87,8 +88,7 @@ func TestService_Health(t *testing.T) {
 func TestService_Health_RealTime(t *testing.T) {
 	t.Parallel()
 
-	chronoProvider := &mockChrono{mockTime: time.Now()}
-	svc := health.NewService(chronoProvider)
+	svc := health.NewService(chrono.New())
 
 	got, err := svc.Health(context.Background(), &scene_hunterv1.HealthRequest{})
 	if err != nil {
@@ -108,8 +108,7 @@ func TestService_Health_RealTime(t *testing.T) {
 func TestNewService(t *testing.T) {
 	t.Parallel()
 
-	chronoProvider := &mockChrono{mockTime: time.Now()}
-	svc := health.NewService(chronoProvider)
+	svc := health.NewService(chrono.New())
 
 	if svc == nil {
 		t.Error("NewService() returned nil")

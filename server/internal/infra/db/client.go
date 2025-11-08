@@ -31,8 +31,8 @@ func NewPgxClient(ctx context.Context, connString string) (domaindb.DB, error) {
 	}, nil
 }
 
-func (c *PgxClient) Ping() error {
-	err := c.pool.Ping(context.Background())
+func (c *PgxClient) Ping(ctx context.Context) error {
+	err := c.pool.Ping(ctx)
 	if err != nil {
 		return fmt.Errorf("ping failed: %w", err)
 	}

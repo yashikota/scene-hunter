@@ -18,8 +18,8 @@ func NewHealthChecker(db domaindb.DB) health.Checker {
 	}
 }
 
-func (h *HealthChecker) Check(_ context.Context) error {
-	err := h.db.Ping()
+func (h *HealthChecker) Check(ctx context.Context) error {
+	err := h.db.Ping(ctx)
 	if err != nil {
 		return fmt.Errorf("postgres ping failed: %w", err)
 	}

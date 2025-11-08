@@ -44,7 +44,7 @@ func TestClient_Ping(t *testing.T) {
 			)
 			defer server.Close()
 
-			client := blob.NewClient(server.URL)
+			client := blob.NewClient(server.URL, 0)
 			err := client.Ping(context.Background())
 
 			if (err != nil) != testCase.wantErr {
@@ -129,7 +129,7 @@ func TestClient_Put(t *testing.T) {
 			)
 			defer server.Close()
 
-			client := blob.NewClient(server.URL)
+			client := blob.NewClient(server.URL, 0)
 			err := client.Put(
 				context.Background(),
 				testCase.key,
@@ -195,7 +195,7 @@ func TestClient_Get(t *testing.T) {
 			)
 			defer server.Close()
 
-			client := blob.NewClient(server.URL)
+			client := blob.NewClient(server.URL, 0)
 			reader, err := client.Get(context.Background(), testCase.key)
 
 			if (err != nil) != testCase.wantErr {
@@ -269,7 +269,7 @@ func TestClient_Delete(t *testing.T) {
 			)
 			defer server.Close()
 
-			client := blob.NewClient(server.URL)
+			client := blob.NewClient(server.URL, 0)
 			err := client.Delete(context.Background(), testCase.key)
 
 			if (err != nil) != testCase.wantErr {
@@ -333,7 +333,7 @@ func TestClient_Exists(t *testing.T) {
 			)
 			defer server.Close()
 
-			client := blob.NewClient(server.URL)
+			client := blob.NewClient(server.URL, 0)
 			exists, err := client.Exists(context.Background(), testCase.key)
 
 			if (err != nil) != testCase.wantErr {
@@ -443,7 +443,7 @@ func TestClient_List(t *testing.T) { //nolint:gocognit // テストケースが�
 			)
 			defer server.Close()
 
-			client := blob.NewClient(server.URL)
+			client := blob.NewClient(server.URL, 0)
 			objects, err := client.List(context.Background(), testCase.prefix)
 
 			if (err != nil) != testCase.wantErr {
@@ -477,7 +477,7 @@ func TestNewClient(t *testing.T) {
 	t.Parallel()
 
 	baseURL := "http://localhost:9000"
-	client := blob.NewClient(baseURL)
+	client := blob.NewClient(baseURL, 0)
 
 	if client == nil {
 		t.Error("NewClient() returned nil")
