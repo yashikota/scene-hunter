@@ -17,6 +17,7 @@ type AppConfig struct {
 	Database databaseConfig `mapstructure:"database"`
 	Kvs      kvsConfig      `mapstructure:"kvs"`
 	Blob     blobConfig     `mapstructure:"blob"`
+	Gemini   geminiConfig   `mapstructure:"gemini"`
 	Logger   loggerConfig   `mapstructure:"logger"`
 }
 
@@ -56,6 +57,11 @@ type blobConfig struct {
 	URL string `mapstructure:"url"`
 }
 
+type geminiConfig struct {
+	Model  string `mapstructure:"model"`
+	APIKey string `mapstructure:"api_key"`
+}
+
 type loggerConfig struct {
 	Level slog.Level `mapstructure:"level"`
 }
@@ -80,6 +86,7 @@ func LoadConfigFromPath(configPath string) *AppConfig {
 	viper.SetDefault("server.read_timeout", 30*time.Second)
 	viper.SetDefault("server.write_timeout", 30*time.Second)
 	viper.SetDefault("server.idle_timeout", 60*time.Second)
+	viper.SetDefault("gemini.model", "gemini-2.0-flash")
 	viper.SetDefault("logger.level", slog.LevelDebug)
 
 	// Load environment variables
