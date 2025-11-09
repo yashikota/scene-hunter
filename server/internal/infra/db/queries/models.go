@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type User struct {
@@ -17,4 +18,13 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	DeletedAt time.Time `json:"deleted_at"`
+}
+
+type UserIdentity struct {
+	ID        uuid.UUID   `json:"id"`
+	UserID    uuid.UUID   `json:"user_id"`
+	Provider  string      `json:"provider"`
+	Subject   string      `json:"subject"`
+	Email     pgtype.Text `json:"email"`
+	CreatedAt time.Time   `json:"created_at"`
 }

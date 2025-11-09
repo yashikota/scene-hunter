@@ -17,7 +17,9 @@ func InitializeDependencies(
 	cfg *config.AppConfig,
 	logger *slog.Logger,
 ) *Dependencies {
-	deps := &Dependencies{}
+	deps := &Dependencies{
+		Config: cfg,
+	}
 
 	// PostgreSQL client
 	dbPassword := os.Getenv("POSTGRES_PASSWORD")

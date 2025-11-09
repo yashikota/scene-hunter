@@ -13,13 +13,17 @@ import (
 	domainchrono "github.com/yashikota/scene-hunter/server/internal/domain/chrono"
 	"github.com/yashikota/scene-hunter/server/internal/domain/health"
 	domainkvs "github.com/yashikota/scene-hunter/server/internal/domain/kvs"
+	infraauth "github.com/yashikota/scene-hunter/server/internal/infra/auth"
 	"github.com/yashikota/scene-hunter/server/internal/infra/chrono"
 	infradb "github.com/yashikota/scene-hunter/server/internal/infra/db"
 	infraroom "github.com/yashikota/scene-hunter/server/internal/infra/room"
+	authsvc "github.com/yashikota/scene-hunter/server/internal/service/auth"
 	healthsvc "github.com/yashikota/scene-hunter/server/internal/service/health"
 	imagesvc "github.com/yashikota/scene-hunter/server/internal/service/image"
+	"github.com/yashikota/scene-hunter/server/internal/service/middleware"
 	roomsvc "github.com/yashikota/scene-hunter/server/internal/service/room"
 	"github.com/yashikota/scene-hunter/server/internal/service/status"
+	"github.com/yashikota/scene-hunter/server/util/config"
 )
 
 // failedChecker は初期化に失敗した依存を表すヘルスチェッカー.
@@ -43,6 +47,7 @@ type Dependencies struct {
 	KVSClient  domainkvs.KVS
 	KVSError   error
 	BlobClient domainblob.Blob
+	Config     *config.AppConfig
 }
 
 // RegisterHandlers registers all service handlers to the router.
@@ -52,6 +57,7 @@ func RegisterHandlers(mux *chi.Mux, deps *Dependencies) {
 	interceptors := connect.WithInterceptors(
 		validate.NewInterceptor(),
 		NewErrorLoggingInterceptor(logger),
+		middleware.AuthInterceptor(),
 	)
 
 	chronoProvider := chrono.New()
@@ -70,6 +76,7 @@ func RegisterHandlers(mux *chi.Mux, deps *Dependencies) {
 	}
 
 	registerStatusService(mux, deps, chronoProvider, interceptors)
+	registerAuthService(mux, deps, interceptors)
 	registerImageService(mux, deps, interceptors)
 	registerRoomService(mux, deps, interceptors)
 }
@@ -147,4 +154,19 @@ func registerRoomService(mux *chi.Mux, deps *Dependencies, interceptors connect.
 		interceptors,
 	)
 	mux.Mount(roomPath, roomHandler)
+}
+
+func registerAuthService(mux *chi.Mux, deps *Dependencies, interceptors connect.Option) {
+	if deps.KVSClient == nil || deps.DBClient == nil || deps.Config == nil {
+		return
+	}
+
+	anonRepo := infraauth.NewAnonRepository(deps.KVSClient)
+	identityRepo := infraauth.NewIdentityRepository(deps.DBClient)
+	authService := authsvc.NewService(anonRepo, identityRepo, deps.Config)
+	authPath, authHandler := scene_hunterv1connect.NewAuthServiceHandler(
+		authService,
+		interceptors,
+	)
+	mux.Mount(authPath, authHandler)
 }
