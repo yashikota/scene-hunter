@@ -4,6 +4,7 @@ package auth
 import (
 	"context"
 	"os"
+	"strings"
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	domainauth "github.com/yashikota/scene-hunter/server/internal/domain/auth"
@@ -13,10 +14,11 @@ import (
 
 // Service implements the AuthService.
 type Service struct {
-	anonRepo     domainauth.AnonRepository
-	identityRepo domainauth.IdentityRepository
-	tokenSigner  *domainauth.TokenSigner
-	config       *config.AppConfig
+	anonRepo       domainauth.AnonRepository
+	identityRepo   domainauth.IdentityRepository
+	tokenSigner    *domainauth.TokenSigner
+	googleVerifier *GoogleVerifier
+	config         *config.AppConfig
 }
 
 // NewService creates a new auth Service.
@@ -31,11 +33,15 @@ func NewService(
 		panic("AUTH_HMAC_SECRET environment variable is required")
 	}
 
+	// Initialize Google verifier
+	googleVerifier := NewGoogleVerifier()
+
 	return &Service{
-		anonRepo:     anonRepo,
-		identityRepo: identityRepo,
-		tokenSigner:  domainauth.NewTokenSigner([]byte(hmacSecret)),
-		config:       cfg,
+		anonRepo:       anonRepo,
+		identityRepo:   identityRepo,
+		tokenSigner:    domainauth.NewTokenSigner([]byte(hmacSecret)),
+		googleVerifier: googleVerifier,
+		config:         cfg,
 	}
 }
 
@@ -62,7 +68,7 @@ func (s *Service) IssueAnon(
 		userAgent = req.GetClient().GetUserAgent()
 	}
 
-	refreshToken, err := domainauth.NewRefreshToken(
+	refreshToken, rawRefreshToken, err := domainauth.NewRefreshToken(
 		anonID,
 		userAgent,
 		s.config.Auth.RefreshTokenTTL,
@@ -82,7 +88,7 @@ func (s *Service) IssueAnon(
 			ExpiresAtUnix: accessToken.ExpiresAt.Unix(),
 		},
 		RefreshToken: &scene_hunterv1.Token{
-			Token:         refreshToken.GetRawToken(),
+			Token:         rawRefreshToken,
 			ExpiresAtUnix: refreshToken.ExpiresAt.Unix(),
 		},
 	}
@@ -95,11 +101,26 @@ func (s *Service) RefreshAnon(
 	ctx context.Context,
 	req *scene_hunterv1.RefreshAnonRequest,
 ) (*scene_hunterv1.RefreshAnonResponse, error) {
-	refreshTokenID := req.GetRefreshToken()
+	rawToken := req.GetRefreshToken()
+
+	// Parse token: ID:secret
+	parts := strings.Split(rawToken, ":")
+	if len(parts) != 2 {
+		return nil, errors.Errorf("invalid refresh token format")
+	}
+
+	tokenID := parts[0]
+	tokenSecret := parts[1]
 
 	// Get refresh token
-	storedToken, err := s.anonRepo.GetRefreshToken(ctx, refreshTokenID)
+	storedToken, err := s.anonRepo.GetRefreshToken(ctx, tokenID)
 	if err != nil {
+		return nil, errors.Errorf("invalid refresh token")
+	}
+
+	// Verify token secret
+	secretHash := domainauth.HashToken(tokenSecret)
+	if storedToken.TokenHash != secretHash {
 		return nil, errors.Errorf("invalid refresh token")
 	}
 
@@ -109,7 +130,7 @@ func (s *Service) RefreshAnon(
 	}
 
 	// Mark old token as used
-	if err := s.anonRepo.MarkRefreshTokenAsUsed(ctx, refreshTokenID); err != nil {
+	if err := s.anonRepo.MarkRefreshTokenAsUsed(ctx, tokenID); err != nil {
 		return nil, err
 	}
 
@@ -128,7 +149,7 @@ func (s *Service) RefreshAnon(
 		userAgent = req.GetClient().GetUserAgent()
 	}
 
-	newRefreshToken, err := domainauth.NewRefreshToken(
+	newRefreshToken, rawNewRefreshToken, err := domainauth.NewRefreshToken(
 		storedToken.AnonID,
 		userAgent,
 		s.config.Auth.RefreshTokenTTL,
@@ -143,7 +164,7 @@ func (s *Service) RefreshAnon(
 	}
 
 	// Revoke old token (already marked as used, but clean up)
-	_ = s.anonRepo.RevokeRefreshToken(ctx, refreshTokenID)
+	_ = s.anonRepo.RevokeRefreshToken(ctx, tokenID)
 
 	res := &scene_hunterv1.RefreshAnonResponse{
 		AccessToken: &scene_hunterv1.Token{
@@ -151,7 +172,7 @@ func (s *Service) RefreshAnon(
 			ExpiresAtUnix: accessToken.ExpiresAt.Unix(),
 		},
 		RefreshToken: &scene_hunterv1.Token{
-			Token:         newRefreshToken.GetRawToken(),
+			Token:         rawNewRefreshToken,
 			ExpiresAtUnix: newRefreshToken.ExpiresAt.Unix(),
 		},
 	}
@@ -164,10 +185,18 @@ func (s *Service) RevokeAnon(
 	ctx context.Context,
 	req *scene_hunterv1.RevokeAnonRequest,
 ) (*scene_hunterv1.RevokeAnonResponse, error) {
-	refreshTokenID := req.GetRefreshToken()
+	rawToken := req.GetRefreshToken()
+
+	// Parse token: ID:secret
+	parts := strings.Split(rawToken, ":")
+	if len(parts) != 2 {
+		return nil, errors.Errorf("invalid refresh token format")
+	}
+
+	tokenID := parts[0]
 
 	// Revoke the refresh token
-	err := s.anonRepo.RevokeRefreshToken(ctx, refreshTokenID)
+	err := s.anonRepo.RevokeRefreshToken(ctx, tokenID)
 	if err != nil {
 		return nil, err
 	}

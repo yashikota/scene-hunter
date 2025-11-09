@@ -64,18 +64,18 @@ func (s *TokenSigner) SignAnonToken(anonID string, ttl time.Duration) (*AnonToke
 // VerifyAnonToken verifies and decodes an anonymous access token.
 func (s *TokenSigner) VerifyAnonToken(token string) (*AnonToken, error) {
 	parts := strings.Split(token, ".")
-	if len(parts) != 3 {
+	if len(parts) != 2 {
 		return nil, errors.Errorf("invalid token format")
 	}
 
 	// Decode payload
-	payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[0] + "." + parts[1])
+	payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[0])
 	if err != nil {
 		return nil, errors.Errorf("failed to decode payload: %w", err)
 	}
 
 	// Decode signature
-	sigBytes, err := base64.RawURLEncoding.DecodeString(parts[2])
+	sigBytes, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
 		return nil, errors.Errorf("failed to decode signature: %w", err)
 	}

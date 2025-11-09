@@ -20,3 +20,4 @@ model = "gemini-2.0-flash"
 [auth]
 access_token_ttl = "10m"
 refresh_token_ttl = "168h"
+google_redirect_uri = "http://localhost:3000/auth/callback"

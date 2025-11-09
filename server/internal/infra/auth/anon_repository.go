@@ -75,11 +75,15 @@ func (r *AnonRepository) SaveRefreshToken(
 		return errors.Errorf("failed to save refresh token: %w", err)
 	}
 
-	// Add to anon_id index (for revocation)
+	// Add to anon_id index (for revocation) using a set
 	anonKey := r.anonTokensKey(token.AnonID)
-	// Store as a set of token IDs
-	if err := r.kvs.Set(ctx, anonKey, token.ID, ttl); err != nil {
+	if err := r.kvs.SAdd(ctx, anonKey, token.ID); err != nil {
 		return errors.Errorf("failed to index token by anon_id: %w", err)
+	}
+
+	// Set expiration for the set key to match the token TTL
+	if err := r.kvs.Expire(ctx, anonKey, ttl); err != nil {
+		return errors.Errorf("failed to set expiration for token index: %w", err)
 	}
 
 	return nil
@@ -118,56 +122,85 @@ func (r *AnonRepository) GetRefreshToken(
 	}, nil
 }
 
-// MarkRefreshTokenAsUsed marks a refresh token as used (atomic operation).
+// MarkRefreshTokenAsUsed marks a refresh token as used (atomic operation using Lua script).
 func (r *AnonRepository) MarkRefreshTokenAsUsed(ctx context.Context, tokenID string) error {
-	token, err := r.GetRefreshToken(ctx, tokenID)
-	if err != nil {
-		return err
-	}
-
-	if token.Used {
-		return errors.Errorf("refresh token already used")
-	}
-
-	token.Used = true
-	token.LastUsedAt = time.Now()
-
-	data := refreshTokenData{
-		ID:         token.ID,
-		AnonID:     token.AnonID,
-		TokenHash:  token.TokenHash,
-		ExpiresAt:  token.ExpiresAt,
-		Used:       true,
-		UserAgent:  token.UserAgent,
-		CreatedAt:  token.CreatedAt,
-		LastUsedAt: token.LastUsedAt,
-	}
-
-	dataJSON, err := json.Marshal(data)
-	if err != nil {
-		return errors.Errorf("failed to marshal token data: %w", err)
-	}
-
-	ttl := time.Until(token.ExpiresAt)
-	if ttl <= 0 {
-		return errors.Errorf("token expired")
-	}
-
+	now := time.Now()
 	key := r.tokenKey(tokenID)
-	if err := r.kvs.Set(ctx, key, string(dataJSON), ttl); err != nil {
+
+	// Lua script to atomically check and mark token as used
+	script := `
+		local key = KEYS[1]
+		local now_unix = tonumber(ARGV[1])
+
+		local value = redis.call('GET', key)
+		if not value then
+			return {err='token not found'}
+		end
+
+		local data = cjson.decode(value)
+
+		if data.Used then
+			return {err='token already used'}
+		end
+
+		if data.ExpiresAt < now_unix then
+			return {err='token expired'}
+		end
+
+		data.Used = true
+		data.LastUsedAt = now_unix
+
+		local ttl = redis.call('TTL', key)
+		if ttl <= 0 then
+			return {err='token expired'}
+		end
+
+		redis.call('SET', key, cjson.encode(data), 'EX', ttl)
+		return {ok='success'}
+	`
+
+	result, err := r.kvs.Eval(ctx, script, []string{key}, now.Unix())
+	if err != nil {
 		return errors.Errorf("failed to mark token as used: %w", err)
+	}
+
+	// Parse result
+	resultMap, ok := result.(map[interface{}]interface{})
+	if !ok {
+		return errors.Errorf("unexpected result type from lua script")
+	}
+
+	if errMsg, exists := resultMap["err"]; exists {
+		return errors.Errorf("%v", errMsg)
 	}
 
 	return nil
 }
 
-// RevokeRefreshToken deletes a refresh token.
+// RevokeRefreshToken deletes a refresh token and removes it from the anon_id index.
 func (r *AnonRepository) RevokeRefreshToken(ctx context.Context, tokenID string) error {
-	key := r.tokenKey(tokenID)
-
-	err := r.kvs.Delete(ctx, key)
+	// Get token to find its anon_id
+	token, err := r.GetRefreshToken(ctx, tokenID)
 	if err != nil {
+		// If token doesn't exist, consider it already revoked
+		if errors.Is(err, domainkvs.ErrNotFound) {
+			return nil
+		}
+
+		return err
+	}
+
+	// Delete token data
+	key := r.tokenKey(tokenID)
+	if err := r.kvs.Delete(ctx, key); err != nil {
 		return errors.Errorf("failed to revoke refresh token: %w", err)
+	}
+
+	// Remove from anon_id set
+	anonKey := r.anonTokensKey(token.AnonID)
+	if err := r.kvs.SRem(ctx, anonKey, tokenID); err != nil {
+		// Log but don't fail if set removal fails
+		return nil
 	}
 
 	return nil
@@ -175,25 +208,28 @@ func (r *AnonRepository) RevokeRefreshToken(ctx context.Context, tokenID string)
 
 // RevokeAllAnonTokens revokes all refresh tokens for an anon_id.
 func (r *AnonRepository) RevokeAllAnonTokens(ctx context.Context, anonID string) error {
-	// This is a simplified implementation
-	// In production, you might want to use Redis SCAN or maintain a proper set
 	anonKey := r.anonTokensKey(anonID)
 
-	tokenID, err := r.kvs.Get(ctx, anonKey)
+	// Get all token IDs for this anon_id
+	tokenIDs, err := r.kvs.SMembers(ctx, anonKey)
 	if err != nil {
-		if errors.Is(err, domainkvs.ErrNotFound) {
-			return nil // No tokens to revoke
-		}
-
 		return errors.Errorf("failed to get anon tokens: %w", err)
 	}
 
-	// Revoke the token
-	if err := r.RevokeRefreshToken(ctx, tokenID); err != nil {
-		return err
+	if len(tokenIDs) == 0 {
+		return nil // No tokens to revoke
 	}
 
-	// Delete the index
+	// Revoke each token
+	for _, tokenID := range tokenIDs {
+		key := r.tokenKey(tokenID)
+		if err := r.kvs.Delete(ctx, key); err != nil {
+			// Log but continue with other tokens
+			continue
+		}
+	}
+
+	// Delete the index set
 	if err := r.kvs.Delete(ctx, anonKey); err != nil {
 		return errors.Errorf("failed to delete anon tokens index: %w", err)
 	}

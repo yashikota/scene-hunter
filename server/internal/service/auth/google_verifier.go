@@ -147,11 +147,16 @@ func (v *GoogleVerifier) VerifyIDToken(
 		[]byte(idToken),
 		jwt.WithKeySet(jwkSet),
 		jwt.WithValidate(true),
-		jwt.WithIssuer("https://accounts.google.com"),
 		jwt.WithAudience(v.clientID),
 	)
 	if err != nil {
 		return nil, errors.Errorf("failed to verify ID token: %w", err)
+	}
+
+	// Verify issuer (accept both Google issuer formats)
+	issuer := token.Issuer()
+	if issuer != "https://accounts.google.com" && issuer != "accounts.google.com" {
+		return nil, errors.Errorf("invalid issuer: %s", issuer)
 	}
 
 	// Extract standard claims

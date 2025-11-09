@@ -23,27 +23,28 @@ type RefreshToken struct {
 }
 
 // NewRefreshToken creates a new refresh token.
-func NewRefreshToken(anonID, userAgent string, ttl time.Duration) (*RefreshToken, error) {
+// Returns the token metadata and the raw token string (ID:secret) to be sent to the client.
+func NewRefreshToken(anonID, userAgent string, ttl time.Duration) (*RefreshToken, string, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
-		return nil, errors.Errorf("failed to generate refresh token ID: %w", err)
+		return nil, "", errors.Errorf("failed to generate refresh token ID: %w", err)
 	}
 
-	// Generate random token (32 bytes)
+	// Generate random token secret (32 bytes)
 	tokenBytes := make([]byte, 32)
 	if _, err := rand.Read(tokenBytes); err != nil {
-		return nil, errors.Errorf("failed to generate random token: %w", err)
+		return nil, "", errors.Errorf("failed to generate random token: %w", err)
 	}
 
-	rawToken := base64.RawURLEncoding.EncodeToString(tokenBytes)
+	tokenSecret := base64.RawURLEncoding.EncodeToString(tokenBytes)
 
-	// Hash the token for storage
-	hash := sha256.Sum256([]byte(rawToken))
+	// Hash the token secret for storage
+	hash := sha256.Sum256([]byte(tokenSecret))
 	tokenHash := base64.RawURLEncoding.EncodeToString(hash[:])
 
 	now := time.Now()
 
-	return &RefreshToken{
+	token := &RefreshToken{
 		ID:         id.String(),
 		AnonID:     anonID,
 		TokenHash:  tokenHash,
@@ -52,10 +53,16 @@ func NewRefreshToken(anonID, userAgent string, ttl time.Duration) (*RefreshToken
 		UserAgent:  userAgent,
 		CreatedAt:  now,
 		LastUsedAt: now,
-	}, nil
+	}
+
+	// Return token in format: ID:secret
+	rawToken := id.String() + ":" + tokenSecret
+
+	return token, rawToken, nil
 }
 
 // GetRawToken returns the raw token string (ID:hash for lookup).
+// Deprecated: Use the rawToken returned by NewRefreshToken instead.
 func (r *RefreshToken) GetRawToken() string {
 	return r.ID
 }

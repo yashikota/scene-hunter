@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
@@ -24,13 +25,10 @@ func (s *Service) UpgradeAnonWithGoogle(
 	}
 
 	// Verify Google OAuth code and get ID token
-	verifier := NewGoogleVerifier()
+	// Get redirect URI from config
+	redirectURI := s.config.Auth.GoogleRedirectURI
 
-	// For now, we'll use a default redirect URI
-	// In production, this should come from the request or config
-	redirectURI := "http://localhost:3000/auth/callback"
-
-	tokenResp, err := verifier.ExchangeCodeForToken(
+	tokenResp, err := s.googleVerifier.ExchangeCodeForToken(
 		ctx,
 		req.GetAuthorizationCode(),
 		req.GetCodeVerifier(),
@@ -41,7 +39,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 	}
 
 	// Verify ID token
-	idToken, err := verifier.VerifyIDToken(ctx, tokenResp.IDToken)
+	idToken, err := s.googleVerifier.VerifyIDToken(ctx, tokenResp.IDToken)
 	if err != nil {
 		return nil, errors.Errorf("invalid ID token: %w", err)
 	}
@@ -96,10 +94,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 		return nil, err
 	}
 
-	// TODO: Start transaction
-	// For now, we'll do this in sequence (should be wrapped in a transaction)
-
-	// Create user in database
+	// Get database client for transaction
 	identityRepo, ok := s.identityRepo.(*infraauth.IdentityRepository)
 	if !ok {
 		return nil, errors.Errorf("invalid identity repository type")
@@ -107,7 +102,22 @@ func (s *Service) UpgradeAnonWithGoogle(
 
 	dbClient := identityRepo.DB
 
-	_, err = dbClient.Queries.CreateUser(ctx, queries.CreateUserParams{
+	// Start transaction
+	tx, err := dbClient.Begin(ctx)
+	if err != nil {
+		return nil, errors.Errorf("failed to start transaction: %w", err)
+	}
+
+	// Ensure rollback on error
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+		}
+	}()
+
+	// Create user in database (within transaction)
+	qtx := dbClient.Queries.WithTx(tx)
+	_, err = qtx.CreateUser(ctx, queries.CreateUserParams{
 		ID:        newUser.ID,
 		Code:      newUser.Code,
 		Name:      newUser.Name,
@@ -119,9 +129,22 @@ func (s *Service) UpgradeAnonWithGoogle(
 		return nil, errors.Errorf("failed to create user: %w", err)
 	}
 
-	// Create identity
-	if err := s.identityRepo.CreateIdentity(ctx, identity); err != nil {
+	// Create identity (within transaction)
+	_, err = qtx.CreateUserIdentity(ctx, queries.CreateUserIdentityParams{
+		ID:        identity.ID,
+		UserID:    identity.UserID,
+		Provider:  identity.Provider,
+		Subject:   identity.Subject,
+		Email:     identity.Email,
+		CreatedAt: identity.CreatedAt,
+	})
+	if err != nil {
 		return nil, errors.Errorf("failed to create identity: %w", err)
+	}
+
+	// Commit transaction
+	if err = tx.Commit(ctx); err != nil {
+		return nil, errors.Errorf("failed to commit transaction: %w", err)
 	}
 
 	// TODO: Migrate anonymous data from Valkey to Postgres
@@ -136,9 +159,16 @@ func (s *Service) UpgradeAnonWithGoogle(
 		// Log but don't fail
 	}
 
-	// Revoke the specific refresh token
-	if err := s.anonRepo.RevokeRefreshToken(ctx, req.GetAnonRefreshToken()); err != nil {
-		// Log but don't fail
+	// Parse and revoke the specific refresh token
+	rawRefreshToken := req.GetAnonRefreshToken()
+	if rawRefreshToken != "" {
+		parts := strings.Split(rawRefreshToken, ":")
+		if len(parts) == 2 {
+			tokenID := parts[0]
+			if err := s.anonRepo.RevokeRefreshToken(ctx, tokenID); err != nil {
+				// Log but don't fail
+			}
+		}
 	}
 
 	// Create permanent user session token
@@ -165,8 +195,10 @@ func (s *Service) UpgradeAnonWithGoogle(
 // generateUserCode generates a unique user code from an email.
 // This is a simplified implementation.
 func generateUserCode(email string) string {
-	// Extract username from email and add random suffix
-	// In production, ensure uniqueness by checking database
+	// Generate a random user code
+	// TODO: Ensure uniqueness by checking database and retrying on collision
+	// Current implementation: Use first 8 characters of UUID (collision risk exists)
+	// Recommended: Implement retry logic with database uniqueness check
 	id := uuid.New()
 
 	return id.String()[:8]

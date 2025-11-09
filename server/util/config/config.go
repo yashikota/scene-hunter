@@ -64,8 +64,9 @@ type geminiConfig struct {
 }
 
 type authConfig struct {
-	AccessTokenTTL  time.Duration `mapstructure:"access_token_ttl"`
-	RefreshTokenTTL time.Duration `mapstructure:"refresh_token_ttl"`
+	AccessTokenTTL    time.Duration `mapstructure:"access_token_ttl"`
+	RefreshTokenTTL   time.Duration `mapstructure:"refresh_token_ttl"`
+	GoogleRedirectURI string        `mapstructure:"google_redirect_uri"`
 }
 
 type loggerConfig struct {

@@ -26,4 +26,3 @@ CREATE TABLE user_identities (
 );
 
 CREATE INDEX idx_user_identities_user_id ON user_identities(user_id);
-CREATE INDEX idx_user_identities_provider_subject ON user_identities(provider, subject);
