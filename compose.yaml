@@ -8,7 +8,8 @@ services:
       dockerfile: Dockerfile
       target: dev
     ports:
-      - "8686:8686"
+      - "8686:8686" # application port
+      - "2345:2345" # debugger port
     env_file:
       - .env
     volumes:
@@ -63,8 +64,8 @@ services:
     image: rustfs/rustfs:1.0.0-alpha.66@sha256:8bdaa50a5c0bbbddd19ceb45a613141c0e64e692ddd845810f375292f08fe3d2
     container_name: rustfs
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9000:9000" # application port
+      - "9001:9001" # web ui port
     environment:
       - TZ=Asia/Tokyo
       - RUSTFS_SECRET_KEY=${RUSTFS_PASSWORD}

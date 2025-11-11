@@ -6,13 +6,15 @@ FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS dev
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
-RUN go mod download -x
-# hadolint ignore=DL3059
-RUN go install github.com/air-verse/air@v1.63.0
+RUN --mount=type=cache,target=/go/pkg/mod/,sharing=locked \
+    --mount=type=bind,source=go.sum,target=go.sum \
+    --mount=type=bind,source=go.mod,target=go.mod \
+    go mod download -x
+
+RUN go install github.com/air-verse/air@v1.63.0 \
+    && go install github.com/go-delve/delve/cmd/dlv@v1.25.2
 
 COPY . .
-EXPOSE 8686
 
 CMD ["air"]
 
@@ -56,9 +58,6 @@ WORKDIR /app
 
 # Timezone
 ENV TZ=Asia/Tokyo
-
-# Expose the port that the application listens on.
-EXPOSE 8686
 
 # What the container should run when it is started.
 ENTRYPOINT ["/bin/server"]

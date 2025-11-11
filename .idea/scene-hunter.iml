@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="DBE_MODULE" version="4">
+  <component name="Go" enabled="true" />
+  <component name="GOROOT" url="file://$USER_HOME$/.local/share/aquaproj-aqua/bin/go" />
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
