@@ -1,7 +1,7 @@
 ### ----------------- ###
 ### Development image ###
 ### ----------------- ###
-ARG GO_VERSION=1.25@sha256:6ca9eb0b32a4bd4e8c98a4a2edf2d7c96f3ea6db6eb4fc254eef6c067cf73bb4
+ARG GO_VERSION=1.25@sha256:e68f6a00e88586577fafa4d9cefad1349c2be70d21244321321c407474ff9bf2
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS dev
 
 WORKDIR /app
@@ -21,7 +21,7 @@ CMD ["air"]
 ### ---------------- ###
 ### Production image ###
 ### ---------------- ###
-ARG GO_VERSION=1.25@sha256:6ca9eb0b32a4bd4e8c98a4a2edf2d7c96f3ea6db6eb4fc254eef6c067cf73bb4
+ARG GO_VERSION=1.25@sha256:e68f6a00e88586577fafa4d9cefad1349c2be70d21244321321c407474ff9bf2
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS build
 
 WORKDIR /app
