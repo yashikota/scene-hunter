@@ -19,7 +19,7 @@ tasks:
   setup:
     desc: "Setup application"
     cmds:
-      - genenv -y .env.example
+      - genenv .env.example
 
   buf/gen:
     desc: "Generate protobuf files"
