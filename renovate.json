@@ -2,32 +2,44 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>aquaproj/aqua-renovate-config#2.9.0",
-    "group:allNonMajor", // minorとpatchアップデートを1つのPRにまとめる
+    "group:allNonMajor",
     "config:best-practices",
-    ":disableRateLimiting", // 1時間単位のPR数と同時に存在可能なPR数を無制限にする
+    ":disableRateLimiting",
     ":label(renovate)",
     ":timezone(Asia/Tokyo)"
   ],
-  "configMigration": true, // renovate.json自体の更新を有効にする
-  "minimumReleaseAge": "7 days", // リリース後1週間経ってからインストールされるようにする
+  "configMigration": true,
+  "minimumReleaseAge": "7 days",
   "dependencyDashboard": false,
   "packageRules": [
     {
-      // minorとpathの自動マージ
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": true,
       "automergeType": "pr"
     },
     {
-      "datasources": ["docker"],
-      "labels": ["docker-update"],
-      "updateTypes": ["pin", "digest"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "labels": [
+        "docker-update"
+      ],
+      "matchUpdateTypes": [
+        "pin",
+        "digest"
+      ],
       "automerge": true
     },
     {
-      // aqua standard registryの更新頻度を抑える
-      "matchPackageNames": ["aquaproj/aqua-registry"],
-      "extends": ["schedule:earlyMondays"]
+      "matchPackageNames": [
+        "aquaproj/aqua-registry"
+      ],
+      "extends": [
+        "schedule:earlyMondays"
+      ]
     }
   ]
 }
