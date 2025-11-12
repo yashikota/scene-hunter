@@ -19,6 +19,12 @@
       "automergeType": "pr"
     },
     {
+      "datasources": ["docker"],
+      "labels": ["docker-update"],
+      "updateTypes": ["pin", "digest"],
+      "automerge": true
+    },
+    {
       // aqua standard registryの更新頻度を抑える
       "matchPackageNames": ["aquaproj/aqua-registry"],
       "extends": ["schedule:earlyMondays"]
