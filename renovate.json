@@ -19,9 +19,10 @@
       "automergeType": "pr"
     },
     {
-      "datasources": ["docker"],
+      // dockerのhashとpinを自動マージ
+      "matchDatasources": ["docker"],      
       "labels": ["docker-update"],
-      "updateTypes": ["pin", "digest"],
+      "matchUpdateTypes": ["pin", "digest"],
       "automerge": true
     },
     {
