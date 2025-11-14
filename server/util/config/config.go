@@ -18,6 +18,7 @@ type AppConfig struct {
 	Kvs      kvsConfig      `mapstructure:"kvs"`
 	Blob     blobConfig     `mapstructure:"blob"`
 	Gemini   geminiConfig   `mapstructure:"gemini"`
+	Auth     authConfig     `mapstructure:"auth"`
 	Logger   loggerConfig   `mapstructure:"logger"`
 }
 
@@ -62,6 +63,12 @@ type geminiConfig struct {
 	APIKey string `mapstructure:"api_key"`
 }
 
+type authConfig struct {
+	AccessTokenTTL    time.Duration `mapstructure:"access_token_ttl"`
+	RefreshTokenTTL   time.Duration `mapstructure:"refresh_token_ttl"`
+	GoogleRedirectURI string        `mapstructure:"google_redirect_uri"`
+}
+
 type loggerConfig struct {
 	Level slog.Level `mapstructure:"level"`
 }
@@ -87,6 +94,8 @@ func LoadConfigFromPath(configPath string) *AppConfig {
 	viper.SetDefault("server.write_timeout", 30*time.Second)
 	viper.SetDefault("server.idle_timeout", 60*time.Second)
 	viper.SetDefault("gemini.model", "gemini-2.0-flash")
+	viper.SetDefault("auth.access_token_ttl", 10*time.Minute)
+	viper.SetDefault("auth.refresh_token_ttl", 168*time.Hour)
 	viper.SetDefault("logger.level", slog.LevelDebug)
 
 	// Load environment variables

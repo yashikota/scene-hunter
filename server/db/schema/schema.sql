@@ -13,3 +13,16 @@ CREATE TABLE users (
 
 CREATE INDEX idx_users_code ON users(code);
 CREATE INDEX idx_users_deleted_at ON users(deleted_at);
+
+-- User identities table (for OAuth providers)
+CREATE TABLE user_identities (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider VARCHAR(20) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (provider, subject)
+);
+
+CREATE INDEX idx_user_identities_user_id ON user_identities(user_id);

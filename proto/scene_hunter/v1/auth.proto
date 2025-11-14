@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package scene_hunter.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1;scene_hunterv1";
+
+// ClientInfo represents client information for authentication.
+message ClientInfo {
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    WEB = 1;
+    IOS = 2;
+    ANDROID = 3;
+  }
+  Type type = 1;
+  string user_agent = 2 [(buf.validate.field).string.max_len = 500];
+  string app_version = 3 [(buf.validate.field).string.max_len = 50];
+}
+
+// Token represents an authentication token with expiration.
+message Token {
+  string token = 1 [(buf.validate.field).string.min_len = 1];
+  int64 expires_at_unix = 2 [(buf.validate.field).int64.gt = 0];
+}
+
+// IssueAnonRequest requests a new anonymous token.
+message IssueAnonRequest {
+  string install_id = 1 [(buf.validate.field).string = {min_len: 1, max_len: 255}];
+  ClientInfo client = 2;
+}
+
+// IssueAnonResponse returns anonymous tokens.
+message IssueAnonResponse {
+  Token access_token = 1;
+  Token refresh_token = 2;
+}
+
+// RefreshAnonRequest requests a token refresh.
+message RefreshAnonRequest {
+  string refresh_token = 1 [(buf.validate.field).string.min_len = 1];
+  ClientInfo client = 2;
+}
+
+// RefreshAnonResponse returns new anonymous tokens.
+message RefreshAnonResponse {
+  Token access_token = 1;
+  Token refresh_token = 2;
+}
+
+// RevokeAnonRequest requests token revocation.
+message RevokeAnonRequest {
+  string refresh_token = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// RevokeAnonResponse confirms token revocation.
+message RevokeAnonResponse {}
+
+// UpgradeAnonWithGoogleRequest requests upgrade to permanent user with Google OAuth.
+message UpgradeAnonWithGoogleRequest {
+  string authorization_code = 1 [(buf.validate.field).string.min_len = 1];
+  string code_verifier = 2 [(buf.validate.field).string.min_len = 1];
+  string anon_access_token = 3 [(buf.validate.field).string.min_len = 1];
+  string anon_refresh_token = 4 [(buf.validate.field).string.min_len = 1];
+  ClientInfo client = 5;
+}
+
+// UpgradeAnonWithGoogleResponse returns permanent user session.
+message UpgradeAnonWithGoogleResponse {
+  Token user_session = 1;
+  uint32 migrated_records = 2;
+  string user_id = 3 [(buf.validate.field).string.uuid = true];
+}
+
+// AuthService provides anonymous authentication.
+service AuthService {
+  rpc IssueAnon(IssueAnonRequest) returns (IssueAnonResponse);
+  rpc RefreshAnon(RefreshAnonRequest) returns (RefreshAnonResponse);
+  rpc RevokeAnon(RevokeAnonRequest) returns (RevokeAnonResponse);
+  rpc UpgradeAnonWithGoogle(UpgradeAnonWithGoogleRequest) returns (UpgradeAnonWithGoogleResponse);
+}

@@ -3,6 +3,7 @@ package kvs
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/valkey-io/valkey-go"
@@ -151,4 +152,104 @@ func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 	}
 
 	return count > 0, nil
+}
+
+// Eval executes a Lua script.
+func (c *Client) Eval(ctx context.Context, script string, keys []string, args ...interface{}) (interface{}, error) {
+	// Convert args to strings
+	strArgs := make([]string, len(args))
+	for i, arg := range args {
+		strArgs[i] = toString(arg)
+	}
+
+	cmd := c.client.B().Eval().Script(script).Numkeys(int64(len(keys))).Key(keys...).Arg(strArgs...).Build()
+	result := c.client.Do(ctx, cmd)
+
+	if err := result.Error(); err != nil {
+		return nil, errors.Errorf("eval failed: %w", err)
+	}
+
+	val, err := result.ToAny()
+	if err != nil {
+		return nil, errors.Errorf("failed to convert eval result: %w", err)
+	}
+
+	return val, nil
+}
+
+// SAdd adds members to a set.
+func (c *Client) SAdd(ctx context.Context, key string, members ...string) error {
+	cmd := c.client.B().Sadd().Key(key).Member(members...).Build()
+
+	err := c.client.Do(ctx, cmd).Error()
+	if err != nil {
+		return errors.Errorf("sadd failed: %w", err)
+	}
+
+	return nil
+}
+
+// SMembers returns all members of a set.
+func (c *Client) SMembers(ctx context.Context, key string) ([]string, error) {
+	cmd := c.client.B().Smembers().Key(key).Build()
+	result := c.client.Do(ctx, cmd)
+
+	members, err := result.AsStrSlice()
+	if err != nil {
+		if valkey.IsValkeyNil(err) {
+			return []string{}, nil
+		}
+
+		return nil, errors.Errorf("smembers failed: %w", err)
+	}
+
+	return members, nil
+}
+
+// SRem removes members from a set.
+func (c *Client) SRem(ctx context.Context, key string, members ...string) error {
+	cmd := c.client.B().Srem().Key(key).Member(members...).Build()
+
+	err := c.client.Do(ctx, cmd).Error()
+	if err != nil {
+		return errors.Errorf("srem failed: %w", err)
+	}
+
+	return nil
+}
+
+// Expire sets a key's time to live in seconds.
+func (c *Client) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	cmd := c.client.B().Expire().Key(key).Seconds(int64(ttl.Seconds())).Build()
+
+	err := c.client.Do(ctx, cmd).Error()
+	if err != nil {
+		return errors.Errorf("expire failed: %w", err)
+	}
+
+	return nil
+}
+
+// TTL returns the remaining time to live of a key.
+// Returns -2 if the key does not exist, -1 if the key has no expiration.
+func (c *Client) TTL(ctx context.Context, key string) (time.Duration, error) {
+	cmd := c.client.B().Ttl().Key(key).Build()
+	result := c.client.Do(ctx, cmd)
+
+	ttlSeconds, err := result.AsInt64()
+	if err != nil {
+		return 0, errors.Errorf("ttl failed: %w", err)
+	}
+
+	// -2 means key doesn't exist, -1 means no expiration
+	if ttlSeconds < 0 {
+		return time.Duration(ttlSeconds), nil
+	}
+
+	return time.Duration(ttlSeconds) * time.Second, nil
+}
+
+// toString converts an interface{} to string.
+func toString(v interface{}) string {
+	return fmt.Sprintf("%v", v)
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/yashikota/scene-hunter/server/util/config"
 )
 
-//nolint:unparam // Repository is used in future test implementations
 func setupTestRepository(t *testing.T) (domainroom.Repository, context.Context) {
 	t.Helper()
 

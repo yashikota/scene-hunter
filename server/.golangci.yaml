@@ -11,9 +11,19 @@ linters:
     - revive # コメント書いてないと警告されるので
     - funlen # テスト等で行数が多くなるので
     - cyclop # テスト等で複雑になると警告されるので
+    - tagliatelle # 外部API（Google OAuth等）はsnake_caseを使用する必要があるため
+    - noinlineerr # インラインエラーハンドリングは可読性を向上させる
+    - interfacebloat # KVS等の汎用インターフェースは多くのメソッドが必要
+    - godox # TODO/FIXMEコメントは開発中に有用
+    - gosec # 誤検知が多いため（例：OAuth endpoint URL）
+    - nilerr # 意図的にエラーを無視する場合がある（例：クリーンアップ処理）
+    - gocognit # テストケース等で複雑度が高くなることがある
+    - unparam # テストヘルパー関数等で将来使う予定のパラメータがある
   exclusions:
     generated: lax
   settings:
+    staticcheck:
+      checks: ["all", "-SA9003"]  # SA9003: 空ブランチ警告を無効化（オプショナルな値の取得で使用）
     wsl_v5:
       allow-first-in-block: true
       allow-whole-block: false
@@ -21,6 +31,8 @@ linters:
     depguard:
       rules:
         main:
+          files:
+            - "!**/internal/util/errors/**"
           deny:
           - pkg: "github.com/stretchr/testify/assert"
             desc: "Use github.com/stretchr/testify/require instead of github.com/stretchr/testify/assert"

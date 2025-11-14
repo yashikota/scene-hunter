@@ -12,9 +12,14 @@ import (
 
 type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) (UserIdentity, error)
 	DeleteUser(ctx context.Context, arg DeleteUserParams) error
+	DeleteUserIdentity(ctx context.Context, id uuid.UUID) error
 	GetUserByCode(ctx context.Context, code string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
+	GetUserIdentitiesByUserID(ctx context.Context, userID uuid.UUID) ([]UserIdentity, error)
+	GetUserIdentityByID(ctx context.Context, id uuid.UUID) (UserIdentity, error)
+	GetUserIdentityByProviderAndSubject(ctx context.Context, arg GetUserIdentityByProviderAndSubjectParams) (UserIdentity, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
