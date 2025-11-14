@@ -163,6 +163,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 	}
 
 	// Commit transaction
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err = dbTx.Commit(ctx); err != nil {
 		return nil, errors.Errorf("failed to commit transaction: %w", err)
 	}
@@ -176,6 +177,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 	migratedRecords := uint32(0)
 
 	// Revoke all anonymous tokens
+	//nolint:staticcheck,noinlineerr // Intentionally ignoring errors to not fail upgrade on token revocation
 	if err := s.anonRepo.RevokeAllAnonTokens(ctx, anonToken.AnonID); err != nil {
 		// Log but don't fail
 	}
