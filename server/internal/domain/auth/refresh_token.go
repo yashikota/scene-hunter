@@ -25,7 +25,7 @@ type RefreshToken struct {
 // NewRefreshToken creates a new refresh token.
 // Returns the token metadata and the raw token string (ID:secret) to be sent to the client.
 func NewRefreshToken(anonID, userAgent string, ttl time.Duration) (*RefreshToken, string, error) {
-	id, err := uuid.NewV7()
+	tokenID, err := uuid.NewV7()
 	if err != nil {
 		return nil, "", errors.Errorf("failed to generate refresh token ID: %w", err)
 	}
@@ -45,7 +45,7 @@ func NewRefreshToken(anonID, userAgent string, ttl time.Duration) (*RefreshToken
 	now := time.Now()
 
 	token := &RefreshToken{
-		ID:         id.String(),
+		ID:         tokenID.String(),
 		AnonID:     anonID,
 		TokenHash:  tokenHash,
 		ExpiresAt:  now.Add(ttl),
@@ -56,7 +56,7 @@ func NewRefreshToken(anonID, userAgent string, ttl time.Duration) (*RefreshToken
 	}
 
 	// Return token in format: ID:secret
-	rawToken := id.String() + ":" + tokenSecret
+	rawToken := tokenID.String() + ":" + tokenSecret
 
 	return token, rawToken, nil
 }

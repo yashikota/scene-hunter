@@ -19,7 +19,7 @@ type Identity struct {
 
 // NewIdentity creates a new Identity.
 func NewIdentity(userID uuid.UUID, provider, subject, email string) (*Identity, error) {
-	id, err := uuid.NewV7()
+	identityID, err := uuid.NewV7()
 	if err != nil {
 		return nil, errors.Errorf("failed to generate identity ID: %w", err)
 	}
@@ -33,7 +33,7 @@ func NewIdentity(userID uuid.UUID, provider, subject, email string) (*Identity, 
 	}
 
 	return &Identity{
-		ID:        id,
+		ID:        identityID,
 		UserID:    userID,
 		Provider:  provider,
 		Subject:   subject,

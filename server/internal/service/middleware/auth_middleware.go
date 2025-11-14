@@ -60,7 +60,7 @@ func AuthInterceptor() connect.UnaryInterceptorFunc {
 		// Store ID in context
 		// Note: Current implementation uses the same token format for both anonymous and permanent users.
 		// The AnonID field contains either the anon_id (for anonymous users) or user_id (for permanent users).
-		// TODO: Add a token type field to distinguish between anonymous and permanent users,
+		//nolint:godox // TODO: Add a token type field to distinguish between anonymous and permanent users,
 		// and store in appropriate context keys (AnonIDContextKey vs UserIDContextKey).
 		ctx = context.WithValue(ctx, AnonIDContextKey, anonToken.AnonID)
 

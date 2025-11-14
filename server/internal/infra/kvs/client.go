@@ -169,7 +169,12 @@ func (c *Client) Eval(ctx context.Context, script string, keys []string, args ..
 		return nil, errors.Errorf("eval failed: %w", err)
 	}
 
-	return result.ToAny()
+	val, err := result.ToAny()
+	if err != nil {
+		return nil, errors.Errorf("failed to convert eval result: %w", err)
+	}
+
+	return val, nil
 }
 
 // SAdd adds members to a set.

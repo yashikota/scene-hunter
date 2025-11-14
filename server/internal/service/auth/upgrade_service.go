@@ -76,7 +76,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 			s.config.Auth.AccessTokenTTL,
 		)
 		if err != nil {
-			return nil, err
+			return nil, errors.Errorf("failed to sign user session token: %w", err)
 		}
 
 		res := &scene_hunterv1.UpgradeAnonWithGoogleResponse{
@@ -93,7 +93,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 
 	// Create new permanent user
 	// Generate a unique user code (simplified - in production, ensure uniqueness)
-	userCode := generateUserCode(idToken.Email)
+	userCode := generateUserCode()
 
 	userName := idToken.Name
 	if userName == "" {
@@ -105,7 +105,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 	// Create identity
 	identity, err := domainauth.GoogleIdentity(newUser.ID, idToken.Sub, idToken.Email)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to create Google identity: %w", err)
 	}
 
 	// Get database client for transaction
@@ -117,7 +117,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 	dbClient := identityRepo.DB
 
 	// Start transaction
-	tx, err := dbClient.Begin(ctx)
+	dbTx, err := dbClient.Begin(ctx)
 	if err != nil {
 		return nil, errors.Errorf("failed to start transaction: %w", err)
 	}
@@ -128,12 +128,12 @@ func (s *Service) UpgradeAnonWithGoogle(
 	// Ensure rollback on error
 	defer func() {
 		if !committed && err != nil {
-			_ = tx.Rollback(ctx)
+			_ = dbTx.Rollback(ctx)
 		}
 	}()
 
 	// Create user in database (within transaction)
-	qtx := dbClient.Queries.WithTx(tx)
+	qtx := dbClient.Queries.WithTx(dbTx)
 	_, err = qtx.CreateUser(ctx, queries.CreateUserParams{
 		ID:        newUser.ID,
 		Code:      newUser.Code,
@@ -163,12 +163,12 @@ func (s *Service) UpgradeAnonWithGoogle(
 	}
 
 	// Commit transaction
-	if err = tx.Commit(ctx); err != nil {
+	if err = dbTx.Commit(ctx); err != nil {
 		return nil, errors.Errorf("failed to commit transaction: %w", err)
 	}
 	committed = true
 
-	// TODO: Migrate anonymous data from Valkey to Postgres
+	//nolint:godox // TODO: Migrate anonymous data from Valkey to Postgres
 	// This would involve:
 	// 1. Find all data associated with anonToken.AnonID
 	// 2. Associate it with newUser.ID
@@ -213,14 +213,14 @@ func (s *Service) UpgradeAnonWithGoogle(
 	return res, nil
 }
 
-// generateUserCode generates a unique user code from an email.
+// generateUserCode generates a unique user code.
 // This is a simplified implementation.
-func generateUserCode(email string) string {
+func generateUserCode() string {
 	// Generate a random user code
-	// TODO: Ensure uniqueness by checking database and retrying on collision
+	//nolint:godox // TODO: Ensure uniqueness by checking database and retrying on collision
 	// Current implementation: Use first 8 characters of UUID (collision risk exists)
 	// Recommended: Implement retry logic with database uniqueness check
-	id := uuid.New()
+	userID := uuid.New()
 
-	return id.String()[:8]
+	return userID.String()[:8]
 }

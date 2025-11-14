@@ -15,6 +15,9 @@ import (
 )
 
 // GoogleIDToken represents the claims in a Google ID token.
+// Google API uses snake_case for JSON field names, so we disable tagliatelle linter.
+//
+//nolint:tagliatelle
 type GoogleIDToken struct {
 	Iss           string `json:"iss"`
 	Sub           string `json:"sub"`
@@ -32,6 +35,9 @@ type GoogleIDToken struct {
 }
 
 // GoogleTokenResponse represents the response from Google's token endpoint.
+// Google API uses snake_case for JSON field names, so we disable tagliatelle linter.
+//
+//nolint:tagliatelle
 type GoogleTokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	ExpiresIn    int    `json:"expires_in"`
@@ -97,14 +103,14 @@ func (v *GoogleVerifier) ExchangeCodeForToken(
 		return nil, errors.Errorf("failed to create request: %w", err)
 	}
 
-	q := req.URL.Query()
-	q.Add("code", code)
-	q.Add("client_id", v.clientID)
-	q.Add("client_secret", v.clientSecret)
-	q.Add("redirect_uri", redirectURI)
-	q.Add("grant_type", "authorization_code")
-	q.Add("code_verifier", codeVerifier)
-	req.URL.RawQuery = q.Encode()
+	query := req.URL.Query()
+	query.Add("code", code)
+	query.Add("client_id", v.clientID)
+	query.Add("client_secret", v.clientSecret)
+	query.Add("redirect_uri", redirectURI)
+	query.Add("grant_type", "authorization_code")
+	query.Add("code_verifier", codeVerifier)
+	req.URL.RawQuery = query.Encode()
 
 	resp, err := v.httpClient.Do(req)
 	if err != nil {
@@ -154,8 +160,8 @@ func (v *GoogleVerifier) VerifyIDToken(
 	}
 
 	// Verify issuer (accept both Google issuer formats)
-	issuer, ok := token.Issuer()
-	if !ok {
+	issuer, issuerOK := token.Issuer()
+	if !issuerOK {
 		return nil, errors.Errorf("missing issuer")
 	}
 	if issuer != "https://accounts.google.com" && issuer != "accounts.google.com" {

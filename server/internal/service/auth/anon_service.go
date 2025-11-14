@@ -53,13 +53,13 @@ func (s *Service) IssueAnon(
 	// Generate new anon_id
 	anonID, err := domainauth.GenerateAnonID()
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to generate anon ID: %w", err)
 	}
 
 	// Create access token
 	accessToken, err := s.tokenSigner.SignAnonToken(anonID, s.config.Auth.AccessTokenTTL)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to sign access token: %w", err)
 	}
 
 	// Create refresh token
@@ -74,12 +74,12 @@ func (s *Service) IssueAnon(
 		s.config.Auth.RefreshTokenTTL,
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to create refresh token: %w", err)
 	}
 
 	// Save refresh token
 	if err := s.anonRepo.SaveRefreshToken(ctx, refreshToken); err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to save refresh token: %w", err)
 	}
 
 	res := &scene_hunterv1.IssueAnonResponse{
@@ -131,7 +131,7 @@ func (s *Service) RefreshAnon(
 
 	// Mark old token as used
 	if err := s.anonRepo.MarkRefreshTokenAsUsed(ctx, tokenID); err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to mark refresh token as used: %w", err)
 	}
 
 	// Create new access token
@@ -140,7 +140,7 @@ func (s *Service) RefreshAnon(
 		s.config.Auth.AccessTokenTTL,
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to sign new access token: %w", err)
 	}
 
 	// Create new refresh token
@@ -155,12 +155,12 @@ func (s *Service) RefreshAnon(
 		s.config.Auth.RefreshTokenTTL,
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to create new refresh token: %w", err)
 	}
 
 	// Save new refresh token
 	if err := s.anonRepo.SaveRefreshToken(ctx, newRefreshToken); err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to save new refresh token: %w", err)
 	}
 
 	// Revoke old token (already marked as used, but clean up)
@@ -198,7 +198,7 @@ func (s *Service) RevokeAnon(
 	// Revoke the refresh token
 	err := s.anonRepo.RevokeRefreshToken(ctx, tokenID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to revoke refresh token: %w", err)
 	}
 
 	res := &scene_hunterv1.RevokeAnonResponse{}
