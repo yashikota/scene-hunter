@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	domainauth "github.com/yashikota/scene-hunter/server/internal/domain/auth"
 	domainuser "github.com/yashikota/scene-hunter/server/internal/domain/user"
@@ -50,7 +52,19 @@ func (s *Service) UpgradeAnonWithGoogle(
 		"google",
 		idToken.Sub,
 	)
-	if err == nil && existingIdentity != nil {
+	
+	// Handle database errors properly
+	if err != nil {
+		// Check if it's a "not found" error
+		if !errors.Is(err, pgx.ErrNoRows) {
+			// If it's not "not found", it's a real database error
+			return nil, errors.Errorf("failed to check existing identity: %w", err)
+		}
+		// If it's "not found", continue to create new user
+		existingIdentity = nil
+	}
+	
+	if existingIdentity != nil {
 		// User already exists, just revoke anon tokens and return session
 		if err := s.anonRepo.RevokeAllAnonTokens(ctx, anonToken.AnonID); err != nil {
 			// Log but don't fail
@@ -108,9 +122,12 @@ func (s *Service) UpgradeAnonWithGoogle(
 		return nil, errors.Errorf("failed to start transaction: %w", err)
 	}
 
+	// Track whether transaction has been committed
+	committed := false
+	
 	// Ensure rollback on error
 	defer func() {
-		if err != nil {
+		if !committed && err != nil {
 			_ = tx.Rollback(ctx)
 		}
 	}()
@@ -131,11 +148,14 @@ func (s *Service) UpgradeAnonWithGoogle(
 
 	// Create identity (within transaction)
 	_, err = qtx.CreateUserIdentity(ctx, queries.CreateUserIdentityParams{
-		ID:        identity.ID,
-		UserID:    identity.UserID,
-		Provider:  identity.Provider,
-		Subject:   identity.Subject,
-		Email:     identity.Email,
+		ID:       identity.ID,
+		UserID:   identity.UserID,
+		Provider: identity.Provider,
+		Subject:  identity.Subject,
+		Email: pgtype.Text{
+			String: identity.Email,
+			Valid:  identity.Email != "",
+		},
 		CreatedAt: identity.CreatedAt,
 	})
 	if err != nil {
@@ -146,6 +166,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 	if err = tx.Commit(ctx); err != nil {
 		return nil, errors.Errorf("failed to commit transaction: %w", err)
 	}
+	committed = true
 
 	// TODO: Migrate anonymous data from Valkey to Postgres
 	// This would involve:

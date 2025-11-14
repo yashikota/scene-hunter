@@ -225,6 +225,25 @@ func (c *Client) Expire(ctx context.Context, key string, ttl time.Duration) erro
 	return nil
 }
 
+// TTL returns the remaining time to live of a key.
+// Returns -2 if the key does not exist, -1 if the key has no expiration.
+func (c *Client) TTL(ctx context.Context, key string) (time.Duration, error) {
+	cmd := c.client.B().Ttl().Key(key).Build()
+	result := c.client.Do(ctx, cmd)
+
+	ttlSeconds, err := result.AsInt64()
+	if err != nil {
+		return 0, errors.Errorf("ttl failed: %w", err)
+	}
+
+	// -2 means key doesn't exist, -1 means no expiration
+	if ttlSeconds < 0 {
+		return time.Duration(ttlSeconds), nil
+	}
+
+	return time.Duration(ttlSeconds) * time.Second, nil
+}
+
 // toString converts an interface{} to string.
 func toString(v interface{}) string {
 	return fmt.Sprintf("%v", v)

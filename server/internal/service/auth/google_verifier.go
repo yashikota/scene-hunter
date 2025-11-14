@@ -154,7 +154,10 @@ func (v *GoogleVerifier) VerifyIDToken(
 	}
 
 	// Verify issuer (accept both Google issuer formats)
-	issuer := token.Issuer()
+	issuer, ok := token.Issuer()
+	if !ok {
+		return nil, errors.Errorf("missing issuer")
+	}
 	if issuer != "https://accounts.google.com" && issuer != "accounts.google.com" {
 		return nil, errors.Errorf("invalid issuer: %s", issuer)
 	}

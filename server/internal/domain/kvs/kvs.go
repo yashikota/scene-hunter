@@ -24,4 +24,5 @@ type KVS interface {
 	SMembers(ctx context.Context, key string) ([]string, error)
 	SRem(ctx context.Context, key string, members ...string) error
 	Expire(ctx context.Context, key string, ttl time.Duration) error
+	TTL(ctx context.Context, key string) (time.Duration, error)
 }

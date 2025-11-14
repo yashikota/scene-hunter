@@ -25,14 +25,14 @@ func NewAnonRepository(kvs domainkvs.KVS) domainauth.AnonRepository {
 
 // refreshTokenData represents the data stored in Valkey for a refresh token.
 type refreshTokenData struct {
-	ID         string    `json:"id"`
-	AnonID     string    `json:"anon_id"`
-	TokenHash  string    `json:"token_hash"`
-	ExpiresAt  time.Time `json:"expires_at"`
-	Used       bool      `json:"used"`
-	UserAgent  string    `json:"user_agent"`
-	CreatedAt  time.Time `json:"created_at"`
-	LastUsedAt time.Time `json:"last_used_at"`
+	ID         string `json:"id"`
+	AnonID     string `json:"anon_id"`
+	TokenHash  string `json:"token_hash"`
+	ExpiresAt  int64  `json:"expires_at"`   // Unix timestamp
+	Used       bool   `json:"used"`
+	UserAgent  string `json:"user_agent"`
+	CreatedAt  int64  `json:"created_at"`   // Unix timestamp
+	LastUsedAt int64  `json:"last_used_at"` // Unix timestamp
 }
 
 func (r *AnonRepository) tokenKey(tokenID string) string {
@@ -52,11 +52,11 @@ func (r *AnonRepository) SaveRefreshToken(
 		ID:         token.ID,
 		AnonID:     token.AnonID,
 		TokenHash:  token.TokenHash,
-		ExpiresAt:  token.ExpiresAt,
+		ExpiresAt:  token.ExpiresAt.Unix(),
 		Used:       token.Used,
 		UserAgent:  token.UserAgent,
-		CreatedAt:  token.CreatedAt,
-		LastUsedAt: token.LastUsedAt,
+		CreatedAt:  token.CreatedAt.Unix(),
+		LastUsedAt: token.LastUsedAt.Unix(),
 	}
 
 	dataJSON, err := json.Marshal(data)
@@ -81,9 +81,19 @@ func (r *AnonRepository) SaveRefreshToken(
 		return errors.Errorf("failed to index token by anon_id: %w", err)
 	}
 
-	// Set expiration for the set key to match the token TTL
-	if err := r.kvs.Expire(ctx, anonKey, ttl); err != nil {
-		return errors.Errorf("failed to set expiration for token index: %w", err)
+	// Set expiration for the set key, but only if it's longer than the current TTL
+	// This prevents overwriting a longer TTL with a shorter one when multiple tokens exist
+	currentTTL, err := r.kvs.TTL(ctx, anonKey)
+	if err != nil {
+		return errors.Errorf("failed to get current TTL for token index: %w", err)
+	}
+
+	// Update TTL only if the new token's TTL is longer than the current one
+	// -2 means key doesn't exist (first token), -1 means no expiration (shouldn't happen)
+	if currentTTL < 0 || ttl > currentTTL {
+		if err := r.kvs.Expire(ctx, anonKey, ttl); err != nil {
+			return errors.Errorf("failed to set expiration for token index: %w", err)
+		}
 	}
 
 	return nil
@@ -114,11 +124,11 @@ func (r *AnonRepository) GetRefreshToken(
 		ID:         data.ID,
 		AnonID:     data.AnonID,
 		TokenHash:  data.TokenHash,
-		ExpiresAt:  data.ExpiresAt,
+		ExpiresAt:  time.Unix(data.ExpiresAt, 0),
 		Used:       data.Used,
 		UserAgent:  data.UserAgent,
-		CreatedAt:  data.CreatedAt,
-		LastUsedAt: data.LastUsedAt,
+		CreatedAt:  time.Unix(data.CreatedAt, 0),
+		LastUsedAt: time.Unix(data.LastUsedAt, 0),
 	}, nil
 }
 
