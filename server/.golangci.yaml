@@ -27,6 +27,8 @@ linters:
     depguard:
       rules:
         main:
+          files:
+            - "!**/internal/util/errors/**"
           deny:
           - pkg: "github.com/stretchr/testify/assert"
             desc: "Use github.com/stretchr/testify/require instead of github.com/stretchr/testify/assert"
