@@ -66,7 +66,6 @@ func (s *Service) UpgradeAnonWithGoogle(
 	
 	if existingIdentity != nil {
 		// User already exists, just revoke anon tokens and return session
-		//nolint:staticcheck,noinlineerr // Intentionally ignoring errors to not fail upgrade on token revocation
 		if err := s.anonRepo.RevokeAllAnonTokens(ctx, anonToken.AnonID); err != nil {
 			// Log but don't fail
 		}
@@ -164,13 +163,11 @@ func (s *Service) UpgradeAnonWithGoogle(
 	}
 
 	// Commit transaction
-	//nolint:noinlineerr // Inline error handling is clearer here
 	if err = dbTx.Commit(ctx); err != nil {
 		return nil, errors.Errorf("failed to commit transaction: %w", err)
 	}
 	committed = true
 
-	//nolint:godox // TODO: Migrate anonymous data from Valkey to Postgres
 	// This would involve:
 	// 1. Find all data associated with anonToken.AnonID
 	// 2. Associate it with newUser.ID
@@ -178,7 +175,6 @@ func (s *Service) UpgradeAnonWithGoogle(
 	migratedRecords := uint32(0)
 
 	// Revoke all anonymous tokens
-	//nolint:staticcheck,noinlineerr // Intentionally ignoring errors to not fail upgrade on token revocation
 	if err := s.anonRepo.RevokeAllAnonTokens(ctx, anonToken.AnonID); err != nil {
 		// Log but don't fail
 	}
@@ -189,7 +185,6 @@ func (s *Service) UpgradeAnonWithGoogle(
 		parts := strings.Split(rawRefreshToken, ":")
 		if len(parts) == 2 {
 			tokenID := parts[0]
-			//nolint:staticcheck // Intentionally ignoring errors to not fail upgrade on token revocation
 			if err := s.anonRepo.RevokeRefreshToken(ctx, tokenID); err != nil {
 				// Log but don't fail
 			}
@@ -221,7 +216,6 @@ func (s *Service) UpgradeAnonWithGoogle(
 // This is a simplified implementation.
 func generateUserCode() string {
 	// Generate a random user code
-	//nolint:godox // TODO: Ensure uniqueness by checking database and retrying on collision
 	// Current implementation: Use first 8 characters of UUID (collision risk exists)
 	// Recommended: Implement retry logic with database uniqueness check
 	userID := uuid.New()

@@ -2,7 +2,6 @@ package errors
 
 import (
 	"context"
-	//nolint:depguard // errors package is deprecated
 	"errors"
 	"log/slog"
 
@@ -11,7 +10,6 @@ import (
 
 // StackFrame represents a single stack frame for structured logging.
 //
-//nolint:tagliatelle // Use uppercase field names to match reference implementation
 type StackFrame struct {
 	File           string  `json:"File"`
 	LineNumber     int     `json:"LineNumber"`

@@ -17,7 +17,6 @@ import (
 // GoogleIDToken represents the claims in a Google ID token.
 // Google API uses snake_case for JSON field names, so we disable tagliatelle linter.
 //
-//nolint:tagliatelle
 type GoogleIDToken struct {
 	Iss           string `json:"iss"`
 	Sub           string `json:"sub"`
@@ -37,7 +36,6 @@ type GoogleIDToken struct {
 // GoogleTokenResponse represents the response from Google's token endpoint.
 // Google API uses snake_case for JSON field names, so we disable tagliatelle linter.
 //
-//nolint:tagliatelle
 type GoogleTokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	ExpiresIn    int    `json:"expires_in"`
@@ -96,7 +94,6 @@ func (v *GoogleVerifier) ExchangeCodeForToken(
 	ctx context.Context,
 	code, codeVerifier, redirectURI string,
 ) (*GoogleTokenResponse, error) {
-	//nolint:gosec // This is Google's public OAuth endpoint URL, not a hardcoded credential
 	tokenURL := "https://oauth2.googleapis.com/token"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, nil)
@@ -129,7 +126,6 @@ func (v *GoogleVerifier) ExchangeCodeForToken(
 	}
 
 	var tokenResp GoogleTokenResponse
-	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
 		return nil, errors.Errorf("failed to decode token response: %w", err)
 	}
@@ -178,49 +174,41 @@ func (v *GoogleVerifier) VerifyIDToken(
 
 	// Extract custom claims
 	var email string
-	//nolint:staticcheck,noinlineerr // Empty branch is intentional - claim is optional
 	if err := token.Get("email", &email); err == nil {
 		// Got email
 	}
 
 	var emailVerified bool
-	//nolint:staticcheck,noinlineerr // Empty branch is intentional - claim is optional
 	if err := token.Get("email_verified", &emailVerified); err == nil {
 		// Got emailVerified
 	}
 
 	var name string
-	//nolint:staticcheck,noinlineerr // Empty branch is intentional - claim is optional
 	if err := token.Get("name", &name); err == nil {
 		// Got name
 	}
 
 	var picture string
-	//nolint:staticcheck,noinlineerr // Empty branch is intentional - claim is optional
 	if err := token.Get("picture", &picture); err == nil {
 		// Got picture
 	}
 
 	var givenName string
-	//nolint:staticcheck,noinlineerr // Empty branch is intentional - claim is optional
 	if err := token.Get("given_name", &givenName); err == nil {
 		// Got givenName
 	}
 
 	var familyName string
-	//nolint:staticcheck,noinlineerr // Empty branch is intentional - claim is optional
 	if err := token.Get("family_name", &familyName); err == nil {
 		// Got familyName
 	}
 
 	var locale string
-	//nolint:staticcheck,noinlineerr // Empty branch is intentional - claim is optional
 	if err := token.Get("locale", &locale); err == nil {
 		// Got locale
 	}
 
 	var azp string
-	//nolint:staticcheck,noinlineerr // Empty branch is intentional - claim is optional
 	if err := token.Get("azp", &azp); err == nil {
 		// Got azp
 	}
@@ -284,7 +272,6 @@ func (v *GoogleVerifier) GetUserInfo(
 	}
 
 	var userInfo map[string]any
-	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
 		return nil, errors.Errorf("failed to decode user info: %w", err)
 	}

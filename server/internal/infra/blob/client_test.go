@@ -351,7 +351,6 @@ func TestClient_Exists(t *testing.T) {
 
 // TestClient_List はオブジェクトのリスト取得が正常に動作することをテストする.
 // プレフィックスによるフィルタリング、空の結果、エラーケースなどを検証する.
-func TestClient_List(t *testing.T) { //nolint:gocognit // テストケースが多いため許容
 	t.Parallel()
 
 	tests := []struct {

@@ -26,7 +26,6 @@ func NewAnonRepository(kvs domainkvs.KVS) domainauth.AnonRepository {
 // refreshTokenData represents the data stored in Valkey for a refresh token.
 // Internal JSON structure uses snake_case for Redis compatibility.
 //
-//nolint:tagliatelle
 type refreshTokenData struct {
 	ID         string `json:"id"`
 	AnonID     string `json:"anon_id"`
@@ -66,14 +65,12 @@ func (r *AnonRepository) SaveRefreshToken(
 
 	// Store token data
 	key := r.tokenKey(token.ID)
-	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := r.kvs.Set(ctx, key, string(dataJSON), ttl); err != nil {
 		return errors.Errorf("failed to save refresh token: %w", err)
 	}
 
 	// Add to anon_id index (for revocation) using a set
 	anonKey := r.anonTokensKey(token.AnonID)
-	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := r.kvs.SAdd(ctx, anonKey, token.ID); err != nil {
 		return errors.Errorf("failed to index token by anon_id: %w", err)
 	}
@@ -113,7 +110,6 @@ func (r *AnonRepository) GetRefreshToken(
 	}
 
 	var data refreshTokenData
-	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := json.Unmarshal([]byte(dataJSON), &data); err != nil {
 		return nil, errors.Errorf("failed to unmarshal token data: %w", err)
 	}
@@ -200,14 +196,12 @@ func (r *AnonRepository) RevokeRefreshToken(ctx context.Context, tokenID string)
 
 	// Delete token data
 	key := r.tokenKey(tokenID)
-	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := r.kvs.Delete(ctx, key); err != nil {
 		return errors.Errorf("failed to revoke refresh token: %w", err)
 	}
 
 	// Remove from anon_id set
 	anonKey := r.anonTokensKey(token.AnonID)
-	//nolint:nilerr,noinlineerr // Intentionally ignore set removal errors and continue
 	if err := r.kvs.SRem(ctx, anonKey, tokenID); err != nil {
 		// Log but don't fail if set removal fails
 		return nil
@@ -240,7 +234,6 @@ func (r *AnonRepository) RevokeAllAnonTokens(ctx context.Context, anonID string)
 	}
 
 	// Delete the index set
-	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := r.kvs.Delete(ctx, anonKey); err != nil {
 		return errors.Errorf("failed to delete anon tokens index: %w", err)
 	}

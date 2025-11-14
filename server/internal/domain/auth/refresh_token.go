@@ -32,7 +32,6 @@ func NewRefreshToken(anonID, userAgent string, ttl time.Duration) (*RefreshToken
 
 	// Generate random token secret (32 bytes)
 	tokenBytes := make([]byte, 32)
-	//nolint:noinlineerr // Inline error handling is clearer here
 	if _, err := rand.Read(tokenBytes); err != nil {
 		return nil, "", errors.Errorf("failed to generate random token: %w", err)
 	}

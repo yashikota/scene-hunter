@@ -165,7 +165,6 @@ func (c *Client) Eval(ctx context.Context, script string, keys []string, args ..
 	cmd := c.client.B().Eval().Script(script).Numkeys(int64(len(keys))).Key(keys...).Arg(strArgs...).Build()
 	result := c.client.Do(ctx, cmd)
 
-	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := result.Error(); err != nil {
 		return nil, errors.Errorf("eval failed: %w", err)
 	}

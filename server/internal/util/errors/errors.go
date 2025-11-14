@@ -2,7 +2,6 @@
 package errors
 
 import (
-	//nolint:depguard // errors package is deprecated
 	"errors"
 
 	goerrors "github.com/go-errors/errors"
