@@ -17,9 +17,12 @@ linters:
     - godox # TODO/FIXMEコメントは開発中に有用
     - gosec # 誤検知が多いため（例：OAuth endpoint URL）
     - nilerr # 意図的にエラーを無視する場合がある（例：クリーンアップ処理）
+    - gocognit # テストケース等で複雑度が高くなることがある
   exclusions:
     generated: lax
   settings:
+    staticcheck:
+      checks: ["all", "-SA9003"]  # SA9003: 空ブランチ警告を無効化（オプショナルな値の取得で使用）
     wsl_v5:
       allow-first-in-block: true
       allow-whole-block: false
