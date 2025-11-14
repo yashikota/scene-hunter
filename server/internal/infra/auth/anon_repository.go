@@ -113,6 +113,7 @@ func (r *AnonRepository) GetRefreshToken(
 	}
 
 	var data refreshTokenData
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := json.Unmarshal([]byte(dataJSON), &data); err != nil {
 		return nil, errors.Errorf("failed to unmarshal token data: %w", err)
 	}
@@ -199,13 +200,14 @@ func (r *AnonRepository) RevokeRefreshToken(ctx context.Context, tokenID string)
 
 	// Delete token data
 	key := r.tokenKey(tokenID)
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := r.kvs.Delete(ctx, key); err != nil {
 		return errors.Errorf("failed to revoke refresh token: %w", err)
 	}
 
 	// Remove from anon_id set
 	anonKey := r.anonTokensKey(token.AnonID)
-	//nolint:nilerr // Intentionally ignore set removal errors and continue
+	//nolint:nilerr,noinlineerr // Intentionally ignore set removal errors and continue
 	if err := r.kvs.SRem(ctx, anonKey, tokenID); err != nil {
 		// Log but don't fail if set removal fails
 		return nil
