@@ -18,6 +18,7 @@ linters:
     - gosec # 誤検知が多いため（例：OAuth endpoint URL）
     - nilerr # 意図的にエラーを無視する場合がある（例：クリーンアップ処理）
     - gocognit # テストケース等で複雑度が高くなることがある
+    - unparam # テストヘルパー関数等で将来使う予定のパラメータがある
   exclusions:
     generated: lax
   settings:

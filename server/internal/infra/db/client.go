@@ -1,3 +1,4 @@
+// Package db provides database client implementation using pgx.
 package db
 
 import (
