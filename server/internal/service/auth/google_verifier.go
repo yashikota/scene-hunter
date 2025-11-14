@@ -96,6 +96,7 @@ func (v *GoogleVerifier) ExchangeCodeForToken(
 	ctx context.Context,
 	code, codeVerifier, redirectURI string,
 ) (*GoogleTokenResponse, error) {
+	//nolint:gosec // This is Google's public OAuth endpoint URL, not a hardcoded credential
 	tokenURL := "https://oauth2.googleapis.com/token"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, nil)

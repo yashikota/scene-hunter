@@ -24,6 +24,9 @@ func NewAnonRepository(kvs domainkvs.KVS) domainauth.AnonRepository {
 }
 
 // refreshTokenData represents the data stored in Valkey for a refresh token.
+// Internal JSON structure uses snake_case for Redis compatibility.
+//
+//nolint:tagliatelle
 type refreshTokenData struct {
 	ID         string `json:"id"`
 	AnonID     string `json:"anon_id"`
@@ -33,14 +36,6 @@ type refreshTokenData struct {
 	UserAgent  string `json:"user_agent"`
 	CreatedAt  int64  `json:"created_at"`   // Unix timestamp
 	LastUsedAt int64  `json:"last_used_at"` // Unix timestamp
-}
-
-func (r *AnonRepository) tokenKey(tokenID string) string {
-	return "refresh:" + tokenID
-}
-
-func (r *AnonRepository) anonTokensKey(anonID string) string {
-	return "anon:tokens:" + anonID
 }
 
 // SaveRefreshToken stores a refresh token with TTL.
@@ -71,12 +66,14 @@ func (r *AnonRepository) SaveRefreshToken(
 
 	// Store token data
 	key := r.tokenKey(token.ID)
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := r.kvs.Set(ctx, key, string(dataJSON), ttl); err != nil {
 		return errors.Errorf("failed to save refresh token: %w", err)
 	}
 
 	// Add to anon_id index (for revocation) using a set
 	anonKey := r.anonTokensKey(token.AnonID)
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := r.kvs.SAdd(ctx, anonKey, token.ID); err != nil {
 		return errors.Errorf("failed to index token by anon_id: %w", err)
 	}
@@ -208,6 +205,7 @@ func (r *AnonRepository) RevokeRefreshToken(ctx context.Context, tokenID string)
 
 	// Remove from anon_id set
 	anonKey := r.anonTokensKey(token.AnonID)
+	//nolint:nilerr // Intentionally ignore set removal errors and continue
 	if err := r.kvs.SRem(ctx, anonKey, tokenID); err != nil {
 		// Log but don't fail if set removal fails
 		return nil
@@ -245,4 +243,14 @@ func (r *AnonRepository) RevokeAllAnonTokens(ctx context.Context, anonID string)
 	}
 
 	return nil
+}
+
+// tokenKey returns the Redis key for a refresh token.
+func (r *AnonRepository) tokenKey(tokenID string) string {
+	return "refresh:" + tokenID
+}
+
+// anonTokensKey returns the Redis key for the set of tokens for an anon_id.
+func (r *AnonRepository) anonTokensKey(anonID string) string {
+	return "anon:tokens:" + anonID
 }

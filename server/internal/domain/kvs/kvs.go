@@ -11,6 +11,10 @@ import (
 // ErrNotFound is returned when a key is not found.
 var ErrNotFound = errors.New("key not found")
 
+// KVS defines the interface for key-value store operations.
+// This interface requires many methods to support various Redis/Valkey operations.
+//
+//nolint:interfacebloat // Many methods are required for complete KVS functionality
 type KVS interface {
 	Ping(ctx context.Context) error
 	Close()

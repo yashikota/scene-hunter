@@ -186,6 +186,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 		parts := strings.Split(rawRefreshToken, ":")
 		if len(parts) == 2 {
 			tokenID := parts[0]
+			//nolint:staticcheck // Intentionally ignoring errors to not fail upgrade on token revocation
 			if err := s.anonRepo.RevokeRefreshToken(ctx, tokenID); err != nil {
 				// Log but don't fail
 			}
@@ -198,7 +199,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 		s.config.Auth.AccessTokenTTL,
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to sign user session token: %w", err)
 	}
 
 	res := &scene_hunterv1.UpgradeAnonWithGoogleResponse{

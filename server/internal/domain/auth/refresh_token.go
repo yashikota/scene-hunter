@@ -32,6 +32,7 @@ func NewRefreshToken(anonID, userAgent string, ttl time.Duration) (*RefreshToken
 
 	// Generate random token secret (32 bytes)
 	tokenBytes := make([]byte, 32)
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if _, err := rand.Read(tokenBytes); err != nil {
 		return nil, "", errors.Errorf("failed to generate random token: %w", err)
 	}
@@ -62,6 +63,7 @@ func NewRefreshToken(anonID, userAgent string, ttl time.Duration) (*RefreshToken
 }
 
 // GetRawToken returns the raw token string (ID:hash for lookup).
+//
 // Deprecated: Use the rawToken returned by NewRefreshToken instead.
 func (r *RefreshToken) GetRawToken() string {
 	return r.ID
