@@ -184,36 +184,43 @@ func (v *GoogleVerifier) VerifyIDToken(
 	}
 
 	var emailVerified bool
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := token.Get("email_verified", &emailVerified); err == nil {
 		// Got emailVerified
 	}
 
 	var name string
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := token.Get("name", &name); err == nil {
 		// Got name
 	}
 
 	var picture string
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := token.Get("picture", &picture); err == nil {
 		// Got picture
 	}
 
 	var givenName string
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := token.Get("given_name", &givenName); err == nil {
 		// Got givenName
 	}
 
 	var familyName string
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := token.Get("family_name", &familyName); err == nil {
 		// Got familyName
 	}
 
 	var locale string
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := token.Get("locale", &locale); err == nil {
 		// Got locale
 	}
 
 	var azp string
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := token.Get("azp", &azp); err == nil {
 		// Got azp
 	}
