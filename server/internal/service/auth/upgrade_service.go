@@ -66,6 +66,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 	
 	if existingIdentity != nil {
 		// User already exists, just revoke anon tokens and return session
+		//nolint:staticcheck,noinlineerr // Intentionally ignoring errors to not fail upgrade on token revocation
 		if err := s.anonRepo.RevokeAllAnonTokens(ctx, anonToken.AnonID); err != nil {
 			// Log but don't fail
 		}

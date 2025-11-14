@@ -284,6 +284,7 @@ func (v *GoogleVerifier) GetUserInfo(
 	}
 
 	var userInfo map[string]any
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
 		return nil, errors.Errorf("failed to decode user info: %w", err)
 	}
