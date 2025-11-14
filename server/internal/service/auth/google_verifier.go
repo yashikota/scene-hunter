@@ -129,6 +129,7 @@ func (v *GoogleVerifier) ExchangeCodeForToken(
 	}
 
 	var tokenResp GoogleTokenResponse
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
 		return nil, errors.Errorf("failed to decode token response: %w", err)
 	}
@@ -177,6 +178,7 @@ func (v *GoogleVerifier) VerifyIDToken(
 
 	// Extract custom claims
 	var email string
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := token.Get("email", &email); err == nil {
 		// Got email
 	}

@@ -131,6 +131,7 @@ func (s *Service) RefreshAnon(
 	}
 
 	// Mark old token as used
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := s.anonRepo.MarkRefreshTokenAsUsed(ctx, tokenID); err != nil {
 		return nil, errors.Errorf("failed to mark refresh token as used: %w", err)
 	}
