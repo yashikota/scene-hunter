@@ -127,7 +127,8 @@ func registerImageService(mux *chi.Mux, deps *Dependencies, interceptors connect
 		return
 	}
 
-	imageService := imagesvc.NewService(deps.BlobClient, deps.KVSClient)
+	roomRepo := infraroom.NewRepository(deps.KVSClient)
+	imageService := imagesvc.NewService(deps.BlobClient, deps.KVSClient, roomRepo)
 	imagePath, imageHandler := scene_hunterv1connect.NewImageServiceHandler(
 		imageService,
 		interceptors,

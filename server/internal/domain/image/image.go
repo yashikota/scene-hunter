@@ -96,6 +96,14 @@ func (i *Image) Path() string {
 	return filepath.Join("game", i.RoomCode, filename)
 }
 
+// PathFromRoomID returns the storage path for the image using room ID.
+func PathFromRoomID(roomID uuid.UUID, imageID uuid.UUID, contentType string) string {
+	ext := getExtension(contentType)
+	filename := fmt.Sprintf("%s.%s", imageID.String(), ext)
+
+	return filepath.Join("game", roomID.String(), filename)
+}
+
 // Reader returns a bytes.Reader for the image data.
 func (i *Image) Reader() *bytes.Reader {
 	return bytes.NewReader(i.Data)

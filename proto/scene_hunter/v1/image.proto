@@ -3,6 +3,7 @@ syntax = "proto3";
 package scene_hunter.v1;
 
 import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1;scene_hunterv1";
 
@@ -17,6 +18,33 @@ message UploadImageResponse {
   string image_path = 2;
 }
 
+message GetImageRequest {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+  string image_id = 2 [(buf.validate.field).string.uuid = true];
+}
+
+message GetImageResponse {
+  bytes image_data = 1;
+  string content_type = 2;
+}
+
+message ListImagesRequest {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message ImageInfo {
+  string image_id = 1 [(buf.validate.field).string.uuid = true];
+  string image_path = 2;
+  int64 size = 3;
+  google.protobuf.Timestamp last_modified = 4;
+}
+
+message ListImagesResponse {
+  repeated ImageInfo images = 1;
+}
+
 service ImageService {
   rpc UploadImage(UploadImageRequest) returns (UploadImageResponse);
+  rpc GetImage(GetImageRequest) returns (GetImageResponse);
+  rpc ListImages(ListImagesRequest) returns (ListImagesResponse);
 }
