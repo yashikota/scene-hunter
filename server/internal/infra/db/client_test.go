@@ -147,6 +147,7 @@ func TestClient_Exec(t *testing.T) {
 
 // TestClient_Query は複数行を返すクエリが正常に動作することをテストする.
 // テーブルを作成してデータを挿入し、それらを取得して検証する.
+func TestClient_Query(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
