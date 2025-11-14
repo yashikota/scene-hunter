@@ -3,6 +3,7 @@ package image_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"testing"
 	"time"
@@ -246,7 +247,7 @@ func TestGetImage_RoomNotFound(t *testing.T) {
 	}
 
 	var connectErr *connect.Error
-	if !connect.As(err, &connectErr) {
+	if !errors.As(err, &connectErr) {
 		t.Fatal("error should be connect.Error")
 	}
 
@@ -286,7 +287,7 @@ func TestGetImage_ImageNotFound(t *testing.T) {
 	}
 
 	var connectErr *connect.Error
-	if !connect.As(err, &connectErr) {
+	if !errors.As(err, &connectErr) {
 		t.Fatal("error should be connect.Error")
 	}
 
@@ -415,7 +416,7 @@ func TestListImages_RoomNotFound(t *testing.T) {
 	}
 
 	var connectErr *connect.Error
-	if !connect.As(err, &connectErr) {
+	if !errors.As(err, &connectErr) {
 		t.Fatal("error should be connect.Error")
 	}
 
