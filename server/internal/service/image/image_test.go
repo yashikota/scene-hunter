@@ -3,7 +3,6 @@ package image_test
 import (
 	"bytes"
 	"context"
-	"errors"
 	"io"
 	"testing"
 	"time"
@@ -14,6 +13,7 @@ import (
 	domainblob "github.com/yashikota/scene-hunter/server/internal/domain/blob"
 	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
 	"github.com/yashikota/scene-hunter/server/internal/service/image"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 // mockBlobClient はBlobインターフェースのモック実装.
@@ -34,7 +34,7 @@ func (m *mockBlobClient) Ping(_ context.Context) error {
 func (m *mockBlobClient) Put(_ context.Context, key string, data io.Reader, _ time.Duration) error {
 	content, err := io.ReadAll(data)
 	if err != nil {
-		return err
+		return errors.Errorf("failed to read data: %w", err)
 	}
 
 	m.objects[key] = content

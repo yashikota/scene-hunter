@@ -46,19 +46,22 @@ func (s *Service) UploadImage(
 	ctx context.Context,
 	req *scene_hunterv1.UploadImageRequest,
 ) (*scene_hunterv1.UploadImageResponse, error) {
-	// room codeの存在確認
-	exists, err := s.kvsClient.Exists(ctx, req.GetRoomCode())
-	if err != nil {
-		return nil, connect.NewError(
-			connect.CodeInternal,
-			errors.Errorf("failed to check room existence: %w", err),
-		)
-	}
+	// room codeからroomを取得
+	roomCodeKey := "room_code:" + req.GetRoomCode()
 
-	if !exists {
+	roomIDStr, err := s.kvsClient.Get(ctx, roomCodeKey)
+	if err != nil {
 		return nil, connect.NewError(
 			connect.CodeNotFound,
 			errors.Errorf("%w: code=%s", ErrRoomNotFound, req.GetRoomCode()),
+		)
+	}
+
+	roomID, err := uuid.Parse(roomIDStr)
+	if err != nil {
+		return nil, connect.NewError(
+			connect.CodeInternal,
+			errors.Errorf("invalid room ID: %w", err),
 		)
 	}
 
@@ -75,8 +78,8 @@ func (s *Service) UploadImage(
 		)
 	}
 
-	// RustFSに保存
-	path := img.Path()
+	// RustFSに保存（roomIDベースのパスを使用）
+	path := domainimage.PathFromRoomID(roomID, img.ID, img.ContentType)
 
 	err = s.blobClient.Put(ctx, path, img.Reader(), TTL)
 	if err != nil {
@@ -136,8 +139,8 @@ func (s *Service) GetImage(
 
 	supportedTypes := []string{"image/jpeg", "image/png", "image/webp"}
 
-	for _, ct := range supportedTypes {
-		path := domainimage.PathFromRoomID(roomID, imageID, ct)
+	for _, candidateType := range supportedTypes {
+		path := domainimage.PathFromRoomID(roomID, imageID, candidateType)
 
 		reader, err := s.blobClient.Get(ctx, path)
 		if err != nil {
@@ -154,7 +157,7 @@ func (s *Service) GetImage(
 		}
 
 		imageData = data
-		contentType = ct
+		contentType = candidateType
 
 		break
 	}
