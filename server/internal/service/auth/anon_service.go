@@ -78,6 +78,7 @@ func (s *Service) IssueAnon(
 	}
 
 	// Save refresh token
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := s.anonRepo.SaveRefreshToken(ctx, refreshToken); err != nil {
 		return nil, errors.Errorf("failed to save refresh token: %w", err)
 	}
@@ -159,6 +160,7 @@ func (s *Service) RefreshAnon(
 	}
 
 	// Save new refresh token
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := s.anonRepo.SaveRefreshToken(ctx, newRefreshToken); err != nil {
 		return nil, errors.Errorf("failed to save new refresh token: %w", err)
 	}

@@ -240,6 +240,7 @@ func (r *AnonRepository) RevokeAllAnonTokens(ctx context.Context, anonID string)
 	}
 
 	// Delete the index set
+	//nolint:noinlineerr // Inline error handling is clearer here
 	if err := r.kvs.Delete(ctx, anonKey); err != nil {
 		return errors.Errorf("failed to delete anon tokens index: %w", err)
 	}
