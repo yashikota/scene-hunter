@@ -9,6 +9,21 @@ import (
 	"google.golang.org/genai"
 )
 
+// ImageAnalysisResult represents the result of image analysis.
+type ImageAnalysisResult struct {
+	Features []string
+}
+
+// Gemini is an interface for Gemini AI operations.
+type Gemini interface {
+	AnalyzeImage(
+		ctx context.Context,
+		imageData []byte,
+		mimeType string,
+		prompt string,
+	) (*ImageAnalysisResult, error)
+}
+
 // Client is a Gemini AI client.
 type Client struct {
 	client    *genai.Client

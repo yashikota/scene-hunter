@@ -6,20 +6,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	domainauth "github.com/yashikota/scene-hunter/server/internal/domain/auth"
 	domainuser "github.com/yashikota/scene-hunter/server/internal/domain/user"
-	"github.com/yashikota/scene-hunter/server/internal/infra/db/queries"
-	infrarepository "github.com/yashikota/scene-hunter/server/internal/infra/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
-// UpgradeAnonWithGoogle upgrades an anonymous user to a permanent user with Google OAuth.
-func (s *Service) UpgradeAnonWithGoogle(
+// PrepareGoogleUpgrade prepares the upgrade by validating tokens and checking for existing users.
+func (s *Service) PrepareGoogleUpgrade(
 	ctx context.Context,
 	req *scene_hunterv1.UpgradeAnonWithGoogleRequest,
-) (*scene_hunterv1.UpgradeAnonWithGoogleResponse, error) {
+) (*PreparedUpgradeData, error) {
 	// Verify anon access token
 	anonToken, err := s.tokenSigner.VerifyAnonToken(req.GetAnonAccessToken())
 	if err != nil {
@@ -27,7 +24,6 @@ func (s *Service) UpgradeAnonWithGoogle(
 	}
 
 	// Verify Google OAuth code and get ID token
-	// Get redirect URI from config
 	redirectURI := s.config.Auth.GoogleRedirectURI
 
 	tokenResp, err := s.googleVerifier.ExchangeCodeForToken(
@@ -63,112 +59,74 @@ func (s *Service) UpgradeAnonWithGoogle(
 		existingIdentity = nil
 	}
 
-	if existingIdentity != nil {
-		// User already exists, just revoke anon tokens and return session
-		if err := s.anonRepo.RevokeAllAnonTokens(ctx, anonToken.AnonID); err != nil {
-			// Log but don't fail
+	preparedData := &PreparedUpgradeData{
+		AnonToken:        anonToken,
+		IDToken:          idToken,
+		ExistingIdentity: existingIdentity,
+	}
+
+	// If user doesn't exist, prepare new user and identity
+	if existingIdentity == nil {
+		// Create new permanent user
+		userCode := generateUserCode()
+
+		userName := idToken.Name
+		if userName == "" {
+			userName = idToken.Email
 		}
 
-		// Create user session token (reusing anon token mechanism for now)
-		userSession, err := s.tokenSigner.SignAnonToken(
-			existingIdentity.UserID.String(),
-			s.config.Auth.AccessTokenTTL,
-		)
+		newUser := domainuser.NewUser(userCode, userName)
+
+		// Create identity
+		identity, err := domainauth.GoogleIdentity(newUser.ID, idToken.Sub, idToken.Email)
 		if err != nil {
-			return nil, errors.Errorf("failed to sign user session token: %w", err)
+			return nil, errors.Errorf("failed to create Google identity: %w", err)
 		}
 
-		res := &scene_hunterv1.UpgradeAnonWithGoogleResponse{
-			UserSession: &scene_hunterv1.Token{
-				Token:         userSession.Token,
-				ExpiresAtUnix: userSession.ExpiresAt.Unix(),
-			},
-			MigratedRecords: 0,
-			UserId:          existingIdentity.UserID.String(),
-		}
-
-		return res, nil
+		preparedData.NewUser = newUser
+		preparedData.Identity = identity
 	}
 
-	// Create new permanent user
-	// Generate a unique user code (simplified - in production, ensure uniqueness)
-	userCode := generateUserCode()
+	return preparedData, nil
+}
 
-	userName := idToken.Name
-	if userName == "" {
-		userName = idToken.Email
+// CompleteExistingUserUpgrade completes the upgrade for an existing user.
+func (s *Service) CompleteExistingUserUpgrade(
+	ctx context.Context,
+	data *PreparedUpgradeData,
+) (*scene_hunterv1.UpgradeAnonWithGoogleResponse, error) {
+	// User already exists, just revoke anon tokens and return session
+	if err := s.anonRepo.RevokeAllAnonTokens(ctx, data.AnonToken.AnonID); err != nil {
+		// Log but don't fail
 	}
 
-	newUser := domainuser.NewUser(userCode, userName)
-
-	// Create identity
-	identity, err := domainauth.GoogleIdentity(newUser.ID, idToken.Sub, idToken.Email)
+	// Create user session token
+	userSession, err := s.tokenSigner.SignAnonToken(
+		data.ExistingIdentity.UserID.String(),
+		s.config.Auth.AccessTokenTTL,
+	)
 	if err != nil {
-		return nil, errors.Errorf("failed to create Google identity: %w", err)
+		return nil, errors.Errorf("failed to sign user session token: %w", err)
 	}
 
-	// Get database client for transaction
-	identityRepo, ok := s.identityRepo.(*infrarepository.IdentityRepository)
-	if !ok {
-		return nil, errors.Errorf("invalid identity repository type")
-	}
-
-	dbClient := identityRepo.DB
-
-	// Start transaction
-	dbTx, err := dbClient.Begin(ctx)
-	if err != nil {
-		return nil, errors.Errorf("failed to start transaction: %w", err)
-	}
-
-	// Track whether transaction has been committed
-	committed := false
-
-	// Ensure rollback on error
-	defer func() {
-		if !committed && err != nil {
-			_ = dbTx.Rollback(ctx)
-		}
-	}()
-
-	// Create user in database (within transaction)
-	qtx := dbClient.Queries.WithTx(dbTx)
-
-	_, err = qtx.CreateUser(ctx, queries.CreateUserParams{
-		ID:        newUser.ID,
-		Code:      newUser.Code,
-		Name:      newUser.Name,
-		CreatedAt: newUser.CreatedAt,
-		UpdatedAt: newUser.UpdatedAt,
-		DeletedAt: newUser.DeletedAt,
-	})
-	if err != nil {
-		return nil, errors.Errorf("failed to create user: %w", err)
-	}
-
-	// Create identity (within transaction)
-	_, err = qtx.CreateUserIdentity(ctx, queries.CreateUserIdentityParams{
-		ID:       identity.ID,
-		UserID:   identity.UserID,
-		Provider: identity.Provider,
-		Subject:  identity.Subject,
-		Email: pgtype.Text{
-			String: identity.Email,
-			Valid:  identity.Email != "",
+	res := &scene_hunterv1.UpgradeAnonWithGoogleResponse{
+		UserSession: &scene_hunterv1.Token{
+			Token:         userSession.Token,
+			ExpiresAtUnix: userSession.ExpiresAt.Unix(),
 		},
-		CreatedAt: identity.CreatedAt,
-	})
-	if err != nil {
-		return nil, errors.Errorf("failed to create identity: %w", err)
+		MigratedRecords: 0,
+		UserId:          data.ExistingIdentity.UserID.String(),
 	}
 
-	// Commit transaction
-	if err = dbTx.Commit(ctx); err != nil {
-		return nil, errors.Errorf("failed to commit transaction: %w", err)
-	}
+	return res, nil
+}
 
-	committed = true
-
+// CompleteNewUserUpgrade completes the upgrade for a new user (after transaction commit).
+func (s *Service) CompleteNewUserUpgrade(
+	ctx context.Context,
+	data *PreparedUpgradeData,
+	req *scene_hunterv1.UpgradeAnonWithGoogleRequest,
+) (*scene_hunterv1.UpgradeAnonWithGoogleResponse, error) {
 	// This would involve:
 	// 1. Find all data associated with anonToken.AnonID
 	// 2. Associate it with newUser.ID
@@ -176,7 +134,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 	migratedRecords := uint32(0)
 
 	// Revoke all anonymous tokens
-	if err := s.anonRepo.RevokeAllAnonTokens(ctx, anonToken.AnonID); err != nil {
+	if err := s.anonRepo.RevokeAllAnonTokens(ctx, data.AnonToken.AnonID); err != nil {
 		// Log but don't fail
 	}
 
@@ -194,7 +152,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 
 	// Create permanent user session token
 	userSession, err := s.tokenSigner.SignAnonToken(
-		newUser.ID.String(),
+		data.NewUser.ID.String(),
 		s.config.Auth.AccessTokenTTL,
 	)
 	if err != nil {
@@ -207,7 +165,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 			ExpiresAtUnix: userSession.ExpiresAt.Unix(),
 		},
 		MigratedRecords: migratedRecords,
-		UserId:          newUser.ID.String(),
+		UserId:          data.NewUser.ID.String(),
 	}
 
 	return res, nil

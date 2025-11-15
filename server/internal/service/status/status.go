@@ -6,17 +6,22 @@ import (
 	"time"
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
-	"github.com/yashikota/scene-hunter/server/internal/infra/chrono"
-	"github.com/yashikota/scene-hunter/server/internal/infra/health"
+	"github.com/yashikota/scene-hunter/server/internal/util/chrono"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
+// Checker is an interface for health checking components.
+type Checker interface {
+	Check(ctx context.Context) error
+	Name() string
+}
+
 type Service struct {
-	checkers []health.Checker
+	checkers []Checker
 	chrono   chrono.Chrono
 }
 
-func NewService(checkers []health.Checker, chrono chrono.Chrono) *Service {
+func NewService(checkers []Checker, chrono chrono.Chrono) *Service {
 	return &Service{
 		checkers: checkers,
 		chrono:   chrono,

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
-	"github.com/yashikota/scene-hunter/server/internal/infra/chrono"
 	"github.com/yashikota/scene-hunter/server/internal/service/health"
+	"github.com/yashikota/scene-hunter/server/internal/util/chrono"
 )
 
 type mockChrono struct {

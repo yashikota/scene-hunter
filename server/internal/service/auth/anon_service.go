@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
+	"github.com/yashikota/scene-hunter/server/internal/config"
 	domainauth "github.com/yashikota/scene-hunter/server/internal/domain/auth"
 	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
-	"github.com/yashikota/scene-hunter/server/util/config"
 )
 
 // Service implements the AuthService.

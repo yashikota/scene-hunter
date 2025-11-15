@@ -8,18 +8,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/yashikota/scene-hunter/server/internal/domain/room"
 	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
-	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
-// RoomRepository implements repository.RoomRepository using KVS.
-type RoomRepository struct {
+// roomRepositoryImpl implements RoomRepository interface using KVS.
+type roomRepositoryImpl struct {
 	kvs kvs.KVS
 }
 
 // NewRoomRepository creates a new room repository.
-func NewRoomRepository(kvsClient kvs.KVS) repository.RoomRepository {
-	return &RoomRepository{
+func NewRoomRepository(kvsClient kvs.KVS) RoomRepository {
+	return &roomRepositoryImpl{
 		kvs: kvsClient,
 	}
 }
@@ -35,7 +34,7 @@ func roomCodeKey(code string) string {
 }
 
 // Create saves a new room to KVS.
-func (r *RoomRepository) Create(ctx context.Context, gameRoom *room.Room) error {
+func (r *roomRepositoryImpl) Create(ctx context.Context, gameRoom *room.Room) error {
 	// Calculate TTL from expiration time
 	ttl := time.Until(gameRoom.ExpiredAt)
 	if ttl <= 0 {
@@ -82,7 +81,7 @@ func (r *RoomRepository) Create(ctx context.Context, gameRoom *room.Room) error 
 }
 
 // Get retrieves a room from KVS by ID.
-func (r *RoomRepository) Get(ctx context.Context, roomID uuid.UUID) (*room.Room, error) {
+func (r *roomRepositoryImpl) Get(ctx context.Context, roomID uuid.UUID) (*room.Room, error) {
 	key := roomKey(roomID)
 
 	data, err := r.kvs.Get(ctx, key)
@@ -108,7 +107,7 @@ func (r *RoomRepository) Get(ctx context.Context, roomID uuid.UUID) (*room.Room,
 // Note: There is a potential race condition between Exists check and Set operation.
 // However, since updates are typically initiated by a single user/session and
 // the likelihood of concurrent updates is low, this approach is acceptable.
-func (r *RoomRepository) Update(ctx context.Context, gameRoom *room.Room) error {
+func (r *roomRepositoryImpl) Update(ctx context.Context, gameRoom *room.Room) error {
 	// Check if room exists
 	_, err := r.Get(ctx, gameRoom.ID)
 	if err != nil {
@@ -142,7 +141,7 @@ func (r *RoomRepository) Update(ctx context.Context, gameRoom *room.Room) error 
 }
 
 // Delete removes a room from KVS.
-func (r *RoomRepository) Delete(ctx context.Context, roomID uuid.UUID) error {
+func (r *roomRepositoryImpl) Delete(ctx context.Context, roomID uuid.UUID) error {
 	// Get room first to retrieve the room code
 	gameRoom, err := r.Get(ctx, roomID)
 	if err != nil {
@@ -165,7 +164,7 @@ func (r *RoomRepository) Delete(ctx context.Context, roomID uuid.UUID) error {
 }
 
 // Exists checks if a room exists in KVS.
-func (r *RoomRepository) Exists(ctx context.Context, roomID uuid.UUID) (bool, error) {
+func (r *roomRepositoryImpl) Exists(ctx context.Context, roomID uuid.UUID) (bool, error) {
 	key := roomKey(roomID)
 
 	exists, err := r.kvs.Exists(ctx, key)

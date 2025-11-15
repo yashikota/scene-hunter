@@ -6,7 +6,6 @@ import (
 	"time"
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
-	"github.com/yashikota/scene-hunter/server/internal/infra/health"
 	"github.com/yashikota/scene-hunter/server/internal/service/status"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
@@ -93,7 +92,7 @@ func TestService_Status(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			checkers := make([]health.Checker, len(testCase.checkers))
+			checkers := make([]status.Checker, len(testCase.checkers))
 			for i := range testCase.checkers {
 				checkers[i] = &testCase.checkers[i]
 			}
@@ -134,7 +133,7 @@ func TestService_Status(t *testing.T) {
 func TestNewService(t *testing.T) {
 	t.Parallel()
 
-	checkers := []health.Checker{}
+	checkers := []status.Checker{}
 	chronoProvider := &mockChrono{mockTime: time.Now()}
 	svc := status.NewService(checkers, chronoProvider)
 

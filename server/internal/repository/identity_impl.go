@@ -8,24 +8,23 @@ import (
 	"github.com/yashikota/scene-hunter/server/internal/domain/auth"
 	"github.com/yashikota/scene-hunter/server/internal/infra/db"
 	"github.com/yashikota/scene-hunter/server/internal/infra/db/queries"
-	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
-// IdentityRepository implements repository.IdentityRepository using Postgres.
-type IdentityRepository struct {
+// IdentityRepositoryImpl implements IdentityRepository interface using Postgres.
+type IdentityRepositoryImpl struct {
 	DB *db.Client
 }
 
 // NewIdentityRepository creates a new IdentityRepository.
-func NewIdentityRepository(dbClient *db.Client) repository.IdentityRepository {
-	return &IdentityRepository{
+func NewIdentityRepository(dbClient *db.Client) IdentityRepository {
+	return &IdentityRepositoryImpl{
 		DB: dbClient,
 	}
 }
 
 // CreateIdentity creates a new user identity.
-func (r *IdentityRepository) CreateIdentity(
+func (r *IdentityRepositoryImpl) CreateIdentity(
 	ctx context.Context,
 	identity *auth.Identity,
 ) error {
@@ -51,7 +50,7 @@ func (r *IdentityRepository) CreateIdentity(
 }
 
 // GetIdentityByProviderAndSubject retrieves an identity by provider and subject.
-func (r *IdentityRepository) GetIdentityByProviderAndSubject(
+func (r *IdentityRepositoryImpl) GetIdentityByProviderAndSubject(
 	ctx context.Context,
 	provider, subject string,
 ) (*auth.Identity, error) {
@@ -77,7 +76,7 @@ func (r *IdentityRepository) GetIdentityByProviderAndSubject(
 }
 
 // GetIdentitiesByUserID retrieves all identities for a user.
-func (r *IdentityRepository) GetIdentitiesByUserID(
+func (r *IdentityRepositoryImpl) GetIdentitiesByUserID(
 	ctx context.Context,
 	userID uuid.UUID,
 ) ([]*auth.Identity, error) {
@@ -102,7 +101,7 @@ func (r *IdentityRepository) GetIdentitiesByUserID(
 }
 
 // DeleteIdentity deletes an identity.
-func (r *IdentityRepository) DeleteIdentity(ctx context.Context, identityID uuid.UUID) error {
+func (r *IdentityRepositoryImpl) DeleteIdentity(ctx context.Context, identityID uuid.UUID) error {
 	err := r.DB.Queries.DeleteUserIdentity(ctx, identityID)
 	if err != nil {
 		return errors.Errorf("failed to delete identity: %w", err)

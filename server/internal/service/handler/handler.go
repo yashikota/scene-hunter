@@ -9,19 +9,17 @@ import (
 	"connectrpc.com/validate"
 	"github.com/go-chi/chi/v5"
 	"github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1/scene_hunterv1connect"
+	"github.com/yashikota/scene-hunter/server/internal/config"
 	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
-	"github.com/yashikota/scene-hunter/server/internal/infra/chrono"
 	infradb "github.com/yashikota/scene-hunter/server/internal/infra/db"
-	"github.com/yashikota/scene-hunter/server/internal/infra/health"
 	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
-	infrarepository "github.com/yashikota/scene-hunter/server/internal/infra/repository"
+	"github.com/yashikota/scene-hunter/server/internal/repository"
 	authsvc "github.com/yashikota/scene-hunter/server/internal/service/auth"
 	healthsvc "github.com/yashikota/scene-hunter/server/internal/service/health"
-	imagesvc "github.com/yashikota/scene-hunter/server/internal/service/image"
 	"github.com/yashikota/scene-hunter/server/internal/service/middleware"
 	roomsvc "github.com/yashikota/scene-hunter/server/internal/service/room"
 	"github.com/yashikota/scene-hunter/server/internal/service/status"
-	"github.com/yashikota/scene-hunter/server/util/config"
+	"github.com/yashikota/scene-hunter/server/internal/util/chrono"
 )
 
 // failedChecker は初期化に失敗した依存を表すヘルスチェッカー.
@@ -96,12 +94,12 @@ func registerStatusService(
 	mux.Mount(statusPath, statusHandler)
 }
 
-func buildHealthCheckers(deps *Dependencies) []health.Checker {
-	checkers := []health.Checker{}
+func buildHealthCheckers(deps *Dependencies) []status.Checker {
+	checkers := []status.Checker{}
 
 	// DBクライアントのヘルスチェック
 	if deps.DBClient != nil {
-		// DBClient自体がhealth.Checkerを実装している
+		// DBClient自体がstatus.Checkerを実装している
 		checkers = append(checkers, deps.DBClient)
 	} else if deps.DBError != nil {
 		checkers = append(checkers, &failedChecker{name: "postgres", err: deps.DBError})
@@ -109,8 +107,8 @@ func buildHealthCheckers(deps *Dependencies) []health.Checker {
 
 	// KVSクライアントのヘルスチェック
 	if deps.KVSClient != nil {
-		// KVSClient自体がhealth.Checkerを実装している
-		if checker, ok := deps.KVSClient.(health.Checker); ok {
+		// KVSClient自体がstatus.Checkerを実装している
+		if checker, ok := deps.KVSClient.(status.Checker); ok {
 			checkers = append(checkers, checker)
 		}
 	} else if deps.KVSError != nil {
@@ -119,8 +117,8 @@ func buildHealthCheckers(deps *Dependencies) []health.Checker {
 
 	// Blobクライアントのヘルスチェック
 	if deps.BlobClient != nil {
-		// BlobClient自体がhealth.Checkerを実装している
-		if checker, ok := deps.BlobClient.(health.Checker); ok {
+		// BlobClient自体がstatus.Checkerを実装している
+		if checker, ok := deps.BlobClient.(status.Checker); ok {
 			checkers = append(checkers, checker)
 		}
 	}
@@ -133,8 +131,11 @@ func registerImageService(mux *chi.Mux, deps *Dependencies, interceptors connect
 		return
 	}
 
-	roomRepo := infrarepository.NewRoomRepository(deps.KVSClient)
-	imageService := imagesvc.NewService(deps.BlobClient, deps.KVSClient, roomRepo)
+	roomRepo := repository.NewRoomRepository(deps.KVSClient)
+
+	// Create image service with handler for blob/kvs operations
+	imageService := NewImageService(deps.BlobClient, deps.KVSClient, roomRepo)
+
 	imagePath, imageHandler := scene_hunterv1connect.NewImageServiceHandler(
 		imageService,
 		interceptors,
@@ -147,7 +148,7 @@ func registerRoomService(mux *chi.Mux, deps *Dependencies, interceptors connect.
 		return
 	}
 
-	roomRepo := infrarepository.NewRoomRepository(deps.KVSClient)
+	roomRepo := repository.NewRoomRepository(deps.KVSClient)
 	roomService := roomsvc.NewService(roomRepo)
 	roomPath, roomHandler := scene_hunterv1connect.NewRoomServiceHandler(
 		roomService,
@@ -161,9 +162,13 @@ func registerAuthService(mux *chi.Mux, deps *Dependencies, interceptors connect.
 		return
 	}
 
-	anonRepo := infrarepository.NewAnonRepository(deps.KVSClient)
-	identityRepo := infrarepository.NewIdentityRepository(deps.DBClient)
-	authService := authsvc.NewService(anonRepo, identityRepo, deps.Config)
+	anonRepo := repository.NewAnonRepository(deps.KVSClient)
+	identityRepo := repository.NewIdentityRepository(deps.DBClient)
+	authSvc := authsvc.NewService(anonRepo, identityRepo, deps.Config)
+
+	// Create auth service with handler for transaction management
+	authService := NewAuthService(authSvc, deps.DBClient)
+
 	authPath, authHandler := scene_hunterv1connect.NewAuthServiceHandler(
 		authService,
 		interceptors,
