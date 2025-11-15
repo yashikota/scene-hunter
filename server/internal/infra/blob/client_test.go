@@ -1,99 +1,146 @@
 package blob_test
 
 import (
+	"bytes"
 	"context"
 	"io"
-	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
+	"github.com/testcontainers/testcontainers-go/modules/minio"
 	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
 )
 
-// TestClient_Ping はBlobサーバーへの疎通確認が正常に動作することをテストする.
+// setupMinio はテスト用のMinIOコンテナをセットアップする.
+func setupMinio(ctx context.Context, t *testing.T) (string, func()) {
+	t.Helper()
+
+	minioContainer, err := minio.Run(
+		ctx,
+		"docker.io/minio/minio:RELEASE.2025-09-07T16-13-09Z",
+	)
+	if err != nil {
+		t.Fatalf("failed to start minio container: %v", err)
+	}
+
+	connString, err := minioContainer.ConnectionString(ctx)
+	if err != nil {
+		t.Fatalf("failed to get connection string: %v", err)
+	}
+
+	// Wait for MinIO to be fully initialized by attempting to create a client and ping
+	// Retry up to 10 times with 1 second delay between attempts
+	var client blob.Blob
+	for range 10 {
+		client, err = blob.NewClient(connString, "minioadmin", "minioadmin", "test-bucket", false)
+		if err == nil {
+			err = client.Ping(ctx)
+			if err == nil {
+				break
+			}
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	if err != nil {
+		_ = minioContainer.Terminate(ctx)
+
+		t.Fatalf("failed to initialize minio: %v", err)
+	}
+
+	cleanup := func() {
+		err := minioContainer.Terminate(ctx)
+		if err != nil {
+			t.Logf("failed to terminate container: %v", err)
+		}
+	}
+
+	return connString, cleanup
+}
+
+// TestNewClient はBlobクライアントが正常に作成できることをテストする.
+func TestNewClient(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	endpoint, cleanup := setupMinio(ctx, t)
+	defer cleanup()
+
+	client, err := blob.NewClient(endpoint, "minioadmin", "minioadmin", "test-bucket", false)
+	if err != nil {
+		t.Fatalf("NewClient() error = %v, want nil", err)
+	}
+
+	if client == nil {
+		t.Error("NewClient() returned nil")
+	}
+}
+
+// TestNewClient_InvalidEndpoint は無効なエンドポイントでエラーが返されることをテストする.
+func TestNewClient_InvalidEndpoint(t *testing.T) {
+	t.Parallel()
+
+	_, err := blob.NewClient("invalid:endpoint:format", "key", "secret", "bucket", false)
+	if err == nil {
+		t.Error("NewClient() with invalid endpoint should return error")
+	}
+}
+
+// TestClient_Ping はBlobストレージへの疎通確認が成功することをテストする.
 func TestClient_Ping(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name       string
-		statusCode int
-		wantErr    bool
-	}{
-		{
-			name:       "success", // 正常応答
-			statusCode: http.StatusOK,
-			wantErr:    false,
-		},
-		{
-			name:       "service unavailable", // サービス利用不可
-			statusCode: http.StatusServiceUnavailable,
-			wantErr:    true,
-		},
+	ctx := context.Background()
+
+	endpoint, cleanup := setupMinio(ctx, t)
+	defer cleanup()
+
+	client, err := blob.NewClient(endpoint, "minioadmin", "minioadmin", "test-bucket", false)
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-
-			server := httptest.NewServer(
-				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.WriteHeader(testCase.statusCode)
-				}),
-			)
-			defer server.Close()
-
-			client := blob.NewClient(server.URL, 0)
-			err := client.Ping(context.Background())
-
-			if (err != nil) != testCase.wantErr {
-				t.Errorf("Ping() error = %v, wantErr %v", err, testCase.wantErr)
-			}
-		})
+	err = client.Ping(ctx)
+	if err != nil {
+		t.Errorf("Ping() error = %v, want nil", err)
 	}
 }
 
-// TestClient_Put はオブジェクトのアップロードが正常に動作することをテストする.
-// TTLあり・なし、エラーケースなど様々な状況を検証する.
-func TestClient_Put(t *testing.T) {
+// TestClient_Put_Get はオブジェクトの保存と取得が正常に動作することをテストする.
+func TestClient_Put_Get(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name       string
-		key        string
-		data       string
-		ttl        time.Duration
-		statusCode int
-		wantErr    bool
-		checkTTL   bool
+		name    string
+		key     string
+		content string
+		ttl     time.Duration
 	}{
 		{
-			name:       "success without ttl", // TTLなしで成功
-			key:        "test.txt",
-			data:       "hello world",
-			ttl:        0,
-			statusCode: http.StatusOK,
-			wantErr:    false,
-			checkTTL:   false,
+			name:    "simple put and get",
+			key:     "test-key",
+			content: "test content",
+			ttl:     0,
 		},
 		{
-			name:       "success with ttl", // TTL付きで成功
-			key:        "temp.txt",
-			data:       "temporary data",
-			ttl:        1 * time.Hour,
-			statusCode: http.StatusCreated,
-			wantErr:    false,
-			checkTTL:   true,
+			name:    "put with ttl",
+			key:     "ttl-key",
+			content: "ttl content",
+			ttl:     1 * time.Hour,
 		},
 		{
-			name:       "server error", // サーバーエラー
-			key:        "error.txt",
-			data:       "data",
-			ttl:        0,
-			statusCode: http.StatusInternalServerError,
-			wantErr:    true,
-			checkTTL:   false,
+			name:    "empty content",
+			key:     "empty-key",
+			content: "",
+			ttl:     0,
+		},
+		{
+			name:    "large content",
+			key:     "large-key",
+			content: string(make([]byte, 1024*1024)), // 1MB
+			ttl:     0,
 		},
 	}
 
@@ -101,181 +148,172 @@ func TestClient_Put(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			server := httptest.NewServer(
-				http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
-					if req.Method != http.MethodPut {
-						t.Errorf("expected PUT, got %s", req.Method)
-					}
+			ctx := context.Background()
 
-					expectedPath := "/objects/" + testCase.key
-					if req.URL.Path != expectedPath {
-						t.Errorf("expected path %s, got %s", expectedPath, req.URL.Path)
-					}
+			endpoint, cleanup := setupMinio(ctx, t)
+			defer cleanup()
 
-					if testCase.checkTTL {
-						ttlHeader := req.Header.Get("X-Ttl-Seconds")
-						if ttlHeader == "" {
-							t.Error("expected X-TTL-Seconds header, got none")
-						}
-					}
-
-					body, _ := io.ReadAll(req.Body)
-					if string(body) != testCase.data {
-						t.Errorf("expected body %s, got %s", testCase.data, string(body))
-					}
-
-					writer.WriteHeader(testCase.statusCode)
-				}),
+			client, err := blob.NewClient(
+				endpoint,
+				"minioadmin",
+				"minioadmin",
+				"test-bucket",
+				false,
 			)
-			defer server.Close()
+			if err != nil {
+				t.Fatalf("NewClient() error = %v", err)
+			}
 
-			client := blob.NewClient(server.URL, 0)
-			err := client.Put(
-				context.Background(),
+			// Ping to ensure bucket exists
+			err = client.Ping(ctx)
+			if err != nil {
+				t.Fatalf("Ping() error = %v", err)
+			}
+
+			// Put
+			err = client.Put(
+				ctx,
 				testCase.key,
-				strings.NewReader(testCase.data),
+				bytes.NewReader([]byte(testCase.content)),
 				testCase.ttl,
 			)
-
-			if (err != nil) != testCase.wantErr {
-				t.Errorf("Put() error = %v, wantErr %v", err, testCase.wantErr)
-			}
-		})
-	}
-}
-
-// TestClient_Get はオブジェクトのダウンロードが正常に動作することをテストする.
-func TestClient_Get(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name       string
-		key        string
-		statusCode int
-		response   string
-		wantErr    bool
-	}{
-		{
-			name:       "success", // 正常にオブジェクトを取得
-			key:        "test.txt",
-			statusCode: http.StatusOK,
-			response:   "file contents",
-			wantErr:    false,
-		},
-		{
-			name:       "not found", // オブジェクトが存在しない
-			key:        "missing.txt",
-			statusCode: http.StatusNotFound,
-			response:   "",
-			wantErr:    true,
-		},
-	}
-
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-
-			server := httptest.NewServer(
-				http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
-					if req.Method != http.MethodGet {
-						t.Errorf("expected GET, got %s", req.Method)
-					}
-
-					expectedPath := "/objects/" + testCase.key
-					if req.URL.Path != expectedPath {
-						t.Errorf("expected path %s, got %s", expectedPath, req.URL.Path)
-					}
-
-					writer.WriteHeader(testCase.statusCode)
-
-					if testCase.statusCode == http.StatusOK {
-						_, _ = writer.Write([]byte(testCase.response))
-					}
-				}),
-			)
-			defer server.Close()
-
-			client := blob.NewClient(server.URL, 0)
-			reader, err := client.Get(context.Background(), testCase.key)
-
-			if (err != nil) != testCase.wantErr {
-				t.Errorf("Get() error = %v, wantErr %v", err, testCase.wantErr)
+			if err != nil {
+				t.Errorf("Put() error = %v, want nil", err)
 
 				return
 			}
 
-			if err == nil {
-				defer func() {
-					_ = reader.Close()
-				}()
+			// Get
+			reader, err := client.Get(ctx, testCase.key)
+			if err != nil {
+				t.Errorf("Get() error = %v, want nil", err)
 
-				body, _ := io.ReadAll(reader)
-				if string(body) != testCase.response {
-					t.Errorf("Get() body = %s, want %s", string(body), testCase.response)
+				return
+			}
+
+			defer func() {
+				if closeErr := reader.Close(); closeErr != nil {
+					t.Logf("failed to close reader: %v", closeErr)
 				}
+			}()
+
+			got, err := io.ReadAll(reader)
+			if err != nil {
+				t.Errorf("ReadAll() error = %v, want nil", err)
+
+				return
+			}
+
+			if string(got) != testCase.content {
+				t.Errorf("Get() content = %v, want %v", string(got), testCase.content)
 			}
 		})
 	}
 }
 
-// TestClient_Delete はオブジェクトの削除が正常に動作することをテストする.
-// 200/204ステータスでの成功ケースと、404エラーケースを検証する.
+// TestClient_Get_NonExistentKey は存在しないキーを取得した際にエラーが返されることをテストする.
+func TestClient_Get_NonExistentKey(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	endpoint, cleanup := setupMinio(ctx, t)
+	defer cleanup()
+
+	client, err := blob.NewClient(endpoint, "minioadmin", "minioadmin", "test-bucket", false)
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+
+	err = client.Ping(ctx)
+	if err != nil {
+		t.Fatalf("Ping() error = %v", err)
+	}
+
+	_, err = client.Get(ctx, "non-existent-key")
+	if err == nil {
+		t.Error("Get() with non-existent key should return error")
+	}
+}
+
+// TestClient_Delete はオブジェクトが正常に削除できることをテストする.
 func TestClient_Delete(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name       string
-		key        string
-		statusCode int
-		wantErr    bool
-	}{
-		{
-			name:       "success with 200", // 200で削除成功
-			key:        "test.txt",
-			statusCode: http.StatusOK,
-			wantErr:    false,
-		},
-		{
-			name:       "success with 204", // 204で削除成功
-			key:        "test.txt",
-			statusCode: http.StatusNoContent,
-			wantErr:    false,
-		},
-		{
-			name:       "not found", // オブジェクトが見つからない
-			key:        "missing.txt",
-			statusCode: http.StatusNotFound,
-			wantErr:    true,
-		},
+	ctx := context.Background()
+
+	endpoint, cleanup := setupMinio(ctx, t)
+	defer cleanup()
+
+	client, err := blob.NewClient(endpoint, "minioadmin", "minioadmin", "test-bucket", false)
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
+	err = client.Ping(ctx)
+	if err != nil {
+		t.Fatalf("Ping() error = %v", err)
+	}
 
-			server := httptest.NewServer(
-				http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
-					if req.Method != http.MethodDelete {
-						t.Errorf("expected DELETE, got %s", req.Method)
-					}
+	key := "delete-test-key"
+	content := "delete test content"
 
-					expectedPath := "/objects/" + testCase.key
-					if req.URL.Path != expectedPath {
-						t.Errorf("expected path %s, got %s", expectedPath, req.URL.Path)
-					}
+	// Put an object
+	err = client.Put(ctx, key, bytes.NewReader([]byte(content)), 0)
+	if err != nil {
+		t.Fatalf("Put() error = %v", err)
+	}
 
-					writer.WriteHeader(testCase.statusCode)
-				}),
-			)
-			defer server.Close()
+	// Verify it exists
+	exists, err := client.Exists(ctx, key)
+	if err != nil {
+		t.Fatalf("Exists() error = %v", err)
+	}
 
-			client := blob.NewClient(server.URL, 0)
-			err := client.Delete(context.Background(), testCase.key)
+	if !exists {
+		t.Error("Object should exist before deletion")
+	}
 
-			if (err != nil) != testCase.wantErr {
-				t.Errorf("Delete() error = %v, wantErr %v", err, testCase.wantErr)
-			}
-		})
+	// Delete the object
+	err = client.Delete(ctx, key)
+	if err != nil {
+		t.Errorf("Delete() error = %v, want nil", err)
+	}
+
+	// Verify it no longer exists
+	exists, err = client.Exists(ctx, key)
+	if err != nil {
+		t.Fatalf("Exists() after delete error = %v", err)
+	}
+
+	if exists {
+		t.Error("Object should not exist after deletion")
+	}
+}
+
+// TestClient_Delete_NonExistentKey は存在しないキーを削除してもエラーにならないこと（冪等性）をテストする.
+func TestClient_Delete_NonExistentKey(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	endpoint, cleanup := setupMinio(ctx, t)
+	defer cleanup()
+
+	client, err := blob.NewClient(endpoint, "minioadmin", "minioadmin", "test-bucket", false)
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+
+	err = client.Ping(ctx)
+	if err != nil {
+		t.Fatalf("Ping() error = %v", err)
+	}
+
+	// Deleting a non-existent key should not return an error
+	err = client.Delete(ctx, "non-existent-key")
+	if err != nil {
+		t.Errorf("Delete() non-existent key error = %v, want nil", err)
 	}
 }
 
@@ -284,32 +322,25 @@ func TestClient_Exists(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name       string
-		key        string
-		statusCode int
-		want       bool
-		wantErr    bool
+		name      string
+		setupKey  bool
+		key       string
+		content   string
+		wantExist bool
 	}{
 		{
-			name:       "exists", // オブジェクトが存在する
-			key:        "test.txt",
-			statusCode: http.StatusOK,
-			want:       true,
-			wantErr:    false,
+			name:      "object exists",
+			setupKey:  true,
+			key:       "existing-key",
+			content:   "content",
+			wantExist: true,
 		},
 		{
-			name:       "not found", // オブジェクトが存在しない
-			key:        "missing.txt",
-			statusCode: http.StatusNotFound,
-			want:       false,
-			wantErr:    false,
-		},
-		{
-			name:       "server error", // サーバーエラー
-			key:        "error.txt",
-			statusCode: http.StatusInternalServerError,
-			want:       false,
-			wantErr:    true,
+			name:      "object does not exist",
+			setupKey:  false,
+			key:       "non-existing-key",
+			content:   "",
+			wantExist: false,
 		},
 	}
 
@@ -317,169 +348,172 @@ func TestClient_Exists(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			server := httptest.NewServer(
-				http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
-					if req.Method != http.MethodHead {
-						t.Errorf("expected HEAD, got %s", req.Method)
-					}
+			ctx := context.Background()
 
-					expectedPath := "/objects/" + testCase.key
-					if req.URL.Path != expectedPath {
-						t.Errorf("expected path %s, got %s", expectedPath, req.URL.Path)
-					}
+			endpoint, cleanup := setupMinio(ctx, t)
+			defer cleanup()
 
-					writer.WriteHeader(testCase.statusCode)
-				}),
+			client, err := blob.NewClient(
+				endpoint,
+				"minioadmin",
+				"minioadmin",
+				"test-bucket",
+				false,
 			)
-			defer server.Close()
+			if err != nil {
+				t.Fatalf("NewClient() error = %v", err)
+			}
 
-			client := blob.NewClient(server.URL, 0)
-			exists, err := client.Exists(context.Background(), testCase.key)
+			err = client.Ping(ctx)
+			if err != nil {
+				t.Fatalf("Ping() error = %v", err)
+			}
 
-			if (err != nil) != testCase.wantErr {
-				t.Errorf("Exists() error = %v, wantErr %v", err, testCase.wantErr)
+			if testCase.setupKey {
+				err = client.Put(ctx, testCase.key, bytes.NewReader([]byte(testCase.content)), 0)
+				if err != nil {
+					t.Fatalf("Put() error = %v", err)
+				}
+			}
+
+			exists, err := client.Exists(ctx, testCase.key)
+			if err != nil {
+				t.Errorf("Exists() error = %v, want nil", err)
 
 				return
 			}
 
-			if exists != testCase.want {
-				t.Errorf("Exists() = %v, want %v", exists, testCase.want)
+			if exists != testCase.wantExist {
+				t.Errorf("Exists() = %v, want %v", exists, testCase.wantExist)
 			}
 		})
 	}
 }
 
-// TestClient_List はオブジェクトのリスト取得が正常に動作することをテストする.
-// プレフィックスによるフィルタリング、空の結果、エラーケースなどを検証する.
+// TestClient_List はオブジェクトの一覧取得が正常に動作することをテストする.
 func TestClient_List(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name       string
-		prefix     string
-		statusCode int
-		response   string
-		wantLen    int
-		wantErr    bool
-	}{
-		{
-			name:       "success with results", // 複数の結果を取得
-			prefix:     "test/",
-			statusCode: http.StatusOK,
-			response: `{
-				"objects": [
-					{"key": "test/file1.txt", "size": 100, "lastModified": "2024-01-01T00:00:00Z"},
-					{"key": "test/file2.txt", "size": 200, "lastModified": "2024-01-02T00:00:00Z"}
-				]
-			}`,
-			wantLen: 2,
-			wantErr: false,
-		},
-		{
-			name:       "success with empty results", // 空の結果
-			prefix:     "empty/",
-			statusCode: http.StatusOK,
-			response:   `{"objects": []}`,
-			wantLen:    0,
-			wantErr:    false,
-		},
-		{
-			name:       "no prefix", // プレフィックスなしで全取得
-			prefix:     "",
-			statusCode: http.StatusOK,
-			response: `{
-				"objects": [
-					{"key": "file.txt", "size": 50, "lastModified": "2024-01-01T00:00:00Z"}
-				]
-			}`,
-			wantLen: 1,
-			wantErr: false,
-		},
-		{
-			name:       "server error", // サーバーエラー
-			prefix:     "error/",
-			statusCode: http.StatusInternalServerError,
-			response:   "",
-			wantLen:    0,
-			wantErr:    true,
-		},
-		{
-			name:       "invalid json", // 無効なJSONレスポンス
-			prefix:     "invalid/",
-			statusCode: http.StatusOK,
-			response:   `{invalid json}`,
-			wantLen:    0,
-			wantErr:    true,
-		},
+	ctx := context.Background()
+
+	endpoint, cleanup := setupMinio(ctx, t)
+	defer cleanup()
+
+	client, err := blob.NewClient(endpoint, "minioadmin", "minioadmin", "test-bucket", false)
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
+	err = client.Ping(ctx)
+	if err != nil {
+		t.Fatalf("Ping() error = %v", err)
+	}
 
-			server := httptest.NewServer(
-				http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
-					if req.Method != http.MethodGet {
-						t.Errorf("expected GET, got %s", req.Method)
-					}
+	// Put some objects
+	testObjects := map[string]string{
+		"test/file1.txt": "content1",
+		"test/file2.txt": "content2",
+		"prod/file3.txt": "content3",
+	}
 
-					if req.URL.Path != "/objects" {
-						t.Errorf("expected path /objects, got %s", req.URL.Path)
-					}
+	for key, content := range testObjects {
+		err = client.Put(ctx, key, bytes.NewReader([]byte(content)), 0)
+		if err != nil {
+			t.Fatalf("Put() error = %v", err)
+		}
+	}
 
-					if testCase.prefix != "" {
-						prefix := req.URL.Query().Get("prefix")
-						if prefix != testCase.prefix {
-							t.Errorf("expected prefix %s, got %s", testCase.prefix, prefix)
-						}
-					}
+	// List all objects
+	allObjects, err := client.List(ctx, "")
+	if err != nil {
+		t.Errorf("List() error = %v, want nil", err)
+	}
 
-					writer.WriteHeader(testCase.statusCode)
+	if len(allObjects) < len(testObjects) {
+		t.Errorf("List() returned %d objects, want at least %d", len(allObjects), len(testObjects))
+	}
 
-					if testCase.response != "" {
-						_, _ = writer.Write([]byte(testCase.response))
-					}
-				}),
-			)
-			defer server.Close()
+	// List with prefix
+	testObjects2, err := client.List(ctx, "test/")
+	if err != nil {
+		t.Errorf("List() with prefix error = %v, want nil", err)
+	}
 
-			client := blob.NewClient(server.URL, 0)
-			objects, err := client.List(context.Background(), testCase.prefix)
-
-			if (err != nil) != testCase.wantErr {
-				t.Errorf("List() error = %v, wantErr %v", err, testCase.wantErr)
-
-				return
-			}
-
-			if len(objects) != testCase.wantLen {
-				t.Errorf("List() returned %d objects, want %d", len(objects), testCase.wantLen)
-			}
-
-			// 正常系の場合は各フィールドの検証
-			if !testCase.wantErr && testCase.wantLen > 0 {
-				for _, obj := range objects {
-					if obj.Key == "" {
-						t.Error("List() object has empty Key")
-					}
-
-					if obj.Size < 0 {
-						t.Errorf("List() object has negative Size: %d", obj.Size)
-					}
-				}
-			}
-		})
+	if len(testObjects2) < 2 {
+		t.Errorf("List() with prefix returned %d objects, want at least 2", len(testObjects2))
 	}
 }
 
-// TestNewClient はBlobクライアントが正常に作成できることをテストする.
-func TestNewClient(t *testing.T) {
+// TestClient_UpdateExistingKey は既存のキーの値を上書き更新できることをテストする.
+func TestClient_UpdateExistingKey(t *testing.T) {
 	t.Parallel()
 
-	baseURL := "http://localhost:9000"
-	client := blob.NewClient(baseURL, 0)
+	ctx := context.Background()
 
-	if client == nil {
-		t.Error("NewClient() returned nil")
+	endpoint, cleanup := setupMinio(ctx, t)
+	defer cleanup()
+
+	client, err := blob.NewClient(endpoint, "minioadmin", "minioadmin", "test-bucket", false)
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+
+	err = client.Ping(ctx)
+	if err != nil {
+		t.Fatalf("Ping() error = %v", err)
+	}
+
+	key := "update-key"
+	content1 := "content1"
+	content2 := "content2"
+
+	// Put initial content
+	err = client.Put(ctx, key, bytes.NewReader([]byte(content1)), 0)
+	if err != nil {
+		t.Fatalf("Put() first content error = %v", err)
+	}
+
+	// Get and verify initial content
+	reader, err := client.Get(ctx, key)
+	if err != nil {
+		t.Fatalf("Get() first content error = %v", err)
+	}
+
+	got, err := io.ReadAll(reader)
+	if closeErr := reader.Close(); closeErr != nil {
+		t.Fatalf("Close() first content error = %v", closeErr)
+	}
+
+	if err != nil {
+		t.Fatalf("ReadAll() first content error = %v", err)
+	}
+
+	if string(got) != content1 {
+		t.Errorf("Get() first content = %v, want %v", string(got), content1)
+	}
+
+	// Update to new content
+	err = client.Put(ctx, key, bytes.NewReader([]byte(content2)), 0)
+	if err != nil {
+		t.Fatalf("Put() second content error = %v", err)
+	}
+
+	// Get and verify updated content
+	reader, err = client.Get(ctx, key)
+	if err != nil {
+		t.Fatalf("Get() second content error = %v", err)
+	}
+
+	got, err = io.ReadAll(reader)
+	if closeErr := reader.Close(); closeErr != nil {
+		t.Fatalf("Close() second content error = %v", closeErr)
+	}
+
+	if err != nil {
+		t.Fatalf("ReadAll() second content error = %v", err)
+	}
+
+	if string(got) != content2 {
+		t.Errorf("Get() second content = %v, want %v", string(got), content2)
 	}
 }

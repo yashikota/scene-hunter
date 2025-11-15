@@ -4,6 +4,8 @@ package kvs
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/valkey-io/valkey-go"
@@ -15,8 +17,19 @@ type Client struct {
 }
 
 func NewClient(addr, password string) (KVS, error) {
+	// Parse redis:// scheme if present
+	parsedAddr := addr
+	if strings.HasPrefix(addr, "redis://") || strings.HasPrefix(addr, "rediss://") {
+		u, err := url.Parse(addr)
+		if err != nil {
+			return nil, errors.Errorf("failed to parse redis URL: %w", err)
+		}
+
+		parsedAddr = u.Host
+	}
+
 	client, err := valkey.NewClient(valkey.ClientOption{
-		InitAddress:  []string{addr},
+		InitAddress:  []string{parsedAddr},
 		Password:     password,
 		DisableCache: true, // miniredisやRESP2との互換性のためキャッシュを無効化
 	})

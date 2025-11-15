@@ -45,6 +45,7 @@ type Dependencies struct {
 	KVSClient  kvs.KVS
 	KVSError   error
 	BlobClient blob.Blob
+	BlobError  error
 	Config     *config.AppConfig
 }
 

@@ -4,39 +4,67 @@ import (
 	"context"
 	"testing"
 
+	"github.com/testcontainers/testcontainers-go/modules/valkey"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	infrakvs "github.com/yashikota/scene-hunter/server/internal/infra/kvs"
 	infrarepository "github.com/yashikota/scene-hunter/server/internal/infra/repository"
 	roomsvc "github.com/yashikota/scene-hunter/server/internal/service/room"
-	"github.com/yashikota/scene-hunter/server/util/config"
 )
 
-func setupTestService(t *testing.T) (*roomsvc.Service, context.Context) {
+// setupValkey はテスト用のValkeyコンテナをセットアップする.
+func setupValkey(ctx context.Context, t *testing.T) (string, func()) {
 	t.Helper()
 
-	ctx := context.Background()
-	cfg := config.LoadConfigFromPath("../../..")
-
-	kvsClient, err := infrakvs.NewClient(cfg.Kvs.URL, "")
+	valkeyContainer, err := valkey.Run(ctx, "docker.io/valkey/valkey:9.0.0")
 	if err != nil {
-		t.Skipf("KVS client initialization failed: %v", err)
+		t.Fatalf("failed to start valkey container: %v", err)
+	}
+
+	addr, err := valkeyContainer.ConnectionString(ctx)
+	if err != nil {
+		t.Fatalf("failed to get connection string: %v", err)
+	}
+
+	cleanup := func() {
+		if err := valkeyContainer.Terminate(ctx); err != nil {
+			t.Logf("failed to terminate container: %v", err)
+		}
+	}
+
+	return addr, cleanup
+}
+
+func setupTestService(ctx context.Context, t *testing.T) (*roomsvc.Service, func()) {
+	t.Helper()
+
+	addr, cleanup := setupValkey(ctx, t)
+
+	kvsClient, err := infrakvs.NewClient(addr, "")
+	if err != nil {
+		cleanup()
+		t.Fatalf("KVS client initialization failed: %v", err)
 	}
 
 	// Ping to verify connection
 	err = kvsClient.Ping(ctx)
 	if err != nil {
-		t.Skipf("KVS ping failed: %v", err)
+		cleanup()
+		t.Fatalf("KVS ping failed: %v", err)
 	}
 
 	repo := infrarepository.NewRoomRepository(kvsClient)
 	service := roomsvc.NewService(repo)
 
-	return service, ctx
+	return service, cleanup
 }
 
 func TestService_CreateRoom(t *testing.T) {
 	t.Parallel()
-	service, ctx := setupTestService(t)
+
+	ctx := context.Background()
+
+	service, cleanup := setupTestService(ctx, t)
+	defer cleanup()
 
 	req := &scene_hunterv1.CreateRoomRequest{}
 
@@ -64,7 +92,11 @@ func TestService_CreateRoom(t *testing.T) {
 
 func TestService_GetRoom(t *testing.T) {
 	t.Parallel()
-	service, ctx := setupTestService(t)
+
+	ctx := context.Background()
+
+	service, cleanup := setupTestService(ctx, t)
+	defer cleanup()
 
 	// Create a room first
 	createReq := &scene_hunterv1.CreateRoomRequest{}
@@ -101,7 +133,11 @@ func TestService_GetRoom(t *testing.T) {
 
 func TestService_UpdateRoom(t *testing.T) {
 	t.Parallel()
-	service, ctx := setupTestService(t)
+
+	ctx := context.Background()
+
+	service, cleanup := setupTestService(ctx, t)
+	defer cleanup()
 
 	// Create a room first
 	createReq := &scene_hunterv1.CreateRoomRequest{}
@@ -134,7 +170,11 @@ func TestService_UpdateRoom(t *testing.T) {
 
 func TestService_DeleteRoom(t *testing.T) {
 	t.Parallel()
-	service, ctx := setupTestService(t)
+
+	ctx := context.Background()
+
+	service, cleanup := setupTestService(ctx, t)
+	defer cleanup()
 
 	// Create a room first
 	createReq := &scene_hunterv1.CreateRoomRequest{}

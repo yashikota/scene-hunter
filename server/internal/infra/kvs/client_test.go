@@ -5,25 +5,41 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alicebob/miniredis/v2"
+	"github.com/testcontainers/testcontainers-go/modules/valkey"
 	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
 )
 
-// setupMiniredis はテスト用のminiredisサーバーをセットアップする.
-func setupMiniredis(t *testing.T) (*miniredis.Miniredis, string) {
+// setupValkey はテスト用のValkeyコンテナをセットアップする.
+func setupValkey(ctx context.Context, t *testing.T) (string, func()) {
 	t.Helper()
 
-	server := miniredis.RunT(t)
+	valkeyContainer, err := valkey.Run(ctx, "docker.io/valkey/valkey:9.0.0")
+	if err != nil {
+		t.Fatalf("failed to start valkey container: %v", err)
+	}
 
-	return server, server.Addr()
+	addr, err := valkeyContainer.ConnectionString(ctx)
+	if err != nil {
+		t.Fatalf("failed to get connection string: %v", err)
+	}
+
+	cleanup := func() {
+		if err := valkeyContainer.Terminate(ctx); err != nil {
+			t.Logf("failed to terminate container: %v", err)
+		}
+	}
+
+	return addr, cleanup
 }
 
 // TestNewClient はKVSクライアントが正常に作成できることをテストする.
 func TestNewClient(t *testing.T) {
 	t.Parallel()
 
-	server, addr := setupMiniredis(t)
-	defer server.Close()
+	ctx := context.Background()
+
+	addr, cleanup := setupValkey(ctx, t)
+	defer cleanup()
 
 	client, err := kvs.NewClient(addr, "")
 	if err != nil {
@@ -51,8 +67,10 @@ func TestNewClient_InvalidAddress(t *testing.T) {
 func TestClient_Ping(t *testing.T) {
 	t.Parallel()
 
-	server, addr := setupMiniredis(t)
-	defer server.Close()
+	ctx := context.Background()
+
+	addr, cleanup := setupValkey(ctx, t)
+	defer cleanup()
 
 	client, err := kvs.NewClient(addr, "")
 	if err != nil {
@@ -60,7 +78,7 @@ func TestClient_Ping(t *testing.T) {
 	}
 	defer client.Close()
 
-	err = client.Ping(context.Background())
+	err = client.Ping(ctx)
 	if err != nil {
 		t.Errorf("Ping() error = %v, want nil", err)
 	}
@@ -107,8 +125,10 @@ func TestClient_Set_Get(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			server, addr := setupMiniredis(t)
-			defer server.Close()
+			ctx := context.Background()
+
+			addr, cleanup := setupValkey(ctx, t)
+			defer cleanup()
 
 			client, err := kvs.NewClient(addr, "")
 			if err != nil {
@@ -117,7 +137,7 @@ func TestClient_Set_Get(t *testing.T) {
 			defer client.Close()
 
 			// Set
-			err = client.Set(context.Background(), testCase.key, testCase.value, testCase.ttl)
+			err = client.Set(ctx, testCase.key, testCase.value, testCase.ttl)
 			if err != nil {
 				t.Errorf("Set() error = %v, want nil", err)
 
@@ -125,7 +145,7 @@ func TestClient_Set_Get(t *testing.T) {
 			}
 
 			// Get
-			got, err := client.Get(context.Background(), testCase.key)
+			got, err := client.Get(ctx, testCase.key)
 			if err != nil {
 				t.Errorf("Get() error = %v, want nil", err)
 
@@ -143,8 +163,10 @@ func TestClient_Set_Get(t *testing.T) {
 func TestClient_Get_NonExistentKey(t *testing.T) {
 	t.Parallel()
 
-	server, addr := setupMiniredis(t)
-	defer server.Close()
+	ctx := context.Background()
+
+	addr, cleanup := setupValkey(ctx, t)
+	defer cleanup()
 
 	client, err := kvs.NewClient(addr, "")
 	if err != nil {
@@ -152,7 +174,7 @@ func TestClient_Get_NonExistentKey(t *testing.T) {
 	}
 	defer client.Close()
 
-	_, err = client.Get(context.Background(), "non_existent_key")
+	_, err = client.Get(ctx, "non_existent_key")
 	if err == nil {
 		t.Error("Get() with non-existent key should return error")
 	}
@@ -163,8 +185,10 @@ func TestClient_Get_NonExistentKey(t *testing.T) {
 func TestClient_Delete(t *testing.T) {
 	t.Parallel()
 
-	server, addr := setupMiniredis(t)
-	defer server.Close()
+	ctx := context.Background()
+
+	addr, cleanup := setupValkey(ctx, t)
+	defer cleanup()
 
 	client, err := kvs.NewClient(addr, "")
 	if err != nil {
@@ -172,7 +196,6 @@ func TestClient_Delete(t *testing.T) {
 	}
 	defer client.Close()
 
-	ctx := context.Background()
 	key := "test_key"
 	value := "test_value"
 
@@ -213,8 +236,10 @@ func TestClient_Delete(t *testing.T) {
 func TestClient_Delete_NonExistentKey(t *testing.T) {
 	t.Parallel()
 
-	server, addr := setupMiniredis(t)
-	defer server.Close()
+	ctx := context.Background()
+
+	addr, cleanup := setupValkey(ctx, t)
+	defer cleanup()
 
 	client, err := kvs.NewClient(addr, "")
 	if err != nil {
@@ -223,7 +248,7 @@ func TestClient_Delete_NonExistentKey(t *testing.T) {
 	defer client.Close()
 
 	// Deleting a non-existent key should not return an error
-	err = client.Delete(context.Background(), "non_existent_key")
+	err = client.Delete(ctx, "non_existent_key")
 	if err != nil {
 		t.Errorf("Delete() non-existent key error = %v, want nil", err)
 	}
@@ -261,16 +286,16 @@ func TestClient_Exists(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			server, addr := setupMiniredis(t)
-			defer server.Close()
+			ctx := context.Background()
+
+			addr, cleanup := setupValkey(ctx, t)
+			defer cleanup()
 
 			client, err := kvs.NewClient(addr, "")
 			if err != nil {
 				t.Fatalf("NewClient() error = %v", err)
 			}
 			defer client.Close()
-
-			ctx := context.Background()
 
 			if testCase.setupKey {
 				err = client.Set(ctx, testCase.key, testCase.value, 0)
@@ -298,8 +323,10 @@ func TestClient_Exists(t *testing.T) {
 func TestClient_SetWithTTL_Expiration(t *testing.T) {
 	t.Parallel()
 
-	server, addr := setupMiniredis(t)
-	defer server.Close()
+	ctx := context.Background()
+
+	addr, cleanup := setupValkey(ctx, t)
+	defer cleanup()
 
 	client, err := kvs.NewClient(addr, "")
 	if err != nil {
@@ -307,10 +334,9 @@ func TestClient_SetWithTTL_Expiration(t *testing.T) {
 	}
 	defer client.Close()
 
-	ctx := context.Background()
 	key := "ttl_key"
 	value := "ttl_value"
-	ttl := 1 * time.Second
+	ttl := 2 * time.Second
 
 	// Set with TTL
 	err = client.Set(ctx, key, value, ttl)
@@ -328,8 +354,8 @@ func TestClient_SetWithTTL_Expiration(t *testing.T) {
 		t.Error("Key should exist immediately after setting")
 	}
 
-	// Fast forward time in miniredis
-	server.FastForward(2 * time.Second)
+	// Wait for TTL to expire
+	time.Sleep(3 * time.Second)
 
 	// Verify key has expired
 	exists, err = client.Exists(ctx, key)
@@ -346,8 +372,10 @@ func TestClient_SetWithTTL_Expiration(t *testing.T) {
 func TestClient_UpdateExistingKey(t *testing.T) {
 	t.Parallel()
 
-	server, addr := setupMiniredis(t)
-	defer server.Close()
+	ctx := context.Background()
+
+	addr, cleanup := setupValkey(ctx, t)
+	defer cleanup()
 
 	client, err := kvs.NewClient(addr, "")
 	if err != nil {
@@ -355,7 +383,6 @@ func TestClient_UpdateExistingKey(t *testing.T) {
 	}
 	defer client.Close()
 
-	ctx := context.Background()
 	key := "update_key"
 	value1 := "value1"
 	value2 := "value2"

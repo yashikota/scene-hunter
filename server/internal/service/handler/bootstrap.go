@@ -47,11 +47,27 @@ func InitializeDependencies(
 		logger.Info("KVS client initialized successfully")
 	}
 
-	// RustFS client
-	blobClient := infrablob.NewClient(cfg.Blob.URL, 0)
-	deps.BlobClient = blobClient
+	// Blob storage client
+	blobAccessKey := os.Getenv("BLOB_ACCESS_KEY")
+	blobSecretKey := os.Getenv("BLOB_SECRET_KEY")
+	blobBucketName := os.Getenv("BLOB_BUCKET_NAME")
+	blobUseSSL := os.Getenv("BLOB_USE_SSL") == "true"
 
-	logger.Info("blob client initialized successfully")
+	blobClient, err := infrablob.NewClient(
+		cfg.Blob.URL,
+		blobAccessKey,
+		blobSecretKey,
+		blobBucketName,
+		blobUseSSL,
+	)
+	if err != nil {
+		errors.LogError(ctx, logger, "failed to initialize blob client", err)
+		deps.BlobError = err
+	} else {
+		deps.BlobClient = blobClient
+
+		logger.Info("blob client initialized successfully")
+	}
 
 	return deps
 }
