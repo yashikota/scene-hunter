@@ -1,36 +1,36 @@
-// Package auth provides authentication infrastructure implementations.
-package auth
+// Package repository provides repository implementations.
+package repository
 
 import (
 	"context"
 	"encoding/json"
 	"time"
 
-	domainauth "github.com/yashikota/scene-hunter/server/internal/domain/auth"
-	domainkvs "github.com/yashikota/scene-hunter/server/internal/domain/kvs"
+	"github.com/yashikota/scene-hunter/server/internal/domain/auth"
+	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
+	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
-// AnonRepository implements domainauth.AnonRepository using Valkey.
+// AnonRepository implements repository.AnonRepository using Valkey.
 type AnonRepository struct {
-	kvs domainkvs.KVS
+	kvs kvs.KVS
 }
 
 // NewAnonRepository creates a new AnonRepository.
-func NewAnonRepository(kvs domainkvs.KVS) domainauth.AnonRepository {
+func NewAnonRepository(kvsClient kvs.KVS) repository.AnonRepository {
 	return &AnonRepository{
-		kvs: kvs,
+		kvs: kvsClient,
 	}
 }
 
 // refreshTokenData represents the data stored in Valkey for a refresh token.
 // Internal JSON structure uses snake_case for Redis compatibility.
-//
 type refreshTokenData struct {
 	ID         string `json:"id"`
 	AnonID     string `json:"anon_id"`
 	TokenHash  string `json:"token_hash"`
-	ExpiresAt  int64  `json:"expires_at"`   // Unix timestamp
+	ExpiresAt  int64  `json:"expires_at"` // Unix timestamp
 	Used       bool   `json:"used"`
 	UserAgent  string `json:"user_agent"`
 	CreatedAt  int64  `json:"created_at"`   // Unix timestamp
@@ -40,7 +40,7 @@ type refreshTokenData struct {
 // SaveRefreshToken stores a refresh token with TTL.
 func (r *AnonRepository) SaveRefreshToken(
 	ctx context.Context,
-	token *domainauth.RefreshToken,
+	token *auth.RefreshToken,
 ) error {
 	data := refreshTokenData{
 		ID:         token.ID,
@@ -97,12 +97,12 @@ func (r *AnonRepository) SaveRefreshToken(
 func (r *AnonRepository) GetRefreshToken(
 	ctx context.Context,
 	tokenID string,
-) (*domainauth.RefreshToken, error) {
+) (*auth.RefreshToken, error) {
 	key := r.tokenKey(tokenID)
 
 	dataJSON, err := r.kvs.Get(ctx, key)
 	if err != nil {
-		if errors.Is(err, domainkvs.ErrNotFound) {
+		if errors.Is(err, kvs.ErrNotFound) {
 			return nil, errors.Errorf("refresh token not found")
 		}
 
@@ -114,7 +114,7 @@ func (r *AnonRepository) GetRefreshToken(
 		return nil, errors.Errorf("failed to unmarshal token data: %w", err)
 	}
 
-	return &domainauth.RefreshToken{
+	return &auth.RefreshToken{
 		ID:         data.ID,
 		AnonID:     data.AnonID,
 		TokenHash:  data.TokenHash,
@@ -169,7 +169,7 @@ func (r *AnonRepository) MarkRefreshTokenAsUsed(ctx context.Context, tokenID str
 	}
 
 	// Parse result
-	resultMap, ok := result.(map[interface{}]interface{})
+	resultMap, ok := result.(map[any]any)
 	if !ok {
 		return errors.Errorf("unexpected result type from lua script")
 	}
@@ -187,7 +187,7 @@ func (r *AnonRepository) RevokeRefreshToken(ctx context.Context, tokenID string)
 	token, err := r.GetRefreshToken(ctx, tokenID)
 	if err != nil {
 		// If token doesn't exist, consider it already revoked
-		if errors.Is(err, domainkvs.ErrNotFound) {
+		if errors.Is(err, kvs.ErrNotFound) {
 			return nil
 		}
 

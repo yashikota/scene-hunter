@@ -1,5 +1,4 @@
-// Package room provides room repository implementations.
-package room
+package repository
 
 import (
 	"context"
@@ -7,20 +6,21 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	domainkvs "github.com/yashikota/scene-hunter/server/internal/domain/kvs"
-	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
+	"github.com/yashikota/scene-hunter/server/internal/domain/room"
+	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
+	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
-// Repository implements the room repository using KVS.
-type Repository struct {
-	kvs domainkvs.KVS
+// RoomRepository implements repository.RoomRepository using KVS.
+type RoomRepository struct {
+	kvs kvs.KVS
 }
 
-// NewRepository creates a new room repository.
-func NewRepository(kvs domainkvs.KVS) domainroom.Repository {
-	return &Repository{
-		kvs: kvs,
+// NewRoomRepository creates a new room repository.
+func NewRoomRepository(kvsClient kvs.KVS) repository.RoomRepository {
+	return &RoomRepository{
+		kvs: kvsClient,
 	}
 }
 
@@ -35,33 +35,33 @@ func roomCodeKey(code string) string {
 }
 
 // Create saves a new room to KVS.
-func (r *Repository) Create(ctx context.Context, room *domainroom.Room) error {
+func (r *RoomRepository) Create(ctx context.Context, gameRoom *room.Room) error {
 	// Calculate TTL from expiration time
-	ttl := time.Until(room.ExpiredAt)
+	ttl := time.Until(gameRoom.ExpiredAt)
 	if ttl <= 0 {
-		return domainroom.ErrRoomExpired
+		return room.ErrRoomExpired
 	}
 
 	// Serialize room to JSON
-	data, err := json.Marshal(room)
+	data, err := json.Marshal(gameRoom)
 	if err != nil {
 		return errors.Errorf("failed to marshal room: %w", err)
 	}
 
 	// First, try to reserve the room code
-	codeKey := roomCodeKey(room.Code)
+	codeKey := roomCodeKey(gameRoom.Code)
 
-	codeSet, err := r.kvs.SetNX(ctx, codeKey, room.ID.String(), ttl)
+	codeSet, err := r.kvs.SetNX(ctx, codeKey, gameRoom.ID.String(), ttl)
 	if err != nil {
 		return errors.Errorf("failed to reserve room code: %w", err)
 	}
 
 	if !codeSet {
-		return errors.Errorf("%w: code=%s", domainroom.ErrRoomAlreadyExists, room.Code)
+		return errors.Errorf("%w: code=%s", room.ErrRoomAlreadyExists, gameRoom.Code)
 	}
 
 	// Then, save the room data atomically
-	roomKey := roomKey(room.ID)
+	roomKey := roomKey(gameRoom.ID)
 
 	roomSet, err := r.kvs.SetNX(ctx, roomKey, string(data), ttl)
 	if err != nil {
@@ -75,63 +75,63 @@ func (r *Repository) Create(ctx context.Context, room *domainroom.Room) error {
 		// Clean up the room code reservation
 		_ = r.kvs.Delete(ctx, codeKey)
 
-		return errors.Errorf("%w: id=%s", domainroom.ErrRoomAlreadyExists, room.ID)
+		return errors.Errorf("%w: id=%s", room.ErrRoomAlreadyExists, gameRoom.ID)
 	}
 
 	return nil
 }
 
 // Get retrieves a room from KVS by ID.
-func (r *Repository) Get(ctx context.Context, roomID uuid.UUID) (*domainroom.Room, error) {
+func (r *RoomRepository) Get(ctx context.Context, roomID uuid.UUID) (*room.Room, error) {
 	key := roomKey(roomID)
 
 	data, err := r.kvs.Get(ctx, key)
 	if err != nil {
-		if errors.Is(err, domainkvs.ErrNotFound) {
-			return nil, errors.Errorf("%w: id=%s", domainroom.ErrRoomNotFound, roomID)
+		if errors.Is(err, kvs.ErrNotFound) {
+			return nil, errors.Errorf("%w: id=%s", room.ErrRoomNotFound, roomID)
 		}
 
 		return nil, errors.Errorf("failed to get room from KVS: %w", err)
 	}
 
-	var room domainroom.Room
+	var gameRoom room.Room
 
-	err = json.Unmarshal([]byte(data), &room)
+	err = json.Unmarshal([]byte(data), &gameRoom)
 	if err != nil {
 		return nil, errors.Errorf("failed to unmarshal room: %w", err)
 	}
 
-	return &room, nil
+	return &gameRoom, nil
 }
 
 // Update updates an existing room in KVS.
 // Note: There is a potential race condition between Exists check and Set operation.
 // However, since updates are typically initiated by a single user/session and
 // the likelihood of concurrent updates is low, this approach is acceptable.
-func (r *Repository) Update(ctx context.Context, room *domainroom.Room) error {
+func (r *RoomRepository) Update(ctx context.Context, gameRoom *room.Room) error {
 	// Check if room exists
-	_, err := r.Get(ctx, room.ID)
+	_, err := r.Get(ctx, gameRoom.ID)
 	if err != nil {
 		return err
 	}
 
 	// Update timestamp
-	room.UpdatedAt = time.Now()
+	gameRoom.UpdatedAt = time.Now()
 
 	// Serialize room to JSON
-	data, err := json.Marshal(room)
+	data, err := json.Marshal(gameRoom)
 	if err != nil {
 		return errors.Errorf("failed to marshal room: %w", err)
 	}
 
 	// Calculate TTL from expiration time
-	ttl := time.Until(room.ExpiredAt)
+	ttl := time.Until(gameRoom.ExpiredAt)
 	if ttl <= 0 {
-		return domainroom.ErrRoomExpired
+		return room.ErrRoomExpired
 	}
 
 	// Save to KVS with TTL (overwrites existing key)
-	key := roomKey(room.ID)
+	key := roomKey(gameRoom.ID)
 
 	err = r.kvs.Set(ctx, key, string(data), ttl)
 	if err != nil {
@@ -142,9 +142,9 @@ func (r *Repository) Update(ctx context.Context, room *domainroom.Room) error {
 }
 
 // Delete removes a room from KVS.
-func (r *Repository) Delete(ctx context.Context, roomID uuid.UUID) error {
+func (r *RoomRepository) Delete(ctx context.Context, roomID uuid.UUID) error {
 	// Get room first to retrieve the room code
-	room, err := r.Get(ctx, roomID)
+	gameRoom, err := r.Get(ctx, roomID)
 	if err != nil {
 		return err
 	}
@@ -158,14 +158,14 @@ func (r *Repository) Delete(ctx context.Context, roomID uuid.UUID) error {
 	}
 
 	// Delete room code mapping (ignore error since room data is already deleted)
-	codeKey := roomCodeKey(room.Code)
+	codeKey := roomCodeKey(gameRoom.Code)
 	_ = r.kvs.Delete(ctx, codeKey)
 
 	return nil
 }
 
 // Exists checks if a room exists in KVS.
-func (r *Repository) Exists(ctx context.Context, roomID uuid.UUID) (bool, error) {
+func (r *RoomRepository) Exists(ctx context.Context, roomID uuid.UUID) (bool, error) {
 	key := roomKey(roomID)
 
 	exists, err := r.kvs.Exists(ctx, key)

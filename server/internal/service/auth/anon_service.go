@@ -8,14 +8,15 @@ import (
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	domainauth "github.com/yashikota/scene-hunter/server/internal/domain/auth"
+	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 	"github.com/yashikota/scene-hunter/server/util/config"
 )
 
 // Service implements the AuthService.
 type Service struct {
-	anonRepo       domainauth.AnonRepository
-	identityRepo   domainauth.IdentityRepository
+	anonRepo       repository.AnonRepository
+	identityRepo   repository.IdentityRepository
 	tokenSigner    *domainauth.TokenSigner
 	googleVerifier *GoogleVerifier
 	config         *config.AppConfig
@@ -23,8 +24,8 @@ type Service struct {
 
 // NewService creates a new auth Service.
 func NewService(
-	anonRepo domainauth.AnonRepository,
-	identityRepo domainauth.IdentityRepository,
+	anonRepo repository.AnonRepository,
+	identityRepo repository.IdentityRepository,
 	cfg *config.AppConfig,
 ) *Service {
 	// Get HMAC secret from environment

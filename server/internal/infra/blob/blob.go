@@ -1,4 +1,3 @@
-// Package blob provides blob storage domain interfaces.
 package blob
 
 import (

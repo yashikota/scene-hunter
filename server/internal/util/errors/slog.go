@@ -9,7 +9,6 @@ import (
 )
 
 // StackFrame represents a single stack frame for structured logging.
-//
 type StackFrame struct {
 	File           string  `json:"File"`
 	LineNumber     int     `json:"LineNumber"`

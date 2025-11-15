@@ -1,4 +1,4 @@
-// Package health provides health check domain interfaces.
+// Package health provides health check infrastructure interfaces and implementations.
 package health
 
 import "context"

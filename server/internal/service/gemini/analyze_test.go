@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	domainblob "github.com/yashikota/scene-hunter/server/internal/domain/blob"
-	domaingemini "github.com/yashikota/scene-hunter/server/internal/domain/gemini"
+	infrablob "github.com/yashikota/scene-hunter/server/internal/infra/blob"
+	infragemini "github.com/yashikota/scene-hunter/server/internal/infra/gemini"
 	"github.com/yashikota/scene-hunter/server/internal/service/gemini"
 )
 
-// mockBlobClient is a mock implementation of domainblob.Blob.
+// mockBlobClient is a mock implementation of infrablob.Blob.
 type mockBlobClient struct {
 	getData  []byte
 	getError error
@@ -42,13 +42,13 @@ func (m *mockBlobClient) Exists(_ context.Context, _ string) (bool, error) {
 	return true, nil
 }
 
-func (m *mockBlobClient) List(_ context.Context, _ string) ([]domainblob.ObjectInfo, error) {
+func (m *mockBlobClient) List(_ context.Context, _ string) ([]infrablob.ObjectInfo, error) {
 	return nil, nil
 }
 
-// mockGeminiClient is a mock implementation of domaingemini.Gemini.
+// mockGeminiClient is a mock implementation of infragemini.Gemini.
 type mockGeminiClient struct {
-	analyzeResult *domaingemini.ImageAnalysisResult
+	analyzeResult *infragemini.ImageAnalysisResult
 	analyzeError  error
 }
 
@@ -57,7 +57,7 @@ func (m *mockGeminiClient) AnalyzeImage(
 	_ []byte,
 	_ string,
 	_ string,
-) (*domaingemini.ImageAnalysisResult, error) {
+) (*infragemini.ImageAnalysisResult, error) {
 	if m.analyzeError != nil {
 		return nil, m.analyzeError
 	}
@@ -98,7 +98,7 @@ func TestService_AnalyzeImageFromBlob(t *testing.T) {
 				getData: []byte("fake image data"),
 			},
 			geminiClient: &mockGeminiClient{
-				analyzeResult: &domaingemini.ImageAnalysisResult{
+				analyzeResult: &infragemini.ImageAnalysisResult{
 					Features: []string{"feature1", "feature2", "feature3", "feature4", "feature5"},
 				},
 			},

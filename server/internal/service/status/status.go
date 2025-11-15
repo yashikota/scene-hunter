@@ -6,8 +6,8 @@ import (
 	"time"
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
-	"github.com/yashikota/scene-hunter/server/internal/domain/chrono"
-	"github.com/yashikota/scene-hunter/server/internal/domain/health"
+	"github.com/yashikota/scene-hunter/server/internal/infra/chrono"
+	"github.com/yashikota/scene-hunter/server/internal/infra/health"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 

@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	domainblob "github.com/yashikota/scene-hunter/server/internal/domain/blob"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
@@ -23,7 +22,7 @@ type Client struct {
 
 // NewClient creates a new Client with the specified baseURL and timeout.
 // If timeout is 0, the defaultTimeout is used.
-func NewClient(baseURL string, timeout time.Duration) domainblob.Blob {
+func NewClient(baseURL string, timeout time.Duration) Blob {
 	if timeout == 0 {
 		timeout = defaultTimeout
 	}
@@ -176,7 +175,7 @@ func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 	return false, errors.Errorf("unexpected status code: %d: %s", resp.StatusCode, resp.Status)
 }
 
-func (c *Client) List(ctx context.Context, prefix string) ([]domainblob.ObjectInfo, error) {
+func (c *Client) List(ctx context.Context, prefix string) ([]ObjectInfo, error) {
 	url := c.baseURL + "/objects"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -218,9 +217,9 @@ func (c *Client) List(ctx context.Context, prefix string) ([]domainblob.ObjectIn
 		return nil, errors.Errorf("failed to decode response: %w", err)
 	}
 
-	result := make([]domainblob.ObjectInfo, 0, len(response.Objects))
+	result := make([]ObjectInfo, 0, len(response.Objects))
 	for _, obj := range response.Objects {
-		result = append(result, domainblob.ObjectInfo{
+		result = append(result, ObjectInfo{
 			Key:          obj.Key,
 			Size:         obj.Size,
 			LastModified: obj.LastModified,

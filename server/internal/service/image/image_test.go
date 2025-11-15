@@ -10,8 +10,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
-	domainblob "github.com/yashikota/scene-hunter/server/internal/domain/blob"
 	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
+	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
 	"github.com/yashikota/scene-hunter/server/internal/service/image"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
@@ -63,12 +63,12 @@ func (m *mockBlobClient) Exists(_ context.Context, key string) (bool, error) {
 	return exists, nil
 }
 
-func (m *mockBlobClient) List(_ context.Context, prefix string) ([]domainblob.ObjectInfo, error) {
-	result := []domainblob.ObjectInfo{}
+func (m *mockBlobClient) List(_ context.Context, prefix string) ([]blob.ObjectInfo, error) {
+	result := []blob.ObjectInfo{}
 
 	for key, data := range m.objects {
 		if len(prefix) == 0 || len(key) >= len(prefix) && key[:len(prefix)] == prefix {
-			result = append(result, domainblob.ObjectInfo{
+			result = append(result, blob.ObjectInfo{
 				Key:          key,
 				Size:         int64(len(data)),
 				LastModified: time.Now(),
@@ -111,7 +111,12 @@ func (m *mockKVSClient) Set(_ context.Context, key string, value string, _ time.
 	return nil
 }
 
-func (m *mockKVSClient) SetNX(_ context.Context, key string, value string, _ time.Duration) (bool, error) {
+func (m *mockKVSClient) SetNX(
+	_ context.Context,
+	key string,
+	value string,
+	_ time.Duration,
+) (bool, error) {
 	if _, exists := m.data[key]; exists {
 		return false, nil
 	}
@@ -131,6 +136,30 @@ func (m *mockKVSClient) Exists(_ context.Context, key string) (bool, error) {
 	_, exists := m.data[key]
 
 	return exists, nil
+}
+
+func (m *mockKVSClient) Eval(_ context.Context, _ string, _ []string, _ ...any) (any, error) {
+	return map[string]string{}, nil
+}
+
+func (m *mockKVSClient) SAdd(_ context.Context, _ string, _ ...string) error {
+	return nil
+}
+
+func (m *mockKVSClient) SMembers(_ context.Context, _ string) ([]string, error) {
+	return []string{}, nil
+}
+
+func (m *mockKVSClient) SRem(_ context.Context, _ string, _ ...string) error {
+	return nil
+}
+
+func (m *mockKVSClient) Expire(_ context.Context, _ string, _ time.Duration) error {
+	return nil
+}
+
+func (m *mockKVSClient) TTL(_ context.Context, _ string) (time.Duration, error) {
+	return 0, nil
 }
 
 // mockRoomRepository はRoomRepositoryインターフェースのモック実装.
@@ -217,11 +246,11 @@ func TestGetImage_Success(t *testing.T) {
 		t.Fatalf("GetImage() failed: %v", err)
 	}
 
-	if resp.ContentType != "image/jpeg" {
-		t.Errorf("GetImage() content_type = %s, want %s", resp.ContentType, "image/jpeg")
+	if resp.GetContentType() != "image/jpeg" {
+		t.Errorf("GetImage() content_type = %s, want %s", resp.GetContentType(), "image/jpeg")
 	}
 
-	if !bytes.Equal(resp.ImageData, imageData) {
+	if !bytes.Equal(resp.GetImageData(), imageData) {
 		t.Error("GetImage() returned different image data")
 	}
 }
@@ -339,24 +368,24 @@ func TestListImages_Success(t *testing.T) {
 		t.Fatalf("ListImages() failed: %v", err)
 	}
 
-	if len(resp.Images) != len(imageIDs) {
-		t.Errorf("ListImages() returned %d images, want %d", len(resp.Images), len(imageIDs))
+	if len(resp.GetImages()) != len(imageIDs) {
+		t.Errorf("ListImages() returned %d images, want %d", len(resp.GetImages()), len(imageIDs))
 	}
 
-	for _, img := range resp.Images {
-		if img.ImageId == "" {
+	for _, img := range resp.GetImages() {
+		if img.GetImageId() == "" {
 			t.Error("ListImages() returned image with empty ID")
 		}
 
-		if img.ImagePath == "" {
+		if img.GetImagePath() == "" {
 			t.Error("ListImages() returned image with empty path")
 		}
 
-		if img.Size == 0 {
+		if img.GetSize() == 0 {
 			t.Error("ListImages() returned image with zero size")
 		}
 
-		if img.LastModified == nil {
+		if img.GetLastModified() == nil {
 			t.Error("ListImages() returned image with nil LastModified")
 		}
 	}
@@ -391,8 +420,8 @@ func TestListImages_EmptyResult(t *testing.T) {
 		t.Fatalf("ListImages() failed: %v", err)
 	}
 
-	if len(resp.Images) != 0 {
-		t.Errorf("ListImages() returned %d images, want 0", len(resp.Images))
+	if len(resp.GetImages()) != 0 {
+		t.Errorf("ListImages() returned %d images, want 0", len(resp.GetImages()))
 	}
 }
 

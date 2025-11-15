@@ -6,19 +6,19 @@ import (
 	"io"
 	"net/http"
 
-	domainblob "github.com/yashikota/scene-hunter/server/internal/domain/blob"
-	domaingemini "github.com/yashikota/scene-hunter/server/internal/domain/gemini"
+	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
+	"github.com/yashikota/scene-hunter/server/internal/infra/gemini"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 // Service is a Gemini service.
 type Service struct {
-	blobClient   domainblob.Blob
-	geminiClient domaingemini.Gemini
+	blobClient   blob.Blob
+	geminiClient gemini.Gemini
 }
 
 // NewService creates a new Gemini service.
-func NewService(blobClient domainblob.Blob, geminiClient domaingemini.Gemini) *Service {
+func NewService(blobClient blob.Blob, geminiClient gemini.Gemini) *Service {
 	return &Service{
 		blobClient:   blobClient,
 		geminiClient: geminiClient,
@@ -35,7 +35,7 @@ func detectImageMIMEType(data []byte) string {
 func (s *Service) AnalyzeImageFromBlob(
 	ctx context.Context,
 	imageKey, prompt string,
-) (*domaingemini.ImageAnalysisResult, error) {
+) (*gemini.ImageAnalysisResult, error) {
 	// Get image from blob storage
 	reader, err := s.blobClient.Get(ctx, imageKey)
 	if err != nil {

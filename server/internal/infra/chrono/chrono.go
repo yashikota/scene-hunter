@@ -1,18 +1,21 @@
-// Package chrono provides time-related infrastructure implementations.
+// Package chrono provides time-related infrastructure interfaces and implementations.
 package chrono
 
-import (
-	"time"
+import "time"
 
-	"github.com/yashikota/scene-hunter/server/internal/domain/chrono"
-)
+type Chrono interface {
+	Now() time.Time
+}
 
+// RealChrono is a real-time implementation of Chrono.
 type RealChrono struct{}
 
-func New() chrono.Chrono {
+// New creates a new RealChrono.
+func New() Chrono {
 	return &RealChrono{}
 }
 
+// Now returns the current time.
 func (r *RealChrono) Now() time.Time {
 	return time.Now()
 }

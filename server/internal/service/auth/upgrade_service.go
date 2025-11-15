@@ -10,8 +10,8 @@ import (
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	domainauth "github.com/yashikota/scene-hunter/server/internal/domain/auth"
 	domainuser "github.com/yashikota/scene-hunter/server/internal/domain/user"
-	infraauth "github.com/yashikota/scene-hunter/server/internal/infra/auth"
 	"github.com/yashikota/scene-hunter/server/internal/infra/db/queries"
+	infrarepository "github.com/yashikota/scene-hunter/server/internal/infra/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
@@ -52,7 +52,6 @@ func (s *Service) UpgradeAnonWithGoogle(
 		"google",
 		idToken.Sub,
 	)
-	
 	// Handle database errors properly
 	if err != nil {
 		// Check if it's a "not found" error
@@ -63,7 +62,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 		// If it's "not found", continue to create new user
 		existingIdentity = nil
 	}
-	
+
 	if existingIdentity != nil {
 		// User already exists, just revoke anon tokens and return session
 		if err := s.anonRepo.RevokeAllAnonTokens(ctx, anonToken.AnonID); err != nil {
@@ -109,7 +108,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 	}
 
 	// Get database client for transaction
-	identityRepo, ok := s.identityRepo.(*infraauth.IdentityRepository)
+	identityRepo, ok := s.identityRepo.(*infrarepository.IdentityRepository)
 	if !ok {
 		return nil, errors.Errorf("invalid identity repository type")
 	}
@@ -124,7 +123,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 
 	// Track whether transaction has been committed
 	committed := false
-	
+
 	// Ensure rollback on error
 	defer func() {
 		if !committed && err != nil {
@@ -134,6 +133,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 
 	// Create user in database (within transaction)
 	qtx := dbClient.Queries.WithTx(dbTx)
+
 	_, err = qtx.CreateUser(ctx, queries.CreateUserParams{
 		ID:        newUser.ID,
 		Code:      newUser.Code,
@@ -166,6 +166,7 @@ func (s *Service) UpgradeAnonWithGoogle(
 	if err = dbTx.Commit(ctx); err != nil {
 		return nil, errors.Errorf("failed to commit transaction: %w", err)
 	}
+
 	committed = true
 
 	// This would involve:

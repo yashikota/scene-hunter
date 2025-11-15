@@ -6,7 +6,7 @@ import (
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	infrakvs "github.com/yashikota/scene-hunter/server/internal/infra/kvs"
-	infraroom "github.com/yashikota/scene-hunter/server/internal/infra/room"
+	infrarepository "github.com/yashikota/scene-hunter/server/internal/infra/repository"
 	roomsvc "github.com/yashikota/scene-hunter/server/internal/service/room"
 	"github.com/yashikota/scene-hunter/server/util/config"
 )
@@ -28,7 +28,7 @@ func setupTestService(t *testing.T) (*roomsvc.Service, context.Context) {
 		t.Skipf("KVS ping failed: %v", err)
 	}
 
-	repo := infraroom.NewRepository(kvsClient)
+	repo := infrarepository.NewRoomRepository(kvsClient)
 	service := roomsvc.NewService(repo)
 
 	return service, ctx

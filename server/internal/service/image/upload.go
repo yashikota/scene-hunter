@@ -11,10 +11,10 @@ import (
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
-	domainblob "github.com/yashikota/scene-hunter/server/internal/domain/blob"
 	domainimage "github.com/yashikota/scene-hunter/server/internal/domain/image"
-	domainkvs "github.com/yashikota/scene-hunter/server/internal/domain/kvs"
-	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
+	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
+	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
+	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -29,12 +29,16 @@ var ErrImageNotFound = errors.New("image not found")
 const TTL = 1 * time.Hour
 
 type Service struct {
-	blobClient domainblob.Blob
-	kvsClient  domainkvs.KVS
-	roomRepo   domainroom.Repository
+	blobClient blob.Blob
+	kvsClient  kvs.KVS
+	roomRepo   repository.RoomRepository
 }
 
-func NewService(blobClient domainblob.Blob, kvsClient domainkvs.KVS, roomRepo domainroom.Repository) *Service {
+func NewService(
+	blobClient blob.Blob,
+	kvsClient kvs.KVS,
+	roomRepo repository.RoomRepository,
+) *Service {
 	return &Service{
 		blobClient: blobClient,
 		kvsClient:  kvsClient,
@@ -134,8 +138,10 @@ func (s *Service) GetImage(
 	}
 
 	// 画像のパスを構築 (各contentTypeを試す)
-	var imageData []byte
-	var contentType string
+	var (
+		imageData   []byte
+		contentType string
+	)
 
 	supportedTypes := []string{"image/jpeg", "image/png", "image/webp"}
 

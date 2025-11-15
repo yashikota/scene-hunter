@@ -1,23 +1,24 @@
-package auth
+package repository
 
 import (
 	"context"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	domainauth "github.com/yashikota/scene-hunter/server/internal/domain/auth"
+	"github.com/yashikota/scene-hunter/server/internal/domain/auth"
 	"github.com/yashikota/scene-hunter/server/internal/infra/db"
 	"github.com/yashikota/scene-hunter/server/internal/infra/db/queries"
+	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
-// IdentityRepository implements domainauth.IdentityRepository using Postgres.
+// IdentityRepository implements repository.IdentityRepository using Postgres.
 type IdentityRepository struct {
 	DB *db.Client
 }
 
 // NewIdentityRepository creates a new IdentityRepository.
-func NewIdentityRepository(dbClient *db.Client) domainauth.IdentityRepository {
+func NewIdentityRepository(dbClient *db.Client) repository.IdentityRepository {
 	return &IdentityRepository{
 		DB: dbClient,
 	}
@@ -26,7 +27,7 @@ func NewIdentityRepository(dbClient *db.Client) domainauth.IdentityRepository {
 // CreateIdentity creates a new user identity.
 func (r *IdentityRepository) CreateIdentity(
 	ctx context.Context,
-	identity *domainauth.Identity,
+	identity *auth.Identity,
 ) error {
 	var email pgtype.Text
 	if identity.Email != "" {
@@ -53,7 +54,7 @@ func (r *IdentityRepository) CreateIdentity(
 func (r *IdentityRepository) GetIdentityByProviderAndSubject(
 	ctx context.Context,
 	provider, subject string,
-) (*domainauth.Identity, error) {
+) (*auth.Identity, error) {
 	row, err := r.DB.Queries.GetUserIdentityByProviderAndSubject(
 		ctx,
 		queries.GetUserIdentityByProviderAndSubjectParams{
@@ -65,7 +66,7 @@ func (r *IdentityRepository) GetIdentityByProviderAndSubject(
 		return nil, errors.Errorf("failed to get identity: %w", err)
 	}
 
-	return &domainauth.Identity{
+	return &auth.Identity{
 		ID:        row.ID,
 		UserID:    row.UserID,
 		Provider:  row.Provider,
@@ -79,15 +80,15 @@ func (r *IdentityRepository) GetIdentityByProviderAndSubject(
 func (r *IdentityRepository) GetIdentitiesByUserID(
 	ctx context.Context,
 	userID uuid.UUID,
-) ([]*domainauth.Identity, error) {
+) ([]*auth.Identity, error) {
 	rows, err := r.DB.Queries.GetUserIdentitiesByUserID(ctx, userID)
 	if err != nil {
 		return nil, errors.Errorf("failed to get identities: %w", err)
 	}
 
-	identities := make([]*domainauth.Identity, len(rows))
+	identities := make([]*auth.Identity, len(rows))
 	for i, row := range rows {
-		identities[i] = &domainauth.Identity{
+		identities[i] = &auth.Identity{
 			ID:        row.ID,
 			UserID:    row.UserID,
 			Provider:  row.Provider,

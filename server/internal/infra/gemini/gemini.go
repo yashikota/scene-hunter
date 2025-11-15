@@ -1,4 +1,3 @@
-// Package gemini provides gemini AI domain interfaces.
 package gemini
 
 import (

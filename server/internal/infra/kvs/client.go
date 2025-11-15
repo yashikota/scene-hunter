@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/valkey-io/valkey-go"
-	domainkvs "github.com/yashikota/scene-hunter/server/internal/domain/kvs"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
@@ -15,7 +14,7 @@ type Client struct {
 	client valkey.Client
 }
 
-func NewClient(addr, password string) (domainkvs.KVS, error) {
+func NewClient(addr, password string) (KVS, error) {
 	client, err := valkey.NewClient(valkey.ClientOption{
 		InitAddress:  []string{addr},
 		Password:     password,
@@ -67,7 +66,7 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 	val, err := result.ToString()
 	if err != nil {
 		if valkey.IsValkeyNil(err) {
-			return "", domainkvs.ErrNotFound
+			return "", ErrNotFound
 		}
 
 		return "", errors.Errorf("get failed: %w", err)
@@ -155,14 +154,20 @@ func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 }
 
 // Eval executes a Lua script.
-func (c *Client) Eval(ctx context.Context, script string, keys []string, args ...interface{}) (interface{}, error) {
+func (c *Client) Eval(ctx context.Context, script string, keys []string, args ...any) (any, error) {
 	// Convert args to strings
 	strArgs := make([]string, len(args))
 	for i, arg := range args {
 		strArgs[i] = toString(arg)
 	}
 
-	cmd := c.client.B().Eval().Script(script).Numkeys(int64(len(keys))).Key(keys...).Arg(strArgs...).Build()
+	cmd := c.client.B().
+		Eval().
+		Script(script).
+		Numkeys(int64(len(keys))).
+		Key(keys...).
+		Arg(strArgs...).
+		Build()
 	result := c.client.Do(ctx, cmd)
 
 	if err := result.Error(); err != nil {
@@ -250,6 +255,6 @@ func (c *Client) TTL(ctx context.Context, key string) (time.Duration, error) {
 }
 
 // toString converts an interface{} to string.
-func toString(v interface{}) string {
+func toString(v any) string {
 	return fmt.Sprintf("%v", v)
 }

@@ -57,11 +57,11 @@ func AuthInterceptor() connect.UnaryInterceptorFunc {
 				return nil, connect.NewError(connect.CodeUnauthenticated, err)
 			}
 
-		// Store ID in context
-		// Note: Current implementation uses the same token format for both anonymous and permanent users.
-		// The AnonID field contains either the anon_id (for anonymous users) or user_id (for permanent users).
-		// and store in appropriate context keys (AnonIDContextKey vs UserIDContextKey).
-		ctx = context.WithValue(ctx, AnonIDContextKey, anonToken.AnonID)
+			// Store ID in context
+			// Note: Current implementation uses the same token format for both anonymous and permanent users.
+			// The AnonID field contains either the anon_id (for anonymous users) or user_id (for permanent users).
+			// and store in appropriate context keys (AnonIDContextKey vs UserIDContextKey).
+			ctx = context.WithValue(ctx, AnonIDContextKey, anonToken.AnonID)
 
 			return next(ctx, req)
 		}

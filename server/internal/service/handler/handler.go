@@ -9,14 +9,12 @@ import (
 	"connectrpc.com/validate"
 	"github.com/go-chi/chi/v5"
 	"github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1/scene_hunterv1connect"
-	domainblob "github.com/yashikota/scene-hunter/server/internal/domain/blob"
-	domainchrono "github.com/yashikota/scene-hunter/server/internal/domain/chrono"
-	"github.com/yashikota/scene-hunter/server/internal/domain/health"
-	domainkvs "github.com/yashikota/scene-hunter/server/internal/domain/kvs"
-	infraauth "github.com/yashikota/scene-hunter/server/internal/infra/auth"
+	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
 	"github.com/yashikota/scene-hunter/server/internal/infra/chrono"
 	infradb "github.com/yashikota/scene-hunter/server/internal/infra/db"
-	infraroom "github.com/yashikota/scene-hunter/server/internal/infra/room"
+	"github.com/yashikota/scene-hunter/server/internal/infra/health"
+	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
+	infrarepository "github.com/yashikota/scene-hunter/server/internal/infra/repository"
 	authsvc "github.com/yashikota/scene-hunter/server/internal/service/auth"
 	healthsvc "github.com/yashikota/scene-hunter/server/internal/service/health"
 	imagesvc "github.com/yashikota/scene-hunter/server/internal/service/image"
@@ -44,9 +42,9 @@ func (f *failedChecker) Name() string {
 type Dependencies struct {
 	DBClient   *infradb.Client
 	DBError    error
-	KVSClient  domainkvs.KVS
+	KVSClient  kvs.KVS
 	KVSError   error
-	BlobClient domainblob.Blob
+	BlobClient blob.Blob
 	Config     *config.AppConfig
 }
 
@@ -84,7 +82,7 @@ func RegisterHandlers(mux *chi.Mux, deps *Dependencies) {
 func registerStatusService(
 	mux *chi.Mux,
 	deps *Dependencies,
-	chronoProvider domainchrono.Chrono,
+	chronoProvider chrono.Chrono,
 	interceptors connect.Option,
 ) {
 	checkers := buildHealthCheckers(deps)
@@ -134,7 +132,7 @@ func registerImageService(mux *chi.Mux, deps *Dependencies, interceptors connect
 		return
 	}
 
-	roomRepo := infraroom.NewRepository(deps.KVSClient)
+	roomRepo := infrarepository.NewRoomRepository(deps.KVSClient)
 	imageService := imagesvc.NewService(deps.BlobClient, deps.KVSClient, roomRepo)
 	imagePath, imageHandler := scene_hunterv1connect.NewImageServiceHandler(
 		imageService,
@@ -148,7 +146,7 @@ func registerRoomService(mux *chi.Mux, deps *Dependencies, interceptors connect.
 		return
 	}
 
-	roomRepo := infraroom.NewRepository(deps.KVSClient)
+	roomRepo := infrarepository.NewRoomRepository(deps.KVSClient)
 	roomService := roomsvc.NewService(roomRepo)
 	roomPath, roomHandler := scene_hunterv1connect.NewRoomServiceHandler(
 		roomService,
@@ -162,8 +160,8 @@ func registerAuthService(mux *chi.Mux, deps *Dependencies, interceptors connect.
 		return
 	}
 
-	anonRepo := infraauth.NewAnonRepository(deps.KVSClient)
-	identityRepo := infraauth.NewIdentityRepository(deps.DBClient)
+	anonRepo := infrarepository.NewAnonRepository(deps.KVSClient)
+	identityRepo := infrarepository.NewIdentityRepository(deps.DBClient)
 	authService := authsvc.NewService(anonRepo, identityRepo, deps.Config)
 	authPath, authHandler := scene_hunterv1connect.NewAuthServiceHandler(
 		authService,

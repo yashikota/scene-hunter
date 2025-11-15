@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 
-	domaingemini "github.com/yashikota/scene-hunter/server/internal/domain/gemini"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 	"google.golang.org/genai"
 )
@@ -17,7 +16,7 @@ type Client struct {
 }
 
 // NewClient creates a new Gemini client.
-func NewClient(ctx context.Context, apiKey, modelName string) (domaingemini.Gemini, error) {
+func NewClient(ctx context.Context, apiKey, modelName string) (Gemini, error) {
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
 		APIKey: apiKey,
 	})
@@ -42,7 +41,7 @@ func (c *Client) AnalyzeImage(
 	imageData []byte,
 	mimeType string,
 	prompt string,
-) (*domaingemini.ImageAnalysisResult, error) {
+) (*ImageAnalysisResult, error) {
 	schema := &genai.Schema{
 		Type: "object",
 		Properties: map[string]*genai.Schema{
@@ -96,7 +95,7 @@ func (c *Client) AnalyzeImage(
 		return nil, errors.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	return &domaingemini.ImageAnalysisResult{
+	return &ImageAnalysisResult{
 		Features: response.Result,
 	}, nil
 }

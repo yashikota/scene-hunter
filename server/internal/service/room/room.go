@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
+	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
@@ -22,11 +23,11 @@ const (
 
 // Service implements the RoomService handler.
 type Service struct {
-	repo domainroom.Repository
+	repo repository.RoomRepository
 }
 
 // NewService creates a new room service.
-func NewService(repo domainroom.Repository) *Service {
+func NewService(repo repository.RoomRepository) *Service {
 	return &Service{
 		repo: repo,
 	}

@@ -2,7 +2,6 @@
 package room
 
 import (
-	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -48,13 +47,4 @@ func NewRoom(code string) *Room {
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-}
-
-// Repository defines the interface for room persistence.
-type Repository interface {
-	Create(ctx context.Context, room *Room) error
-	Get(ctx context.Context, id uuid.UUID) (*Room, error)
-	Update(ctx context.Context, room *Room) error
-	Delete(ctx context.Context, id uuid.UUID) error
-	Exists(ctx context.Context, id uuid.UUID) (bool, error)
 }

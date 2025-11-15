@@ -16,7 +16,6 @@ import (
 
 // GoogleIDToken represents the claims in a Google ID token.
 // Google API uses snake_case for JSON field names, so we disable tagliatelle linter.
-//
 type GoogleIDToken struct {
 	Iss           string `json:"iss"`
 	Sub           string `json:"sub"`
@@ -35,7 +34,6 @@ type GoogleIDToken struct {
 
 // GoogleTokenResponse represents the response from Google's token endpoint.
 // Google API uses snake_case for JSON field names, so we disable tagliatelle linter.
-//
 type GoogleTokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	ExpiresIn    int    `json:"expires_in"`
@@ -162,6 +160,7 @@ func (v *GoogleVerifier) VerifyIDToken(
 	if !issuerOK {
 		return nil, errors.Errorf("missing issuer")
 	}
+
 	if issuer != "https://accounts.google.com" && issuer != "accounts.google.com" {
 		return nil, errors.Errorf("invalid issuer: %s", issuer)
 	}
