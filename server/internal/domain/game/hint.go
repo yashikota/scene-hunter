@@ -1,4 +1,3 @@
-// Package game represents game domain.
 package game
 
 import "github.com/yashikota/scene-hunter/server/internal/util/errors"
