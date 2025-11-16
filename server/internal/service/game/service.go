@@ -18,6 +18,7 @@ import (
 
 const (
 	// hintPrompt is the prompt for generating hints from game master's photo.
+	//nolint:gosmopolitan // Japanese text is required for the game
 	hintPrompt = `この写真の特徴を5つの短い文章で説明してください。
 撮影場所を特定できるような情報を含めてください。
 以下の形式で出力してください：
@@ -26,11 +27,6 @@ const (
 3. [3つ目のヒント]
 4. [4つ目のヒント]
 5. [5つ目のヒント]`
-
-	// scorePrompt is the prompt for calculating similarity score.
-	scorePrompt = `2枚の写真の類似度を0から100の整数で評価してください。
-場所、構図、角度、被写体が同じかを評価してください。
-数値のみを返してください。`
 )
 
 // Service implements the GameService.
@@ -84,7 +80,7 @@ func (s *Service) StartGame(
 	// Create new game
 	gameSession, err := game.NewGame(roomID, totalRounds, gameMasterUserID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to create new game: %w", err)
 	}
 
 	// Save game to repository
@@ -106,19 +102,19 @@ func (s *Service) JoinGame(
 	// Get game
 	gameSession, err := s.gameRepo.Get(ctx, roomID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to get game: %w", err)
 	}
 
 	// Create player
 	player, err := game.NewPlayer(userID, name, isGameMaster, isAdmin)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to create player: %w", err)
 	}
 
 	// Add player to game
 	err = gameSession.AddPlayer(player)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to add player to game: %w", err)
 	}
 
 	// Update game
@@ -139,21 +135,21 @@ func (s *Service) StartRound(
 	// Get game
 	gameSession, err := s.gameRepo.Get(ctx, roomID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to get game: %w", err)
 	}
 
 	// Start game if not started
 	if gameSession.Status == game.GameStatusWaiting {
 		err = gameSession.Start()
 		if err != nil {
-			return nil, err
+			return nil, errors.Errorf("failed to start game: %w", err)
 		}
 	}
 
 	// Start round
 	err = gameSession.StartRound(gameMasterUserID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to start round: %w", err)
 	}
 
 	// Update game
@@ -174,13 +170,13 @@ func (s *Service) SubmitGameMasterPhoto(
 	// Get game
 	gameSession, err := s.gameRepo.Get(ctx, roomID)
 	if err != nil {
-		return "", nil, err
+		return "", nil, errors.Errorf("failed to get game: %w", err)
 	}
 
 	// Get current round
 	round, err := gameSession.GetCurrentRound()
 	if err != nil {
-		return "", nil, err
+		return "", nil, errors.Errorf("failed to get current round: %w", err)
 	}
 
 	// Verify user is game master for this round
@@ -218,7 +214,7 @@ func (s *Service) SubmitGameMasterPhoto(
 	// Start hunters' turn
 	err = round.StartHuntersTurn()
 	if err != nil {
-		return "", nil, err
+		return "", nil, errors.Errorf("failed to start hunters' turn: %w", err)
 	}
 
 	// Update game
@@ -240,13 +236,13 @@ func (s *Service) SubmitHunterPhoto(
 	// Get game
 	gameSession, err := s.gameRepo.Get(ctx, roomID)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, errors.Errorf("failed to get game: %w", err)
 	}
 
 	// Get current round
 	round, err := gameSession.GetCurrentRound()
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, errors.Errorf("failed to get current round: %w", err)
 	}
 
 	// Verify user is not game master
@@ -281,7 +277,7 @@ func (s *Service) SubmitHunterPhoto(
 	// Create round result
 	result, err := game.NewRoundResult(userID, score, remainingSeconds)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, errors.Errorf("failed to create round result: %w", err)
 	}
 
 	// Add result to round
@@ -290,7 +286,7 @@ func (s *Service) SubmitHunterPhoto(
 	// Update player points
 	err = gameSession.UpdatePlayerPoints(userID, result.Points)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, errors.Errorf("failed to update player points: %w", err)
 	}
 
 	// Update game
@@ -304,7 +300,12 @@ func (s *Service) SubmitHunterPhoto(
 
 // GetGameState returns the current game state.
 func (s *Service) GetGameState(ctx context.Context, roomID uuid.UUID) (*game.Game, error) {
-	return s.gameRepo.Get(ctx, roomID)
+	gameSession, err := s.gameRepo.Get(ctx, roomID)
+	if err != nil {
+		return nil, errors.Errorf("failed to get game: %w", err)
+	}
+
+	return gameSession, nil
 }
 
 // EndGame ends the game and returns final rankings.
@@ -312,13 +313,13 @@ func (s *Service) EndGame(ctx context.Context, roomID uuid.UUID) (*game.Game, []
 	// Get game
 	gameSession, err := s.gameRepo.Get(ctx, roomID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.Errorf("failed to get game: %w", err)
 	}
 
 	// Finish game
 	err = gameSession.Finish()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.Errorf("failed to finish game: %w", err)
 	}
 
 	// Update game
@@ -338,17 +339,17 @@ func parseHints(features []string) ([]*game.Hint, error) {
 	hints := make([]*game.Hint, 0, 5)
 
 	// Ensure we have exactly 5 hints
-	for i := 0; i < 5; i++ {
+	for hintIndex := 0; hintIndex < 5; hintIndex++ {
 		var hintText string
-		if i < len(features) && features[i] != "" {
-			hintText = features[i]
+		if hintIndex < len(features) && features[hintIndex] != "" {
+			hintText = features[hintIndex]
 		} else {
-			hintText = fmt.Sprintf("ヒント%d", i+1)
+			hintText = fmt.Sprintf("ヒント%d", hintIndex+1)
 		}
 
-		hint, err := game.NewHint(i+1, hintText)
+		hint, err := game.NewHint(hintIndex+1, hintText)
 		if err != nil {
-			return nil, err
+			return nil, errors.Errorf("failed to create hint: %w", err)
 		}
 
 		hints = append(hints, hint)
