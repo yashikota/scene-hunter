@@ -245,6 +245,16 @@ func (s *Service) SubmitHunterPhoto(
 		return 0, 0, 0, errors.Errorf("failed to get current round: %w", err)
 	}
 
+	// Verify round is in hunters' phase
+	if round.TurnStatus != game.TurnStatusHunters {
+		return 0, 0, 0, errors.New("not in hunters' turn")
+	}
+
+	// Verify game master image has been uploaded
+	if round.GameMasterImageID == "" {
+		return 0, 0, 0, errors.New("game master has not uploaded image yet")
+	}
+
 	// Verify user is not game master
 	if round.GameMasterUserID == userID {
 		return 0, 0, 0, errors.New("game master cannot submit as hunter")
