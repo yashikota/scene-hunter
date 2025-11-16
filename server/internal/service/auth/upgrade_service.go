@@ -171,6 +171,129 @@ func (s *Service) CompleteNewUserUpgrade(
 	return res, nil
 }
 
+// PrepareGoogleLogin prepares direct Google login by validating tokens.
+func (s *Service) PrepareGoogleLogin(
+	ctx context.Context,
+	req *scene_hunterv1.LoginWithGoogleRequest,
+) (*PreparedLoginData, error) {
+	// Verify Google OAuth code and get ID token
+	redirectURI := s.config.Auth.GoogleRedirectURI
+
+	tokenResp, err := s.googleVerifier.ExchangeCodeForToken(
+		ctx,
+		req.GetAuthorizationCode(),
+		req.GetCodeVerifier(),
+		redirectURI,
+	)
+	if err != nil {
+		return nil, errors.Errorf("failed to exchange code: %w", err)
+	}
+
+	// Verify ID token
+	idToken, err := s.googleVerifier.VerifyIDToken(ctx, tokenResp.IDToken)
+	if err != nil {
+		return nil, errors.Errorf("invalid ID token: %w", err)
+	}
+
+	// Check if user already exists with this Google account
+	existingIdentity, err := s.identityRepo.GetIdentityByProviderAndSubject(
+		ctx,
+		"google",
+		idToken.Sub,
+	)
+	// Handle database errors properly
+	if err != nil {
+		// Check if it's a "not found" error
+		if !errors.Is(err, pgx.ErrNoRows) {
+			// If it's not "not found", it's a real database error
+			return nil, errors.Errorf("failed to check existing identity: %w", err)
+		}
+		// If it's "not found", continue to create new user
+		existingIdentity = nil
+	}
+
+	preparedData := &PreparedLoginData{
+		IDToken:          idToken,
+		ExistingIdentity: existingIdentity,
+	}
+
+	// If user doesn't exist, prepare new user and identity
+	if existingIdentity == nil {
+		// Create new permanent user
+		userCode := generateUserCode()
+
+		userName := idToken.Name
+		if userName == "" {
+			userName = idToken.Email
+		}
+
+		newUser := domainuser.NewUser(userCode, userName)
+
+		// Create identity
+		identity, err := domainauth.GoogleIdentity(newUser.ID, idToken.Sub, idToken.Email)
+		if err != nil {
+			return nil, errors.Errorf("failed to create Google identity: %w", err)
+		}
+
+		preparedData.NewUser = newUser
+		preparedData.Identity = identity
+	}
+
+	return preparedData, nil
+}
+
+// CompleteExistingUserLogin completes the login for an existing user.
+func (s *Service) CompleteExistingUserLogin(
+	ctx context.Context,
+	data *PreparedLoginData,
+) (*scene_hunterv1.LoginWithGoogleResponse, error) {
+	// Create user session token
+	userSession, err := s.tokenSigner.SignAnonToken(
+		data.ExistingIdentity.UserID.String(),
+		s.config.Auth.AccessTokenTTL,
+	)
+	if err != nil {
+		return nil, errors.Errorf("failed to sign user session token: %w", err)
+	}
+
+	res := &scene_hunterv1.LoginWithGoogleResponse{
+		UserSession: &scene_hunterv1.Token{
+			Token:         userSession.Token,
+			ExpiresAtUnix: userSession.ExpiresAt.Unix(),
+		},
+		UserId:    data.ExistingIdentity.UserID.String(),
+		IsNewUser: false,
+	}
+
+	return res, nil
+}
+
+// CompleteNewUserLogin completes the login for a new user.
+func (s *Service) CompleteNewUserLogin(
+	ctx context.Context,
+	data *PreparedLoginData,
+) (*scene_hunterv1.LoginWithGoogleResponse, error) {
+	// Create user session token
+	userSession, err := s.tokenSigner.SignAnonToken(
+		data.NewUser.ID.String(),
+		s.config.Auth.AccessTokenTTL,
+	)
+	if err != nil {
+		return nil, errors.Errorf("failed to sign user session token: %w", err)
+	}
+
+	res := &scene_hunterv1.LoginWithGoogleResponse{
+		UserSession: &scene_hunterv1.Token{
+			Token:         userSession.Token,
+			ExpiresAtUnix: userSession.ExpiresAt.Unix(),
+		},
+		UserId:    data.NewUser.ID.String(),
+		IsNewUser: true,
+	}
+
+	return res, nil
+}
+
 // generateUserCode generates a unique user code.
 // This is a simplified implementation.
 func generateUserCode() string {

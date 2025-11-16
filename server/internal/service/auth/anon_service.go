@@ -206,3 +206,11 @@ func (s *Service) RevokeAnon(
 
 	return res, nil
 }
+
+// LoginWithGoogle is a placeholder - use LoginWithGoogleWithDB instead.
+func (s *Service) LoginWithGoogle(
+	ctx context.Context,
+	req *scene_hunterv1.LoginWithGoogleRequest,
+) (*scene_hunterv1.LoginWithGoogleResponse, error) {
+	return nil, errors.Errorf("login requires database client - use LoginWithGoogleWithDB")
+}
