@@ -395,6 +395,154 @@ func (x *ListImagesResponse) GetImages() []*ImageInfo {
 	return nil
 }
 
+type ListImageThumbnailsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListImageThumbnailsRequest) Reset() {
+	*x = ListImageThumbnailsRequest{}
+	mi := &file_scene_hunter_v1_image_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListImageThumbnailsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListImageThumbnailsRequest) ProtoMessage() {}
+
+func (x *ListImageThumbnailsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_scene_hunter_v1_image_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListImageThumbnailsRequest.ProtoReflect.Descriptor instead.
+func (*ListImageThumbnailsRequest) Descriptor() ([]byte, []int) {
+	return file_scene_hunter_v1_image_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListImageThumbnailsRequest) GetRoomId() string {
+	if x != nil {
+		return x.RoomId
+	}
+	return ""
+}
+
+type ThumbnailInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ImageId       string                 `protobuf:"bytes,1,opt,name=image_id,json=imageId,proto3" json:"image_id,omitempty"`
+	ThumbnailData []byte                 `protobuf:"bytes,2,opt,name=thumbnail_data,json=thumbnailData,proto3" json:"thumbnail_data,omitempty"`
+	ContentType   string                 `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ThumbnailInfo) Reset() {
+	*x = ThumbnailInfo{}
+	mi := &file_scene_hunter_v1_image_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ThumbnailInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ThumbnailInfo) ProtoMessage() {}
+
+func (x *ThumbnailInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_scene_hunter_v1_image_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ThumbnailInfo.ProtoReflect.Descriptor instead.
+func (*ThumbnailInfo) Descriptor() ([]byte, []int) {
+	return file_scene_hunter_v1_image_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ThumbnailInfo) GetImageId() string {
+	if x != nil {
+		return x.ImageId
+	}
+	return ""
+}
+
+func (x *ThumbnailInfo) GetThumbnailData() []byte {
+	if x != nil {
+		return x.ThumbnailData
+	}
+	return nil
+}
+
+func (x *ThumbnailInfo) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+type ListImageThumbnailsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Thumbnails    []*ThumbnailInfo       `protobuf:"bytes,1,rep,name=thumbnails,proto3" json:"thumbnails,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListImageThumbnailsResponse) Reset() {
+	*x = ListImageThumbnailsResponse{}
+	mi := &file_scene_hunter_v1_image_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListImageThumbnailsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListImageThumbnailsResponse) ProtoMessage() {}
+
+func (x *ListImageThumbnailsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_scene_hunter_v1_image_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListImageThumbnailsResponse.ProtoReflect.Descriptor instead.
+func (*ListImageThumbnailsResponse) Descriptor() ([]byte, []int) {
+	return file_scene_hunter_v1_image_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListImageThumbnailsResponse) GetThumbnails() []*ThumbnailInfo {
+	if x != nil {
+		return x.Thumbnails
+	}
+	return nil
+}
+
 var File_scene_hunter_v1_image_proto protoreflect.FileDescriptor
 
 const file_scene_hunter_v1_image_proto_rawDesc = "" +
@@ -428,12 +576,23 @@ const file_scene_hunter_v1_image_proto_rawDesc = "" +
 	"\x04size\x18\x03 \x01(\x03R\x04size\x12?\n" +
 	"\rlast_modified\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\flastModified\"H\n" +
 	"\x12ListImagesResponse\x122\n" +
-	"\x06images\x18\x01 \x03(\v2\x1a.scene_hunter.v1.ImageInfoR\x06images2\x90\x02\n" +
+	"\x06images\x18\x01 \x03(\v2\x1a.scene_hunter.v1.ImageInfoR\x06images\"?\n" +
+	"\x1aListImageThumbnailsRequest\x12!\n" +
+	"\aroom_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06roomId\"~\n" +
+	"\rThumbnailInfo\x12#\n" +
+	"\bimage_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aimageId\x12%\n" +
+	"\x0ethumbnail_data\x18\x02 \x01(\fR\rthumbnailData\x12!\n" +
+	"\fcontent_type\x18\x03 \x01(\tR\vcontentType\"]\n" +
+	"\x1bListImageThumbnailsResponse\x12>\n" +
+	"\n" +
+	"thumbnails\x18\x01 \x03(\v2\x1e.scene_hunter.v1.ThumbnailInfoR\n" +
+	"thumbnails2\x82\x03\n" +
 	"\fImageService\x12X\n" +
 	"\vUploadImage\x12#.scene_hunter.v1.UploadImageRequest\x1a$.scene_hunter.v1.UploadImageResponse\x12O\n" +
 	"\bGetImage\x12 .scene_hunter.v1.GetImageRequest\x1a!.scene_hunter.v1.GetImageResponse\x12U\n" +
 	"\n" +
-	"ListImages\x12\".scene_hunter.v1.ListImagesRequest\x1a#.scene_hunter.v1.ListImagesResponseB\xc7\x01\n" +
+	"ListImages\x12\".scene_hunter.v1.ListImagesRequest\x1a#.scene_hunter.v1.ListImagesResponse\x12p\n" +
+	"\x13ListImageThumbnails\x12+.scene_hunter.v1.ListImageThumbnailsRequest\x1a,.scene_hunter.v1.ListImageThumbnailsResponseB\xc7\x01\n" +
 	"\x13com.scene_hunter.v1B\n" +
 	"ImageProtoP\x01ZKgithub.com/yashikota/scene-hunter/server/gen/scene_hunter/v1;scene_hunterv1\xa2\x02\x03SXX\xaa\x02\x0eSceneHunter.V1\xca\x02\x0eSceneHunter\\V1\xe2\x02\x1aSceneHunter\\V1\\GPBMetadata\xea\x02\x0fSceneHunter::V1b\x06proto3"
 
@@ -449,31 +608,37 @@ func file_scene_hunter_v1_image_proto_rawDescGZIP() []byte {
 	return file_scene_hunter_v1_image_proto_rawDescData
 }
 
-var file_scene_hunter_v1_image_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_scene_hunter_v1_image_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_scene_hunter_v1_image_proto_goTypes = []any{
-	(*UploadImageRequest)(nil),    // 0: scene_hunter.v1.UploadImageRequest
-	(*UploadImageResponse)(nil),   // 1: scene_hunter.v1.UploadImageResponse
-	(*GetImageRequest)(nil),       // 2: scene_hunter.v1.GetImageRequest
-	(*GetImageResponse)(nil),      // 3: scene_hunter.v1.GetImageResponse
-	(*ListImagesRequest)(nil),     // 4: scene_hunter.v1.ListImagesRequest
-	(*ImageInfo)(nil),             // 5: scene_hunter.v1.ImageInfo
-	(*ListImagesResponse)(nil),    // 6: scene_hunter.v1.ListImagesResponse
-	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
+	(*UploadImageRequest)(nil),          // 0: scene_hunter.v1.UploadImageRequest
+	(*UploadImageResponse)(nil),         // 1: scene_hunter.v1.UploadImageResponse
+	(*GetImageRequest)(nil),             // 2: scene_hunter.v1.GetImageRequest
+	(*GetImageResponse)(nil),            // 3: scene_hunter.v1.GetImageResponse
+	(*ListImagesRequest)(nil),           // 4: scene_hunter.v1.ListImagesRequest
+	(*ImageInfo)(nil),                   // 5: scene_hunter.v1.ImageInfo
+	(*ListImagesResponse)(nil),          // 6: scene_hunter.v1.ListImagesResponse
+	(*ListImageThumbnailsRequest)(nil),  // 7: scene_hunter.v1.ListImageThumbnailsRequest
+	(*ThumbnailInfo)(nil),               // 8: scene_hunter.v1.ThumbnailInfo
+	(*ListImageThumbnailsResponse)(nil), // 9: scene_hunter.v1.ListImageThumbnailsResponse
+	(*timestamppb.Timestamp)(nil),       // 10: google.protobuf.Timestamp
 }
 var file_scene_hunter_v1_image_proto_depIdxs = []int32{
-	7, // 0: scene_hunter.v1.ImageInfo.last_modified:type_name -> google.protobuf.Timestamp
-	5, // 1: scene_hunter.v1.ListImagesResponse.images:type_name -> scene_hunter.v1.ImageInfo
-	0, // 2: scene_hunter.v1.ImageService.UploadImage:input_type -> scene_hunter.v1.UploadImageRequest
-	2, // 3: scene_hunter.v1.ImageService.GetImage:input_type -> scene_hunter.v1.GetImageRequest
-	4, // 4: scene_hunter.v1.ImageService.ListImages:input_type -> scene_hunter.v1.ListImagesRequest
-	1, // 5: scene_hunter.v1.ImageService.UploadImage:output_type -> scene_hunter.v1.UploadImageResponse
-	3, // 6: scene_hunter.v1.ImageService.GetImage:output_type -> scene_hunter.v1.GetImageResponse
-	6, // 7: scene_hunter.v1.ImageService.ListImages:output_type -> scene_hunter.v1.ListImagesResponse
-	5, // [5:8] is the sub-list for method output_type
-	2, // [2:5] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	10, // 0: scene_hunter.v1.ImageInfo.last_modified:type_name -> google.protobuf.Timestamp
+	5,  // 1: scene_hunter.v1.ListImagesResponse.images:type_name -> scene_hunter.v1.ImageInfo
+	8,  // 2: scene_hunter.v1.ListImageThumbnailsResponse.thumbnails:type_name -> scene_hunter.v1.ThumbnailInfo
+	0,  // 3: scene_hunter.v1.ImageService.UploadImage:input_type -> scene_hunter.v1.UploadImageRequest
+	2,  // 4: scene_hunter.v1.ImageService.GetImage:input_type -> scene_hunter.v1.GetImageRequest
+	4,  // 5: scene_hunter.v1.ImageService.ListImages:input_type -> scene_hunter.v1.ListImagesRequest
+	7,  // 6: scene_hunter.v1.ImageService.ListImageThumbnails:input_type -> scene_hunter.v1.ListImageThumbnailsRequest
+	1,  // 7: scene_hunter.v1.ImageService.UploadImage:output_type -> scene_hunter.v1.UploadImageResponse
+	3,  // 8: scene_hunter.v1.ImageService.GetImage:output_type -> scene_hunter.v1.GetImageResponse
+	6,  // 9: scene_hunter.v1.ImageService.ListImages:output_type -> scene_hunter.v1.ListImagesResponse
+	9,  // 10: scene_hunter.v1.ImageService.ListImageThumbnails:output_type -> scene_hunter.v1.ListImageThumbnailsResponse
+	7,  // [7:11] is the sub-list for method output_type
+	3,  // [3:7] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_scene_hunter_v1_image_proto_init() }
@@ -487,7 +652,7 @@ func file_scene_hunter_v1_image_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_scene_hunter_v1_image_proto_rawDesc), len(file_scene_hunter_v1_image_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

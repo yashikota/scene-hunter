@@ -40,6 +40,9 @@ const (
 	ImageServiceGetImageProcedure = "/scene_hunter.v1.ImageService/GetImage"
 	// ImageServiceListImagesProcedure is the fully-qualified name of the ImageService's ListImages RPC.
 	ImageServiceListImagesProcedure = "/scene_hunter.v1.ImageService/ListImages"
+	// ImageServiceListImageThumbnailsProcedure is the fully-qualified name of the ImageService's
+	// ListImageThumbnails RPC.
+	ImageServiceListImageThumbnailsProcedure = "/scene_hunter.v1.ImageService/ListImageThumbnails"
 )
 
 // ImageServiceClient is a client for the scene_hunter.v1.ImageService service.
@@ -47,6 +50,7 @@ type ImageServiceClient interface {
 	UploadImage(context.Context, *v1.UploadImageRequest) (*v1.UploadImageResponse, error)
 	GetImage(context.Context, *v1.GetImageRequest) (*v1.GetImageResponse, error)
 	ListImages(context.Context, *v1.ListImagesRequest) (*v1.ListImagesResponse, error)
+	ListImageThumbnails(context.Context, *v1.ListImageThumbnailsRequest) (*v1.ListImageThumbnailsResponse, error)
 }
 
 // NewImageServiceClient constructs a client for the scene_hunter.v1.ImageService service. By
@@ -78,14 +82,21 @@ func NewImageServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(imageServiceMethods.ByName("ListImages")),
 			connect.WithClientOptions(opts...),
 		),
+		listImageThumbnails: connect.NewClient[v1.ListImageThumbnailsRequest, v1.ListImageThumbnailsResponse](
+			httpClient,
+			baseURL+ImageServiceListImageThumbnailsProcedure,
+			connect.WithSchema(imageServiceMethods.ByName("ListImageThumbnails")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // imageServiceClient implements ImageServiceClient.
 type imageServiceClient struct {
-	uploadImage *connect.Client[v1.UploadImageRequest, v1.UploadImageResponse]
-	getImage    *connect.Client[v1.GetImageRequest, v1.GetImageResponse]
-	listImages  *connect.Client[v1.ListImagesRequest, v1.ListImagesResponse]
+	uploadImage         *connect.Client[v1.UploadImageRequest, v1.UploadImageResponse]
+	getImage            *connect.Client[v1.GetImageRequest, v1.GetImageResponse]
+	listImages          *connect.Client[v1.ListImagesRequest, v1.ListImagesResponse]
+	listImageThumbnails *connect.Client[v1.ListImageThumbnailsRequest, v1.ListImageThumbnailsResponse]
 }
 
 // UploadImage calls scene_hunter.v1.ImageService.UploadImage.
@@ -115,11 +126,21 @@ func (c *imageServiceClient) ListImages(ctx context.Context, req *v1.ListImagesR
 	return nil, err
 }
 
+// ListImageThumbnails calls scene_hunter.v1.ImageService.ListImageThumbnails.
+func (c *imageServiceClient) ListImageThumbnails(ctx context.Context, req *v1.ListImageThumbnailsRequest) (*v1.ListImageThumbnailsResponse, error) {
+	response, err := c.listImageThumbnails.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ImageServiceHandler is an implementation of the scene_hunter.v1.ImageService service.
 type ImageServiceHandler interface {
 	UploadImage(context.Context, *v1.UploadImageRequest) (*v1.UploadImageResponse, error)
 	GetImage(context.Context, *v1.GetImageRequest) (*v1.GetImageResponse, error)
 	ListImages(context.Context, *v1.ListImagesRequest) (*v1.ListImagesResponse, error)
+	ListImageThumbnails(context.Context, *v1.ListImageThumbnailsRequest) (*v1.ListImageThumbnailsResponse, error)
 }
 
 // NewImageServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -147,6 +168,12 @@ func NewImageServiceHandler(svc ImageServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(imageServiceMethods.ByName("ListImages")),
 		connect.WithHandlerOptions(opts...),
 	)
+	imageServiceListImageThumbnailsHandler := connect.NewUnaryHandlerSimple(
+		ImageServiceListImageThumbnailsProcedure,
+		svc.ListImageThumbnails,
+		connect.WithSchema(imageServiceMethods.ByName("ListImageThumbnails")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/scene_hunter.v1.ImageService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ImageServiceUploadImageProcedure:
@@ -155,6 +182,8 @@ func NewImageServiceHandler(svc ImageServiceHandler, opts ...connect.HandlerOpti
 			imageServiceGetImageHandler.ServeHTTP(w, r)
 		case ImageServiceListImagesProcedure:
 			imageServiceListImagesHandler.ServeHTTP(w, r)
+		case ImageServiceListImageThumbnailsProcedure:
+			imageServiceListImageThumbnailsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -174,4 +203,8 @@ func (UnimplementedImageServiceHandler) GetImage(context.Context, *v1.GetImageRe
 
 func (UnimplementedImageServiceHandler) ListImages(context.Context, *v1.ListImagesRequest) (*v1.ListImagesResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("scene_hunter.v1.ImageService.ListImages is not implemented"))
+}
+
+func (UnimplementedImageServiceHandler) ListImageThumbnails(context.Context, *v1.ListImageThumbnailsRequest) (*v1.ListImageThumbnailsResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("scene_hunter.v1.ImageService.ListImageThumbnails is not implemented"))
 }

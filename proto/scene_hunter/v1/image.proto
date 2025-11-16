@@ -43,8 +43,23 @@ message ListImagesResponse {
   repeated ImageInfo images = 1;
 }
 
+message ListImageThumbnailsRequest {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message ThumbnailInfo {
+  string image_id = 1 [(buf.validate.field).string.uuid = true];
+  bytes thumbnail_data = 2;
+  string content_type = 3;
+}
+
+message ListImageThumbnailsResponse {
+  repeated ThumbnailInfo thumbnails = 1;
+}
+
 service ImageService {
   rpc UploadImage(UploadImageRequest) returns (UploadImageResponse);
   rpc GetImage(GetImageRequest) returns (GetImageResponse);
   rpc ListImages(ListImagesRequest) returns (ListImagesResponse);
+  rpc ListImageThumbnails(ListImageThumbnailsRequest) returns (ListImageThumbnailsResponse);
 }
