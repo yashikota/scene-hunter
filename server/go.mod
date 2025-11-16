@@ -21,7 +21,7 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.40.0
 	github.com/testcontainers/testcontainers-go/modules/valkey v0.40.0
 	github.com/valkey-io/valkey-go v1.0.67
-	golang.org/x/image v0.18.0
+	golang.org/x/image v0.32.0
 	golang.org/x/net v0.46.0
 	google.golang.org/genai v1.34.0
 	google.golang.org/protobuf v1.36.10
