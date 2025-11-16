@@ -2,6 +2,7 @@
 package game
 
 import (
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -189,14 +190,11 @@ func (g *Game) GetFinalRankings() []*Player {
 	rankings := make([]*Player, len(g.Players))
 	copy(rankings, g.Players)
 
-	// Sort by total points (descending)
-	for i := 0; i < len(rankings)-1; i++ {
-		for j := i + 1; j < len(rankings); j++ {
-			if rankings[i].TotalPoints < rankings[j].TotalPoints {
-				rankings[i], rankings[j] = rankings[j], rankings[i]
-			}
-		}
-	}
+	// Sort by total points (descending) using sort.Slice for better performance
+	// This is more efficient than bubble sort, especially for up to 20 players
+	sort.Slice(rankings, func(i, j int) bool {
+		return rankings[i].TotalPoints > rankings[j].TotalPoints
+	})
 
 	return rankings
 }

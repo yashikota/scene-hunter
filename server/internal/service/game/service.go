@@ -378,8 +378,13 @@ func (s *Service) compareImages(ctx context.Context, image1Key, image2Key string
 	// The API might need to support multi-image input or we might need to
 	// concatenate descriptions and ask Gemini to compare them
 
-	// Placeholder: return a random-ish score based on timestamp
-	score := int(time.Now().Unix() % 101) // 0-100
+	// Placeholder: return a random score between 0-100
+	// Using time.Now().UnixNano() as seed to avoid collision within same second
+	//nolint:gosec // This is a placeholder implementation for development
+	score := int(time.Now().UnixNano()%101) + int(time.Now().Nanosecond()%50)
+	if score > 100 {
+		score = 100
+	}
 
 	return score, nil
 }
