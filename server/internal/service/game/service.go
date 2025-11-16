@@ -381,7 +381,7 @@ func (s *Service) compareImages(ctx context.Context, image1Key, image2Key string
 	// Placeholder: return a random score between 0-100
 	// Using time.Now().UnixNano() as seed to avoid collision within same second
 	//nolint:gosec // This is a placeholder implementation for development
-	score := int(time.Now().UnixNano()%101) + int(time.Now().Nanosecond()%50)
+	score := int(time.Now().UnixNano()%101) + time.Now().Nanosecond()%50
 	if score > 100 {
 		score = 100
 	}
