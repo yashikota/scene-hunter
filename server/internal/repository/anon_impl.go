@@ -1,4 +1,3 @@
-// Package repository provides repository implementations.
 package repository
 
 import (
@@ -8,18 +7,17 @@ import (
 
 	"github.com/yashikota/scene-hunter/server/internal/domain/auth"
 	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
-	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
-// AnonRepository implements repository.AnonRepository using Valkey.
-type AnonRepository struct {
+// anonRepositoryImpl implements AnonRepository interface using Valkey.
+type anonRepositoryImpl struct {
 	kvs kvs.KVS
 }
 
 // NewAnonRepository creates a new AnonRepository.
-func NewAnonRepository(kvsClient kvs.KVS) repository.AnonRepository {
-	return &AnonRepository{
+func NewAnonRepository(kvsClient kvs.KVS) AnonRepository {
+	return &anonRepositoryImpl{
 		kvs: kvsClient,
 	}
 }
@@ -38,7 +36,7 @@ type refreshTokenData struct {
 }
 
 // SaveRefreshToken stores a refresh token with TTL.
-func (r *AnonRepository) SaveRefreshToken(
+func (r *anonRepositoryImpl) SaveRefreshToken(
 	ctx context.Context,
 	token *auth.RefreshToken,
 ) error {
@@ -94,7 +92,7 @@ func (r *AnonRepository) SaveRefreshToken(
 }
 
 // GetRefreshToken retrieves a refresh token by ID.
-func (r *AnonRepository) GetRefreshToken(
+func (r *anonRepositoryImpl) GetRefreshToken(
 	ctx context.Context,
 	tokenID string,
 ) (*auth.RefreshToken, error) {
@@ -127,7 +125,7 @@ func (r *AnonRepository) GetRefreshToken(
 }
 
 // MarkRefreshTokenAsUsed marks a refresh token as used (atomic operation using Lua script).
-func (r *AnonRepository) MarkRefreshTokenAsUsed(ctx context.Context, tokenID string) error {
+func (r *anonRepositoryImpl) MarkRefreshTokenAsUsed(ctx context.Context, tokenID string) error {
 	now := time.Now()
 	key := r.tokenKey(tokenID)
 
@@ -182,7 +180,7 @@ func (r *AnonRepository) MarkRefreshTokenAsUsed(ctx context.Context, tokenID str
 }
 
 // RevokeRefreshToken deletes a refresh token and removes it from the anon_id index.
-func (r *AnonRepository) RevokeRefreshToken(ctx context.Context, tokenID string) error {
+func (r *anonRepositoryImpl) RevokeRefreshToken(ctx context.Context, tokenID string) error {
 	// Get token to find its anon_id
 	token, err := r.GetRefreshToken(ctx, tokenID)
 	if err != nil {
@@ -211,7 +209,7 @@ func (r *AnonRepository) RevokeRefreshToken(ctx context.Context, tokenID string)
 }
 
 // RevokeAllAnonTokens revokes all refresh tokens for an anon_id.
-func (r *AnonRepository) RevokeAllAnonTokens(ctx context.Context, anonID string) error {
+func (r *anonRepositoryImpl) RevokeAllAnonTokens(ctx context.Context, anonID string) error {
 	anonKey := r.anonTokensKey(anonID)
 
 	// Get all token IDs for this anon_id
@@ -242,11 +240,11 @@ func (r *AnonRepository) RevokeAllAnonTokens(ctx context.Context, anonID string)
 }
 
 // tokenKey returns the Redis key for a refresh token.
-func (r *AnonRepository) tokenKey(tokenID string) string {
+func (r *anonRepositoryImpl) tokenKey(tokenID string) string {
 	return "refresh:" + tokenID
 }
 
 // anonTokensKey returns the Redis key for the set of tokens for an anon_id.
-func (r *AnonRepository) anonTokensKey(anonID string) string {
+func (r *anonRepositoryImpl) anonTokensKey(anonID string) string {
 	return "anon:tokens:" + anonID
 }

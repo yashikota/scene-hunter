@@ -43,7 +43,7 @@ func (c *Client) Ping(ctx context.Context) error {
 	return nil
 }
 
-// Check implements health.Checker interface.
+// Check implements infra.Checker interface.
 func (c *Client) Check(ctx context.Context) error {
 	err := c.Ping(ctx)
 	if err != nil {
@@ -53,7 +53,7 @@ func (c *Client) Check(ctx context.Context) error {
 	return nil
 }
 
-// Name implements health.Checker interface.
+// Name implements infra.Checker interface.
 func (c *Client) Name() string {
 	return "postgres"
 }

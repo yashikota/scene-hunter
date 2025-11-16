@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yashikota/scene-hunter/server/util/config"
+	"github.com/yashikota/scene-hunter/server/internal/config"
 )
 
 // createTempConfigFile creates a temporary config file with the given content.

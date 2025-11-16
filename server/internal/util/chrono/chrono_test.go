@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yashikota/scene-hunter/server/internal/infra/chrono"
+	"github.com/yashikota/scene-hunter/server/internal/util/chrono"
 )
 
 func TestNew(t *testing.T) {

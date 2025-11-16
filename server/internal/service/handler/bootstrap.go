@@ -5,11 +5,11 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/yashikota/scene-hunter/server/internal/config"
 	infrablob "github.com/yashikota/scene-hunter/server/internal/infra/blob"
 	infradb "github.com/yashikota/scene-hunter/server/internal/infra/db"
 	infrakvs "github.com/yashikota/scene-hunter/server/internal/infra/kvs"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
-	"github.com/yashikota/scene-hunter/server/util/config"
 )
 
 func InitializeDependencies(
