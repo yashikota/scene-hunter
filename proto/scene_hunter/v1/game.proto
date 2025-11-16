@@ -1,0 +1,155 @@
+syntax = "proto3";
+
+package scene_hunter.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1;scene_hunterv1";
+
+// GameStatus represents the current status of the game.
+enum GameStatus {
+  GAME_STATUS_UNSPECIFIED = 0;
+  GAME_STATUS_WAITING = 1;      // Waiting for players to join
+  GAME_STATUS_IN_PROGRESS = 2;  // Game is currently in progress
+  GAME_STATUS_FINISHED = 3;     // Game has ended
+}
+
+// TurnStatus represents the current status of a turn.
+enum TurnStatus {
+  TURN_STATUS_UNSPECIFIED = 0;
+  TURN_STATUS_GAME_MASTER = 1;  // Game master's turn (taking photo)
+  TURN_STATUS_HUNTERS = 2;      // Hunters' turn (finding location)
+}
+
+// Player represents a player in the game.
+message Player {
+  string user_id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string = {min_len: 1, max_len: 20}];
+  bool is_game_master = 3;
+  bool is_admin = 4;
+  int32 total_points = 5;
+  bool is_connected = 6;
+}
+
+// Hint represents a single hint for hunters.
+message Hint {
+  int32 hint_number = 1 [(buf.validate.field).int32 = {gte: 1, lte: 5}];
+  string text = 2;
+}
+
+// RoundResult represents the result of a single round for a player.
+message RoundResult {
+  string user_id = 1 [(buf.validate.field).string.uuid = true];
+  int32 score = 2 [(buf.validate.field).int32 = {gte: 0, lte: 100}];
+  int32 remaining_seconds = 3 [(buf.validate.field).int32 = {gte: 0, lte: 60}];
+  int32 points = 4;  // score + remaining_seconds
+}
+
+// Round represents a single round in the game.
+message Round {
+  int32 round_number = 1;
+  string game_master_user_id = 2 [(buf.validate.field).string.uuid = true];
+  string game_master_image_id = 3;  // Image ID of game master's photo
+  repeated Hint hints = 4;
+  repeated RoundResult results = 5;
+  TurnStatus turn_status = 6;
+  int32 turn_elapsed_seconds = 7;
+}
+
+// Game represents a game session.
+message Game {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+  GameStatus status = 2;
+  int32 total_rounds = 3 [(buf.validate.field).int32 = {gte: 1, lte: 5}];
+  int32 current_round = 4;
+  repeated Player players = 5;
+  repeated Round rounds = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+// StartGameRequest starts a new game.
+message StartGameRequest {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+  int32 total_rounds = 2 [(buf.validate.field).int32 = {gte: 1, lte: 5}];
+  string game_master_user_id = 3 [(buf.validate.field).string.uuid = true];
+}
+
+message StartGameResponse {
+  Game game = 1;
+}
+
+// JoinGameRequest allows a player to join a game.
+message JoinGameRequest {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+  string user_id = 2 [(buf.validate.field).string.uuid = true];
+  string name = 3 [(buf.validate.field).string = {min_len: 1, max_len: 20}];
+}
+
+message JoinGameResponse {
+  Game game = 1;
+}
+
+// SubmitGameMasterPhotoRequest submits the game master's photo.
+message SubmitGameMasterPhotoRequest {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+  string user_id = 2 [(buf.validate.field).string.uuid = true];
+  bytes image_data = 3;
+}
+
+message SubmitGameMasterPhotoResponse {
+  string image_id = 1;
+  repeated Hint hints = 2;
+}
+
+// SubmitHunterPhotoRequest submits a hunter's photo.
+message SubmitHunterPhotoRequest {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+  string user_id = 2 [(buf.validate.field).string.uuid = true];
+  bytes image_data = 3;
+}
+
+message SubmitHunterPhotoResponse {
+  int32 score = 1;
+  int32 remaining_seconds = 2;
+  int32 points = 3;
+}
+
+// GetGameStateRequest gets the current game state.
+message GetGameStateRequest {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message GetGameStateResponse {
+  Game game = 1;
+}
+
+// StartNextRoundRequest starts the next round.
+message StartNextRoundRequest {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+  string game_master_user_id = 2 [(buf.validate.field).string.uuid = true];
+}
+
+message StartNextRoundResponse {
+  Game game = 1;
+}
+
+// EndGameRequest ends the game and calculates final rankings.
+message EndGameRequest {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message EndGameResponse {
+  Game game = 1;
+  repeated Player final_rankings = 2;
+}
+
+service GameService {
+  rpc StartGame(StartGameRequest) returns (StartGameResponse);
+  rpc JoinGame(JoinGameRequest) returns (JoinGameResponse);
+  rpc SubmitGameMasterPhoto(SubmitGameMasterPhotoRequest) returns (SubmitGameMasterPhotoResponse);
+  rpc SubmitHunterPhoto(SubmitHunterPhotoRequest) returns (SubmitHunterPhotoResponse);
+  rpc GetGameState(GetGameStateRequest) returns (GetGameStateResponse);
+  rpc StartNextRound(StartNextRoundRequest) returns (StartNextRoundResponse);
+  rpc EndGame(EndGameRequest) returns (EndGameResponse);
+}
