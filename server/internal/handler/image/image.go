@@ -376,9 +376,17 @@ func generateThumbnail(imageData []byte) ([]byte, error) {
 	if width > height {
 		thumbnailWidth = ThumbnailMaxSize
 		thumbnailHeight = (height * ThumbnailMaxSize) / width
+		// 極端な縦横比の場合でも最低1ピクセルを保証
+		if thumbnailHeight < 1 {
+			thumbnailHeight = 1
+		}
 	} else {
 		thumbnailHeight = ThumbnailMaxSize
 		thumbnailWidth = (width * ThumbnailMaxSize) / height
+		// 極端な縦横比の場合でも最低1ピクセルを保証
+		if thumbnailWidth < 1 {
+			thumbnailWidth = 1
+		}
 	}
 
 	// 既に小さい画像の場合はリサイズしない
