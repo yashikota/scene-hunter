@@ -1,4 +1,3 @@
-// Package game represents game service domain.
 package game
 
 import (
