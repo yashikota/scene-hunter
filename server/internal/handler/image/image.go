@@ -2,13 +2,17 @@
 package image
 
 import (
+	"bytes"
 	"context"
+	"image"
+	"image/jpeg"
 	"io"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/anthonynsimon/bild/transform"
 	"github.com/google/uuid"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	domainimage "github.com/yashikota/scene-hunter/server/internal/domain/image"
@@ -17,6 +21,11 @@ import (
 	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	_ "image/gif"
+	_ "image/png"
+
+	_ "golang.org/x/image/webp"
 )
 
 // ErrRoomNotFound is returned when the room is not found.
@@ -251,4 +260,143 @@ func (h *ImageHandler) ListImages(
 	return connect.NewResponse(&scene_hunterv1.ListImagesResponse{
 		Images: images,
 	}), nil
+}
+
+// ListImageThumbnails lists all images in a room as thumbnails from blob storage.
+func (h *ImageHandler) ListImageThumbnails(
+	ctx context.Context,
+	req *connect.Request[scene_hunterv1.ListImageThumbnailsRequest],
+) (*connect.Response[scene_hunterv1.ListImageThumbnailsResponse], error) {
+	// Parse UUID
+	roomID, err := uuid.Parse(req.Msg.GetRoomId())
+	if err != nil {
+		return nil, connect.NewError(
+			connect.CodeInvalidArgument,
+			errors.Errorf("invalid room ID: %w", err),
+		)
+	}
+
+	// room IDの存在確認
+	exists, err := h.roomRepo.Exists(ctx, roomID)
+	if err != nil {
+		return nil, connect.NewError(
+			connect.CodeInternal,
+			errors.Errorf("failed to check room existence: %w", err),
+		)
+	}
+
+	if !exists {
+		return nil, connect.NewError(
+			connect.CodeNotFound,
+			errors.Errorf("%w: id=%s", ErrRoomNotFound, roomID),
+		)
+	}
+
+	// roomIDをprefixにして画像一覧を取得
+	prefix := filepath.Join("game", roomID.String())
+
+	objects, err := h.blobClient.List(ctx, prefix)
+	if err != nil {
+		return nil, connect.NewError(
+			connect.CodeInternal,
+			errors.Errorf("failed to list images: %w", err),
+		)
+	}
+
+	// レスポンスを構築
+	thumbnails := make([]*scene_hunterv1.ThumbnailInfo, 0, len(objects))
+
+	for _, obj := range objects {
+		// パスからimageIDを抽出
+		filename := filepath.Base(obj.Key)
+		imageIDStr := strings.TrimSuffix(filename, filepath.Ext(filename))
+
+		imageID, err := uuid.Parse(imageIDStr)
+		if err != nil {
+			// 不正なファイル名はスキップ
+			continue
+		}
+
+		// 画像を取得
+		reader, err := h.blobClient.Get(ctx, obj.Key)
+		if err != nil {
+			// エラーが発生した場合はスキップ
+			continue
+		}
+
+		imageData, err := io.ReadAll(reader)
+		_ = reader.Close()
+
+		if err != nil {
+			continue
+		}
+
+		// サムネイルを生成
+		thumbnailData, err := generateThumbnail(imageData)
+		if err != nil {
+			// サムネイル生成に失敗した場合はスキップ
+			continue
+		}
+
+		thumbnails = append(thumbnails, &scene_hunterv1.ThumbnailInfo{
+			ImageId:       imageID.String(),
+			ThumbnailData: thumbnailData,
+			ContentType:   "image/jpeg",
+		})
+	}
+
+	return connect.NewResponse(&scene_hunterv1.ListImageThumbnailsResponse{
+		Thumbnails: thumbnails,
+	}), nil
+}
+
+const (
+	// ThumbnailMaxSize はサムネイルの最大幅（ピクセル）.
+	ThumbnailMaxSize = 540
+	// JPEGQuality はJPEG圧縮の品質（75%）.
+	JPEGQuality = 75
+)
+
+// generateThumbnail generates a thumbnail from image data.
+func generateThumbnail(imageData []byte) ([]byte, error) {
+	// 画像をデコード
+	img, _, err := image.Decode(bytes.NewReader(imageData))
+	if err != nil {
+		return nil, errors.Errorf("failed to decode image: %w", err)
+	}
+
+	// 元の画像サイズを取得
+	bounds := img.Bounds()
+	width := bounds.Dx()
+	height := bounds.Dy()
+
+	// サムネイルサイズを計算（アスペクト比を維持）
+	var thumbnailWidth, thumbnailHeight int
+
+	if width > height {
+		thumbnailWidth = ThumbnailMaxSize
+		thumbnailHeight = (height * ThumbnailMaxSize) / width
+	} else {
+		thumbnailHeight = ThumbnailMaxSize
+		thumbnailWidth = (width * ThumbnailMaxSize) / height
+	}
+
+	// 既に小さい画像の場合はリサイズしない
+	if width <= ThumbnailMaxSize && height <= ThumbnailMaxSize {
+		thumbnailWidth = width
+		thumbnailHeight = height
+	}
+
+	// リサイズ
+	resized := transform.Resize(img, thumbnailWidth, thumbnailHeight, transform.Linear)
+
+	// JPEGにエンコード
+	var buf bytes.Buffer
+
+	err = jpeg.Encode(&buf, resized, &jpeg.Options{Quality: JPEGQuality})
+	if err != nil {
+		return nil, errors.Errorf("failed to encode thumbnail: %w", err)
+	}
+
+	return buf.Bytes(), nil
 }

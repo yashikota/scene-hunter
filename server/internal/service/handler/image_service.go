@@ -68,3 +68,17 @@ func (s *ImageService) ListImages(
 
 	return resp.Msg, nil
 }
+
+// ListImageThumbnails lists all images in a room as thumbnails.
+func (s *ImageService) ListImageThumbnails(
+	ctx context.Context,
+	req *scene_hunterv1.ListImageThumbnailsRequest,
+) (*scene_hunterv1.ListImageThumbnailsResponse, error) {
+	resp, err := s.handler.ListImageThumbnails(ctx, connect.NewRequest(req))
+	if err != nil {
+		//nolint:wrapcheck // service delegates to handler, error wrapping done in handler layer
+		return nil, err
+	}
+
+	return resp.Msg, nil
+}
