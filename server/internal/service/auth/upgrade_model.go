@@ -22,3 +22,18 @@ type PreparedUpgradeData struct {
 	// Identity is the identity to be created (only set if ExistingIdentity is nil)
 	Identity *domainauth.Identity
 }
+
+// PreparedLoginData contains all the data prepared for a direct Google login operation.
+type PreparedLoginData struct {
+	// IDToken is the verified Google ID token
+	IDToken *GoogleIDToken
+
+	// ExistingIdentity is set if the user already has an account with this Google ID
+	ExistingIdentity *domainauth.Identity
+
+	// NewUser is the user to be created (only set if ExistingIdentity is nil)
+	NewUser *domainuser.User
+
+	// Identity is the identity to be created (only set if ExistingIdentity is nil)
+	Identity *domainauth.Identity
+}

@@ -42,6 +42,9 @@ const (
 	// AuthServiceUpgradeAnonWithGoogleProcedure is the fully-qualified name of the AuthService's
 	// UpgradeAnonWithGoogle RPC.
 	AuthServiceUpgradeAnonWithGoogleProcedure = "/scene_hunter.v1.AuthService/UpgradeAnonWithGoogle"
+	// AuthServiceLoginWithGoogleProcedure is the fully-qualified name of the AuthService's
+	// LoginWithGoogle RPC.
+	AuthServiceLoginWithGoogleProcedure = "/scene_hunter.v1.AuthService/LoginWithGoogle"
 )
 
 // AuthServiceClient is a client for the scene_hunter.v1.AuthService service.
@@ -50,6 +53,7 @@ type AuthServiceClient interface {
 	RefreshAnon(context.Context, *v1.RefreshAnonRequest) (*v1.RefreshAnonResponse, error)
 	RevokeAnon(context.Context, *v1.RevokeAnonRequest) (*v1.RevokeAnonResponse, error)
 	UpgradeAnonWithGoogle(context.Context, *v1.UpgradeAnonWithGoogleRequest) (*v1.UpgradeAnonWithGoogleResponse, error)
+	LoginWithGoogle(context.Context, *v1.LoginWithGoogleRequest) (*v1.LoginWithGoogleResponse, error)
 }
 
 // NewAuthServiceClient constructs a client for the scene_hunter.v1.AuthService service. By default,
@@ -87,6 +91,12 @@ func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(authServiceMethods.ByName("UpgradeAnonWithGoogle")),
 			connect.WithClientOptions(opts...),
 		),
+		loginWithGoogle: connect.NewClient[v1.LoginWithGoogleRequest, v1.LoginWithGoogleResponse](
+			httpClient,
+			baseURL+AuthServiceLoginWithGoogleProcedure,
+			connect.WithSchema(authServiceMethods.ByName("LoginWithGoogle")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -96,6 +106,7 @@ type authServiceClient struct {
 	refreshAnon           *connect.Client[v1.RefreshAnonRequest, v1.RefreshAnonResponse]
 	revokeAnon            *connect.Client[v1.RevokeAnonRequest, v1.RevokeAnonResponse]
 	upgradeAnonWithGoogle *connect.Client[v1.UpgradeAnonWithGoogleRequest, v1.UpgradeAnonWithGoogleResponse]
+	loginWithGoogle       *connect.Client[v1.LoginWithGoogleRequest, v1.LoginWithGoogleResponse]
 }
 
 // IssueAnon calls scene_hunter.v1.AuthService.IssueAnon.
@@ -134,12 +145,22 @@ func (c *authServiceClient) UpgradeAnonWithGoogle(ctx context.Context, req *v1.U
 	return nil, err
 }
 
+// LoginWithGoogle calls scene_hunter.v1.AuthService.LoginWithGoogle.
+func (c *authServiceClient) LoginWithGoogle(ctx context.Context, req *v1.LoginWithGoogleRequest) (*v1.LoginWithGoogleResponse, error) {
+	response, err := c.loginWithGoogle.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // AuthServiceHandler is an implementation of the scene_hunter.v1.AuthService service.
 type AuthServiceHandler interface {
 	IssueAnon(context.Context, *v1.IssueAnonRequest) (*v1.IssueAnonResponse, error)
 	RefreshAnon(context.Context, *v1.RefreshAnonRequest) (*v1.RefreshAnonResponse, error)
 	RevokeAnon(context.Context, *v1.RevokeAnonRequest) (*v1.RevokeAnonResponse, error)
 	UpgradeAnonWithGoogle(context.Context, *v1.UpgradeAnonWithGoogleRequest) (*v1.UpgradeAnonWithGoogleResponse, error)
+	LoginWithGoogle(context.Context, *v1.LoginWithGoogleRequest) (*v1.LoginWithGoogleResponse, error)
 }
 
 // NewAuthServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -173,6 +194,12 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(authServiceMethods.ByName("UpgradeAnonWithGoogle")),
 		connect.WithHandlerOptions(opts...),
 	)
+	authServiceLoginWithGoogleHandler := connect.NewUnaryHandlerSimple(
+		AuthServiceLoginWithGoogleProcedure,
+		svc.LoginWithGoogle,
+		connect.WithSchema(authServiceMethods.ByName("LoginWithGoogle")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/scene_hunter.v1.AuthService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AuthServiceIssueAnonProcedure:
@@ -183,6 +210,8 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 			authServiceRevokeAnonHandler.ServeHTTP(w, r)
 		case AuthServiceUpgradeAnonWithGoogleProcedure:
 			authServiceUpgradeAnonWithGoogleHandler.ServeHTTP(w, r)
+		case AuthServiceLoginWithGoogleProcedure:
+			authServiceLoginWithGoogleHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -206,4 +235,8 @@ func (UnimplementedAuthServiceHandler) RevokeAnon(context.Context, *v1.RevokeAno
 
 func (UnimplementedAuthServiceHandler) UpgradeAnonWithGoogle(context.Context, *v1.UpgradeAnonWithGoogleRequest) (*v1.UpgradeAnonWithGoogleResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("scene_hunter.v1.AuthService.UpgradeAnonWithGoogle is not implemented"))
+}
+
+func (UnimplementedAuthServiceHandler) LoginWithGoogle(context.Context, *v1.LoginWithGoogleRequest) (*v1.LoginWithGoogleResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("scene_hunter.v1.AuthService.LoginWithGoogle is not implemented"))
 }

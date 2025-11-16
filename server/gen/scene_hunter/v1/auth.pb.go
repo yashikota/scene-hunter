@@ -620,6 +620,128 @@ func (x *UpgradeAnonWithGoogleResponse) GetUserId() string {
 	return ""
 }
 
+// LoginWithGoogleRequest requests direct login with Google OAuth.
+type LoginWithGoogleRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	AuthorizationCode string                 `protobuf:"bytes,1,opt,name=authorization_code,json=authorizationCode,proto3" json:"authorization_code,omitempty"`
+	CodeVerifier      string                 `protobuf:"bytes,2,opt,name=code_verifier,json=codeVerifier,proto3" json:"code_verifier,omitempty"`
+	Client            *ClientInfo            `protobuf:"bytes,3,opt,name=client,proto3" json:"client,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *LoginWithGoogleRequest) Reset() {
+	*x = LoginWithGoogleRequest{}
+	mi := &file_scene_hunter_v1_auth_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoginWithGoogleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoginWithGoogleRequest) ProtoMessage() {}
+
+func (x *LoginWithGoogleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_scene_hunter_v1_auth_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoginWithGoogleRequest.ProtoReflect.Descriptor instead.
+func (*LoginWithGoogleRequest) Descriptor() ([]byte, []int) {
+	return file_scene_hunter_v1_auth_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *LoginWithGoogleRequest) GetAuthorizationCode() string {
+	if x != nil {
+		return x.AuthorizationCode
+	}
+	return ""
+}
+
+func (x *LoginWithGoogleRequest) GetCodeVerifier() string {
+	if x != nil {
+		return x.CodeVerifier
+	}
+	return ""
+}
+
+func (x *LoginWithGoogleRequest) GetClient() *ClientInfo {
+	if x != nil {
+		return x.Client
+	}
+	return nil
+}
+
+// LoginWithGoogleResponse returns user session for direct Google login.
+type LoginWithGoogleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserSession   *Token                 `protobuf:"bytes,1,opt,name=user_session,json=userSession,proto3" json:"user_session,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	IsNewUser     bool                   `protobuf:"varint,3,opt,name=is_new_user,json=isNewUser,proto3" json:"is_new_user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoginWithGoogleResponse) Reset() {
+	*x = LoginWithGoogleResponse{}
+	mi := &file_scene_hunter_v1_auth_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoginWithGoogleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoginWithGoogleResponse) ProtoMessage() {}
+
+func (x *LoginWithGoogleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_scene_hunter_v1_auth_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoginWithGoogleResponse.ProtoReflect.Descriptor instead.
+func (*LoginWithGoogleResponse) Descriptor() ([]byte, []int) {
+	return file_scene_hunter_v1_auth_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *LoginWithGoogleResponse) GetUserSession() *Token {
+	if x != nil {
+		return x.UserSession
+	}
+	return nil
+}
+
+func (x *LoginWithGoogleResponse) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *LoginWithGoogleResponse) GetIsNewUser() bool {
+	if x != nil {
+		return x.IsNewUser
+	}
+	return false
+}
+
 var File_scene_hunter_v1_auth_proto protoreflect.FileDescriptor
 
 const file_scene_hunter_v1_auth_proto_rawDesc = "" +
@@ -666,13 +788,22 @@ const file_scene_hunter_v1_auth_proto_rawDesc = "" +
 	"\x1dUpgradeAnonWithGoogleResponse\x129\n" +
 	"\fuser_session\x18\x01 \x01(\v2\x16.scene_hunter.v1.TokenR\vuserSession\x12)\n" +
 	"\x10migrated_records\x18\x02 \x01(\rR\x0fmigratedRecords\x12!\n" +
-	"\auser_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId2\x8a\x03\n" +
+	"\auser_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\"\xb3\x01\n" +
+	"\x16LoginWithGoogleRequest\x126\n" +
+	"\x12authorization_code\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x11authorizationCode\x12,\n" +
+	"\rcode_verifier\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\fcodeVerifier\x123\n" +
+	"\x06client\x18\x03 \x01(\v2\x1b.scene_hunter.v1.ClientInfoR\x06client\"\x97\x01\n" +
+	"\x17LoginWithGoogleResponse\x129\n" +
+	"\fuser_session\x18\x01 \x01(\v2\x16.scene_hunter.v1.TokenR\vuserSession\x12!\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12\x1e\n" +
+	"\vis_new_user\x18\x03 \x01(\bR\tisNewUser2\xf0\x03\n" +
 	"\vAuthService\x12R\n" +
 	"\tIssueAnon\x12!.scene_hunter.v1.IssueAnonRequest\x1a\".scene_hunter.v1.IssueAnonResponse\x12X\n" +
 	"\vRefreshAnon\x12#.scene_hunter.v1.RefreshAnonRequest\x1a$.scene_hunter.v1.RefreshAnonResponse\x12U\n" +
 	"\n" +
 	"RevokeAnon\x12\".scene_hunter.v1.RevokeAnonRequest\x1a#.scene_hunter.v1.RevokeAnonResponse\x12v\n" +
-	"\x15UpgradeAnonWithGoogle\x12-.scene_hunter.v1.UpgradeAnonWithGoogleRequest\x1a..scene_hunter.v1.UpgradeAnonWithGoogleResponseB\xc6\x01\n" +
+	"\x15UpgradeAnonWithGoogle\x12-.scene_hunter.v1.UpgradeAnonWithGoogleRequest\x1a..scene_hunter.v1.UpgradeAnonWithGoogleResponse\x12d\n" +
+	"\x0fLoginWithGoogle\x12'.scene_hunter.v1.LoginWithGoogleRequest\x1a(.scene_hunter.v1.LoginWithGoogleResponseB\xc6\x01\n" +
 	"\x13com.scene_hunter.v1B\tAuthProtoP\x01ZKgithub.com/yashikota/scene-hunter/server/gen/scene_hunter/v1;scene_hunterv1\xa2\x02\x03SXX\xaa\x02\x0eSceneHunter.V1\xca\x02\x0eSceneHunter\\V1\xe2\x02\x1aSceneHunter\\V1\\GPBMetadata\xea\x02\x0fSceneHunter::V1b\x06proto3"
 
 var (
@@ -688,7 +819,7 @@ func file_scene_hunter_v1_auth_proto_rawDescGZIP() []byte {
 }
 
 var file_scene_hunter_v1_auth_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_scene_hunter_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_scene_hunter_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_scene_hunter_v1_auth_proto_goTypes = []any{
 	(ClientInfo_Type)(0),                  // 0: scene_hunter.v1.ClientInfo.Type
 	(*ClientInfo)(nil),                    // 1: scene_hunter.v1.ClientInfo
@@ -701,6 +832,8 @@ var file_scene_hunter_v1_auth_proto_goTypes = []any{
 	(*RevokeAnonResponse)(nil),            // 8: scene_hunter.v1.RevokeAnonResponse
 	(*UpgradeAnonWithGoogleRequest)(nil),  // 9: scene_hunter.v1.UpgradeAnonWithGoogleRequest
 	(*UpgradeAnonWithGoogleResponse)(nil), // 10: scene_hunter.v1.UpgradeAnonWithGoogleResponse
+	(*LoginWithGoogleRequest)(nil),        // 11: scene_hunter.v1.LoginWithGoogleRequest
+	(*LoginWithGoogleResponse)(nil),       // 12: scene_hunter.v1.LoginWithGoogleResponse
 }
 var file_scene_hunter_v1_auth_proto_depIdxs = []int32{
 	0,  // 0: scene_hunter.v1.ClientInfo.type:type_name -> scene_hunter.v1.ClientInfo.Type
@@ -712,19 +845,23 @@ var file_scene_hunter_v1_auth_proto_depIdxs = []int32{
 	2,  // 6: scene_hunter.v1.RefreshAnonResponse.refresh_token:type_name -> scene_hunter.v1.Token
 	1,  // 7: scene_hunter.v1.UpgradeAnonWithGoogleRequest.client:type_name -> scene_hunter.v1.ClientInfo
 	2,  // 8: scene_hunter.v1.UpgradeAnonWithGoogleResponse.user_session:type_name -> scene_hunter.v1.Token
-	3,  // 9: scene_hunter.v1.AuthService.IssueAnon:input_type -> scene_hunter.v1.IssueAnonRequest
-	5,  // 10: scene_hunter.v1.AuthService.RefreshAnon:input_type -> scene_hunter.v1.RefreshAnonRequest
-	7,  // 11: scene_hunter.v1.AuthService.RevokeAnon:input_type -> scene_hunter.v1.RevokeAnonRequest
-	9,  // 12: scene_hunter.v1.AuthService.UpgradeAnonWithGoogle:input_type -> scene_hunter.v1.UpgradeAnonWithGoogleRequest
-	4,  // 13: scene_hunter.v1.AuthService.IssueAnon:output_type -> scene_hunter.v1.IssueAnonResponse
-	6,  // 14: scene_hunter.v1.AuthService.RefreshAnon:output_type -> scene_hunter.v1.RefreshAnonResponse
-	8,  // 15: scene_hunter.v1.AuthService.RevokeAnon:output_type -> scene_hunter.v1.RevokeAnonResponse
-	10, // 16: scene_hunter.v1.AuthService.UpgradeAnonWithGoogle:output_type -> scene_hunter.v1.UpgradeAnonWithGoogleResponse
-	13, // [13:17] is the sub-list for method output_type
-	9,  // [9:13] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	1,  // 9: scene_hunter.v1.LoginWithGoogleRequest.client:type_name -> scene_hunter.v1.ClientInfo
+	2,  // 10: scene_hunter.v1.LoginWithGoogleResponse.user_session:type_name -> scene_hunter.v1.Token
+	3,  // 11: scene_hunter.v1.AuthService.IssueAnon:input_type -> scene_hunter.v1.IssueAnonRequest
+	5,  // 12: scene_hunter.v1.AuthService.RefreshAnon:input_type -> scene_hunter.v1.RefreshAnonRequest
+	7,  // 13: scene_hunter.v1.AuthService.RevokeAnon:input_type -> scene_hunter.v1.RevokeAnonRequest
+	9,  // 14: scene_hunter.v1.AuthService.UpgradeAnonWithGoogle:input_type -> scene_hunter.v1.UpgradeAnonWithGoogleRequest
+	11, // 15: scene_hunter.v1.AuthService.LoginWithGoogle:input_type -> scene_hunter.v1.LoginWithGoogleRequest
+	4,  // 16: scene_hunter.v1.AuthService.IssueAnon:output_type -> scene_hunter.v1.IssueAnonResponse
+	6,  // 17: scene_hunter.v1.AuthService.RefreshAnon:output_type -> scene_hunter.v1.RefreshAnonResponse
+	8,  // 18: scene_hunter.v1.AuthService.RevokeAnon:output_type -> scene_hunter.v1.RevokeAnonResponse
+	10, // 19: scene_hunter.v1.AuthService.UpgradeAnonWithGoogle:output_type -> scene_hunter.v1.UpgradeAnonWithGoogleResponse
+	12, // 20: scene_hunter.v1.AuthService.LoginWithGoogle:output_type -> scene_hunter.v1.LoginWithGoogleResponse
+	16, // [16:21] is the sub-list for method output_type
+	11, // [11:16] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_scene_hunter_v1_auth_proto_init() }
@@ -738,7 +875,7 @@ func file_scene_hunter_v1_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_scene_hunter_v1_auth_proto_rawDesc), len(file_scene_hunter_v1_auth_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

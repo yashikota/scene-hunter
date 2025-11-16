@@ -80,6 +80,7 @@ func shouldSkipAuth(procedure string) bool {
 		"/scene_hunter.v1.AuthService/RefreshAnon",
 		"/scene_hunter.v1.AuthService/RevokeAnon",
 		"/scene_hunter.v1.AuthService/UpgradeAnonWithGoogle",
+		"/scene_hunter.v1.AuthService/LoginWithGoogle",
 	}
 
 	return slices.Contains(skipProcedures, procedure)

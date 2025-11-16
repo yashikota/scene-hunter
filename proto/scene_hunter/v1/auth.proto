@@ -73,10 +73,25 @@ message UpgradeAnonWithGoogleResponse {
   string user_id = 3 [(buf.validate.field).string.uuid = true];
 }
 
+// LoginWithGoogleRequest requests direct login with Google OAuth.
+message LoginWithGoogleRequest {
+  string authorization_code = 1 [(buf.validate.field).string.min_len = 1];
+  string code_verifier = 2 [(buf.validate.field).string.min_len = 1];
+  ClientInfo client = 3;
+}
+
+// LoginWithGoogleResponse returns user session for direct Google login.
+message LoginWithGoogleResponse {
+  Token user_session = 1;
+  string user_id = 2 [(buf.validate.field).string.uuid = true];
+  bool is_new_user = 3;
+}
+
 // AuthService provides anonymous authentication.
 service AuthService {
   rpc IssueAnon(IssueAnonRequest) returns (IssueAnonResponse);
   rpc RefreshAnon(RefreshAnonRequest) returns (RefreshAnonResponse);
   rpc RevokeAnon(RevokeAnonRequest) returns (RevokeAnonResponse);
   rpc UpgradeAnonWithGoogle(UpgradeAnonWithGoogleRequest) returns (UpgradeAnonWithGoogleResponse);
+  rpc LoginWithGoogle(LoginWithGoogleRequest) returns (LoginWithGoogleResponse);
 }

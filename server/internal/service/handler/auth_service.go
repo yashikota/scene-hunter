@@ -13,6 +13,7 @@ import (
 type AuthService struct {
 	service        *authsvc.Service
 	upgradeHandler *authhandler.UpgradeServiceHandler
+	loginHandler   *authhandler.LoginServiceHandler
 }
 
 // NewAuthService creates a new auth service with handler support.
@@ -20,6 +21,7 @@ func NewAuthService(service *authsvc.Service, dbClient *db.Client) *AuthService 
 	return &AuthService{
 		service:        service,
 		upgradeHandler: authhandler.NewUpgradeServiceHandler(service, dbClient),
+		loginHandler:   authhandler.NewLoginServiceHandler(service, dbClient),
 	}
 }
 
@@ -57,4 +59,13 @@ func (s *AuthService) UpgradeAnonWithGoogle(
 ) (*scene_hunterv1.UpgradeAnonWithGoogleResponse, error) {
 	//nolint:wrapcheck // wrapper delegates to handler, error wrapping done in handler layer
 	return s.upgradeHandler.UpgradeAnonWithGoogle(ctx, req)
+}
+
+// LoginWithGoogle handles direct Google login without anonymous token.
+func (s *AuthService) LoginWithGoogle(
+	ctx context.Context,
+	req *scene_hunterv1.LoginWithGoogleRequest,
+) (*scene_hunterv1.LoginWithGoogleResponse, error) {
+	//nolint:wrapcheck // wrapper delegates to handler, error wrapping done in handler layer
+	return s.loginHandler.LoginWithGoogle(ctx, req)
 }
