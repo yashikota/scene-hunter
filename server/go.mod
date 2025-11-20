@@ -23,7 +23,7 @@ require (
 	github.com/valkey-io/valkey-go v1.0.68
 	golang.org/x/image v0.33.0
 	golang.org/x/net v0.47.0
-	google.golang.org/genai v1.34.0
+	google.golang.org/genai v1.35.0
 	google.golang.org/protobuf v1.36.10
 )
 
