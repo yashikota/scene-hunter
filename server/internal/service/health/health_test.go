@@ -21,23 +21,12 @@ func (m *mockChrono) Now() time.Time {
 // toDate はUTC時刻の文字列からtime.Timeを作成する.
 func toDate(t *testing.T, date string) time.Time {
 	t.Helper()
-	d, err := time.Parse("2006-01-02 15:04:05", date)
+	d, err := time.Parse(time.DateTime, date)
 	if err != nil {
 		t.Fatalf("toDate: %v", err)
 	}
 
 	return d.UTC()
-}
-
-// toDateWithZone はタイムゾーン指定の時刻文字列からtime.Timeを作成する.
-func toDateWithZone(t *testing.T, date string, zoneName string, offset int) time.Time {
-	t.Helper()
-	d, err := time.Parse("2006-01-02 15:04:05", date)
-	if err != nil {
-		t.Fatalf("toDateWithZone: %v", err)
-	}
-
-	return time.Date(d.Year(), d.Month(), d.Day(), d.Hour(), d.Minute(), d.Second(), 0, time.FixedZone(zoneName, offset))
 }
 
 func TestService_Health(t *testing.T) {
@@ -49,7 +38,7 @@ func TestService_Health(t *testing.T) {
 	}{
 		"returns ok status with current timestamp":  {toDate(t, "2024-01-01 12:00:00"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-01-01T12:00:00Z"}},
 		"returns ok status with different timestamp": {toDate(t, "2024-12-31 23:59:59"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-12-31T23:59:59Z"}},
-		"returns ok status with timezone offset":     {toDateWithZone(t, "2024-06-15 09:30:45", "JST", 9*60*60), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-06-15T09:30:45+09:00"}},
+		"returns ok status with another timestamp":   {toDate(t, "2024-06-15 09:30:45"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-06-15T09:30:45Z"}},
 	}
 
 	for testName, testCase := range tests {

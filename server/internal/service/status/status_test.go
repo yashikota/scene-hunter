@@ -38,7 +38,7 @@ func (m *mockChrono) Now() time.Time {
 // toDate はUTC時刻の文字列からtime.Timeを作成する.
 func toDate(t *testing.T, date string) time.Time {
 	t.Helper()
-	d, err := time.Parse("2006-01-02 15:04:05", date)
+	d, err := time.Parse(time.DateTime, date)
 	if err != nil {
 		t.Fatalf("toDate: %v", err)
 	}
