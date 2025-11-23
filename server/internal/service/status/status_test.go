@@ -7,6 +7,7 @@ import (
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	"github.com/yashikota/scene-hunter/server/internal/service/status"
+	"github.com/yashikota/scene-hunter/server/internal/testutil"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
@@ -35,17 +36,6 @@ func (m *mockChrono) Now() time.Time {
 	return m.mockTime
 }
 
-// toDate はUTC時刻の文字列からtime.Timeを作成する.
-func toDate(t *testing.T, date string) time.Time {
-	t.Helper()
-	d, err := time.Parse(time.DateTime, date)
-	if err != nil {
-		t.Fatalf("toDate: %v", err)
-	}
-
-	return d.UTC()
-}
-
 func TestService_Status(t *testing.T) {
 	t.Parallel()
 
@@ -69,7 +59,7 @@ func TestService_Status(t *testing.T) {
 				checkers[i] = &testCase.checkers[i]
 			}
 
-			chronoProvider := &mockChrono{mockTime: toDate(t, "2024-01-01 00:00:00")}
+			chronoProvider := &mockChrono{mockTime: testutil.ToDate(t, "2024-01-01 00:00:00")}
 			svc := status.NewService(checkers, chronoProvider)
 
 			got, err := svc.Status(context.Background(), &scene_hunterv1.StatusRequest{})

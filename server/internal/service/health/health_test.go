@@ -7,6 +7,7 @@ import (
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	"github.com/yashikota/scene-hunter/server/internal/service/health"
+	"github.com/yashikota/scene-hunter/server/internal/testutil"
 	"github.com/yashikota/scene-hunter/server/internal/util/chrono"
 )
 
@@ -18,17 +19,6 @@ func (m *mockChrono) Now() time.Time {
 	return m.mockTime
 }
 
-// toDate はUTC時刻の文字列からtime.Timeを作成する.
-func toDate(t *testing.T, date string) time.Time {
-	t.Helper()
-	d, err := time.Parse(time.DateTime, date)
-	if err != nil {
-		t.Fatalf("toDate: %v", err)
-	}
-
-	return d.UTC()
-}
-
 func TestService_Health(t *testing.T) {
 	t.Parallel()
 
@@ -36,9 +26,9 @@ func TestService_Health(t *testing.T) {
 		mockTime time.Time
 		want     *scene_hunterv1.HealthResponse
 	}{
-		"returns ok status with current timestamp":  {toDate(t, "2024-01-01 12:00:00"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-01-01T12:00:00Z"}},
-		"returns ok status with different timestamp": {toDate(t, "2024-12-31 23:59:59"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-12-31T23:59:59Z"}},
-		"returns ok status with another timestamp":   {toDate(t, "2024-06-15 09:30:45"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-06-15T09:30:45Z"}},
+		"returns ok status with current timestamp":  {testutil.ToDate(t, "2024-01-01 12:00:00"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-01-01T12:00:00Z"}},
+		"returns ok status with different timestamp": {testutil.ToDate(t, "2024-12-31 23:59:59"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-12-31T23:59:59Z"}},
+		"returns ok status with another timestamp":   {testutil.ToDate(t, "2024-06-15 09:30:45"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-06-15T09:30:45Z"}},
 	}
 
 	for testName, testCase := range tests {
