@@ -68,6 +68,7 @@ func TestService_CreateRoom(t *testing.T) {
 	}{
 		"creates room successfully": {
 			func(t *testing.T) {
+				t.Helper()
 				service, cleanup := setupTestService(ctx, t)
 				defer cleanup()
 				req := &scene_hunterv1.CreateRoomRequest{}
@@ -109,6 +110,7 @@ func TestService_GetRoom(t *testing.T) {
 	}{
 		"retrieves room successfully": {
 			func(t *testing.T) {
+				t.Helper()
 				service, cleanup := setupTestService(ctx, t)
 				defer cleanup()
 				createReq := &scene_hunterv1.CreateRoomRequest{}
@@ -150,6 +152,7 @@ func TestService_UpdateRoom(t *testing.T) {
 	}{
 		"updates room successfully": {
 			func(t *testing.T) {
+				t.Helper()
 				service, cleanup := setupTestService(ctx, t)
 				defer cleanup()
 				createReq := &scene_hunterv1.CreateRoomRequest{}
@@ -189,6 +192,7 @@ func TestService_DeleteRoom(t *testing.T) {
 	}{
 		"deletes room successfully": {
 			func(t *testing.T) {
+				t.Helper()
 				service, cleanup := setupTestService(ctx, t)
 				defer cleanup()
 				createReq := &scene_hunterv1.CreateRoomRequest{}
@@ -197,6 +201,7 @@ func TestService_DeleteRoom(t *testing.T) {
 					t.Fatalf("CreateRoom failed: %v", err)
 				}
 				roomID := createResp.GetRoom().GetId()
+				t.Helper()
 				deleteReq := &scene_hunterv1.DeleteRoomRequest{Id: roomID}
 				deleteResp, err := service.DeleteRoom(ctx, deleteReq)
 				if err != nil {
