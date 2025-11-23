@@ -45,17 +45,26 @@ func TestService_Status(t *testing.T) {
 		wantServiceCnt int
 	}{
 		"all services healthy": {
-			[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return nil }}, {name: "service2", checkFn: func(_ context.Context) error { return nil }}},
+			[]mockChecker{
+				{name: "service1", checkFn: func(_ context.Context) error { return nil }},
+				{name: "service2", checkFn: func(_ context.Context) error { return nil }},
+			},
 			true,
 			2,
 		},
 		"one service unhealthy": {
-			[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return nil }}, {name: "service2", checkFn: func(_ context.Context) error { return errors.New("connection failed") }}},
+			[]mockChecker{
+				{name: "service1", checkFn: func(_ context.Context) error { return nil }},
+				{name: "service2", checkFn: func(_ context.Context) error { return errors.New("connection failed") }},
+			},
 			false,
 			2,
 		},
 		"all services unhealthy": {
-			[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return errors.New("error1") }}, {name: "service2", checkFn: func(_ context.Context) error { return errors.New("error2") }}},
+			[]mockChecker{
+				{name: "service1", checkFn: func(_ context.Context) error { return errors.New("error1") }},
+				{name: "service2", checkFn: func(_ context.Context) error { return errors.New("error2") }},
+			},
 			false,
 			2,
 		},

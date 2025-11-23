@@ -217,6 +217,7 @@ func TestGetImage_Success(t *testing.T) {
 	}{
 		"retrieves image successfully": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				blobClient := newMockBlobClient()
 				kvsClient := newMockKVSClient()
 				roomRepo := newMockRoomRepository()
@@ -282,6 +283,7 @@ func TestGetImage_RoomNotFound(t *testing.T) {
 	}{
 		"returns error when room not found": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				blobClient := newMockBlobClient()
 				kvsClient := newMockKVSClient()
 				roomRepo := newMockRoomRepository()
@@ -328,6 +330,7 @@ func TestGetImage_ImageNotFound(t *testing.T) {
 	}{
 		"returns error when image not found": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				blobClient := newMockBlobClient()
 				kvsClient := newMockKVSClient()
 				roomRepo := newMockRoomRepository()
@@ -384,6 +387,7 @@ func TestListImages_Success(t *testing.T) {
 	}{
 		"lists images successfully": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				blobClient := newMockBlobClient()
 				kvsClient := newMockKVSClient()
 				roomRepo := newMockRoomRepository()
@@ -466,6 +470,7 @@ func TestListImages_EmptyResult(t *testing.T) {
 	}{
 		"returns empty list when no images": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				blobClient := newMockBlobClient()
 				kvsClient := newMockKVSClient()
 				roomRepo := newMockRoomRepository()
@@ -516,6 +521,7 @@ func TestListImages_RoomNotFound(t *testing.T) {
 	}{
 		"returns error when room not found": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				blobClient := newMockBlobClient()
 				kvsClient := newMockKVSClient()
 				roomRepo := newMockRoomRepository()

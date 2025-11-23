@@ -56,6 +56,7 @@ func TestNewClient(t *testing.T) {
 	}{
 		"creates and closes client successfully": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -107,6 +108,7 @@ func TestClient_Ping(t *testing.T) {
 	}{
 		"pings database successfully": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -135,7 +137,7 @@ func TestClient_Ping(t *testing.T) {
 	}
 }
 
-// TestClient_Exec はSQL実行（テーブル作成・データ挿入）が正常に動作することをテストする.
+// TestClient_Exec はSQL実行（テーブル作成・データ挿入）が正常に動作することを確認する.
 func TestClient_Exec(t *testing.T) {
 	t.Parallel()
 
@@ -146,6 +148,7 @@ func TestClient_Exec(t *testing.T) {
 	}{
 		"executes create table and insert": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -202,6 +205,7 @@ func TestClient_Query(t *testing.T) {
 	}{
 		"queries multiple rows": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -309,6 +313,7 @@ func TestClient_QueryRow(t *testing.T) {
 	}{
 		"queries single row": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -365,7 +370,7 @@ func TestClient_QueryRow(t *testing.T) {
 	}
 }
 
-// TestClient_QueryRow_NotFound は存在しない行を取得した際にエラーが返されることをテストする.
+// TestClient_QueryRow_NotFound は存在しない行を取得した際にエラーが返されることを確認する.
 func TestClient_QueryRow_NotFound(t *testing.T) {
 	t.Parallel()
 
@@ -376,6 +381,7 @@ func TestClient_QueryRow_NotFound(t *testing.T) {
 	}{
 		"returns error for non-existent row": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -413,8 +419,8 @@ func TestClient_QueryRow_NotFound(t *testing.T) {
 	}
 }
 
-// TestClient_Transaction_Commit はトランザクションのコミットが正常に動作することをテストする.
-// 複数のSQL実行をトランザクション内で行い、コミット後に変更が反映されることを確認する.
+// TestClient_Transaction_Commit はトランザクションのコミットを確認する.
+// 複数SQLをトランザクション内で実行し、コミット後に変更が反映されることを検証.
 func TestClient_Transaction_Commit(t *testing.T) {
 	t.Parallel()
 
@@ -425,6 +431,7 @@ func TestClient_Transaction_Commit(t *testing.T) {
 	}{
 		"commits transaction successfully": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -527,8 +534,8 @@ func TestClient_Transaction_Commit(t *testing.T) {
 	}
 }
 
-// TestClient_Transaction_Rollback はトランザクションのロールバックが正常に動作することをテストする.
-// トランザクション内でデータを変更後、ロールバックすることで変更が取り消されることを確認する.
+// TestClient_Transaction_Rollback はトランザクションのロールバックを確認する.
+// トランザクション内でデータ変更後、ロールバックで変更が取り消されることを検証.
 func TestClient_Transaction_Rollback(t *testing.T) {
 	t.Parallel()
 
@@ -539,6 +546,7 @@ func TestClient_Transaction_Rollback(t *testing.T) {
 	}{
 		"rolls back transaction successfully": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -613,7 +621,7 @@ func TestClient_Transaction_Rollback(t *testing.T) {
 	}
 }
 
-// TestClient_Transaction_Query はトランザクション内でのクエリ実行が正常に動作することをテストする.
+// TestClient_Transaction_Query はトランザクション内でのクエリ実行を確認する.
 func TestClient_Transaction_Query(t *testing.T) {
 	t.Parallel()
 
@@ -624,6 +632,7 @@ func TestClient_Transaction_Query(t *testing.T) {
 	}{
 		"queries within transaction": {
 			assertion: func(t *testing.T) {
+				t.Helper()
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 

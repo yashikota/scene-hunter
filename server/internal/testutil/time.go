@@ -1,3 +1,4 @@
+// Package testutil はテストコードで使用するユーティリティ関数を提供する.
 package testutil
 
 import (

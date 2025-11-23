@@ -61,6 +61,7 @@ dbname = "testdb"
 sslmode = "disable"
 `,
 			func(t *testing.T, cfg *config.AppConfig) {
+				t.Helper()
 				assertEqual(t, cfg.Database.Host, "localhost", "database host")
 				assertEqual(t, cfg.Database.Port, uint16(5432), "database port")
 				assertEqual(t, cfg.Database.User, "testuser", "database user")
@@ -99,6 +100,7 @@ url = "http://blob.example.com:9000"
 level = 0
 `,
 			func(t *testing.T, cfg *config.AppConfig) {
+				t.Helper()
 				assertEqual(t, cfg.Server.Port, ":9090", "server port")
 				assertEqual(t, cfg.Server.ReadTimeout, 60*time.Second, "read timeout")
 				assertEqual(t, cfg.Server.WriteTimeout, 60*time.Second, "write timeout")
