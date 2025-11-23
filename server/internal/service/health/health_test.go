@@ -18,30 +18,52 @@ func (m *mockChrono) Now() time.Time {
 	return m.mockTime
 }
 
+// toDate はUTC時刻の文字列からtime.Timeを作成する.
+func toDate(t *testing.T, date string) time.Time {
+	t.Helper()
+	d, err := time.Parse("2006-01-02 15:04:05", date)
+	if err != nil {
+		t.Fatalf("toDate: %v", err)
+	}
+
+	return d.UTC()
+}
+
+// toDateWithZone はタイムゾーン指定の時刻文字列からtime.Timeを作成する.
+func toDateWithZone(t *testing.T, date string, zoneName string, offset int) time.Time {
+	t.Helper()
+	d, err := time.Parse("2006-01-02 15:04:05", date)
+	if err != nil {
+		t.Fatalf("toDateWithZone: %v", err)
+	}
+
+	return time.Date(d.Year(), d.Month(), d.Day(), d.Hour(), d.Minute(), d.Second(), 0, time.FixedZone(zoneName, offset))
+}
+
 func TestService_Health(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		time.Time
-		*scene_hunterv1.HealthResponse
+		mockTime time.Time
+		want     *scene_hunterv1.HealthResponse
 	}{
 		"returns ok status with current timestamp": {
-			time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			&scene_hunterv1.HealthResponse{
+			mockTime: toDate(t, "2024-01-01 12:00:00"),
+			want: &scene_hunterv1.HealthResponse{
 				Status:    "ok",
 				Timestamp: "2024-01-01T12:00:00Z",
 			},
 		},
 		"returns ok status with different timestamp": {
-			time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC),
-			&scene_hunterv1.HealthResponse{
+			mockTime: toDate(t, "2024-12-31 23:59:59"),
+			want: &scene_hunterv1.HealthResponse{
 				Status:    "ok",
 				Timestamp: "2024-12-31T23:59:59Z",
 			},
 		},
 		"returns ok status with timezone offset": {
-			time.Date(2024, 6, 15, 9, 30, 45, 0, time.FixedZone("JST", 9*60*60)),
-			&scene_hunterv1.HealthResponse{
+			mockTime: toDateWithZone(t, "2024-06-15 09:30:45", "JST", 9*60*60),
+			want: &scene_hunterv1.HealthResponse{
 				Status:    "ok",
 				Timestamp: "2024-06-15T09:30:45+09:00",
 			},
@@ -52,7 +74,7 @@ func TestService_Health(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			chronoProvider := &mockChrono{mockTime: testCase.Time}
+			chronoProvider := &mockChrono{mockTime: testCase.mockTime}
 			svc := health.NewService(chronoProvider)
 
 			got, err := svc.Health(context.Background(), &scene_hunterv1.HealthRequest{})
@@ -62,19 +84,19 @@ func TestService_Health(t *testing.T) {
 				return
 			}
 
-			if got.GetStatus() != testCase.HealthResponse.GetStatus() {
+			if got.GetStatus() != testCase.want.GetStatus() {
 				t.Errorf(
 					"Health() Status = %v, want %v",
 					got.GetStatus(),
-					testCase.HealthResponse.GetStatus(),
+					testCase.want.GetStatus(),
 				)
 			}
 
-			if got.GetTimestamp() != testCase.HealthResponse.GetTimestamp() {
+			if got.GetTimestamp() != testCase.want.GetTimestamp() {
 				t.Errorf(
 					"Health() Timestamp = %v, want %v",
 					got.GetTimestamp(),
-					testCase.HealthResponse.GetTimestamp(),
+					testCase.want.GetTimestamp(),
 				)
 			}
 		})

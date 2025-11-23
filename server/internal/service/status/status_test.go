@@ -35,6 +35,17 @@ func (m *mockChrono) Now() time.Time {
 	return m.mockTime
 }
 
+// toDate はUTC時刻の文字列からtime.Timeを作成する.
+func toDate(t *testing.T, date string) time.Time {
+	t.Helper()
+	d, err := time.Parse("2006-01-02 15:04:05", date)
+	if err != nil {
+		t.Fatalf("toDate: %v", err)
+	}
+
+	return d.UTC()
+}
+
 func TestService_Status(t *testing.T) {
 	t.Parallel()
 
@@ -88,12 +99,12 @@ func TestService_Status(t *testing.T) {
 			t.Parallel()
 
 			checkers := make([]status.Checker, len(testCase.checkers))
-			for i := range testCase.checkers {
-				checkers[i] = &testCase.checkers[i]
-			}
+		for i := range testCase.checkers {
+			checkers[i] = &testCase.checkers[i]
+		}
 
-			chronoProvider := &mockChrono{mockTime: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)}
-			svc := status.NewService(checkers, chronoProvider)
+		chronoProvider := &mockChrono{mockTime: toDate(t, "2024-01-01 00:00:00")}
+		svc := status.NewService(checkers, chronoProvider)
 
 			got, err := svc.Status(context.Background(), &scene_hunterv1.StatusRequest{})
 			if err != nil {
