@@ -201,7 +201,6 @@ func TestService_DeleteRoom(t *testing.T) {
 					t.Fatalf("CreateRoom failed: %v", err)
 				}
 				roomID := createResp.GetRoom().GetId()
-				t.Helper()
 				deleteReq := &scene_hunterv1.DeleteRoomRequest{Id: roomID}
 				deleteResp, err := service.DeleteRoom(ctx, deleteReq)
 				if err != nil {
