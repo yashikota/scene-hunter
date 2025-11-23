@@ -50,9 +50,9 @@ func TestService_Status(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		c []mockChecker
-		h bool
-		n int
+		checkers       []mockChecker
+		wantHealthy    bool
+		wantServiceCnt int
 	}{
 		"all services healthy":    {[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return nil }}, {name: "service2", checkFn: func(_ context.Context) error { return nil }}}, true, 2},
 		"one service unhealthy":   {[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return nil }}, {name: "service2", checkFn: func(_ context.Context) error { return errors.New("connection failed") }}}, false, 2},
@@ -60,13 +60,13 @@ func TestService_Status(t *testing.T) {
 		"no checkers":             {[]mockChecker{}, true, 0},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			checkers := make([]status.Checker, len(tc.c))
-			for i := range tc.c {
-				checkers[i] = &tc.c[i]
+			checkers := make([]status.Checker, len(testCase.checkers))
+			for i := range testCase.checkers {
+				checkers[i] = &testCase.checkers[i]
 			}
 
 			chronoProvider := &mockChrono{mockTime: toDate(t, "2024-01-01 00:00:00")}
@@ -78,12 +78,12 @@ func TestService_Status(t *testing.T) {
 				return
 			}
 
-			if got.GetOverallHealthy() != tc.h {
-				t.Errorf("Status() OverallHealthy = %v, want %v", got.GetOverallHealthy(), tc.h)
+			if got.GetOverallHealthy() != testCase.wantHealthy {
+				t.Errorf("Status() OverallHealthy = %v, want %v", got.GetOverallHealthy(), testCase.wantHealthy)
 			}
 
-			if len(got.GetServices()) != tc.n {
-				t.Errorf("Status() Services count = %v, want %v", len(got.GetServices()), tc.n)
+			if len(got.GetServices()) != testCase.wantServiceCnt {
+				t.Errorf("Status() Services count = %v, want %v", len(got.GetServices()), testCase.wantServiceCnt)
 			}
 
 			if got.GetTimestamp() == "" {

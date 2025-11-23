@@ -21,17 +21,17 @@ func TestRealChrono_Now(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		a func(t *testing.T)
+		assertion func(t *testing.T)
 	}{
 		"returns time between before and after": {func(t *testing.T) { chronoProvider := chrono.New(); before := time.Now(); now := chronoProvider.Now(); after := time.Now(); if now.Before(before) { t.Errorf("Now() = %v is before the test started at %v", now, before) }; if now.After(after) { t.Errorf("Now() = %v is after the test ended at %v", now, after) } }},
 		"format as RFC3339":                      {func(t *testing.T) { chronoProvider := chrono.New(); now := chronoProvider.Now(); formatted := now.Format(time.RFC3339); if formatted == "" { t.Error("Now().Format(RFC3339) returned empty string") }; parsed, err := time.Parse(time.RFC3339, formatted); if err != nil { t.Errorf("Failed to parse formatted time: %v", err) }; if parsed.Unix() != now.Unix() { t.Errorf("Parsed time %v differs from original %v", parsed, now) } }},
 		"is not zero time":                      {func(t *testing.T) { chronoProvider := chrono.New(); now := chronoProvider.Now(); if now.IsZero() { t.Error("Now() returned zero time") } }},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			tc.a(t)
+			testCase.assertion(t)
 		})
 	}
 }
@@ -40,7 +40,7 @@ func TestRealChrono_Now_Properties(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		a func(t *testing.T)
+		assertion func(t *testing.T)
 	}{
 		"multiple calls progress": {func(t *testing.T) { chronoProvider := chrono.New(); first := chronoProvider.Now(); time.Sleep(10 * time.Millisecond); second := chronoProvider.Now(); if !second.After(first) { t.Errorf("Second call to Now() (%v) should be after first call (%v)", second, first) }; duration := second.Sub(first); if duration < 10*time.Millisecond { t.Errorf("Duration between calls (%v) should be at least 10ms", duration) } }},
 		"location properties":     {func(t *testing.T) { chronoProvider := chrono.New(); now := chronoProvider.Now(); if now.Location() == nil { t.Error("Now() returned time with nil location") }; utc := now.UTC(); if utc.Location() != time.UTC { t.Error("Failed to convert to UTC") } }},
@@ -50,10 +50,10 @@ func TestRealChrono_Now_Properties(t *testing.T) {
 		"hour minute second":      {func(t *testing.T) { chronoProvider := chrono.New(); now := chronoProvider.Now(); hour, minute, sec := now.Clock(); if hour < 0 || hour > 23 { t.Errorf("Invalid hour: %d", hour) }; if minute < 0 || minute > 59 { t.Errorf("Invalid minute: %d", minute) }; if sec < 0 || sec > 59 { t.Errorf("Invalid second: %d", sec) } }},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			tc.a(t)
+			testCase.assertion(t)
 		})
 	}
 }

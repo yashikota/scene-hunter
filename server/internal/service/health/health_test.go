@@ -33,8 +33,8 @@ func TestService_Health(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		time.Time
-		*scene_hunterv1.HealthResponse
+		mockTime time.Time
+		want     *scene_hunterv1.HealthResponse
 	}{
 		"returns ok status with current timestamp":  {toDate(t, "2024-01-01 12:00:00"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-01-01T12:00:00Z"}},
 		"returns ok status with different timestamp": {toDate(t, "2024-12-31 23:59:59"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-12-31T23:59:59Z"}},
@@ -45,7 +45,7 @@ func TestService_Health(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			chronoProvider := &mockChrono{mockTime: testCase.Time}
+			chronoProvider := &mockChrono{mockTime: testCase.mockTime}
 			svc := health.NewService(chronoProvider)
 
 			got, err := svc.Health(context.Background(), &scene_hunterv1.HealthRequest{})
@@ -54,12 +54,12 @@ func TestService_Health(t *testing.T) {
 				return
 			}
 
-			if got.GetStatus() != testCase.HealthResponse.GetStatus() {
-				t.Errorf("Health() Status = %v, want %v", got.GetStatus(), testCase.HealthResponse.GetStatus())
+			if got.GetStatus() != testCase.want.GetStatus() {
+				t.Errorf("Health() Status = %v, want %v", got.GetStatus(), testCase.want.GetStatus())
 			}
 
-			if got.GetTimestamp() != testCase.HealthResponse.GetTimestamp() {
-				t.Errorf("Health() Timestamp = %v, want %v", got.GetTimestamp(), testCase.HealthResponse.GetTimestamp())
+			if got.GetTimestamp() != testCase.want.GetTimestamp() {
+				t.Errorf("Health() Timestamp = %v, want %v", got.GetTimestamp(), testCase.want.GetTimestamp())
 			}
 		})
 	}

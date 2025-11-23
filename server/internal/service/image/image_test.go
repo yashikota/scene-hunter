@@ -213,10 +213,10 @@ func TestGetImage_Success(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		a func(t *testing.T)
+		assertion func(t *testing.T)
 	}{
 		"retrieves image successfully": {
-			a: func(t *testing.T) {
+			assertion: func(t *testing.T) {
 				blobClient := newMockBlobClient()
 				kvsClient := newMockKVSClient()
 				roomRepo := newMockRoomRepository()
@@ -263,10 +263,10 @@ func TestGetImage_Success(t *testing.T) {
 		},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			tc.a(t)
+			testCase.assertion(t)
 		})
 	}
 }
@@ -278,10 +278,10 @@ func TestGetImage_RoomNotFound(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		a func(t *testing.T)
+		assertion func(t *testing.T)
 	}{
 		"returns error when room not found": {
-			a: func(t *testing.T) {
+			assertion: func(t *testing.T) {
 				blobClient := newMockBlobClient()
 				kvsClient := newMockKVSClient()
 				roomRepo := newMockRoomRepository()
@@ -309,10 +309,10 @@ func TestGetImage_RoomNotFound(t *testing.T) {
 		},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			tc.a(t)
+			testCase.assertion(t)
 		})
 	}
 }
@@ -324,10 +324,10 @@ func TestGetImage_ImageNotFound(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		a func(t *testing.T)
+		assertion func(t *testing.T)
 	}{
 		"returns error when image not found": {
-			a: func(t *testing.T) {
+			assertion: func(t *testing.T) {
 				blobClient := newMockBlobClient()
 				kvsClient := newMockKVSClient()
 				roomRepo := newMockRoomRepository()
@@ -365,10 +365,10 @@ func TestGetImage_ImageNotFound(t *testing.T) {
 		},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			tc.a(t)
+			testCase.assertion(t)
 		})
 	}
 }
@@ -380,10 +380,10 @@ func TestListImages_Success(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		a func(t *testing.T)
+		assertion func(t *testing.T)
 	}{
 		"lists images successfully": {
-			a: func(t *testing.T) {
+			assertion: func(t *testing.T) {
 				blobClient := newMockBlobClient()
 				kvsClient := newMockKVSClient()
 				roomRepo := newMockRoomRepository()
@@ -447,10 +447,10 @@ func TestListImages_Success(t *testing.T) {
 		},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			tc.a(t)
+			testCase.assertion(t)
 		})
 	}
 }
@@ -462,10 +462,10 @@ func TestListImages_EmptyResult(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		a func(t *testing.T)
+		assertion func(t *testing.T)
 	}{
 		"returns empty list when no images": {
-			a: func(t *testing.T) {
+			assertion: func(t *testing.T) {
 				blobClient := newMockBlobClient()
 				kvsClient := newMockKVSClient()
 				roomRepo := newMockRoomRepository()
@@ -497,10 +497,10 @@ func TestListImages_EmptyResult(t *testing.T) {
 		},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			tc.a(t)
+			testCase.assertion(t)
 		})
 	}
 }
@@ -512,10 +512,10 @@ func TestListImages_RoomNotFound(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		a func(t *testing.T)
+		assertion func(t *testing.T)
 	}{
 		"returns error when room not found": {
-			a: func(t *testing.T) {
+			assertion: func(t *testing.T) {
 				blobClient := newMockBlobClient()
 				kvsClient := newMockKVSClient()
 				roomRepo := newMockRoomRepository()
@@ -542,10 +542,10 @@ func TestListImages_RoomNotFound(t *testing.T) {
 		},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			tc.a(t)
+			testCase.assertion(t)
 		})
 	}
 }

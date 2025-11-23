@@ -90,9 +90,9 @@ func TestClient_Set_Get(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		k string
-		v string
-		t time.Duration
+		key string
+		value string
+		ttl time.Duration
 	}{
 		"simple key-value without ttl": {"test_key", "test_value", 0},
 		"key-value with ttl":           {"temp_key", "temp_value", 1 * time.Hour},
@@ -100,7 +100,7 @@ func TestClient_Set_Get(t *testing.T) {
 		"long value":                   {"long_key", "Lorem ipsum dolor sit amet, consectetur adipiscing elit", 0},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
@@ -116,21 +116,21 @@ func TestClient_Set_Get(t *testing.T) {
 			defer client.Close()
 
 			// Set
-			err = client.Set(ctx, tc.k, tc.v, tc.t)
+			err = client.Set(ctx, testCase.key, testCase.value, testCase.ttl)
 			if err != nil {
 				t.Errorf("Set() error = %v, want nil", err)
 				return
 			}
 
 			// Get
-			got, err := client.Get(ctx, tc.k)
+			got, err := client.Get(ctx, testCase.key)
 			if err != nil {
 				t.Errorf("Get() error = %v, want nil", err)
 				return
 			}
 
-			if got != tc.v {
-				t.Errorf("Get() = %v, want %v", got, tc.v)
+			if got != testCase.value {
+				t.Errorf("Get() = %v, want %v", got, testCase.value)
 			}
 		})
 	}
@@ -237,16 +237,16 @@ func TestClient_Exists(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		s bool
-		k string
-		v string
-		w bool
+		setupKey bool
+		key string
+		value string
+		wantExist bool
 	}{
 		"key exists":         {true, "existing_key", "value", true},
 		"key does not exist": {false, "non_existing_key", "", false},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
@@ -261,21 +261,21 @@ func TestClient_Exists(t *testing.T) {
 			}
 			defer client.Close()
 
-			if tc.s {
-				err = client.Set(ctx, tc.k, tc.v, 0)
+			if testCase.setupKey {
+				err = client.Set(ctx, testCase.key, testCase.value, 0)
 				if err != nil {
 					t.Fatalf("Set() error = %v", err)
 				}
 			}
 
-			exists, err := client.Exists(ctx, tc.k)
+			exists, err := client.Exists(ctx, testCase.key)
 			if err != nil {
 				t.Errorf("Exists() error = %v, want nil", err)
 				return
 			}
 
-			if exists != tc.w {
-				t.Errorf("Exists() = %v, want %v", exists, tc.w)
+			if exists != testCase.wantExist {
+				t.Errorf("Exists() = %v, want %v", exists, testCase.wantExist)
 			}
 		})
 	}

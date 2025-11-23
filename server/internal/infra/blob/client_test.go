@@ -113,9 +113,9 @@ func TestClient_Put_Get(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		k string
-		c string
-		t time.Duration
+		key string
+		content string
+		ttl time.Duration
 	}{
 		"simple put and get": {"test-key", "test content", 0},
 		"put with ttl":       {"ttl-key", "ttl content", 1 * time.Hour},
@@ -123,7 +123,7 @@ func TestClient_Put_Get(t *testing.T) {
 		"large content":      {"large-key", string(make([]byte, 1024*1024)), 0},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
@@ -150,14 +150,14 @@ func TestClient_Put_Get(t *testing.T) {
 			}
 
 			// Put
-			err = client.Put(ctx, tc.k, bytes.NewReader([]byte(tc.c)), tc.t)
+			err = client.Put(ctx, testCase.key, bytes.NewReader([]byte(testCase.content)), testCase.ttl)
 			if err != nil {
 				t.Errorf("Put() error = %v, want nil", err)
 				return
 			}
 
 			// Get
-			reader, err := client.Get(ctx, tc.k)
+			reader, err := client.Get(ctx, testCase.key)
 			if err != nil {
 				t.Errorf("Get() error = %v, want nil", err)
 				return
@@ -175,8 +175,8 @@ func TestClient_Put_Get(t *testing.T) {
 				return
 			}
 
-			if string(got) != tc.c {
-				t.Errorf("Get() content = %v, want %v", string(got), tc.c)
+			if string(got) != testCase.content {
+				t.Errorf("Get() content = %v, want %v", string(got), testCase.content)
 			}
 		})
 	}
@@ -293,16 +293,16 @@ func TestClient_Exists(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		s bool
-		k string
-		c string
-		w bool
+		setupKey bool
+		key string
+		content string
+		wantExist bool
 	}{
 		"object exists":         {true, "existing-key", "content", true},
 		"object does not exist": {false, "non-existing-key", "", false},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
@@ -327,21 +327,21 @@ func TestClient_Exists(t *testing.T) {
 				t.Fatalf("Ping() error = %v", err)
 			}
 
-			if tc.s {
-				err = client.Put(ctx, tc.k, bytes.NewReader([]byte(tc.c)), 0)
+			if testCase.setupKey {
+				err = client.Put(ctx, testCase.key, bytes.NewReader([]byte(testCase.content)), 0)
 				if err != nil {
 					t.Fatalf("Put() error = %v", err)
 				}
 			}
 
-			exists, err := client.Exists(ctx, tc.k)
+			exists, err := client.Exists(ctx, testCase.key)
 			if err != nil {
 				t.Errorf("Exists() error = %v, want nil", err)
 				return
 			}
 
-			if exists != tc.w {
-				t.Errorf("Exists() = %v, want %v", exists, tc.w)
+			if exists != testCase.wantExist {
+				t.Errorf("Exists() = %v, want %v", exists, testCase.wantExist)
 			}
 		})
 	}

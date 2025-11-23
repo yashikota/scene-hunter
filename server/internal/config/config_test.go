@@ -48,8 +48,8 @@ func TestLoadConfig(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		c string
-		a func(t *testing.T, cfg *config.AppConfig)
+		content string
+		assertions func(t *testing.T, cfg *config.AppConfig)
 	}{
 		"minimal settings": {`
 [database]
@@ -85,12 +85,12 @@ level = 0
 `, func(t *testing.T, cfg *config.AppConfig) { assertEqual(t, cfg.Server.Port, ":9090", "server port"); assertEqual(t, cfg.Server.ReadTimeout, 60*time.Second, "read timeout"); assertEqual(t, cfg.Server.WriteTimeout, 60*time.Second, "write timeout"); assertEqual(t, cfg.Server.IdleTimeout, 120*time.Second, "idle timeout"); assertEqual(t, cfg.Database.Host, "db.example.com", "database host"); assertEqual(t, cfg.Database.Port, uint16(5433), "database port"); assertEqual(t, cfg.Database.User, "admin", "database user"); assertEqual(t, cfg.Database.Password, "secret", "database password"); assertEqual(t, cfg.Database.Dbname, "production", "database dbname"); assertEqual(t, cfg.Database.Sslmode, "require", "database sslmode"); assertEqual(t, cfg.Kvs.URL, "redis://kvs.example.com:6379", "kvs url"); assertEqual(t, cfg.Blob.URL, "http://blob.example.com:9000", "blob url"); assertEqual(t, cfg.Logger.Level, slog.LevelInfo, "logger level") }},
 	}
 
-	for testName, tc := range tests {
+	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			configPath := createTempConfigFile(t, tc.c)
+			configPath := createTempConfigFile(t, testCase.content)
 			cfg := config.LoadConfigFromPath(configPath)
-			tc.a(t, cfg)
+			testCase.assertions(t, cfg)
 		})
 	}
 }
