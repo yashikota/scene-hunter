@@ -89,40 +89,35 @@ func TestClient_Ping(t *testing.T) {
 func TestClient_Set_Get(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name  string
+	tests := map[string]struct {
 		key   string
 		value string
 		ttl   time.Duration
 	}{
-		{
-			name:  "simple key-value without ttl", // TTLなしのシンプルなキー・バリュー
+		"simple key-value without ttl": {
 			key:   "test_key",
 			value: "test_value",
 			ttl:   0,
 		},
-		{
-			name:  "key-value with ttl", // TTL付きのキー・バリュー
+		"key-value with ttl": {
 			key:   "temp_key",
 			value: "temp_value",
 			ttl:   1 * time.Hour,
 		},
-		{
-			name:  "empty value", // 空文字列の値
+		"empty value": {
 			key:   "empty_key",
 			value: "",
 			ttl:   0,
 		},
-		{
-			name:  "long value", // 長い文字列の値
+		"long value": {
 			key:   "long_key",
 			value: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
 			ttl:   0,
 		},
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
@@ -259,22 +254,19 @@ func TestClient_Delete_NonExistentKey(t *testing.T) {
 func TestClient_Exists(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name      string
+	tests := map[string]struct {
 		setupKey  bool
 		key       string
 		value     string
 		wantExist bool
 	}{
-		{
-			name:      "key exists", // キーが存在する場合
+		"key exists": {
 			setupKey:  true,
 			key:       "existing_key",
 			value:     "value",
 			wantExist: true,
 		},
-		{
-			name:      "key does not exist", // キーが存在しない場合
+		"key does not exist": {
 			setupKey:  false,
 			key:       "non_existing_key",
 			value:     "",
@@ -282,8 +274,8 @@ func TestClient_Exists(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()

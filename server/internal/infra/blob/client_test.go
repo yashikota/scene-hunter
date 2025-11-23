@@ -112,40 +112,35 @@ func TestClient_Ping(t *testing.T) {
 func TestClient_Put_Get(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		key     string
 		content string
 		ttl     time.Duration
 	}{
-		{
-			name:    "simple put and get",
+		"simple put and get": {
 			key:     "test-key",
 			content: "test content",
 			ttl:     0,
 		},
-		{
-			name:    "put with ttl",
+		"put with ttl": {
 			key:     "ttl-key",
 			content: "ttl content",
 			ttl:     1 * time.Hour,
 		},
-		{
-			name:    "empty content",
+		"empty content": {
 			key:     "empty-key",
 			content: "",
 			ttl:     0,
 		},
-		{
-			name:    "large content",
+		"large content": {
 			key:     "large-key",
 			content: string(make([]byte, 1024*1024)), // 1MB
 			ttl:     0,
 		},
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
@@ -321,22 +316,19 @@ func TestClient_Delete_NonExistentKey(t *testing.T) {
 func TestClient_Exists(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name      string
+	tests := map[string]struct {
 		setupKey  bool
 		key       string
 		content   string
 		wantExist bool
 	}{
-		{
-			name:      "object exists",
+		"object exists": {
 			setupKey:  true,
 			key:       "existing-key",
 			content:   "content",
 			wantExist: true,
 		},
-		{
-			name:      "object does not exist",
+		"object does not exist": {
 			setupKey:  false,
 			key:       "non-existing-key",
 			content:   "",
@@ -344,8 +336,8 @@ func TestClient_Exists(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()

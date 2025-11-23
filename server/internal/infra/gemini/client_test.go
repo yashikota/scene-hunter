@@ -12,28 +12,25 @@ func TestNewClient(t *testing.T) {
 
 	ctx := context.Background()
 
-	tests := []struct {
-		name      string
+	tests := map[string]struct {
 		apiKey    string
 		modelName string
 		wantErr   bool
 	}{
-		{
-			name:      "empty API key should fail",
+		"empty API key should fail": {
 			apiKey:    "",
 			modelName: "gemini-2.0-flash",
 			wantErr:   true,
 		},
-		{
-			name:      "valid API key and model name",
+		"valid API key and model name": {
 			apiKey:    "test-api-key",
 			modelName: "gemini-2.0-flash",
 			wantErr:   false,
 		},
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
 			_, err := gemini.NewClient(ctx, testCase.apiKey, testCase.modelName)

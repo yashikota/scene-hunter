@@ -82,16 +82,14 @@ func TestService_AnalyzeImageFromBlob(t *testing.T) {
 
 	ctx := context.Background()
 
-	tests := []struct {
-		name         string
+	tests := map[string]struct {
 		imageKey     string
 		prompt       string
 		blobClient   *mockBlobClient
 		geminiClient *mockGeminiClient
 		wantErr      bool
 	}{
-		{
-			name:     "successful analysis",
+		"successful analysis": {
 			imageKey: "test.jpg",
 			prompt:   "Describe 5 features of this image in Japanese",
 			blobClient: &mockBlobClient{
@@ -106,8 +104,8 @@ func TestService_AnalyzeImageFromBlob(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
 			service := gemini.NewService(testCase.blobClient, testCase.geminiClient)

@@ -43,42 +43,41 @@ func assertEqual[T comparable](t *testing.T, got, want T, field string) {
 	}
 }
 
-// TestLoadConfigMinimal tests loading config with minimal settings.
-func TestLoadConfigMinimal(t *testing.T) {
+// TestLoadConfig tests loading config with various settings.
+func TestLoadConfig(t *testing.T) {
 	t.Parallel()
 
-	content := `
+	tests := map[string]struct {
+		content           string
+		assertions        func(t *testing.T, cfg *config.AppConfig)
+	}{
+		"minimal settings": {
+			content: `
 [database]
 host = "localhost"
 port = 5432
 user = "testuser"
 dbname = "testdb"
 sslmode = "disable"
-`
+`,
+			assertions: func(t *testing.T, cfg *config.AppConfig) {
+				// Check database settings
+				assertEqual(t, cfg.Database.Host, "localhost", "database host")
+				assertEqual(t, cfg.Database.Port, uint16(5432), "database port")
+				assertEqual(t, cfg.Database.User, "testuser", "database user")
+				assertEqual(t, cfg.Database.Dbname, "testdb", "database dbname")
+				assertEqual(t, cfg.Database.Sslmode, "disable", "database sslmode")
 
-	configPath := createTempConfigFile(t, content)
-	cfg := config.LoadConfigFromPath(configPath)
-
-	// Check database settings
-	assertEqual(t, cfg.Database.Host, "localhost", "database host")
-	assertEqual(t, cfg.Database.Port, uint16(5432), "database port")
-	assertEqual(t, cfg.Database.User, "testuser", "database user")
-	assertEqual(t, cfg.Database.Dbname, "testdb", "database dbname")
-	assertEqual(t, cfg.Database.Sslmode, "disable", "database sslmode")
-
-	// Check default values
-	assertEqual(t, cfg.Server.Port, ":8686", "default server port")
-	assertEqual(t, cfg.Server.ReadTimeout, 30*time.Second, "default read timeout")
-	assertEqual(t, cfg.Server.WriteTimeout, 30*time.Second, "default write timeout")
-	assertEqual(t, cfg.Server.IdleTimeout, 60*time.Second, "default idle timeout")
-	assertEqual(t, cfg.Logger.Level, slog.LevelDebug, "default logger level")
-}
-
-// TestLoadConfigFull tests loading config with all settings.
-func TestLoadConfigFull(t *testing.T) {
-	t.Parallel()
-
-	content := `
+				// Check default values
+				assertEqual(t, cfg.Server.Port, ":8686", "default server port")
+				assertEqual(t, cfg.Server.ReadTimeout, 30*time.Second, "default read timeout")
+				assertEqual(t, cfg.Server.WriteTimeout, 30*time.Second, "default write timeout")
+				assertEqual(t, cfg.Server.IdleTimeout, 60*time.Second, "default idle timeout")
+				assertEqual(t, cfg.Logger.Level, slog.LevelDebug, "default logger level")
+			},
+		},
+		"full settings": {
+			content: `
 [server]
 port = ":9090"
 read_timeout = "60s"
@@ -101,33 +100,42 @@ url = "http://blob.example.com:9000"
 
 [logger]
 level = 0
-`
+`,
+			assertions: func(t *testing.T, cfg *config.AppConfig) {
+				// Check server settings
+				assertEqual(t, cfg.Server.Port, ":9090", "server port")
+				assertEqual(t, cfg.Server.ReadTimeout, 60*time.Second, "read timeout")
+				assertEqual(t, cfg.Server.WriteTimeout, 60*time.Second, "write timeout")
+				assertEqual(t, cfg.Server.IdleTimeout, 120*time.Second, "idle timeout")
 
-	configPath := createTempConfigFile(t, content)
-	cfg := config.LoadConfigFromPath(configPath)
+				// Check database settings
+				assertEqual(t, cfg.Database.Host, "db.example.com", "database host")
+				assertEqual(t, cfg.Database.Port, uint16(5433), "database port")
+				assertEqual(t, cfg.Database.User, "admin", "database user")
+				assertEqual(t, cfg.Database.Password, "secret", "database password")
+				assertEqual(t, cfg.Database.Dbname, "production", "database dbname")
+				assertEqual(t, cfg.Database.Sslmode, "require", "database sslmode")
 
-	// Check server settings
-	assertEqual(t, cfg.Server.Port, ":9090", "server port")
-	assertEqual(t, cfg.Server.ReadTimeout, 60*time.Second, "read timeout")
-	assertEqual(t, cfg.Server.WriteTimeout, 60*time.Second, "write timeout")
-	assertEqual(t, cfg.Server.IdleTimeout, 120*time.Second, "idle timeout")
+				// Check KVS settings
+				assertEqual(t, cfg.Kvs.URL, "redis://kvs.example.com:6379", "kvs url")
 
-	// Check database settings
-	assertEqual(t, cfg.Database.Host, "db.example.com", "database host")
-	assertEqual(t, cfg.Database.Port, uint16(5433), "database port")
-	assertEqual(t, cfg.Database.User, "admin", "database user")
-	assertEqual(t, cfg.Database.Password, "secret", "database password")
-	assertEqual(t, cfg.Database.Dbname, "production", "database dbname")
-	assertEqual(t, cfg.Database.Sslmode, "require", "database sslmode")
+				// Check blob settings
+				assertEqual(t, cfg.Blob.URL, "http://blob.example.com:9000", "blob url")
 
-	// Check KVS settings
-	assertEqual(t, cfg.Kvs.URL, "redis://kvs.example.com:6379", "kvs url")
+				// Check logger settings
+				assertEqual(t, cfg.Logger.Level, slog.LevelInfo, "logger level")
+			},
+		},
+	}
 
-	// Check blob settings
-	assertEqual(t, cfg.Blob.URL, "http://blob.example.com:9000", "blob url")
-
-	// Check logger settings
-	assertEqual(t, cfg.Logger.Level, slog.LevelInfo, "logger level")
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
+			configPath := createTempConfigFile(t, testCase.content)
+			cfg := config.LoadConfigFromPath(configPath)
+			testCase.assertions(t, cfg)
+		})
+	}
 }
 
 // TestLoadConfigNotFound tests loading config when file doesn't exist.
