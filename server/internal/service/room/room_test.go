@@ -66,7 +66,29 @@ func TestService_CreateRoom(t *testing.T) {
 	tests := map[string]struct {
 		assertion func(t *testing.T)
 	}{
-		"creates room successfully": {func(t *testing.T) { service, cleanup := setupTestService(ctx, t); defer cleanup(); req := &scene_hunterv1.CreateRoomRequest{}; resp, err := service.CreateRoom(ctx, req); if err != nil { t.Fatalf("CreateRoom failed: %v", err) }; if resp.GetRoom() == nil { t.Fatal("Room is nil") }; if resp.GetRoom().GetId() == "" { t.Error("Room ID is empty") }; if resp.GetRoom().GetRoomCode() == "" { t.Error("Room code is empty") }; if len(resp.GetRoom().GetRoomCode()) != 6 { t.Errorf("Room code length is %d, want 6", len(resp.GetRoom().GetRoomCode())) } }},
+		"creates room successfully": {
+			func(t *testing.T) {
+				service, cleanup := setupTestService(ctx, t)
+				defer cleanup()
+				req := &scene_hunterv1.CreateRoomRequest{}
+				resp, err := service.CreateRoom(ctx, req)
+				if err != nil {
+					t.Fatalf("CreateRoom failed: %v", err)
+				}
+				if resp.GetRoom() == nil {
+					t.Fatal("Room is nil")
+				}
+				if resp.GetRoom().GetId() == "" {
+					t.Error("Room ID is empty")
+				}
+				if resp.GetRoom().GetRoomCode() == "" {
+					t.Error("Room code is empty")
+				}
+				if len(resp.GetRoom().GetRoomCode()) != 6 {
+					t.Errorf("Room code length is %d, want 6", len(resp.GetRoom().GetRoomCode()))
+				}
+			},
+		},
 	}
 
 	for testName, testCase := range tests {
@@ -85,7 +107,29 @@ func TestService_GetRoom(t *testing.T) {
 	tests := map[string]struct {
 		assertion func(t *testing.T)
 	}{
-		"retrieves room successfully": {func(t *testing.T) { service, cleanup := setupTestService(ctx, t); defer cleanup(); createReq := &scene_hunterv1.CreateRoomRequest{}; createResp, err := service.CreateRoom(ctx, createReq); if err != nil { t.Fatalf("CreateRoom failed: %v", err) }; roomID := createResp.GetRoom().GetId(); getReq := &scene_hunterv1.GetRoomRequest{Id: roomID}; getResp, err := service.GetRoom(ctx, getReq); if err != nil { t.Fatalf("GetRoom failed: %v", err) }; if getResp.GetRoom().GetId() != roomID { t.Errorf("Room ID is %s, want %s", getResp.GetRoom().GetId(), roomID) }; if getResp.GetRoom().GetRoomCode() != createResp.GetRoom().GetRoomCode() { t.Errorf("Room code is %s, want %s", getResp.GetRoom().GetRoomCode(), createResp.GetRoom().GetRoomCode()) } }},
+		"retrieves room successfully": {
+			func(t *testing.T) {
+				service, cleanup := setupTestService(ctx, t)
+				defer cleanup()
+				createReq := &scene_hunterv1.CreateRoomRequest{}
+				createResp, err := service.CreateRoom(ctx, createReq)
+				if err != nil {
+					t.Fatalf("CreateRoom failed: %v", err)
+				}
+				roomID := createResp.GetRoom().GetId()
+				getReq := &scene_hunterv1.GetRoomRequest{Id: roomID}
+				getResp, err := service.GetRoom(ctx, getReq)
+				if err != nil {
+					t.Fatalf("GetRoom failed: %v", err)
+				}
+				if getResp.GetRoom().GetId() != roomID {
+					t.Errorf("Room ID is %s, want %s", getResp.GetRoom().GetId(), roomID)
+				}
+				if getResp.GetRoom().GetRoomCode() != createResp.GetRoom().GetRoomCode() {
+					t.Errorf("Room code is %s, want %s", getResp.GetRoom().GetRoomCode(), createResp.GetRoom().GetRoomCode())
+				}
+			},
+		},
 	}
 
 	for testName, testCase := range tests {
@@ -104,7 +148,27 @@ func TestService_UpdateRoom(t *testing.T) {
 	tests := map[string]struct {
 		assertion func(t *testing.T)
 	}{
-		"updates room successfully": {func(t *testing.T) { service, cleanup := setupTestService(ctx, t); defer cleanup(); createReq := &scene_hunterv1.CreateRoomRequest{}; createResp, err := service.CreateRoom(ctx, createReq); if err != nil { t.Fatalf("CreateRoom failed: %v", err) }; roomID := createResp.GetRoom().GetId(); newRoomCode := "999999"; updateReq := &scene_hunterv1.UpdateRoomRequest{Room: &scene_hunterv1.Room{Id: roomID, RoomCode: newRoomCode}}; updateResp, err := service.UpdateRoom(ctx, updateReq); if err != nil { t.Fatalf("UpdateRoom failed: %v", err) }; if updateResp.GetRoom().GetRoomCode() != newRoomCode { t.Errorf("Room code is %s, want %s", updateResp.GetRoom().GetRoomCode(), newRoomCode) } }},
+		"updates room successfully": {
+			func(t *testing.T) {
+				service, cleanup := setupTestService(ctx, t)
+				defer cleanup()
+				createReq := &scene_hunterv1.CreateRoomRequest{}
+				createResp, err := service.CreateRoom(ctx, createReq)
+				if err != nil {
+					t.Fatalf("CreateRoom failed: %v", err)
+				}
+				roomID := createResp.GetRoom().GetId()
+				newRoomCode := "999999"
+				updateReq := &scene_hunterv1.UpdateRoomRequest{Room: &scene_hunterv1.Room{Id: roomID, RoomCode: newRoomCode}}
+				updateResp, err := service.UpdateRoom(ctx, updateReq)
+				if err != nil {
+					t.Fatalf("UpdateRoom failed: %v", err)
+				}
+				if updateResp.GetRoom().GetRoomCode() != newRoomCode {
+					t.Errorf("Room code is %s, want %s", updateResp.GetRoom().GetRoomCode(), newRoomCode)
+				}
+			},
+		},
 	}
 
 	for testName, testCase := range tests {
@@ -123,7 +187,31 @@ func TestService_DeleteRoom(t *testing.T) {
 	tests := map[string]struct {
 		assertion func(t *testing.T)
 	}{
-		"deletes room successfully": {func(t *testing.T) { service, cleanup := setupTestService(ctx, t); defer cleanup(); createReq := &scene_hunterv1.CreateRoomRequest{}; createResp, err := service.CreateRoom(ctx, createReq); if err != nil { t.Fatalf("CreateRoom failed: %v", err) }; roomID := createResp.GetRoom().GetId(); deleteReq := &scene_hunterv1.DeleteRoomRequest{Id: roomID}; deleteResp, err := service.DeleteRoom(ctx, deleteReq); if err != nil { t.Fatalf("DeleteRoom failed: %v", err) }; if deleteResp.GetRoom().GetId() != roomID { t.Errorf("Room ID is %s, want %s", deleteResp.GetRoom().GetId(), roomID) }; getReq := &scene_hunterv1.GetRoomRequest{Id: roomID}; _, err = service.GetRoom(ctx, getReq); if err == nil { t.Error("GetRoom should fail after deletion") } }},
+		"deletes room successfully": {
+			func(t *testing.T) {
+				service, cleanup := setupTestService(ctx, t)
+				defer cleanup()
+				createReq := &scene_hunterv1.CreateRoomRequest{}
+				createResp, err := service.CreateRoom(ctx, createReq)
+				if err != nil {
+					t.Fatalf("CreateRoom failed: %v", err)
+				}
+				roomID := createResp.GetRoom().GetId()
+				deleteReq := &scene_hunterv1.DeleteRoomRequest{Id: roomID}
+				deleteResp, err := service.DeleteRoom(ctx, deleteReq)
+				if err != nil {
+					t.Fatalf("DeleteRoom failed: %v", err)
+				}
+				if deleteResp.GetRoom().GetId() != roomID {
+					t.Errorf("Room ID is %s, want %s", deleteResp.GetRoom().GetId(), roomID)
+				}
+				getReq := &scene_hunterv1.GetRoomRequest{Id: roomID}
+				_, err = service.GetRoom(ctx, getReq)
+				if err == nil {
+					t.Error("GetRoom should fail after deletion")
+				}
+			},
+		},
 	}
 
 	for testName, testCase := range tests {

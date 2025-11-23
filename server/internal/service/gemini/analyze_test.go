@@ -89,7 +89,17 @@ func TestService_AnalyzeImageFromBlob(t *testing.T) {
 		geminiClient *mockGeminiClient
 		wantErr bool
 	}{
-		"successful analysis": {"test.jpg", "Describe 5 features of this image in Japanese", &mockBlobClient{getData: []byte("fake image data")}, &mockGeminiClient{analyzeResult: &infragemini.ImageAnalysisResult{Features: []string{"feature1", "feature2", "feature3", "feature4", "feature5"}}}, false},
+		"successful analysis": {
+			"test.jpg",
+			"Describe 5 features of this image in Japanese",
+			&mockBlobClient{getData: []byte("fake image data")},
+			&mockGeminiClient{
+				analyzeResult: &infragemini.ImageAnalysisResult{
+					Features: []string{"feature1", "feature2", "feature3", "feature4", "feature5"},
+				},
+			},
+			false,
+		},
 	}
 
 	for testName, testCase := range tests {

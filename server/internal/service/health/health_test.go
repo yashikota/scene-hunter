@@ -26,9 +26,18 @@ func TestService_Health(t *testing.T) {
 		mockTime time.Time
 		want     *scene_hunterv1.HealthResponse
 	}{
-		"returns ok status with current timestamp":  {testutil.ToDate(t, "2024-01-01 12:00:00"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-01-01T12:00:00Z"}},
-		"returns ok status with different timestamp": {testutil.ToDate(t, "2024-12-31 23:59:59"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-12-31T23:59:59Z"}},
-		"returns ok status with another timestamp":   {testutil.ToDate(t, "2024-06-15 09:30:45"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-06-15T09:30:45Z"}},
+		"returns ok status with current timestamp": {
+			testutil.ToDate(t, "2024-01-01 12:00:00"),
+			&scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-01-01T12:00:00Z"},
+		},
+		"returns ok status with different timestamp": {
+			testutil.ToDate(t, "2024-12-31 23:59:59"),
+			&scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-12-31T23:59:59Z"},
+		},
+		"returns ok status with another timestamp": {
+			testutil.ToDate(t, "2024-06-15 09:30:45"),
+			&scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-06-15T09:30:45Z"},
+		},
 	}
 
 	for testName, testCase := range tests {

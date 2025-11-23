@@ -44,10 +44,22 @@ func TestService_Status(t *testing.T) {
 		wantHealthy    bool
 		wantServiceCnt int
 	}{
-		"all services healthy":    {[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return nil }}, {name: "service2", checkFn: func(_ context.Context) error { return nil }}}, true, 2},
-		"one service unhealthy":   {[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return nil }}, {name: "service2", checkFn: func(_ context.Context) error { return errors.New("connection failed") }}}, false, 2},
-		"all services unhealthy":  {[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return errors.New("error1") }}, {name: "service2", checkFn: func(_ context.Context) error { return errors.New("error2") }}}, false, 2},
-		"no checkers":             {[]mockChecker{}, true, 0},
+		"all services healthy": {
+			[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return nil }}, {name: "service2", checkFn: func(_ context.Context) error { return nil }}},
+			true,
+			2,
+		},
+		"one service unhealthy": {
+			[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return nil }}, {name: "service2", checkFn: func(_ context.Context) error { return errors.New("connection failed") }}},
+			false,
+			2,
+		},
+		"all services unhealthy": {
+			[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return errors.New("error1") }}, {name: "service2", checkFn: func(_ context.Context) error { return errors.New("error2") }}},
+			false,
+			2,
+		},
+		"no checkers": {[]mockChecker{}, true, 0},
 	}
 
 	for testName, testCase := range tests {
