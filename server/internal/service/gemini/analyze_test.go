@@ -83,41 +83,28 @@ func TestService_AnalyzeImageFromBlob(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		imageKey     string
-		prompt       string
-		blobClient   *mockBlobClient
-		geminiClient *mockGeminiClient
-		wantErr      bool
+		k string
+		p string
+		b *mockBlobClient
+		g *mockGeminiClient
+		w bool
 	}{
-		"successful analysis": {
-			imageKey: "test.jpg",
-			prompt:   "Describe 5 features of this image in Japanese",
-			blobClient: &mockBlobClient{
-				getData: []byte("fake image data"),
-			},
-			geminiClient: &mockGeminiClient{
-				analyzeResult: &infragemini.ImageAnalysisResult{
-					Features: []string{"feature1", "feature2", "feature3", "feature4", "feature5"},
-				},
-			},
-			wantErr: false,
-		},
+		"successful analysis": {"test.jpg", "Describe 5 features of this image in Japanese", &mockBlobClient{getData: []byte("fake image data")}, &mockGeminiClient{analyzeResult: &infragemini.ImageAnalysisResult{Features: []string{"feature1", "feature2", "feature3", "feature4", "feature5"}}}, false},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			service := gemini.NewService(testCase.blobClient, testCase.geminiClient)
-			result, err := service.AnalyzeImageFromBlob(ctx, testCase.imageKey, testCase.prompt)
+			service := gemini.NewService(tc.b, tc.g)
+			result, err := service.AnalyzeImageFromBlob(ctx, tc.k, tc.p)
 
-			if (err != nil) != testCase.wantErr {
-				t.Errorf("AnalyzeImageFromBlob() error = %v, wantErr %v", err, testCase.wantErr)
-
+			if (err != nil) != tc.w {
+				t.Errorf("AnalyzeImageFromBlob() error = %v, wantErr %v", err, tc.w)
 				return
 			}
 
-			if !testCase.wantErr && result == nil {
+			if !tc.w && result == nil {
 				t.Error("AnalyzeImageFromBlob() returned nil result")
 			}
 		})

@@ -50,83 +50,40 @@ func TestService_Status(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		checkers       []mockChecker
-		wantHealthy    bool
-		wantServiceCnt int
+		c []mockChecker
+		h bool
+		n int
 	}{
-		"all services healthy": {
-			checkers: []mockChecker{
-				{name: "service1", checkFn: func(_ context.Context) error { return nil }},
-				{name: "service2", checkFn: func(_ context.Context) error { return nil }},
-			},
-			wantHealthy:    true,
-			wantServiceCnt: 2,
-		},
-		"one service unhealthy": {
-			checkers: []mockChecker{
-				{name: "service1", checkFn: func(_ context.Context) error { return nil }},
-				{
-					name:    "service2",
-					checkFn: func(_ context.Context) error { return errors.New("connection failed") },
-				},
-			},
-			wantHealthy:    false,
-			wantServiceCnt: 2,
-		},
-		"all services unhealthy": {
-			checkers: []mockChecker{
-				{
-					name:    "service1",
-					checkFn: func(_ context.Context) error { return errors.New("error1") },
-				},
-				{
-					name:    "service2",
-					checkFn: func(_ context.Context) error { return errors.New("error2") },
-				},
-			},
-			wantHealthy:    false,
-			wantServiceCnt: 2,
-		},
-		"no checkers": {
-			checkers:       []mockChecker{},
-			wantHealthy:    true,
-			wantServiceCnt: 0,
-		},
+		"all services healthy":    {[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return nil }}, {name: "service2", checkFn: func(_ context.Context) error { return nil }}}, true, 2},
+		"one service unhealthy":   {[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return nil }}, {name: "service2", checkFn: func(_ context.Context) error { return errors.New("connection failed") }}}, false, 2},
+		"all services unhealthy":  {[]mockChecker{{name: "service1", checkFn: func(_ context.Context) error { return errors.New("error1") }}, {name: "service2", checkFn: func(_ context.Context) error { return errors.New("error2") }}}, false, 2},
+		"no checkers":             {[]mockChecker{}, true, 0},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			checkers := make([]status.Checker, len(testCase.checkers))
-		for i := range testCase.checkers {
-			checkers[i] = &testCase.checkers[i]
-		}
+			checkers := make([]status.Checker, len(tc.c))
+			for i := range tc.c {
+				checkers[i] = &tc.c[i]
+			}
 
-		chronoProvider := &mockChrono{mockTime: toDate(t, "2024-01-01 00:00:00")}
-		svc := status.NewService(checkers, chronoProvider)
+			chronoProvider := &mockChrono{mockTime: toDate(t, "2024-01-01 00:00:00")}
+			svc := status.NewService(checkers, chronoProvider)
 
 			got, err := svc.Status(context.Background(), &scene_hunterv1.StatusRequest{})
 			if err != nil {
 				t.Errorf("Status() error = %v, want nil", err)
-
 				return
 			}
 
-			if got.GetOverallHealthy() != testCase.wantHealthy {
-				t.Errorf(
-					"Status() OverallHealthy = %v, want %v",
-					got.GetOverallHealthy(),
-					testCase.wantHealthy,
-				)
+			if got.GetOverallHealthy() != tc.h {
+				t.Errorf("Status() OverallHealthy = %v, want %v", got.GetOverallHealthy(), tc.h)
 			}
 
-			if len(got.GetServices()) != testCase.wantServiceCnt {
-				t.Errorf(
-					"Status() Services count = %v, want %v",
-					len(got.GetServices()),
-					testCase.wantServiceCnt,
-				)
+			if len(got.GetServices()) != tc.n {
+				t.Errorf("Status() Services count = %v, want %v", len(got.GetServices()), tc.n)
 			}
 
 			if got.GetTimestamp() == "" {

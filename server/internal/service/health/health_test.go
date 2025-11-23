@@ -44,60 +44,33 @@ func TestService_Health(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		mockTime time.Time
-		want     *scene_hunterv1.HealthResponse
+		time.Time
+		*scene_hunterv1.HealthResponse
 	}{
-		"returns ok status with current timestamp": {
-			mockTime: toDate(t, "2024-01-01 12:00:00"),
-			want: &scene_hunterv1.HealthResponse{
-				Status:    "ok",
-				Timestamp: "2024-01-01T12:00:00Z",
-			},
-		},
-		"returns ok status with different timestamp": {
-			mockTime: toDate(t, "2024-12-31 23:59:59"),
-			want: &scene_hunterv1.HealthResponse{
-				Status:    "ok",
-				Timestamp: "2024-12-31T23:59:59Z",
-			},
-		},
-		"returns ok status with timezone offset": {
-			mockTime: toDateWithZone(t, "2024-06-15 09:30:45", "JST", 9*60*60),
-			want: &scene_hunterv1.HealthResponse{
-				Status:    "ok",
-				Timestamp: "2024-06-15T09:30:45+09:00",
-			},
-		},
+		"returns ok status with current timestamp":  {toDate(t, "2024-01-01 12:00:00"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-01-01T12:00:00Z"}},
+		"returns ok status with different timestamp": {toDate(t, "2024-12-31 23:59:59"), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-12-31T23:59:59Z"}},
+		"returns ok status with timezone offset":     {toDateWithZone(t, "2024-06-15 09:30:45", "JST", 9*60*60), &scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-06-15T09:30:45+09:00"}},
 	}
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			chronoProvider := &mockChrono{mockTime: testCase.mockTime}
+			chronoProvider := &mockChrono{mockTime: testCase.Time}
 			svc := health.NewService(chronoProvider)
 
 			got, err := svc.Health(context.Background(), &scene_hunterv1.HealthRequest{})
 			if err != nil {
 				t.Errorf("Health() error = %v, want nil", err)
-
 				return
 			}
 
-			if got.GetStatus() != testCase.want.GetStatus() {
-				t.Errorf(
-					"Health() Status = %v, want %v",
-					got.GetStatus(),
-					testCase.want.GetStatus(),
-				)
+			if got.GetStatus() != testCase.HealthResponse.GetStatus() {
+				t.Errorf("Health() Status = %v, want %v", got.GetStatus(), testCase.HealthResponse.GetStatus())
 			}
 
-			if got.GetTimestamp() != testCase.want.GetTimestamp() {
-				t.Errorf(
-					"Health() Timestamp = %v, want %v",
-					got.GetTimestamp(),
-					testCase.want.GetTimestamp(),
-				)
+			if got.GetTimestamp() != testCase.HealthResponse.GetTimestamp() {
+				t.Errorf("Health() Timestamp = %v, want %v", got.GetTimestamp(), testCase.HealthResponse.GetTimestamp())
 			}
 		})
 	}

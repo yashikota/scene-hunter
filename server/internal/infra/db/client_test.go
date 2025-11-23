@@ -52,10 +52,10 @@ func TestNewClient(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		assertion func(t *testing.T)
+		a func(t *testing.T)
 	}{
 		"creates and closes client successfully": {
-			assertion: func(t *testing.T) {
+			a: func(t *testing.T) {
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -76,10 +76,10 @@ func TestNewClient(t *testing.T) {
 		},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			testCase.assertion(t)
+			tc.a(t)
 		})
 	}
 }
@@ -103,10 +103,10 @@ func TestClient_Ping(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		assertion func(t *testing.T)
+		a func(t *testing.T)
 	}{
 		"pings database successfully": {
-			assertion: func(t *testing.T) {
+			a: func(t *testing.T) {
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -127,10 +127,10 @@ func TestClient_Ping(t *testing.T) {
 		},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			testCase.assertion(t)
+			tc.a(t)
 		})
 	}
 }
@@ -142,10 +142,10 @@ func TestClient_Exec(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		assertion func(t *testing.T)
+		a func(t *testing.T)
 	}{
 		"executes create table and insert": {
-			assertion: func(t *testing.T) {
+			a: func(t *testing.T) {
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -182,10 +182,10 @@ func TestClient_Exec(t *testing.T) {
 		},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			testCase.assertion(t)
+			tc.a(t)
 		})
 	}
 }
@@ -198,10 +198,10 @@ func TestClient_Query(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		assertion func(t *testing.T)
+		a func(t *testing.T)
 	}{
 		"queries multiple rows": {
-			assertion: func(t *testing.T) {
+			a: func(t *testing.T) {
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -290,10 +290,10 @@ func TestClient_Query(t *testing.T) {
 		},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			testCase.assertion(t)
+			tc.a(t)
 		})
 	}
 }
@@ -305,10 +305,10 @@ func TestClient_QueryRow(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		assertion func(t *testing.T)
+		a func(t *testing.T)
 	}{
 		"queries single row": {
-			assertion: func(t *testing.T) {
+			a: func(t *testing.T) {
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -357,10 +357,10 @@ func TestClient_QueryRow(t *testing.T) {
 		},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			testCase.assertion(t)
+			tc.a(t)
 		})
 	}
 }
@@ -372,10 +372,10 @@ func TestClient_QueryRow_NotFound(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		assertion func(t *testing.T)
+		a func(t *testing.T)
 	}{
 		"returns error for non-existent row": {
-			assertion: func(t *testing.T) {
+			a: func(t *testing.T) {
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -405,10 +405,10 @@ func TestClient_QueryRow_NotFound(t *testing.T) {
 		},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			testCase.assertion(t)
+			tc.a(t)
 		})
 	}
 }
@@ -421,10 +421,10 @@ func TestClient_Transaction_Commit(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		assertion func(t *testing.T)
+		a func(t *testing.T)
 	}{
 		"commits transaction successfully": {
-			assertion: func(t *testing.T) {
+			a: func(t *testing.T) {
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -519,10 +519,10 @@ func TestClient_Transaction_Commit(t *testing.T) {
 		},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			testCase.assertion(t)
+			tc.a(t)
 		})
 	}
 }
@@ -535,10 +535,10 @@ func TestClient_Transaction_Rollback(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		assertion func(t *testing.T)
+		a func(t *testing.T)
 	}{
 		"rolls back transaction successfully": {
-			assertion: func(t *testing.T) {
+			a: func(t *testing.T) {
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -605,10 +605,10 @@ func TestClient_Transaction_Rollback(t *testing.T) {
 		},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			testCase.assertion(t)
+			tc.a(t)
 		})
 	}
 }
@@ -620,10 +620,10 @@ func TestClient_Transaction_Query(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		assertion func(t *testing.T)
+		a func(t *testing.T)
 	}{
 		"queries within transaction": {
-			assertion: func(t *testing.T) {
+			a: func(t *testing.T) {
 				connString, cleanup := setupPostgres(ctx, t)
 				defer cleanup()
 
@@ -682,10 +682,10 @@ func TestClient_Transaction_Query(t *testing.T) {
 		},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			testCase.assertion(t)
+			tc.a(t)
 		})
 	}
 }

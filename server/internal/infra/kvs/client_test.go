@@ -90,33 +90,17 @@ func TestClient_Set_Get(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		key   string
-		value string
-		ttl   time.Duration
+		k string
+		v string
+		t time.Duration
 	}{
-		"simple key-value without ttl": {
-			key:   "test_key",
-			value: "test_value",
-			ttl:   0,
-		},
-		"key-value with ttl": {
-			key:   "temp_key",
-			value: "temp_value",
-			ttl:   1 * time.Hour,
-		},
-		"empty value": {
-			key:   "empty_key",
-			value: "",
-			ttl:   0,
-		},
-		"long value": {
-			key:   "long_key",
-			value: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-			ttl:   0,
-		},
+		"simple key-value without ttl": {"test_key", "test_value", 0},
+		"key-value with ttl":           {"temp_key", "temp_value", 1 * time.Hour},
+		"empty value":                  {"empty_key", "", 0},
+		"long value":                   {"long_key", "Lorem ipsum dolor sit amet, consectetur adipiscing elit", 0},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
@@ -132,23 +116,21 @@ func TestClient_Set_Get(t *testing.T) {
 			defer client.Close()
 
 			// Set
-			err = client.Set(ctx, testCase.key, testCase.value, testCase.ttl)
+			err = client.Set(ctx, tc.k, tc.v, tc.t)
 			if err != nil {
 				t.Errorf("Set() error = %v, want nil", err)
-
 				return
 			}
 
 			// Get
-			got, err := client.Get(ctx, testCase.key)
+			got, err := client.Get(ctx, tc.k)
 			if err != nil {
 				t.Errorf("Get() error = %v, want nil", err)
-
 				return
 			}
 
-			if got != testCase.value {
-				t.Errorf("Get() = %v, want %v", got, testCase.value)
+			if got != tc.v {
+				t.Errorf("Get() = %v, want %v", got, tc.v)
 			}
 		})
 	}
@@ -255,26 +237,16 @@ func TestClient_Exists(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		setupKey  bool
-		key       string
-		value     string
-		wantExist bool
+		s bool
+		k string
+		v string
+		w bool
 	}{
-		"key exists": {
-			setupKey:  true,
-			key:       "existing_key",
-			value:     "value",
-			wantExist: true,
-		},
-		"key does not exist": {
-			setupKey:  false,
-			key:       "non_existing_key",
-			value:     "",
-			wantExist: false,
-		},
+		"key exists":         {true, "existing_key", "value", true},
+		"key does not exist": {false, "non_existing_key", "", false},
 	}
 
-	for testName, testCase := range tests {
+	for testName, tc := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
@@ -289,22 +261,21 @@ func TestClient_Exists(t *testing.T) {
 			}
 			defer client.Close()
 
-			if testCase.setupKey {
-				err = client.Set(ctx, testCase.key, testCase.value, 0)
+			if tc.s {
+				err = client.Set(ctx, tc.k, tc.v, 0)
 				if err != nil {
 					t.Fatalf("Set() error = %v", err)
 				}
 			}
 
-			exists, err := client.Exists(ctx, testCase.key)
+			exists, err := client.Exists(ctx, tc.k)
 			if err != nil {
 				t.Errorf("Exists() error = %v, want nil", err)
-
 				return
 			}
 
-			if exists != testCase.wantExist {
-				t.Errorf("Exists() = %v, want %v", exists, testCase.wantExist)
+			if exists != tc.w {
+				t.Errorf("Exists() = %v, want %v", exists, tc.w)
 			}
 		})
 	}
