@@ -50,7 +50,7 @@ func TestRealChrono_Now_Format(t *testing.T) {
 	}
 
 	// フォーマットされた文字列をパースできることを確認
-	parsed := testutil.ToDate(t, formatted, time.RFC3339)
+	parsed := testutil.MustParseTimeUTC(t, time.RFC3339, formatted)
 
 	// パースした時刻が元の時刻とほぼ同じであることを確認（秒単位）
 	if parsed.Unix() != now.Unix() {
