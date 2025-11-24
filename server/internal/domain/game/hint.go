@@ -2,10 +2,8 @@ package game
 
 import "github.com/yashikota/scene-hunter/server/internal/util/errors"
 
-var (
-	// ErrInvalidHintNumber is returned when a hint number is invalid.
-	ErrInvalidHintNumber = errors.New("invalid hint number: must be between 1 and 5")
-)
+// ErrInvalidHintNumber is returned when a hint number is invalid.
+var ErrInvalidHintNumber = errors.New("invalid hint number: must be between 1 and 5")
 
 // Hint represents a single hint for hunters.
 type Hint struct {

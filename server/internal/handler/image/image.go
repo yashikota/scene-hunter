@@ -5,7 +5,9 @@ import (
 	"bytes"
 	"context"
 	"image"
+	_ "image/gif"
 	"image/jpeg"
+	_ "image/png"
 	"io"
 	"path/filepath"
 	"strings"
@@ -20,12 +22,8 @@ import (
 	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
 	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	_ "image/gif"
-	_ "image/png"
-
 	_ "golang.org/x/image/webp"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // ErrRoomNotFound is returned when the room is not found.
@@ -375,18 +373,14 @@ func generateThumbnail(imageData []byte) ([]byte, error) {
 
 	if width > height {
 		thumbnailWidth = ThumbnailMaxSize
-		thumbnailHeight = (height * ThumbnailMaxSize) / width
-		// 極端な縦横比の場合でも最低1ピクセルを保証
-		if thumbnailHeight < 1 {
-			thumbnailHeight = 1
-		}
+		thumbnailHeight = max(
+			// 極端な縦横比の場合でも最低1ピクセルを保証
+			(height*ThumbnailMaxSize)/width, 1)
 	} else {
 		thumbnailHeight = ThumbnailMaxSize
-		thumbnailWidth = (width * ThumbnailMaxSize) / height
-		// 極端な縦横比の場合でも最低1ピクセルを保証
-		if thumbnailWidth < 1 {
-			thumbnailWidth = 1
-		}
+		thumbnailWidth = max(
+			// 極端な縦横比の場合でも最低1ピクセルを保証
+			(width*ThumbnailMaxSize)/height, 1)
 	}
 
 	// 既に小さい画像の場合はリサイズしない

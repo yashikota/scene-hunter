@@ -190,6 +190,7 @@ func (s *Service) SubmitGameMasterPhoto(
 
 	// Upload image to blob storage
 	imageReader := bytes.NewReader(imageData)
+
 	err = s.blobClient.Put(ctx, imageKey, imageReader, 24*time.Hour)
 	if err != nil {
 		return "", nil, errors.Errorf("failed to upload image: %w", err)
@@ -261,16 +262,14 @@ func (s *Service) SubmitHunterPhoto(
 	}
 
 	// Calculate remaining seconds (60 seconds per turn)
-	remainingSeconds := 60 - elapsedSeconds
-	if remainingSeconds < 0 {
-		remainingSeconds = 0
-	}
+	remainingSeconds := max(60-elapsedSeconds, 0)
 
 	// Generate hunter's image ID and upload
 	hunterImageID := uuid.New().String()
 	hunterImageKey := fmt.Sprintf("images/%s/%s", roomID, hunterImageID)
 
 	hunterImageReader := bytes.NewReader(imageData)
+
 	err = s.blobClient.Put(ctx, hunterImageKey, hunterImageReader, 24*time.Hour)
 	if err != nil {
 		return 0, 0, 0, errors.Errorf("failed to upload hunter image: %w", err)
@@ -319,7 +318,10 @@ func (s *Service) GetGameState(ctx context.Context, roomID uuid.UUID) (*game.Gam
 }
 
 // EndGame ends the game and returns final rankings.
-func (s *Service) EndGame(ctx context.Context, roomID uuid.UUID) (*game.Game, []*game.Player, error) {
+func (s *Service) EndGame(
+	ctx context.Context,
+	roomID uuid.UUID,
+) (*game.Game, []*game.Player, error) {
 	// Get game
 	gameSession, err := s.gameRepo.Get(ctx, roomID)
 	if err != nil {
@@ -349,7 +351,7 @@ func parseHints(features []string) ([]*game.Hint, error) {
 	hints := make([]*game.Hint, 0, 5)
 
 	// Ensure we have exactly 5 hints
-	for hintIndex := 0; hintIndex < 5; hintIndex++ {
+	for hintIndex := range 5 {
 		var hintText string
 		if hintIndex < len(features) && features[hintIndex] != "" {
 			hintText = features[hintIndex]
@@ -373,7 +375,7 @@ func (s *Service) compareImages(ctx context.Context, image1Key, image2Key string
 	// This is a simplified implementation
 	// In production, you would use Gemini's vision API to compare images
 	// For now, return a placeholder score
-	
+
 	// TODO: Implement actual image comparison using Gemini
 	// The API might need to support multi-image input or we might need to
 	// concatenate descriptions and ask Gemini to compare them
@@ -381,10 +383,7 @@ func (s *Service) compareImages(ctx context.Context, image1Key, image2Key string
 	// Placeholder: return a random score between 0-100
 	// Using time.Now().UnixNano() as seed to avoid collision within same second
 	//nolint:gosec // This is a placeholder implementation for development
-	score := int(time.Now().UnixNano()%101) + time.Now().Nanosecond()%50
-	if score > 100 {
-		score = 100
-	}
+	score := min(int(time.Now().UnixNano()%101)+time.Now().Nanosecond()%50, 100)
 
 	return score, nil
 }
