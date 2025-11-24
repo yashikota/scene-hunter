@@ -45,6 +45,9 @@ func setupPostgres(ctx context.Context, t *testing.T) (string, func()) {
 	return connString, cleanup
 }
 
+// 以下のテストはデータベースクライアントの様々な機能（接続、CRUD、トランザクションなど）を検証しており、
+// 各テストが異なるセットアップと検証ロジックを持つため、テーブル駆動テストではなく個別の関数として実装している。
+
 // TestNewClient はPostgreSQLクライアントが正常に作成できることをテストする.
 func TestNewClient(t *testing.T) {
 	t.Parallel()

@@ -43,6 +43,9 @@ func assertEqual[T comparable](t *testing.T, got, want T, field string) {
 	}
 }
 
+// 以下のテストは設定ファイルの様々なシナリオ（最小設定、完全設定、環境変数上書きなど）を検証しており、
+// 各テストが異なるセットアップと検証ロジックを持つため、テーブル駆動テストではなく個別の関数として実装している。
+
 // TestLoadConfigMinimal tests loading config with minimal settings.
 func TestLoadConfigMinimal(t *testing.T) {
 	t.Parallel()

@@ -58,6 +58,9 @@ func setupTestService(ctx context.Context, t *testing.T) (*roomsvc.Service, func
 	return service, cleanup
 }
 
+// 以下のテストは統合テストの性質が強く、各テストが異なるセットアップと検証ロジックを持つため、
+// テーブル駆動テストではなく個別の関数として実装している。
+
 func TestService_CreateRoom(t *testing.T) {
 	t.Parallel()
 
