@@ -21,39 +21,26 @@ func (m *mockChrono) Now() time.Time {
 func TestService_Health(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name     string
+	tests := map[string]struct {
 		mockTime time.Time
 		want     *scene_hunterv1.HealthResponse
 	}{
-		{
-			name:     "returns ok status with current timestamp",
-			mockTime: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			want: &scene_hunterv1.HealthResponse{
-				Status:    "ok",
-				Timestamp: "2024-01-01T12:00:00Z",
-			},
+		"returns ok status with current timestamp": {
+			time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			&scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-01-01T12:00:00Z"},
 		},
-		{
-			name:     "returns ok status with different timestamp",
-			mockTime: time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC),
-			want: &scene_hunterv1.HealthResponse{
-				Status:    "ok",
-				Timestamp: "2024-12-31T23:59:59Z",
-			},
+		"returns ok status with different timestamp": {
+			time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC),
+			&scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-12-31T23:59:59Z"},
 		},
-		{
-			name:     "returns ok status with different time",
-			mockTime: time.Date(2024, 6, 15, 9, 30, 45, 0, time.UTC),
-			want: &scene_hunterv1.HealthResponse{
-				Status:    "ok",
-				Timestamp: "2024-06-15T09:30:45Z",
-			},
+		"returns ok status with different time": {
+			time.Date(2024, 6, 15, 9, 30, 45, 0, time.UTC),
+			&scene_hunterv1.HealthResponse{Status: "ok", Timestamp: "2024-06-15T09:30:45Z"},
 		},
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
+	for name, testCase := range tests {
+		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			chronoProvider := &mockChrono{mockTime: testCase.mockTime}

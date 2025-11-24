@@ -3,207 +3,110 @@ package image_test
 import (
 	"bytes"
 	"context"
-	"io"
 	"testing"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
+	"github.com/testcontainers/testcontainers-go/modules/minio"
+	"github.com/testcontainers/testcontainers-go/modules/valkey"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
-	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
+	infrablob "github.com/yashikota/scene-hunter/server/internal/infra/blob"
+	infrakvs "github.com/yashikota/scene-hunter/server/internal/infra/kvs"
+	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/service/image"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
-// mockBlobClient はBlobインターフェースのモック実装.
-type mockBlobClient struct {
-	objects map[string][]byte
-}
+// 以下のテストはサービス層の統合テストであり、各テストが異なるシナリオを検証するため、
+// テーブル駆動テストではなく個別の関数として実装している。
 
-func newMockBlobClient() *mockBlobClient {
-	return &mockBlobClient{
-		objects: make(map[string][]byte),
-	}
-}
+// setupMinio はテスト用のMinIOコンテナをセットアップする.
+func setupMinio(ctx context.Context, t *testing.T) (infrablob.Blob, func()) {
+	t.Helper()
 
-func (m *mockBlobClient) Ping(_ context.Context) error {
-	return nil
-}
-
-func (m *mockBlobClient) Put(_ context.Context, key string, data io.Reader, _ time.Duration) error {
-	content, err := io.ReadAll(data)
+	minioContainer, err := minio.Run(ctx, "docker.io/minio/minio:RELEASE.2025-09-07T16-13-09Z")
 	if err != nil {
-		return errors.Errorf("failed to read data: %w", err)
+		t.Fatalf("failed to start minio container: %v", err)
 	}
 
-	m.objects[key] = content
-
-	return nil
-}
-
-func (m *mockBlobClient) Get(_ context.Context, key string) (io.ReadCloser, error) {
-	data, exists := m.objects[key]
-	if !exists {
-		return nil, connect.NewError(connect.CodeNotFound, nil)
+	connString, err := minioContainer.ConnectionString(ctx)
+	if err != nil {
+		t.Fatalf("failed to get connection string: %v", err)
 	}
 
-	return io.NopCloser(bytes.NewReader(data)), nil
-}
+	var client infrablob.Blob
+	for range 10 {
+		client, err = infrablob.NewClient(
+			connString,
+			"minioadmin",
+			"minioadmin",
+			"test-bucket",
+			false,
+		)
+		if err == nil {
+			err = client.Ping(ctx)
+			if err == nil {
+				break
+			}
+		}
 
-func (m *mockBlobClient) Delete(_ context.Context, key string) error {
-	delete(m.objects, key)
+		time.Sleep(1 * time.Second)
+	}
 
-	return nil
-}
+	if err != nil {
+		_ = minioContainer.Terminate(ctx)
 
-func (m *mockBlobClient) Exists(_ context.Context, key string) (bool, error) {
-	_, exists := m.objects[key]
+		t.Fatalf("failed to initialize minio: %v", err)
+	}
 
-	return exists, nil
-}
-
-func (m *mockBlobClient) List(_ context.Context, prefix string) ([]blob.ObjectInfo, error) {
-	result := []blob.ObjectInfo{}
-
-	for key, data := range m.objects {
-		if len(prefix) == 0 || len(key) >= len(prefix) && key[:len(prefix)] == prefix {
-			result = append(result, blob.ObjectInfo{
-				Key:          key,
-				Size:         int64(len(data)),
-				LastModified: time.Now(),
-			})
+	cleanup := func() {
+		if err := minioContainer.Terminate(ctx); err != nil {
+			t.Logf("failed to terminate container: %v", err)
 		}
 	}
 
-	return result, nil
+	return client, cleanup
 }
 
-// mockKVSClient はKVSインターフェースのモック実装.
-type mockKVSClient struct {
-	data map[string]string
-}
+// setupValkey はテスト用のValkeyコンテナをセットアップする.
+func setupValkey(ctx context.Context, t *testing.T) (infrakvs.KVS, func()) {
+	t.Helper()
 
-func newMockKVSClient() *mockKVSClient {
-	return &mockKVSClient{
-		data: make(map[string]string),
-	}
-}
-
-func (m *mockKVSClient) Ping(_ context.Context) error {
-	return nil
-}
-
-func (m *mockKVSClient) Close() {}
-
-func (m *mockKVSClient) Get(_ context.Context, key string) (string, error) {
-	value, exists := m.data[key]
-	if !exists {
-		return "", connect.NewError(connect.CodeNotFound, nil)
+	valkeyContainer, err := valkey.Run(ctx, "docker.io/valkey/valkey:9.0.0")
+	if err != nil {
+		t.Fatalf("failed to start valkey container: %v", err)
 	}
 
-	return value, nil
-}
-
-func (m *mockKVSClient) Set(_ context.Context, key string, value string, _ time.Duration) error {
-	m.data[key] = value
-
-	return nil
-}
-
-func (m *mockKVSClient) SetNX(
-	_ context.Context,
-	key string,
-	value string,
-	_ time.Duration,
-) (bool, error) {
-	if _, exists := m.data[key]; exists {
-		return false, nil
+	addr, err := valkeyContainer.ConnectionString(ctx)
+	if err != nil {
+		t.Fatalf("failed to get connection string: %v", err)
 	}
 
-	m.data[key] = value
+	kvsClient, err := infrakvs.NewClient(addr, "")
+	if err != nil {
+		_ = valkeyContainer.Terminate(ctx)
 
-	return true, nil
-}
-
-func (m *mockKVSClient) Delete(_ context.Context, key string) error {
-	delete(m.data, key)
-
-	return nil
-}
-
-func (m *mockKVSClient) Exists(_ context.Context, key string) (bool, error) {
-	_, exists := m.data[key]
-
-	return exists, nil
-}
-
-func (m *mockKVSClient) Eval(_ context.Context, _ string, _ []string, _ ...any) (any, error) {
-	return map[string]string{}, nil
-}
-
-func (m *mockKVSClient) SAdd(_ context.Context, _ string, _ ...string) error {
-	return nil
-}
-
-func (m *mockKVSClient) SMembers(_ context.Context, _ string) ([]string, error) {
-	return []string{}, nil
-}
-
-func (m *mockKVSClient) SRem(_ context.Context, _ string, _ ...string) error {
-	return nil
-}
-
-func (m *mockKVSClient) Expire(_ context.Context, _ string, _ time.Duration) error {
-	return nil
-}
-
-func (m *mockKVSClient) TTL(_ context.Context, _ string) (time.Duration, error) {
-	return 0, nil
-}
-
-// mockRoomRepository はRoomRepositoryインターフェースのモック実装.
-type mockRoomRepository struct {
-	rooms map[uuid.UUID]*domainroom.Room
-}
-
-func newMockRoomRepository() *mockRoomRepository {
-	return &mockRoomRepository{
-		rooms: make(map[uuid.UUID]*domainroom.Room),
-	}
-}
-
-func (m *mockRoomRepository) Create(_ context.Context, room *domainroom.Room) error {
-	m.rooms[room.ID] = room
-
-	return nil
-}
-
-func (m *mockRoomRepository) Get(_ context.Context, id uuid.UUID) (*domainroom.Room, error) {
-	room, exists := m.rooms[id]
-	if !exists {
-		return nil, domainroom.ErrRoomNotFound
+		t.Fatalf("failed to create kvs client: %v", err)
 	}
 
-	return room, nil
-}
+	err = kvsClient.Ping(ctx)
+	if err != nil {
+		_ = valkeyContainer.Terminate(ctx)
 
-func (m *mockRoomRepository) Update(_ context.Context, room *domainroom.Room) error {
-	m.rooms[room.ID] = room
+		t.Fatalf("KVS ping failed: %v", err)
+	}
 
-	return nil
-}
+	cleanup := func() {
+		kvsClient.Close()
 
-func (m *mockRoomRepository) Delete(_ context.Context, id uuid.UUID) error {
-	delete(m.rooms, id)
+		if err := valkeyContainer.Terminate(ctx); err != nil {
+			t.Logf("failed to terminate container: %v", err)
+		}
+	}
 
-	return nil
-}
-
-func (m *mockRoomRepository) Exists(_ context.Context, id uuid.UUID) (bool, error) {
-	_, exists := m.rooms[id]
-
-	return exists, nil
+	return kvsClient, cleanup
 }
 
 // TestGetImage_Success は画像取得が正常に動作することをテストする.
@@ -211,9 +114,14 @@ func TestGetImage_Success(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	blobClient := newMockBlobClient()
-	kvsClient := newMockKVSClient()
-	roomRepo := newMockRoomRepository()
+
+	blobClient, blobCleanup := setupMinio(ctx, t)
+	defer blobCleanup()
+
+	kvsClient, kvsCleanup := setupValkey(ctx, t)
+	defer kvsCleanup()
+
+	roomRepo := repository.NewRoomRepository(kvsClient)
 
 	// テストデータの準備
 	roomID := uuid.New()
@@ -260,9 +168,14 @@ func TestGetImage_RoomNotFound(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	blobClient := newMockBlobClient()
-	kvsClient := newMockKVSClient()
-	roomRepo := newMockRoomRepository()
+
+	blobClient, blobCleanup := setupMinio(ctx, t)
+	defer blobCleanup()
+
+	kvsClient, kvsCleanup := setupValkey(ctx, t)
+	defer kvsCleanup()
+
+	roomRepo := repository.NewRoomRepository(kvsClient)
 
 	svc := image.NewService(blobClient, kvsClient, roomRepo)
 	req := &scene_hunterv1.GetImageRequest{
@@ -290,9 +203,14 @@ func TestGetImage_ImageNotFound(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	blobClient := newMockBlobClient()
-	kvsClient := newMockKVSClient()
-	roomRepo := newMockRoomRepository()
+
+	blobClient, blobCleanup := setupMinio(ctx, t)
+	defer blobCleanup()
+
+	kvsClient, kvsCleanup := setupValkey(ctx, t)
+	defer kvsCleanup()
+
+	roomRepo := repository.NewRoomRepository(kvsClient)
 
 	// ルームは存在する
 	roomID := uuid.New()
@@ -330,9 +248,14 @@ func TestListImages_Success(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	blobClient := newMockBlobClient()
-	kvsClient := newMockKVSClient()
-	roomRepo := newMockRoomRepository()
+
+	blobClient, blobCleanup := setupMinio(ctx, t)
+	defer blobCleanup()
+
+	kvsClient, kvsCleanup := setupValkey(ctx, t)
+	defer kvsCleanup()
+
+	roomRepo := repository.NewRoomRepository(kvsClient)
 
 	// テストデータの準備
 	roomID := uuid.New()
@@ -396,9 +319,14 @@ func TestListImages_EmptyResult(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	blobClient := newMockBlobClient()
-	kvsClient := newMockKVSClient()
-	roomRepo := newMockRoomRepository()
+
+	blobClient, blobCleanup := setupMinio(ctx, t)
+	defer blobCleanup()
+
+	kvsClient, kvsCleanup := setupValkey(ctx, t)
+	defer kvsCleanup()
+
+	roomRepo := repository.NewRoomRepository(kvsClient)
 
 	// ルームは存在するが画像は存在しない
 	roomID := uuid.New()
@@ -430,9 +358,14 @@ func TestListImages_RoomNotFound(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	blobClient := newMockBlobClient()
-	kvsClient := newMockKVSClient()
-	roomRepo := newMockRoomRepository()
+
+	blobClient, blobCleanup := setupMinio(ctx, t)
+	defer blobCleanup()
+
+	kvsClient, kvsCleanup := setupValkey(ctx, t)
+	defer kvsCleanup()
+
+	roomRepo := repository.NewRoomRepository(kvsClient)
 
 	svc := image.NewService(blobClient, kvsClient, roomRepo)
 	req := &scene_hunterv1.ListImagesRequest{

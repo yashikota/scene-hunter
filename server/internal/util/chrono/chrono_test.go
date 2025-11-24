@@ -8,6 +8,9 @@ import (
 	"github.com/yashikota/scene-hunter/server/internal/util/chrono"
 )
 
+// 以下のテストは時刻の様々な側面（フォーマット、タイムゾーン、Unix時刻など）を検証しており、
+// 各テストが異なる検証ロジックを持つため、テーブル駆動テストではなく個別の関数として実装している。
+
 func TestNew(t *testing.T) {
 	t.Parallel()
 

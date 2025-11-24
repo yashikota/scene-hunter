@@ -112,40 +112,18 @@ func TestClient_Ping(t *testing.T) {
 func TestClient_Put_Get(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		key     string
-		content string
-		ttl     time.Duration
+	tests := map[string]struct {
+		key, content string
+		ttl          time.Duration
 	}{
-		{
-			name:    "simple put and get",
-			key:     "test-key",
-			content: "test content",
-			ttl:     0,
-		},
-		{
-			name:    "put with ttl",
-			key:     "ttl-key",
-			content: "ttl content",
-			ttl:     1 * time.Hour,
-		},
-		{
-			name:    "empty content",
-			key:     "empty-key",
-			content: "",
-			ttl:     0,
-		},
-		{
-			name:    "large content",
-			key:     "large-key",
-			content: string(make([]byte, 1024*1024)), // 1MB
-			ttl:     0,
-		},
+		"simple put and get": {"test-key", "test content", 0},
+		"put with ttl":       {"ttl-key", "ttl content", 1 * time.Hour},
+		"empty content":      {"empty-key", "", 0},
+		"large content":      {"large-key", string(make([]byte, 1024*1024)), 0},
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
+	for name, testCase := range tests {
+		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
@@ -321,31 +299,17 @@ func TestClient_Delete_NonExistentKey(t *testing.T) {
 func TestClient_Exists(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name      string
-		setupKey  bool
-		key       string
-		content   string
-		wantExist bool
+	tests := map[string]struct {
+		setupKey     bool
+		key, content string
+		wantExist    bool
 	}{
-		{
-			name:      "object exists",
-			setupKey:  true,
-			key:       "existing-key",
-			content:   "content",
-			wantExist: true,
-		},
-		{
-			name:      "object does not exist",
-			setupKey:  false,
-			key:       "non-existing-key",
-			content:   "",
-			wantExist: false,
-		},
+		"object exists":         {true, "existing-key", "content", true},
+		"object does not exist": {false, "non-existing-key", "", false},
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
+	for name, testCase := range tests {
+		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()

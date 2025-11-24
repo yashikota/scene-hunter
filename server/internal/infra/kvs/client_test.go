@@ -89,40 +89,22 @@ func TestClient_Ping(t *testing.T) {
 func TestClient_Set_Get(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name  string
-		key   string
-		value string
-		ttl   time.Duration
+	tests := map[string]struct {
+		key, value string
+		ttl        time.Duration
 	}{
-		{
-			name:  "simple key-value without ttl", // TTLなしのシンプルなキー・バリュー
-			key:   "test_key",
-			value: "test_value",
-			ttl:   0,
-		},
-		{
-			name:  "key-value with ttl", // TTL付きのキー・バリュー
-			key:   "temp_key",
-			value: "temp_value",
-			ttl:   1 * time.Hour,
-		},
-		{
-			name:  "empty value", // 空文字列の値
-			key:   "empty_key",
-			value: "",
-			ttl:   0,
-		},
-		{
-			name:  "long value", // 長い文字列の値
-			key:   "long_key",
-			value: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-			ttl:   0,
+		"simple key-value without ttl": {"test_key", "test_value", 0},
+		"key-value with ttl":           {"temp_key", "temp_value", 1 * time.Hour},
+		"empty value":                  {"empty_key", "", 0},
+		"long value": {
+			"long_key",
+			"Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+			0,
 		},
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
+	for name, testCase := range tests {
+		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
@@ -259,31 +241,17 @@ func TestClient_Delete_NonExistentKey(t *testing.T) {
 func TestClient_Exists(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name      string
-		setupKey  bool
-		key       string
-		value     string
-		wantExist bool
+	tests := map[string]struct {
+		setupKey   bool
+		key, value string
+		wantExist  bool
 	}{
-		{
-			name:      "key exists", // キーが存在する場合
-			setupKey:  true,
-			key:       "existing_key",
-			value:     "value",
-			wantExist: true,
-		},
-		{
-			name:      "key does not exist", // キーが存在しない場合
-			setupKey:  false,
-			key:       "non_existing_key",
-			value:     "",
-			wantExist: false,
-		},
+		"key exists":         {true, "existing_key", "value", true},
+		"key does not exist": {false, "non_existing_key", "", false},
 	}
 
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
+	for name, testCase := range tests {
+		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
