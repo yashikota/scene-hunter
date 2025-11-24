@@ -6,13 +6,13 @@ import (
 	"time"
 )
 
-// ToDate は指定されたフォーマットの文字列からtime.Timeを作成する.
-func ToDate(t *testing.T, date string, format string) time.Time {
+// MustParseTimeUTC は指定されたフォーマットの文字列からtime.Time (UTC) を作成します。パースに失敗した場合はテストを失敗させます。
+func MustParseTimeUTC(t *testing.T, format string, value string) time.Time {
 	t.Helper()
 
-	d, err := time.Parse(format, date)
+	d, err := time.Parse(format, value)
 	if err != nil {
-		t.Fatalf("ToDate: %v", err)
+		t.Fatalf("MustParseTimeUTC: failed to parse time %q with format %q: %v", value, format, err)
 	}
 
 	return d.UTC()
