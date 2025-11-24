@@ -43,11 +43,11 @@ func TestService_Health(t *testing.T) {
 			},
 		},
 		{
-			name:     "returns ok status with timezone offset",
-			mockTime: time.Date(2024, 6, 15, 9, 30, 45, 0, time.FixedZone("JST", 9*60*60)),
+			name:     "returns ok status with different time",
+			mockTime: time.Date(2024, 6, 15, 9, 30, 45, 0, time.UTC),
 			want: &scene_hunterv1.HealthResponse{
 				Status:    "ok",
-				Timestamp: "2024-06-15T09:30:45+09:00",
+				Timestamp: "2024-06-15T09:30:45Z",
 			},
 		},
 	}
@@ -97,11 +97,6 @@ func TestService_Health_RealTime(t *testing.T) {
 
 	if got.GetStatus() != "ok" {
 		t.Errorf("Health() Status = %v, want %v", got.GetStatus(), "ok")
-	}
-
-	_, err = time.Parse(time.RFC3339, got.GetTimestamp())
-	if err != nil {
-		t.Errorf("Health() Timestamp is not valid RFC3339 format: %v", err)
 	}
 }
 

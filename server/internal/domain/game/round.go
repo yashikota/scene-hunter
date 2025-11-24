@@ -24,13 +24,13 @@ var (
 
 // Round represents a single round in the game.
 type Round struct {
-	RoundNumber         int            `json:"roundNumber"`
-	GameMasterUserID    uuid.UUID      `json:"gameMasterUserId"`
-	GameMasterImageID   string         `json:"gameMasterImageId"`
-	Hints               []*Hint        `json:"hints"`
-	Results             []*RoundResult `json:"results"`
-	TurnStatus          TurnStatus     `json:"turnStatus"`
-	TurnElapsedSeconds  int            `json:"turnElapsedSeconds"`
+	RoundNumber        int            `json:"roundNumber"`
+	GameMasterUserID   uuid.UUID      `json:"gameMasterUserId"`
+	GameMasterImageID  string         `json:"gameMasterImageId"`
+	Hints              []*Hint        `json:"hints"`
+	Results            []*RoundResult `json:"results"`
+	TurnStatus         TurnStatus     `json:"turnStatus"`
+	TurnElapsedSeconds int            `json:"turnElapsedSeconds"`
 }
 
 // NewRound creates a new Round.
@@ -90,10 +90,7 @@ func (r *Round) UpdateTurnElapsedSeconds(seconds int) {
 // First hint is visible at 0 seconds, then one more every 10 seconds.
 func (r *Round) GetHintsUpToTime(elapsedSeconds int) []*Hint {
 	// First hint at 0s, second at 10s, third at 20s, fourth at 30s, fifth at 40s
-	numHints := (elapsedSeconds / 10) + 1
-	if numHints > len(r.Hints) {
-		numHints = len(r.Hints)
-	}
+	numHints := min((elapsedSeconds/10)+1, len(r.Hints))
 
 	return r.Hints[:numHints]
 }

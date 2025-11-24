@@ -55,14 +55,14 @@ var (
 
 // Game represents a game session.
 type Game struct {
-	RoomID       uuid.UUID   `json:"roomId"`
-	Status       GameStatus  `json:"status"`
-	TotalRounds  int         `json:"totalRounds"`
-	CurrentRound int         `json:"currentRound"`
-	Players      []*Player   `json:"players"`
-	Rounds       []*Round    `json:"rounds"`
-	CreatedAt    time.Time   `json:"createdAt"`
-	UpdatedAt    time.Time   `json:"updatedAt"`
+	RoomID       uuid.UUID  `json:"roomId"`
+	Status       GameStatus `json:"status"`
+	TotalRounds  int        `json:"totalRounds"`
+	CurrentRound int        `json:"currentRound"`
+	Players      []*Player  `json:"players"`
+	Rounds       []*Round   `json:"rounds"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
 }
 
 // NewGame creates a new Game.
@@ -207,6 +207,7 @@ func (g *Game) UpdatePlayerPoints(userID uuid.UUID, points int) error {
 	}
 
 	player.AddPoints(points)
+
 	g.UpdatedAt = time.Now()
 
 	return nil

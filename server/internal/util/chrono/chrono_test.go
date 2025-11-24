@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/yashikota/scene-hunter/server/internal/testutil"
 	"github.com/yashikota/scene-hunter/server/internal/util/chrono"
 )
 
@@ -49,10 +50,7 @@ func TestRealChrono_Now_Format(t *testing.T) {
 	}
 
 	// フォーマットされた文字列をパースできることを確認
-	parsed, err := time.Parse(time.RFC3339, formatted)
-	if err != nil {
-		t.Errorf("Failed to parse formatted time: %v", err)
-	}
+	parsed := testutil.MustParseTimeUTC(t, time.RFC3339, formatted)
 
 	// パースした時刻が元の時刻とほぼ同じであることを確認（秒単位）
 	if parsed.Unix() != now.Unix() {
