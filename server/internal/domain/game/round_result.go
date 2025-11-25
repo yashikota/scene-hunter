@@ -12,10 +12,10 @@ var (
 
 // Point values for each rank
 const (
-	FirstPlacePoints  = 100
-	SecondPlacePoints = 50
-	ThirdPlacePoints  = 25
-	DefaultPoints     = 10
+	FirstPlacePoints  = 5
+	SecondPlacePoints = 3
+	ThirdPlacePoints  = 1
+	DefaultPoints     = 0
 )
 
 // RoundResult represents the result of a single round for a player.
