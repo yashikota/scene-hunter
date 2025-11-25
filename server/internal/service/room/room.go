@@ -13,6 +13,7 @@ import (
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
 	"github.com/yashikota/scene-hunter/server/internal/repository"
+	"github.com/yashikota/scene-hunter/server/internal/service/middleware"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
@@ -67,6 +68,24 @@ func (s *Service) CreateRoom(
 	ctx context.Context,
 	req *scene_hunterv1.CreateRoomRequest,
 ) (*scene_hunterv1.CreateRoomResponse, error) {
+	// Get user ID from context (anon_id for anonymous users)
+	anonID, ok := middleware.GetAnonIDFromContext(ctx)
+	if !ok || anonID == "" {
+		return nil, connect.NewError(
+			connect.CodeUnauthenticated,
+			errors.New("user ID not found in context"),
+		)
+	}
+
+	// Parse user ID
+	userID, err := uuid.Parse(anonID)
+	if err != nil {
+		return nil, connect.NewError(
+			connect.CodeInvalidArgument,
+			errors.Errorf("invalid user ID: %w", err),
+		)
+	}
+
 	// Generate unique room code with retry logic
 	var room *domainroom.Room
 
@@ -79,7 +98,7 @@ func (s *Service) CreateRoom(
 			)
 		}
 
-		room = domainroom.NewRoom(code)
+		room = domainroom.NewRoom(code, userID)
 
 		// Try to create the room
 		err = s.repo.Create(ctx, room)
