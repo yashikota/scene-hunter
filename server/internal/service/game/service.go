@@ -300,7 +300,10 @@ func (s *Service) SubmitHunterPhoto(
 }
 
 // GetHunterPhotos returns all hunter photo submissions for the current round.
-func (s *Service) GetHunterPhotos(ctx context.Context, roomID uuid.UUID) ([]*game.HunterSubmission, error) {
+func (s *Service) GetHunterPhotos(
+	ctx context.Context,
+	roomID uuid.UUID,
+) ([]*game.HunterSubmission, error) {
 	// Get game
 	gameSession, err := s.gameRepo.Get(ctx, roomID)
 	if err != nil {
@@ -351,6 +354,7 @@ func (s *Service) SelectWinners(
 		if err != nil {
 			return nil, errors.Errorf("failed to create round result: %w", err)
 		}
+
 		results = append(results, result)
 
 		// Update player points

@@ -259,11 +259,13 @@ func (h *Handler) SelectWinners(
 
 	// Convert rankings from proto to map
 	rankings := make(map[uuid.UUID]int)
+
 	for _, rankSel := range req.GetRankings() {
 		userID, err := uuid.Parse(rankSel.GetUserId())
 		if err != nil {
 			return nil, errors.Errorf("invalid user_id in rankings: %w", err)
 		}
+
 		rankings[userID] = int(rankSel.GetRank())
 	}
 

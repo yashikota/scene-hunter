@@ -5,12 +5,10 @@ import (
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
-var (
-	// ErrInvalidRank is returned when a rank is invalid.
-	ErrInvalidRank = errors.New("invalid rank: must be between 1 and 20")
-)
+// ErrInvalidRank is returned when a rank is invalid.
+var ErrInvalidRank = errors.New("invalid rank: must be between 1 and 20")
 
-// Point values for each rank
+// Point values for each rank.
 const (
 	FirstPlacePoints  = 5
 	SecondPlacePoints = 3
