@@ -204,8 +204,8 @@ func registerGameService(mux *chi.Mux, deps *Dependencies, interceptors connect.
 	// Create game service
 	gameSvc := gamesvc.NewService(gameRepo, roomRepo, deps.BlobClient, geminiClient)
 
-	// Create game handler
-	gameService := gamehandler.NewHandler(gameSvc)
+	// Create game handler with room repository for authorization checks
+	gameService := gamehandler.NewHandler(gameSvc, roomRepo)
 
 	gamePath, gameHandler := scene_hunterv1connect.NewGameServiceHandler(
 		gameService,

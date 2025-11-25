@@ -125,7 +125,8 @@ func TestGetImage_Success(t *testing.T) {
 
 	// テストデータの準備
 	roomID := uuid.New()
-	room := domainroom.NewRoom("123456")
+	adminID := uuid.New()
+	room := domainroom.NewRoom("123456", adminID)
 	room.ID = roomID
 
 	err := roomRepo.Create(ctx, room)
@@ -214,7 +215,8 @@ func TestGetImage_ImageNotFound(t *testing.T) {
 
 	// ルームは存在する
 	roomID := uuid.New()
-	room := domainroom.NewRoom("123456")
+	adminID := uuid.New()
+	room := domainroom.NewRoom("123456", adminID)
 	room.ID = roomID
 
 	err := roomRepo.Create(ctx, room)
@@ -259,7 +261,8 @@ func TestListImages_Success(t *testing.T) {
 
 	// テストデータの準備
 	roomID := uuid.New()
-	room := domainroom.NewRoom("123456")
+	adminID := uuid.New()
+	room := domainroom.NewRoom("123456", adminID)
 	room.ID = roomID
 
 	err := roomRepo.Create(ctx, room)
@@ -330,7 +333,8 @@ func TestListImages_EmptyResult(t *testing.T) {
 
 	// ルームは存在するが画像は存在しない
 	roomID := uuid.New()
-	room := domainroom.NewRoom("123456")
+	adminID := uuid.New()
+	room := domainroom.NewRoom("123456", adminID)
 	room.ID = roomID
 
 	err := roomRepo.Create(ctx, room)

@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	domainauth "github.com/yashikota/scene-hunter/server/internal/domain/auth"
+	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 // contextKey is a type for context keys to avoid collisions.
@@ -98,4 +100,20 @@ func GetUserIDFromContext(ctx context.Context) (string, bool) {
 	userID, ok := ctx.Value(UserIDContextKey).(string)
 
 	return userID, ok
+}
+
+// GetAuthenticatedUserID retrieves and parses the authenticated user ID from context.
+// It returns the user ID as uuid.UUID or an error if not found or invalid.
+func GetAuthenticatedUserID(ctx context.Context) (uuid.UUID, error) {
+	anonID, ok := GetAnonIDFromContext(ctx)
+	if !ok || anonID == "" {
+		return uuid.Nil, errors.New("user ID not found in context")
+	}
+
+	userID, err := uuid.Parse(anonID)
+	if err != nil {
+		return uuid.Nil, errors.Errorf("invalid authenticated user ID: %w", err)
+	}
+
+	return userID, nil
 }

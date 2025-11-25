@@ -25,13 +25,14 @@ var (
 type Room struct {
 	ID        uuid.UUID `json:"id"`
 	Code      string    `json:"code"`
+	AdminID   uuid.UUID `json:"adminId"` // User who created the room (has admin privileges)
 	ExpiredAt time.Time `json:"expiredAt"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-// NewRoom creates a new Room with the given code.
-func NewRoom(code string) *Room {
+// NewRoom creates a new Room with the given code and admin ID.
+func NewRoom(code string, adminID uuid.UUID) *Room {
 	roomID, err := uuid.NewV7()
 	if err != nil {
 		panic(err)
@@ -43,8 +44,14 @@ func NewRoom(code string) *Room {
 	return &Room{
 		ID:        roomID,
 		Code:      code,
+		AdminID:   adminID,
 		ExpiredAt: expiredAt,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
+}
+
+// IsAdmin checks if the given user ID is the admin of this room.
+func (r *Room) IsAdmin(userID uuid.UUID) bool {
+	return r.AdminID == userID
 }

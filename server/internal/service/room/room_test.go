@@ -4,10 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/testcontainers/testcontainers-go/modules/valkey"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	infrakvs "github.com/yashikota/scene-hunter/server/internal/infra/kvs"
 	"github.com/yashikota/scene-hunter/server/internal/repository"
+	"github.com/yashikota/scene-hunter/server/internal/service/middleware"
 	roomsvc "github.com/yashikota/scene-hunter/server/internal/service/room"
 )
 
@@ -58,13 +60,20 @@ func setupTestService(ctx context.Context, t *testing.T) (*roomsvc.Service, func
 	return service, cleanup
 }
 
+// contextWithUserID creates a context with a user ID for testing.
+func contextWithUserID(ctx context.Context) context.Context {
+	userID := uuid.New().String()
+
+	return context.WithValue(ctx, middleware.AnonIDContextKey, userID)
+}
+
 // 以下のテストは統合テストの性質が強く、各テストが異なるセットアップと検証ロジックを持つため、
 // テーブル駆動テストではなく個別の関数として実装している。
 
 func TestService_CreateRoom(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := contextWithUserID(context.Background())
 
 	service, cleanup := setupTestService(ctx, t)
 	defer cleanup()
@@ -96,7 +105,7 @@ func TestService_CreateRoom(t *testing.T) {
 func TestService_GetRoom(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := contextWithUserID(context.Background())
 
 	service, cleanup := setupTestService(ctx, t)
 	defer cleanup()
@@ -137,7 +146,7 @@ func TestService_GetRoom(t *testing.T) {
 func TestService_UpdateRoom(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := contextWithUserID(context.Background())
 
 	service, cleanup := setupTestService(ctx, t)
 	defer cleanup()
@@ -174,7 +183,7 @@ func TestService_UpdateRoom(t *testing.T) {
 func TestService_DeleteRoom(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := contextWithUserID(context.Background())
 
 	service, cleanup := setupTestService(ctx, t)
 	defer cleanup()

@@ -6,19 +6,23 @@ import (
 
 	"github.com/google/uuid"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
+	"github.com/yashikota/scene-hunter/server/internal/repository"
 	gamesvc "github.com/yashikota/scene-hunter/server/internal/service/game"
+	"github.com/yashikota/scene-hunter/server/internal/service/middleware"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
 // Handler wraps the game service.
 type Handler struct {
-	service *gamesvc.Service
+	service  *gamesvc.Service
+	roomRepo repository.RoomRepository
 }
 
 // NewHandler creates a new game handler.
-func NewHandler(service *gamesvc.Service) *Handler {
+func NewHandler(service *gamesvc.Service, roomRepo repository.RoomRepository) *Handler {
 	return &Handler{
-		service: service,
+		service:  service,
+		roomRepo: roomRepo,
 	}
 }
 
@@ -64,8 +68,31 @@ func (h *Handler) JoinGame(
 		return nil, errors.Errorf("invalid user_id: %w", err)
 	}
 
-	// TODO: Get isGameMaster and isAdmin from context or request
-	game, err := h.service.JoinGame(ctx, roomID, userID, req.GetName(), false, false)
+	// Get authenticated user ID from context
+	authenticatedUserID, err := middleware.GetAuthenticatedUserID(ctx)
+	if err != nil {
+		return nil, errors.Errorf("failed to get authenticated user ID: %w", err)
+	}
+
+	// Verify that the user is joining as themselves
+	if userID != authenticatedUserID {
+		return nil, errors.New("cannot join game as another user")
+	}
+
+	// Get room to check admin status
+	room, err := h.roomRepo.Get(ctx, roomID)
+	if err != nil {
+		return nil, errors.Errorf("failed to get room: %w", err)
+	}
+
+	// Check if user is room admin
+	isAdmin := room.IsAdmin(userID)
+
+	// isGameMaster is determined by the game logic (set during game/round creation)
+	// For now, it's false when joining
+	isGameMaster := false
+
+	game, err := h.service.JoinGame(ctx, roomID, userID, req.GetName(), isGameMaster, isAdmin)
 	if err != nil {
 		return nil, errors.Errorf("failed to join game: %w", err)
 	}
@@ -91,6 +118,20 @@ func (h *Handler) SubmitGameMasterPhoto(
 	if err != nil {
 		return nil, errors.Errorf("invalid user_id: %w", err)
 	}
+
+	// Get authenticated user ID from context
+	authenticatedUserID, err := middleware.GetAuthenticatedUserID(ctx)
+	if err != nil {
+		return nil, errors.Errorf("failed to get authenticated user ID: %w", err)
+	}
+
+	// Verify that the user is submitting as themselves
+	if userID != authenticatedUserID {
+		return nil, errors.New("cannot submit photo as another user")
+	}
+
+	// Authorization check is done in the service layer
+	// (verifies user is the game master for current round)
 
 	imageID, hints, err := h.service.SubmitGameMasterPhoto(ctx, roomID, userID, req.GetImageData())
 	if err != nil {
@@ -187,13 +228,29 @@ func (h *Handler) SelectWinners(
 		return nil, errors.Errorf("invalid game_master_user_id: %w", err)
 	}
 
+	// Get authenticated user ID from context
+	authenticatedUserID, err := middleware.GetAuthenticatedUserID(ctx)
+	if err != nil {
+		return nil, errors.Errorf("failed to get authenticated user ID: %w", err)
+	}
+
+	// Verify that the user is selecting winners as themselves
+	if gameMasterUserID != authenticatedUserID {
+		return nil, errors.New("cannot select winners as another user")
+	}
+
+	// Authorization check is done in the service layer
+	// (verifies user is the game master for current round)
+
 	// Convert rankings from proto to map
 	rankings := make(map[uuid.UUID]int)
+
 	for _, rankSel := range req.GetRankings() {
 		userID, err := uuid.Parse(rankSel.GetUserId())
 		if err != nil {
 			return nil, errors.Errorf("invalid user_id in rankings: %w", err)
 		}
+
 		rankings[userID] = int(rankSel.GetRank())
 	}
 
