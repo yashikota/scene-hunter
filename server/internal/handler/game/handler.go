@@ -69,14 +69,9 @@ func (h *Handler) JoinGame(
 	}
 
 	// Get authenticated user ID from context
-	anonID, ok := middleware.GetAnonIDFromContext(ctx)
-	if !ok || anonID == "" {
-		return nil, errors.New("user ID not found in context")
-	}
-
-	authenticatedUserID, err := uuid.Parse(anonID)
+	authenticatedUserID, err := middleware.GetAuthenticatedUserID(ctx)
 	if err != nil {
-		return nil, errors.Errorf("invalid authenticated user ID: %w", err)
+		return nil, errors.Errorf("failed to get authenticated user ID: %w", err)
 	}
 
 	// Verify that the user is joining as themselves
@@ -125,14 +120,9 @@ func (h *Handler) SubmitGameMasterPhoto(
 	}
 
 	// Get authenticated user ID from context
-	anonID, ok := middleware.GetAnonIDFromContext(ctx)
-	if !ok || anonID == "" {
-		return nil, errors.New("user ID not found in context")
-	}
-
-	authenticatedUserID, err := uuid.Parse(anonID)
+	authenticatedUserID, err := middleware.GetAuthenticatedUserID(ctx)
 	if err != nil {
-		return nil, errors.Errorf("invalid authenticated user ID: %w", err)
+		return nil, errors.Errorf("failed to get authenticated user ID: %w", err)
 	}
 
 	// Verify that the user is submitting as themselves
@@ -239,14 +229,9 @@ func (h *Handler) SelectWinners(
 	}
 
 	// Get authenticated user ID from context
-	anonID, ok := middleware.GetAnonIDFromContext(ctx)
-	if !ok || anonID == "" {
-		return nil, errors.New("user ID not found in context")
-	}
-
-	authenticatedUserID, err := uuid.Parse(anonID)
+	authenticatedUserID, err := middleware.GetAuthenticatedUserID(ctx)
 	if err != nil {
-		return nil, errors.Errorf("invalid authenticated user ID: %w", err)
+		return nil, errors.Errorf("failed to get authenticated user ID: %w", err)
 	}
 
 	// Verify that the user is selecting winners as themselves
