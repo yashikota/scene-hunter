@@ -26,24 +26,24 @@ type ClientInfo_Type int32
 
 const (
 	ClientInfo_TYPE_UNSPECIFIED ClientInfo_Type = 0
-	ClientInfo_WEB              ClientInfo_Type = 1
-	ClientInfo_IOS              ClientInfo_Type = 2
-	ClientInfo_ANDROID          ClientInfo_Type = 3
+	ClientInfo_TYPE_WEB         ClientInfo_Type = 1
+	ClientInfo_TYPE_IOS         ClientInfo_Type = 2
+	ClientInfo_TYPE_ANDROID     ClientInfo_Type = 3
 )
 
 // Enum value maps for ClientInfo_Type.
 var (
 	ClientInfo_Type_name = map[int32]string{
 		0: "TYPE_UNSPECIFIED",
-		1: "WEB",
-		2: "IOS",
-		3: "ANDROID",
+		1: "TYPE_WEB",
+		2: "TYPE_IOS",
+		3: "TYPE_ANDROID",
 	}
 	ClientInfo_Type_value = map[string]int32{
 		"TYPE_UNSPECIFIED": 0,
-		"WEB":              1,
-		"IOS":              2,
-		"ANDROID":          3,
+		"TYPE_WEB":         1,
+		"TYPE_IOS":         2,
+		"TYPE_ANDROID":     3,
 	}
 )
 
@@ -746,19 +746,19 @@ var File_scene_hunter_v1_auth_proto protoreflect.FileDescriptor
 
 const file_scene_hunter_v1_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x1ascene_hunter/v1/auth.proto\x12\x0fscene_hunter.v1\x1a\x1bbuf/validate/validate.proto\"\xd2\x01\n" +
+	"\x1ascene_hunter/v1/auth.proto\x12\x0fscene_hunter.v1\x1a\x1bbuf/validate/validate.proto\"\xe1\x01\n" +
 	"\n" +
 	"ClientInfo\x124\n" +
 	"\x04type\x18\x01 \x01(\x0e2 .scene_hunter.v1.ClientInfo.TypeR\x04type\x12'\n" +
 	"\n" +
 	"user_agent\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x18\xf4\x03R\tuserAgent\x12(\n" +
 	"\vapp_version\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x182R\n" +
-	"appVersion\";\n" +
+	"appVersion\"J\n" +
 	"\x04Type\x12\x14\n" +
-	"\x10TYPE_UNSPECIFIED\x10\x00\x12\a\n" +
-	"\x03WEB\x10\x01\x12\a\n" +
-	"\x03IOS\x10\x02\x12\v\n" +
-	"\aANDROID\x10\x03\"W\n" +
+	"\x10TYPE_UNSPECIFIED\x10\x00\x12\f\n" +
+	"\bTYPE_WEB\x10\x01\x12\f\n" +
+	"\bTYPE_IOS\x10\x02\x12\x10\n" +
+	"\fTYPE_ANDROID\x10\x03\"W\n" +
 	"\x05Token\x12\x1d\n" +
 	"\x05token\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05token\x12/\n" +
 	"\x0fexpires_at_unix\x18\x02 \x01(\x03B\a\xbaH\x04\"\x02 \x00R\rexpiresAtUnix\"r\n" +

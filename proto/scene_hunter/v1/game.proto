@@ -9,22 +9,25 @@ option go_package = "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v
 // GameStatus represents the current status of the game.
 enum GameStatus {
   GAME_STATUS_UNSPECIFIED = 0;
-  GAME_STATUS_WAITING = 1;      // Waiting for players to join
-  GAME_STATUS_IN_PROGRESS = 2;  // Game is currently in progress
-  GAME_STATUS_FINISHED = 3;     // Game has ended
+  GAME_STATUS_WAITING = 1; // Waiting for players to join
+  GAME_STATUS_IN_PROGRESS = 2; // Game is currently in progress
+  GAME_STATUS_FINISHED = 3; // Game has ended
 }
 
 // TurnStatus represents the current status of a turn.
 enum TurnStatus {
   TURN_STATUS_UNSPECIFIED = 0;
-  TURN_STATUS_GAME_MASTER = 1;  // Game master's turn (taking photo)
-  TURN_STATUS_HUNTERS = 2;      // Hunters' turn (finding location)
+  TURN_STATUS_GAME_MASTER = 1; // Game master's turn (taking photo)
+  TURN_STATUS_HUNTERS = 2; // Hunters' turn (finding location)
 }
 
 // Player represents a player in the game.
 message Player {
   string user_id = 1 [(buf.validate.field).string.uuid = true];
-  string name = 2 [(buf.validate.field).string = {min_len: 1, max_len: 20}];
+  string name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 20
+  }];
   bool is_game_master = 3;
   bool is_admin = 4;
   int32 total_points = 5;
@@ -33,23 +36,32 @@ message Player {
 
 // Hint represents a single hint for hunters.
 message Hint {
-  int32 hint_number = 1 [(buf.validate.field).int32 = {gte: 1, lte: 5}];
+  int32 hint_number = 1 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 5
+  }];
   string text = 2;
 }
 
 // RoundResult represents the result of a single round for a player.
 message RoundResult {
   string user_id = 1 [(buf.validate.field).string.uuid = true];
-  int32 score = 2 [(buf.validate.field).int32 = {gte: 0, lte: 100}];
-  int32 remaining_seconds = 3 [(buf.validate.field).int32 = {gte: 0, lte: 60}];
-  int32 points = 4;  // score + remaining_seconds
+  int32 score = 2 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 100
+  }];
+  int32 remaining_seconds = 3 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 60
+  }];
+  int32 points = 4; // score + remaining_seconds
 }
 
 // Round represents a single round in the game.
 message Round {
   int32 round_number = 1;
   string game_master_user_id = 2 [(buf.validate.field).string.uuid = true];
-  string game_master_image_id = 3;  // Image ID of game master's photo
+  string game_master_image_id = 3; // Image ID of game master's photo
   repeated Hint hints = 4;
   repeated RoundResult results = 5;
   TurnStatus turn_status = 6;
@@ -60,7 +72,10 @@ message Round {
 message Game {
   string room_id = 1 [(buf.validate.field).string.uuid = true];
   GameStatus status = 2;
-  int32 total_rounds = 3 [(buf.validate.field).int32 = {gte: 1, lte: 5}];
+  int32 total_rounds = 3 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 5
+  }];
   int32 current_round = 4;
   repeated Player players = 5;
   repeated Round rounds = 6;
@@ -71,7 +86,10 @@ message Game {
 // StartGameRequest starts a new game.
 message StartGameRequest {
   string room_id = 1 [(buf.validate.field).string.uuid = true];
-  int32 total_rounds = 2 [(buf.validate.field).int32 = {gte: 1, lte: 5}];
+  int32 total_rounds = 2 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 5
+  }];
   string game_master_user_id = 3 [(buf.validate.field).string.uuid = true];
 }
 
@@ -83,7 +101,10 @@ message StartGameResponse {
 message JoinGameRequest {
   string room_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.uuid = true];
-  string name = 3 [(buf.validate.field).string = {min_len: 1, max_len: 20}];
+  string name = 3 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 20
+  }];
 }
 
 message JoinGameResponse {
@@ -107,7 +128,10 @@ message SubmitHunterPhotoRequest {
   string room_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.uuid = true];
   bytes image_data = 3;
-  int32 elapsed_seconds = 4 [(buf.validate.field).int32 = {gte: 0, lte: 60}];
+  int32 elapsed_seconds = 4 [(buf.validate.field).int32 = {
+    gte: 0
+    lte: 60
+  }];
 }
 
 message SubmitHunterPhotoResponse {

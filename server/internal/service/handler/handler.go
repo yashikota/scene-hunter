@@ -10,11 +10,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1/scene_hunterv1connect"
 	"github.com/yashikota/scene-hunter/server/internal/config"
+	gamehandler "github.com/yashikota/scene-hunter/server/internal/handler/game"
 	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
 	infradb "github.com/yashikota/scene-hunter/server/internal/infra/db"
+	"github.com/yashikota/scene-hunter/server/internal/infra/gemini"
 	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
 	"github.com/yashikota/scene-hunter/server/internal/repository"
 	authsvc "github.com/yashikota/scene-hunter/server/internal/service/auth"
+	gamesvc "github.com/yashikota/scene-hunter/server/internal/service/game"
 	healthsvc "github.com/yashikota/scene-hunter/server/internal/service/health"
 	"github.com/yashikota/scene-hunter/server/internal/service/middleware"
 	roomsvc "github.com/yashikota/scene-hunter/server/internal/service/room"
@@ -76,6 +79,7 @@ func RegisterHandlers(mux *chi.Mux, deps *Dependencies) {
 	registerAuthService(mux, deps, interceptors)
 	registerImageService(mux, deps, interceptors)
 	registerRoomService(mux, deps, interceptors)
+	registerGameService(mux, deps, interceptors)
 }
 
 func registerStatusService(
@@ -174,4 +178,38 @@ func registerAuthService(mux *chi.Mux, deps *Dependencies, interceptors connect.
 		interceptors,
 	)
 	mux.Mount(authPath, authHandler)
+}
+
+func registerGameService(mux *chi.Mux, deps *Dependencies, interceptors connect.Option) {
+	if deps.KVSClient == nil || deps.BlobClient == nil || deps.Config == nil {
+		return
+	}
+
+	// Initialize Gemini client
+	geminiClient, err := gemini.NewClient(
+		context.Background(),
+		deps.Config.Gemini.APIKey,
+		deps.Config.Gemini.Model,
+	)
+	if err != nil {
+		logger := slog.Default()
+		logger.Error("failed to initialize Gemini client for game service", "error", err)
+
+		return
+	}
+
+	gameRepo := repository.NewGameRepository(deps.KVSClient)
+	roomRepo := repository.NewRoomRepository(deps.KVSClient)
+
+	// Create game service
+	gameSvc := gamesvc.NewService(gameRepo, roomRepo, deps.BlobClient, geminiClient)
+
+	// Create game handler
+	gameService := gamehandler.NewHandler(gameSvc)
+
+	gamePath, gameHandler := scene_hunterv1connect.NewGameServiceHandler(
+		gameService,
+		interceptors,
+	)
+	mux.Mount(gamePath, gameHandler)
 }
