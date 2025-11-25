@@ -79,9 +79,10 @@ func (GameStatus) EnumDescriptor() ([]byte, []int) {
 type TurnStatus int32
 
 const (
-	TurnStatus_TURN_STATUS_UNSPECIFIED TurnStatus = 0
-	TurnStatus_TURN_STATUS_GAME_MASTER TurnStatus = 1 // Game master's turn (taking photo)
-	TurnStatus_TURN_STATUS_HUNTERS     TurnStatus = 2 // Hunters' turn (finding location)
+	TurnStatus_TURN_STATUS_UNSPECIFIED           TurnStatus = 0
+	TurnStatus_TURN_STATUS_GAME_MASTER           TurnStatus = 1 // Game master's turn (taking photo)
+	TurnStatus_TURN_STATUS_HUNTERS               TurnStatus = 2 // Hunters' turn (finding location)
+	TurnStatus_TURN_STATUS_WAITING_FOR_SELECTION TurnStatus = 3 // All hunters submitted, waiting for game master to select winners
 )
 
 // Enum value maps for TurnStatus.
@@ -90,11 +91,13 @@ var (
 		0: "TURN_STATUS_UNSPECIFIED",
 		1: "TURN_STATUS_GAME_MASTER",
 		2: "TURN_STATUS_HUNTERS",
+		3: "TURN_STATUS_WAITING_FOR_SELECTION",
 	}
 	TurnStatus_value = map[string]int32{
-		"TURN_STATUS_UNSPECIFIED": 0,
-		"TURN_STATUS_GAME_MASTER": 1,
-		"TURN_STATUS_HUNTERS":     2,
+		"TURN_STATUS_UNSPECIFIED":           0,
+		"TURN_STATUS_GAME_MASTER":           1,
+		"TURN_STATUS_HUNTERS":               2,
+		"TURN_STATUS_WAITING_FOR_SELECTION": 3,
 	}
 )
 
@@ -263,20 +266,80 @@ func (x *Hint) GetText() string {
 	return ""
 }
 
+// HunterSubmission represents a hunter's photo submission.
+type HunterSubmission struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	UserId             string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ImageId            string                 `protobuf:"bytes,2,opt,name=image_id,json=imageId,proto3" json:"image_id,omitempty"`
+	SubmittedAtSeconds int32                  `protobuf:"varint,3,opt,name=submitted_at_seconds,json=submittedAtSeconds,proto3" json:"submitted_at_seconds,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *HunterSubmission) Reset() {
+	*x = HunterSubmission{}
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HunterSubmission) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HunterSubmission) ProtoMessage() {}
+
+func (x *HunterSubmission) ProtoReflect() protoreflect.Message {
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HunterSubmission.ProtoReflect.Descriptor instead.
+func (*HunterSubmission) Descriptor() ([]byte, []int) {
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *HunterSubmission) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *HunterSubmission) GetImageId() string {
+	if x != nil {
+		return x.ImageId
+	}
+	return ""
+}
+
+func (x *HunterSubmission) GetSubmittedAtSeconds() int32 {
+	if x != nil {
+		return x.SubmittedAtSeconds
+	}
+	return 0
+}
+
 // RoundResult represents the result of a single round for a player.
 type RoundResult struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	UserId           string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Score            int32                  `protobuf:"varint,2,opt,name=score,proto3" json:"score,omitempty"`
-	RemainingSeconds int32                  `protobuf:"varint,3,opt,name=remaining_seconds,json=remainingSeconds,proto3" json:"remaining_seconds,omitempty"`
-	Points           int32                  `protobuf:"varint,4,opt,name=points,proto3" json:"points,omitempty"` // score + remaining_seconds
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Rank          int32                  `protobuf:"varint,2,opt,name=rank,proto3" json:"rank,omitempty"`     // Rank assigned by game master (1st, 2nd, 3rd, etc.)
+	Points        int32                  `protobuf:"varint,3,opt,name=points,proto3" json:"points,omitempty"` // Points awarded based on rank
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RoundResult) Reset() {
 	*x = RoundResult{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[2]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -288,7 +351,7 @@ func (x *RoundResult) String() string {
 func (*RoundResult) ProtoMessage() {}
 
 func (x *RoundResult) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[2]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -301,7 +364,7 @@ func (x *RoundResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoundResult.ProtoReflect.Descriptor instead.
 func (*RoundResult) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{2}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RoundResult) GetUserId() string {
@@ -311,16 +374,9 @@ func (x *RoundResult) GetUserId() string {
 	return ""
 }
 
-func (x *RoundResult) GetScore() int32 {
+func (x *RoundResult) GetRank() int32 {
 	if x != nil {
-		return x.Score
-	}
-	return 0
-}
-
-func (x *RoundResult) GetRemainingSeconds() int32 {
-	if x != nil {
-		return x.RemainingSeconds
+		return x.Rank
 	}
 	return 0
 }
@@ -339,16 +395,17 @@ type Round struct {
 	GameMasterUserId   string                 `protobuf:"bytes,2,opt,name=game_master_user_id,json=gameMasterUserId,proto3" json:"game_master_user_id,omitempty"`
 	GameMasterImageId  string                 `protobuf:"bytes,3,opt,name=game_master_image_id,json=gameMasterImageId,proto3" json:"game_master_image_id,omitempty"` // Image ID of game master's photo
 	Hints              []*Hint                `protobuf:"bytes,4,rep,name=hints,proto3" json:"hints,omitempty"`
-	Results            []*RoundResult         `protobuf:"bytes,5,rep,name=results,proto3" json:"results,omitempty"`
-	TurnStatus         TurnStatus             `protobuf:"varint,6,opt,name=turn_status,json=turnStatus,proto3,enum=scene_hunter.v1.TurnStatus" json:"turn_status,omitempty"`
-	TurnElapsedSeconds int32                  `protobuf:"varint,7,opt,name=turn_elapsed_seconds,json=turnElapsedSeconds,proto3" json:"turn_elapsed_seconds,omitempty"`
+	HunterSubmissions  []*HunterSubmission    `protobuf:"bytes,5,rep,name=hunter_submissions,json=hunterSubmissions,proto3" json:"hunter_submissions,omitempty"` // Photos submitted by hunters
+	Results            []*RoundResult         `protobuf:"bytes,6,rep,name=results,proto3" json:"results,omitempty"`                                              // Results after game master selects winners
+	TurnStatus         TurnStatus             `protobuf:"varint,7,opt,name=turn_status,json=turnStatus,proto3,enum=scene_hunter.v1.TurnStatus" json:"turn_status,omitempty"`
+	TurnElapsedSeconds int32                  `protobuf:"varint,8,opt,name=turn_elapsed_seconds,json=turnElapsedSeconds,proto3" json:"turn_elapsed_seconds,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
 
 func (x *Round) Reset() {
 	*x = Round{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[3]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -360,7 +417,7 @@ func (x *Round) String() string {
 func (*Round) ProtoMessage() {}
 
 func (x *Round) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[3]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -373,7 +430,7 @@ func (x *Round) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Round.ProtoReflect.Descriptor instead.
 func (*Round) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{3}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Round) GetRoundNumber() int32 {
@@ -400,6 +457,13 @@ func (x *Round) GetGameMasterImageId() string {
 func (x *Round) GetHints() []*Hint {
 	if x != nil {
 		return x.Hints
+	}
+	return nil
+}
+
+func (x *Round) GetHunterSubmissions() []*HunterSubmission {
+	if x != nil {
+		return x.HunterSubmissions
 	}
 	return nil
 }
@@ -442,7 +506,7 @@ type Game struct {
 
 func (x *Game) Reset() {
 	*x = Game{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[4]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -454,7 +518,7 @@ func (x *Game) String() string {
 func (*Game) ProtoMessage() {}
 
 func (x *Game) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[4]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -467,7 +531,7 @@ func (x *Game) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Game.ProtoReflect.Descriptor instead.
 func (*Game) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{4}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Game) GetRoomId() string {
@@ -538,7 +602,7 @@ type StartGameRequest struct {
 
 func (x *StartGameRequest) Reset() {
 	*x = StartGameRequest{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[5]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -550,7 +614,7 @@ func (x *StartGameRequest) String() string {
 func (*StartGameRequest) ProtoMessage() {}
 
 func (x *StartGameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[5]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -563,7 +627,7 @@ func (x *StartGameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartGameRequest.ProtoReflect.Descriptor instead.
 func (*StartGameRequest) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{5}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *StartGameRequest) GetRoomId() string {
@@ -596,7 +660,7 @@ type StartGameResponse struct {
 
 func (x *StartGameResponse) Reset() {
 	*x = StartGameResponse{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[6]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -608,7 +672,7 @@ func (x *StartGameResponse) String() string {
 func (*StartGameResponse) ProtoMessage() {}
 
 func (x *StartGameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[6]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -621,7 +685,7 @@ func (x *StartGameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartGameResponse.ProtoReflect.Descriptor instead.
 func (*StartGameResponse) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{6}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *StartGameResponse) GetGame() *Game {
@@ -643,7 +707,7 @@ type JoinGameRequest struct {
 
 func (x *JoinGameRequest) Reset() {
 	*x = JoinGameRequest{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[7]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -655,7 +719,7 @@ func (x *JoinGameRequest) String() string {
 func (*JoinGameRequest) ProtoMessage() {}
 
 func (x *JoinGameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[7]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -668,7 +732,7 @@ func (x *JoinGameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinGameRequest.ProtoReflect.Descriptor instead.
 func (*JoinGameRequest) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{7}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *JoinGameRequest) GetRoomId() string {
@@ -701,7 +765,7 @@ type JoinGameResponse struct {
 
 func (x *JoinGameResponse) Reset() {
 	*x = JoinGameResponse{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[8]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -713,7 +777,7 @@ func (x *JoinGameResponse) String() string {
 func (*JoinGameResponse) ProtoMessage() {}
 
 func (x *JoinGameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[8]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -726,7 +790,7 @@ func (x *JoinGameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinGameResponse.ProtoReflect.Descriptor instead.
 func (*JoinGameResponse) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{8}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *JoinGameResponse) GetGame() *Game {
@@ -748,7 +812,7 @@ type SubmitGameMasterPhotoRequest struct {
 
 func (x *SubmitGameMasterPhotoRequest) Reset() {
 	*x = SubmitGameMasterPhotoRequest{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[9]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -760,7 +824,7 @@ func (x *SubmitGameMasterPhotoRequest) String() string {
 func (*SubmitGameMasterPhotoRequest) ProtoMessage() {}
 
 func (x *SubmitGameMasterPhotoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[9]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -773,7 +837,7 @@ func (x *SubmitGameMasterPhotoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitGameMasterPhotoRequest.ProtoReflect.Descriptor instead.
 func (*SubmitGameMasterPhotoRequest) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{9}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *SubmitGameMasterPhotoRequest) GetRoomId() string {
@@ -807,7 +871,7 @@ type SubmitGameMasterPhotoResponse struct {
 
 func (x *SubmitGameMasterPhotoResponse) Reset() {
 	*x = SubmitGameMasterPhotoResponse{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[10]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -819,7 +883,7 @@ func (x *SubmitGameMasterPhotoResponse) String() string {
 func (*SubmitGameMasterPhotoResponse) ProtoMessage() {}
 
 func (x *SubmitGameMasterPhotoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[10]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -832,7 +896,7 @@ func (x *SubmitGameMasterPhotoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitGameMasterPhotoResponse.ProtoReflect.Descriptor instead.
 func (*SubmitGameMasterPhotoResponse) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{10}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *SubmitGameMasterPhotoResponse) GetImageId() string {
@@ -862,7 +926,7 @@ type SubmitHunterPhotoRequest struct {
 
 func (x *SubmitHunterPhotoRequest) Reset() {
 	*x = SubmitHunterPhotoRequest{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[11]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -874,7 +938,7 @@ func (x *SubmitHunterPhotoRequest) String() string {
 func (*SubmitHunterPhotoRequest) ProtoMessage() {}
 
 func (x *SubmitHunterPhotoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[11]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -887,7 +951,7 @@ func (x *SubmitHunterPhotoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitHunterPhotoRequest.ProtoReflect.Descriptor instead.
 func (*SubmitHunterPhotoRequest) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{11}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *SubmitHunterPhotoRequest) GetRoomId() string {
@@ -919,17 +983,16 @@ func (x *SubmitHunterPhotoRequest) GetElapsedSeconds() int32 {
 }
 
 type SubmitHunterPhotoResponse struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Score            int32                  `protobuf:"varint,1,opt,name=score,proto3" json:"score,omitempty"`
-	RemainingSeconds int32                  `protobuf:"varint,2,opt,name=remaining_seconds,json=remainingSeconds,proto3" json:"remaining_seconds,omitempty"`
-	Points           int32                  `protobuf:"varint,3,opt,name=points,proto3" json:"points,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	ImageId             string                 `protobuf:"bytes,1,opt,name=image_id,json=imageId,proto3" json:"image_id,omitempty"`
+	AllHuntersSubmitted bool                   `protobuf:"varint,2,opt,name=all_hunters_submitted,json=allHuntersSubmitted,proto3" json:"all_hunters_submitted,omitempty"` // True if all hunters have submitted their photos
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *SubmitHunterPhotoResponse) Reset() {
 	*x = SubmitHunterPhotoResponse{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[12]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -941,7 +1004,7 @@ func (x *SubmitHunterPhotoResponse) String() string {
 func (*SubmitHunterPhotoResponse) ProtoMessage() {}
 
 func (x *SubmitHunterPhotoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[12]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -954,28 +1017,21 @@ func (x *SubmitHunterPhotoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitHunterPhotoResponse.ProtoReflect.Descriptor instead.
 func (*SubmitHunterPhotoResponse) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{12}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *SubmitHunterPhotoResponse) GetScore() int32 {
+func (x *SubmitHunterPhotoResponse) GetImageId() string {
 	if x != nil {
-		return x.Score
+		return x.ImageId
 	}
-	return 0
+	return ""
 }
 
-func (x *SubmitHunterPhotoResponse) GetRemainingSeconds() int32 {
+func (x *SubmitHunterPhotoResponse) GetAllHuntersSubmitted() bool {
 	if x != nil {
-		return x.RemainingSeconds
+		return x.AllHuntersSubmitted
 	}
-	return 0
-}
-
-func (x *SubmitHunterPhotoResponse) GetPoints() int32 {
-	if x != nil {
-		return x.Points
-	}
-	return 0
+	return false
 }
 
 // GetGameStateRequest gets the current game state.
@@ -988,7 +1044,7 @@ type GetGameStateRequest struct {
 
 func (x *GetGameStateRequest) Reset() {
 	*x = GetGameStateRequest{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[13]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1000,7 +1056,7 @@ func (x *GetGameStateRequest) String() string {
 func (*GetGameStateRequest) ProtoMessage() {}
 
 func (x *GetGameStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[13]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1013,7 +1069,7 @@ func (x *GetGameStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGameStateRequest.ProtoReflect.Descriptor instead.
 func (*GetGameStateRequest) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{13}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetGameStateRequest) GetRoomId() string {
@@ -1032,7 +1088,7 @@ type GetGameStateResponse struct {
 
 func (x *GetGameStateResponse) Reset() {
 	*x = GetGameStateResponse{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[14]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1044,7 +1100,7 @@ func (x *GetGameStateResponse) String() string {
 func (*GetGameStateResponse) ProtoMessage() {}
 
 func (x *GetGameStateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[14]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1057,7 +1113,7 @@ func (x *GetGameStateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGameStateResponse.ProtoReflect.Descriptor instead.
 func (*GetGameStateResponse) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{14}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetGameStateResponse) GetGame() *Game {
@@ -1078,7 +1134,7 @@ type StartNextRoundRequest struct {
 
 func (x *StartNextRoundRequest) Reset() {
 	*x = StartNextRoundRequest{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[15]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1090,7 +1146,7 @@ func (x *StartNextRoundRequest) String() string {
 func (*StartNextRoundRequest) ProtoMessage() {}
 
 func (x *StartNextRoundRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[15]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1103,7 +1159,7 @@ func (x *StartNextRoundRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartNextRoundRequest.ProtoReflect.Descriptor instead.
 func (*StartNextRoundRequest) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{15}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *StartNextRoundRequest) GetRoomId() string {
@@ -1129,7 +1185,7 @@ type StartNextRoundResponse struct {
 
 func (x *StartNextRoundResponse) Reset() {
 	*x = StartNextRoundResponse{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[16]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1141,7 +1197,7 @@ func (x *StartNextRoundResponse) String() string {
 func (*StartNextRoundResponse) ProtoMessage() {}
 
 func (x *StartNextRoundResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[16]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1154,10 +1210,257 @@ func (x *StartNextRoundResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartNextRoundResponse.ProtoReflect.Descriptor instead.
 func (*StartNextRoundResponse) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{16}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *StartNextRoundResponse) GetGame() *Game {
+	if x != nil {
+		return x.Game
+	}
+	return nil
+}
+
+// GetHunterPhotosRequest gets all hunter photo submissions for the current round.
+type GetHunterPhotosRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetHunterPhotosRequest) Reset() {
+	*x = GetHunterPhotosRequest{}
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetHunterPhotosRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetHunterPhotosRequest) ProtoMessage() {}
+
+func (x *GetHunterPhotosRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetHunterPhotosRequest.ProtoReflect.Descriptor instead.
+func (*GetHunterPhotosRequest) Descriptor() ([]byte, []int) {
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GetHunterPhotosRequest) GetRoomId() string {
+	if x != nil {
+		return x.RoomId
+	}
+	return ""
+}
+
+type GetHunterPhotosResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Submissions   []*HunterSubmission    `protobuf:"bytes,1,rep,name=submissions,proto3" json:"submissions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetHunterPhotosResponse) Reset() {
+	*x = GetHunterPhotosResponse{}
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetHunterPhotosResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetHunterPhotosResponse) ProtoMessage() {}
+
+func (x *GetHunterPhotosResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetHunterPhotosResponse.ProtoReflect.Descriptor instead.
+func (*GetHunterPhotosResponse) Descriptor() ([]byte, []int) {
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *GetHunterPhotosResponse) GetSubmissions() []*HunterSubmission {
+	if x != nil {
+		return x.Submissions
+	}
+	return nil
+}
+
+// RankSelection represents a ranking assigned by the game master.
+type RankSelection struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Rank          int32                  `protobuf:"varint,2,opt,name=rank,proto3" json:"rank,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RankSelection) Reset() {
+	*x = RankSelection{}
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RankSelection) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RankSelection) ProtoMessage() {}
+
+func (x *RankSelection) ProtoReflect() protoreflect.Message {
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RankSelection.ProtoReflect.Descriptor instead.
+func (*RankSelection) Descriptor() ([]byte, []int) {
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *RankSelection) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *RankSelection) GetRank() int32 {
+	if x != nil {
+		return x.Rank
+	}
+	return 0
+}
+
+// SelectWinnersRequest allows game master to select winners and assign ranks.
+type SelectWinnersRequest struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	RoomId           string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	GameMasterUserId string                 `protobuf:"bytes,2,opt,name=game_master_user_id,json=gameMasterUserId,proto3" json:"game_master_user_id,omitempty"`
+	Rankings         []*RankSelection       `protobuf:"bytes,3,rep,name=rankings,proto3" json:"rankings,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *SelectWinnersRequest) Reset() {
+	*x = SelectWinnersRequest{}
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SelectWinnersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SelectWinnersRequest) ProtoMessage() {}
+
+func (x *SelectWinnersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SelectWinnersRequest.ProtoReflect.Descriptor instead.
+func (*SelectWinnersRequest) Descriptor() ([]byte, []int) {
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *SelectWinnersRequest) GetRoomId() string {
+	if x != nil {
+		return x.RoomId
+	}
+	return ""
+}
+
+func (x *SelectWinnersRequest) GetGameMasterUserId() string {
+	if x != nil {
+		return x.GameMasterUserId
+	}
+	return ""
+}
+
+func (x *SelectWinnersRequest) GetRankings() []*RankSelection {
+	if x != nil {
+		return x.Rankings
+	}
+	return nil
+}
+
+type SelectWinnersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Game          *Game                  `protobuf:"bytes,1,opt,name=game,proto3" json:"game,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SelectWinnersResponse) Reset() {
+	*x = SelectWinnersResponse{}
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SelectWinnersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SelectWinnersResponse) ProtoMessage() {}
+
+func (x *SelectWinnersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SelectWinnersResponse.ProtoReflect.Descriptor instead.
+func (*SelectWinnersResponse) Descriptor() ([]byte, []int) {
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *SelectWinnersResponse) GetGame() *Game {
 	if x != nil {
 		return x.Game
 	}
@@ -1174,7 +1477,7 @@ type EndGameRequest struct {
 
 func (x *EndGameRequest) Reset() {
 	*x = EndGameRequest{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[17]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1186,7 +1489,7 @@ func (x *EndGameRequest) String() string {
 func (*EndGameRequest) ProtoMessage() {}
 
 func (x *EndGameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[17]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1199,7 +1502,7 @@ func (x *EndGameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EndGameRequest.ProtoReflect.Descriptor instead.
 func (*EndGameRequest) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{17}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *EndGameRequest) GetRoomId() string {
@@ -1219,7 +1522,7 @@ type EndGameResponse struct {
 
 func (x *EndGameResponse) Reset() {
 	*x = EndGameResponse{}
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[18]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1231,7 +1534,7 @@ func (x *EndGameResponse) String() string {
 func (*EndGameResponse) ProtoMessage() {}
 
 func (x *EndGameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_scene_hunter_v1_game_proto_msgTypes[18]
+	mi := &file_scene_hunter_v1_game_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1244,7 +1547,7 @@ func (x *EndGameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EndGameResponse.ProtoReflect.Descriptor instead.
 func (*EndGameResponse) Descriptor() ([]byte, []int) {
-	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{18}
+	return file_scene_hunter_v1_game_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *EndGameResponse) GetGame() *Game {
@@ -1276,21 +1579,25 @@ const file_scene_hunter_v1_game_proto_rawDesc = "" +
 	"\x04Hint\x12*\n" +
 	"\vhint_number\x18\x01 \x01(\x05B\t\xbaH\x06\x1a\x04\x18\x05(\x01R\n" +
 	"hintNumber\x12\x12\n" +
-	"\x04text\x18\x02 \x01(\tR\x04text\"\xa1\x01\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\"\x8d\x01\n" +
+	"\x10HunterSubmission\x12!\n" +
+	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12\x19\n" +
+	"\bimage_id\x18\x02 \x01(\tR\aimageId\x12;\n" +
+	"\x14submitted_at_seconds\x18\x03 \x01(\x05B\t\xbaH\x06\x1a\x04\x18<(\x00R\x12submittedAtSeconds\"g\n" +
 	"\vRoundResult\x12!\n" +
-	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12\x1f\n" +
-	"\x05score\x18\x02 \x01(\x05B\t\xbaH\x06\x1a\x04\x18d(\x00R\x05score\x126\n" +
-	"\x11remaining_seconds\x18\x03 \x01(\x05B\t\xbaH\x06\x1a\x04\x18<(\x00R\x10remainingSeconds\x12\x16\n" +
-	"\x06points\x18\x04 \x01(\x05R\x06points\"\xe9\x02\n" +
+	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12\x1d\n" +
+	"\x04rank\x18\x02 \x01(\x05B\t\xbaH\x06\x1a\x04\x18\x14(\x01R\x04rank\x12\x16\n" +
+	"\x06points\x18\x03 \x01(\x05R\x06points\"\xbb\x03\n" +
 	"\x05Round\x12!\n" +
 	"\fround_number\x18\x01 \x01(\x05R\vroundNumber\x127\n" +
 	"\x13game_master_user_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x10gameMasterUserId\x12/\n" +
 	"\x14game_master_image_id\x18\x03 \x01(\tR\x11gameMasterImageId\x12+\n" +
-	"\x05hints\x18\x04 \x03(\v2\x15.scene_hunter.v1.HintR\x05hints\x126\n" +
-	"\aresults\x18\x05 \x03(\v2\x1c.scene_hunter.v1.RoundResultR\aresults\x12<\n" +
-	"\vturn_status\x18\x06 \x01(\x0e2\x1b.scene_hunter.v1.TurnStatusR\n" +
+	"\x05hints\x18\x04 \x03(\v2\x15.scene_hunter.v1.HintR\x05hints\x12P\n" +
+	"\x12hunter_submissions\x18\x05 \x03(\v2!.scene_hunter.v1.HunterSubmissionR\x11hunterSubmissions\x126\n" +
+	"\aresults\x18\x06 \x03(\v2\x1c.scene_hunter.v1.RoundResultR\aresults\x12<\n" +
+	"\vturn_status\x18\a \x01(\x0e2\x1b.scene_hunter.v1.TurnStatusR\n" +
 	"turnStatus\x120\n" +
-	"\x14turn_elapsed_seconds\x18\a \x01(\x05R\x12turnElapsedSeconds\"\xd2\x02\n" +
+	"\x14turn_elapsed_seconds\x18\b \x01(\x05R\x12turnElapsedSeconds\"\xd2\x02\n" +
 	"\x04Game\x12!\n" +
 	"\aroom_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06roomId\x123\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1b.scene_hunter.v1.GameStatusR\x06status\x12,\n" +
@@ -1327,11 +1634,10 @@ const file_scene_hunter_v1_game_proto_rawDesc = "" +
 	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12\x1d\n" +
 	"\n" +
 	"image_data\x18\x03 \x01(\fR\timageData\x122\n" +
-	"\x0felapsed_seconds\x18\x04 \x01(\x05B\t\xbaH\x06\x1a\x04\x18<(\x00R\x0eelapsedSeconds\"v\n" +
-	"\x19SubmitHunterPhotoResponse\x12\x14\n" +
-	"\x05score\x18\x01 \x01(\x05R\x05score\x12+\n" +
-	"\x11remaining_seconds\x18\x02 \x01(\x05R\x10remainingSeconds\x12\x16\n" +
-	"\x06points\x18\x03 \x01(\x05R\x06points\"8\n" +
+	"\x0felapsed_seconds\x18\x04 \x01(\x05B\t\xbaH\x06\x1a\x04\x18<(\x00R\x0eelapsedSeconds\"j\n" +
+	"\x19SubmitHunterPhotoResponse\x12\x19\n" +
+	"\bimage_id\x18\x01 \x01(\tR\aimageId\x122\n" +
+	"\x15all_hunters_submitted\x18\x02 \x01(\bR\x13allHuntersSubmitted\"8\n" +
 	"\x13GetGameStateRequest\x12!\n" +
 	"\aroom_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06roomId\"A\n" +
 	"\x14GetGameStateResponse\x12)\n" +
@@ -1340,6 +1646,19 @@ const file_scene_hunter_v1_game_proto_rawDesc = "" +
 	"\aroom_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06roomId\x127\n" +
 	"\x13game_master_user_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x10gameMasterUserId\"C\n" +
 	"\x16StartNextRoundResponse\x12)\n" +
+	"\x04game\x18\x01 \x01(\v2\x15.scene_hunter.v1.GameR\x04game\";\n" +
+	"\x16GetHunterPhotosRequest\x12!\n" +
+	"\aroom_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06roomId\"^\n" +
+	"\x17GetHunterPhotosResponse\x12C\n" +
+	"\vsubmissions\x18\x01 \x03(\v2!.scene_hunter.v1.HunterSubmissionR\vsubmissions\"Q\n" +
+	"\rRankSelection\x12!\n" +
+	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12\x1d\n" +
+	"\x04rank\x18\x02 \x01(\x05B\t\xbaH\x06\x1a\x04\x18\x14(\x01R\x04rank\"\xae\x01\n" +
+	"\x14SelectWinnersRequest\x12!\n" +
+	"\aroom_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06roomId\x127\n" +
+	"\x13game_master_user_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x10gameMasterUserId\x12:\n" +
+	"\brankings\x18\x03 \x03(\v2\x1e.scene_hunter.v1.RankSelectionR\brankings\"B\n" +
+	"\x15SelectWinnersResponse\x12)\n" +
 	"\x04game\x18\x01 \x01(\v2\x15.scene_hunter.v1.GameR\x04game\"3\n" +
 	"\x0eEndGameRequest\x12!\n" +
 	"\aroom_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06roomId\"|\n" +
@@ -1351,17 +1670,20 @@ const file_scene_hunter_v1_game_proto_rawDesc = "" +
 	"\x17GAME_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13GAME_STATUS_WAITING\x10\x01\x12\x1b\n" +
 	"\x17GAME_STATUS_IN_PROGRESS\x10\x02\x12\x18\n" +
-	"\x14GAME_STATUS_FINISHED\x10\x03*_\n" +
+	"\x14GAME_STATUS_FINISHED\x10\x03*\x86\x01\n" +
 	"\n" +
 	"TurnStatus\x12\x1b\n" +
 	"\x17TURN_STATUS_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17TURN_STATUS_GAME_MASTER\x10\x01\x12\x17\n" +
-	"\x13TURN_STATUS_HUNTERS\x10\x022\xa4\x05\n" +
+	"\x13TURN_STATUS_HUNTERS\x10\x02\x12%\n" +
+	"!TURN_STATUS_WAITING_FOR_SELECTION\x10\x032\xea\x06\n" +
 	"\vGameService\x12R\n" +
 	"\tStartGame\x12!.scene_hunter.v1.StartGameRequest\x1a\".scene_hunter.v1.StartGameResponse\x12O\n" +
 	"\bJoinGame\x12 .scene_hunter.v1.JoinGameRequest\x1a!.scene_hunter.v1.JoinGameResponse\x12v\n" +
 	"\x15SubmitGameMasterPhoto\x12-.scene_hunter.v1.SubmitGameMasterPhotoRequest\x1a..scene_hunter.v1.SubmitGameMasterPhotoResponse\x12j\n" +
-	"\x11SubmitHunterPhoto\x12).scene_hunter.v1.SubmitHunterPhotoRequest\x1a*.scene_hunter.v1.SubmitHunterPhotoResponse\x12[\n" +
+	"\x11SubmitHunterPhoto\x12).scene_hunter.v1.SubmitHunterPhotoRequest\x1a*.scene_hunter.v1.SubmitHunterPhotoResponse\x12d\n" +
+	"\x0fGetHunterPhotos\x12'.scene_hunter.v1.GetHunterPhotosRequest\x1a(.scene_hunter.v1.GetHunterPhotosResponse\x12^\n" +
+	"\rSelectWinners\x12%.scene_hunter.v1.SelectWinnersRequest\x1a&.scene_hunter.v1.SelectWinnersResponse\x12[\n" +
 	"\fGetGameState\x12$.scene_hunter.v1.GetGameStateRequest\x1a%.scene_hunter.v1.GetGameStateResponse\x12a\n" +
 	"\x0eStartNextRound\x12&.scene_hunter.v1.StartNextRoundRequest\x1a'.scene_hunter.v1.StartNextRoundResponse\x12L\n" +
 	"\aEndGame\x12\x1f.scene_hunter.v1.EndGameRequest\x1a .scene_hunter.v1.EndGameResponseB\xc6\x01\n" +
@@ -1380,63 +1702,77 @@ func file_scene_hunter_v1_game_proto_rawDescGZIP() []byte {
 }
 
 var file_scene_hunter_v1_game_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_scene_hunter_v1_game_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_scene_hunter_v1_game_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_scene_hunter_v1_game_proto_goTypes = []any{
 	(GameStatus)(0),                       // 0: scene_hunter.v1.GameStatus
 	(TurnStatus)(0),                       // 1: scene_hunter.v1.TurnStatus
 	(*Player)(nil),                        // 2: scene_hunter.v1.Player
 	(*Hint)(nil),                          // 3: scene_hunter.v1.Hint
-	(*RoundResult)(nil),                   // 4: scene_hunter.v1.RoundResult
-	(*Round)(nil),                         // 5: scene_hunter.v1.Round
-	(*Game)(nil),                          // 6: scene_hunter.v1.Game
-	(*StartGameRequest)(nil),              // 7: scene_hunter.v1.StartGameRequest
-	(*StartGameResponse)(nil),             // 8: scene_hunter.v1.StartGameResponse
-	(*JoinGameRequest)(nil),               // 9: scene_hunter.v1.JoinGameRequest
-	(*JoinGameResponse)(nil),              // 10: scene_hunter.v1.JoinGameResponse
-	(*SubmitGameMasterPhotoRequest)(nil),  // 11: scene_hunter.v1.SubmitGameMasterPhotoRequest
-	(*SubmitGameMasterPhotoResponse)(nil), // 12: scene_hunter.v1.SubmitGameMasterPhotoResponse
-	(*SubmitHunterPhotoRequest)(nil),      // 13: scene_hunter.v1.SubmitHunterPhotoRequest
-	(*SubmitHunterPhotoResponse)(nil),     // 14: scene_hunter.v1.SubmitHunterPhotoResponse
-	(*GetGameStateRequest)(nil),           // 15: scene_hunter.v1.GetGameStateRequest
-	(*GetGameStateResponse)(nil),          // 16: scene_hunter.v1.GetGameStateResponse
-	(*StartNextRoundRequest)(nil),         // 17: scene_hunter.v1.StartNextRoundRequest
-	(*StartNextRoundResponse)(nil),        // 18: scene_hunter.v1.StartNextRoundResponse
-	(*EndGameRequest)(nil),                // 19: scene_hunter.v1.EndGameRequest
-	(*EndGameResponse)(nil),               // 20: scene_hunter.v1.EndGameResponse
+	(*HunterSubmission)(nil),              // 4: scene_hunter.v1.HunterSubmission
+	(*RoundResult)(nil),                   // 5: scene_hunter.v1.RoundResult
+	(*Round)(nil),                         // 6: scene_hunter.v1.Round
+	(*Game)(nil),                          // 7: scene_hunter.v1.Game
+	(*StartGameRequest)(nil),              // 8: scene_hunter.v1.StartGameRequest
+	(*StartGameResponse)(nil),             // 9: scene_hunter.v1.StartGameResponse
+	(*JoinGameRequest)(nil),               // 10: scene_hunter.v1.JoinGameRequest
+	(*JoinGameResponse)(nil),              // 11: scene_hunter.v1.JoinGameResponse
+	(*SubmitGameMasterPhotoRequest)(nil),  // 12: scene_hunter.v1.SubmitGameMasterPhotoRequest
+	(*SubmitGameMasterPhotoResponse)(nil), // 13: scene_hunter.v1.SubmitGameMasterPhotoResponse
+	(*SubmitHunterPhotoRequest)(nil),      // 14: scene_hunter.v1.SubmitHunterPhotoRequest
+	(*SubmitHunterPhotoResponse)(nil),     // 15: scene_hunter.v1.SubmitHunterPhotoResponse
+	(*GetGameStateRequest)(nil),           // 16: scene_hunter.v1.GetGameStateRequest
+	(*GetGameStateResponse)(nil),          // 17: scene_hunter.v1.GetGameStateResponse
+	(*StartNextRoundRequest)(nil),         // 18: scene_hunter.v1.StartNextRoundRequest
+	(*StartNextRoundResponse)(nil),        // 19: scene_hunter.v1.StartNextRoundResponse
+	(*GetHunterPhotosRequest)(nil),        // 20: scene_hunter.v1.GetHunterPhotosRequest
+	(*GetHunterPhotosResponse)(nil),       // 21: scene_hunter.v1.GetHunterPhotosResponse
+	(*RankSelection)(nil),                 // 22: scene_hunter.v1.RankSelection
+	(*SelectWinnersRequest)(nil),          // 23: scene_hunter.v1.SelectWinnersRequest
+	(*SelectWinnersResponse)(nil),         // 24: scene_hunter.v1.SelectWinnersResponse
+	(*EndGameRequest)(nil),                // 25: scene_hunter.v1.EndGameRequest
+	(*EndGameResponse)(nil),               // 26: scene_hunter.v1.EndGameResponse
 }
 var file_scene_hunter_v1_game_proto_depIdxs = []int32{
 	3,  // 0: scene_hunter.v1.Round.hints:type_name -> scene_hunter.v1.Hint
-	4,  // 1: scene_hunter.v1.Round.results:type_name -> scene_hunter.v1.RoundResult
-	1,  // 2: scene_hunter.v1.Round.turn_status:type_name -> scene_hunter.v1.TurnStatus
-	0,  // 3: scene_hunter.v1.Game.status:type_name -> scene_hunter.v1.GameStatus
-	2,  // 4: scene_hunter.v1.Game.players:type_name -> scene_hunter.v1.Player
-	5,  // 5: scene_hunter.v1.Game.rounds:type_name -> scene_hunter.v1.Round
-	6,  // 6: scene_hunter.v1.StartGameResponse.game:type_name -> scene_hunter.v1.Game
-	6,  // 7: scene_hunter.v1.JoinGameResponse.game:type_name -> scene_hunter.v1.Game
-	3,  // 8: scene_hunter.v1.SubmitGameMasterPhotoResponse.hints:type_name -> scene_hunter.v1.Hint
-	6,  // 9: scene_hunter.v1.GetGameStateResponse.game:type_name -> scene_hunter.v1.Game
-	6,  // 10: scene_hunter.v1.StartNextRoundResponse.game:type_name -> scene_hunter.v1.Game
-	6,  // 11: scene_hunter.v1.EndGameResponse.game:type_name -> scene_hunter.v1.Game
-	2,  // 12: scene_hunter.v1.EndGameResponse.final_rankings:type_name -> scene_hunter.v1.Player
-	7,  // 13: scene_hunter.v1.GameService.StartGame:input_type -> scene_hunter.v1.StartGameRequest
-	9,  // 14: scene_hunter.v1.GameService.JoinGame:input_type -> scene_hunter.v1.JoinGameRequest
-	11, // 15: scene_hunter.v1.GameService.SubmitGameMasterPhoto:input_type -> scene_hunter.v1.SubmitGameMasterPhotoRequest
-	13, // 16: scene_hunter.v1.GameService.SubmitHunterPhoto:input_type -> scene_hunter.v1.SubmitHunterPhotoRequest
-	15, // 17: scene_hunter.v1.GameService.GetGameState:input_type -> scene_hunter.v1.GetGameStateRequest
-	17, // 18: scene_hunter.v1.GameService.StartNextRound:input_type -> scene_hunter.v1.StartNextRoundRequest
-	19, // 19: scene_hunter.v1.GameService.EndGame:input_type -> scene_hunter.v1.EndGameRequest
-	8,  // 20: scene_hunter.v1.GameService.StartGame:output_type -> scene_hunter.v1.StartGameResponse
-	10, // 21: scene_hunter.v1.GameService.JoinGame:output_type -> scene_hunter.v1.JoinGameResponse
-	12, // 22: scene_hunter.v1.GameService.SubmitGameMasterPhoto:output_type -> scene_hunter.v1.SubmitGameMasterPhotoResponse
-	14, // 23: scene_hunter.v1.GameService.SubmitHunterPhoto:output_type -> scene_hunter.v1.SubmitHunterPhotoResponse
-	16, // 24: scene_hunter.v1.GameService.GetGameState:output_type -> scene_hunter.v1.GetGameStateResponse
-	18, // 25: scene_hunter.v1.GameService.StartNextRound:output_type -> scene_hunter.v1.StartNextRoundResponse
-	20, // 26: scene_hunter.v1.GameService.EndGame:output_type -> scene_hunter.v1.EndGameResponse
-	20, // [20:27] is the sub-list for method output_type
-	13, // [13:20] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	4,  // 1: scene_hunter.v1.Round.hunter_submissions:type_name -> scene_hunter.v1.HunterSubmission
+	5,  // 2: scene_hunter.v1.Round.results:type_name -> scene_hunter.v1.RoundResult
+	1,  // 3: scene_hunter.v1.Round.turn_status:type_name -> scene_hunter.v1.TurnStatus
+	0,  // 4: scene_hunter.v1.Game.status:type_name -> scene_hunter.v1.GameStatus
+	2,  // 5: scene_hunter.v1.Game.players:type_name -> scene_hunter.v1.Player
+	6,  // 6: scene_hunter.v1.Game.rounds:type_name -> scene_hunter.v1.Round
+	7,  // 7: scene_hunter.v1.StartGameResponse.game:type_name -> scene_hunter.v1.Game
+	7,  // 8: scene_hunter.v1.JoinGameResponse.game:type_name -> scene_hunter.v1.Game
+	3,  // 9: scene_hunter.v1.SubmitGameMasterPhotoResponse.hints:type_name -> scene_hunter.v1.Hint
+	7,  // 10: scene_hunter.v1.GetGameStateResponse.game:type_name -> scene_hunter.v1.Game
+	7,  // 11: scene_hunter.v1.StartNextRoundResponse.game:type_name -> scene_hunter.v1.Game
+	4,  // 12: scene_hunter.v1.GetHunterPhotosResponse.submissions:type_name -> scene_hunter.v1.HunterSubmission
+	22, // 13: scene_hunter.v1.SelectWinnersRequest.rankings:type_name -> scene_hunter.v1.RankSelection
+	7,  // 14: scene_hunter.v1.SelectWinnersResponse.game:type_name -> scene_hunter.v1.Game
+	7,  // 15: scene_hunter.v1.EndGameResponse.game:type_name -> scene_hunter.v1.Game
+	2,  // 16: scene_hunter.v1.EndGameResponse.final_rankings:type_name -> scene_hunter.v1.Player
+	8,  // 17: scene_hunter.v1.GameService.StartGame:input_type -> scene_hunter.v1.StartGameRequest
+	10, // 18: scene_hunter.v1.GameService.JoinGame:input_type -> scene_hunter.v1.JoinGameRequest
+	12, // 19: scene_hunter.v1.GameService.SubmitGameMasterPhoto:input_type -> scene_hunter.v1.SubmitGameMasterPhotoRequest
+	14, // 20: scene_hunter.v1.GameService.SubmitHunterPhoto:input_type -> scene_hunter.v1.SubmitHunterPhotoRequest
+	20, // 21: scene_hunter.v1.GameService.GetHunterPhotos:input_type -> scene_hunter.v1.GetHunterPhotosRequest
+	23, // 22: scene_hunter.v1.GameService.SelectWinners:input_type -> scene_hunter.v1.SelectWinnersRequest
+	16, // 23: scene_hunter.v1.GameService.GetGameState:input_type -> scene_hunter.v1.GetGameStateRequest
+	18, // 24: scene_hunter.v1.GameService.StartNextRound:input_type -> scene_hunter.v1.StartNextRoundRequest
+	25, // 25: scene_hunter.v1.GameService.EndGame:input_type -> scene_hunter.v1.EndGameRequest
+	9,  // 26: scene_hunter.v1.GameService.StartGame:output_type -> scene_hunter.v1.StartGameResponse
+	11, // 27: scene_hunter.v1.GameService.JoinGame:output_type -> scene_hunter.v1.JoinGameResponse
+	13, // 28: scene_hunter.v1.GameService.SubmitGameMasterPhoto:output_type -> scene_hunter.v1.SubmitGameMasterPhotoResponse
+	15, // 29: scene_hunter.v1.GameService.SubmitHunterPhoto:output_type -> scene_hunter.v1.SubmitHunterPhotoResponse
+	21, // 30: scene_hunter.v1.GameService.GetHunterPhotos:output_type -> scene_hunter.v1.GetHunterPhotosResponse
+	24, // 31: scene_hunter.v1.GameService.SelectWinners:output_type -> scene_hunter.v1.SelectWinnersResponse
+	17, // 32: scene_hunter.v1.GameService.GetGameState:output_type -> scene_hunter.v1.GetGameStateResponse
+	19, // 33: scene_hunter.v1.GameService.StartNextRound:output_type -> scene_hunter.v1.StartNextRoundResponse
+	26, // 34: scene_hunter.v1.GameService.EndGame:output_type -> scene_hunter.v1.EndGameResponse
+	26, // [26:35] is the sub-list for method output_type
+	17, // [17:26] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_scene_hunter_v1_game_proto_init() }
@@ -1450,7 +1786,7 @@ func file_scene_hunter_v1_game_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_scene_hunter_v1_game_proto_rawDesc), len(file_scene_hunter_v1_game_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   19,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -13,6 +13,8 @@ const (
 	TurnStatusGameMaster TurnStatus = iota + 1
 	// TurnStatusHunters represents hunters' turn.
 	TurnStatusHunters
+	// TurnStatusWaitingForSelection represents waiting for game master to select winners.
+	TurnStatusWaitingForSelection
 )
 
 var (
@@ -24,13 +26,14 @@ var (
 
 // Round represents a single round in the game.
 type Round struct {
-	RoundNumber        int            `json:"roundNumber"`
-	GameMasterUserID   uuid.UUID      `json:"gameMasterUserId"`
-	GameMasterImageID  string         `json:"gameMasterImageId"`
-	Hints              []*Hint        `json:"hints"`
-	Results            []*RoundResult `json:"results"`
-	TurnStatus         TurnStatus     `json:"turnStatus"`
-	TurnElapsedSeconds int            `json:"turnElapsedSeconds"`
+	RoundNumber        int                 `json:"roundNumber"`
+	GameMasterUserID   uuid.UUID           `json:"gameMasterUserId"`
+	GameMasterImageID  string              `json:"gameMasterImageId"`
+	Hints              []*Hint             `json:"hints"`
+	HunterSubmissions  []*HunterSubmission `json:"hunterSubmissions"`
+	Results            []*RoundResult      `json:"results"`
+	TurnStatus         TurnStatus          `json:"turnStatus"`
+	TurnElapsedSeconds int                 `json:"turnElapsedSeconds"`
 }
 
 // NewRound creates a new Round.
@@ -43,6 +46,7 @@ func NewRound(roundNumber int, gameMasterUserID uuid.UUID) (*Round, error) {
 		RoundNumber:        roundNumber,
 		GameMasterUserID:   gameMasterUserID,
 		Hints:              make([]*Hint, 0),
+		HunterSubmissions:  make([]*HunterSubmission, 0),
 		Results:            make([]*RoundResult, 0),
 		TurnStatus:         TurnStatusGameMaster,
 		TurnElapsedSeconds: 0,
@@ -76,9 +80,29 @@ func (r *Round) StartHuntersTurn() error {
 	return nil
 }
 
+// AddHunterSubmission adds a hunter's photo submission to the round.
+func (r *Round) AddHunterSubmission(submission *HunterSubmission) {
+	r.HunterSubmissions = append(r.HunterSubmissions, submission)
+}
+
+// CheckAllHuntersSubmitted checks if all hunters have submitted their photos.
+func (r *Round) CheckAllHuntersSubmitted(totalHunters int) bool {
+	return len(r.HunterSubmissions) >= totalHunters
+}
+
+// StartWaitingForSelection transitions to waiting for game master selection.
+func (r *Round) StartWaitingForSelection() {
+	r.TurnStatus = TurnStatusWaitingForSelection
+}
+
 // AddResult adds a result to the round.
 func (r *Round) AddResult(result *RoundResult) {
 	r.Results = append(r.Results, result)
+}
+
+// SetResults sets all results at once (used when game master selects winners).
+func (r *Round) SetResults(results []*RoundResult) {
+	r.Results = results
 }
 
 // UpdateTurnElapsedSeconds updates the elapsed seconds in the current turn.

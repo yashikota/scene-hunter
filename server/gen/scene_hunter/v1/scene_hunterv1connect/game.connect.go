@@ -43,6 +43,12 @@ const (
 	// GameServiceSubmitHunterPhotoProcedure is the fully-qualified name of the GameService's
 	// SubmitHunterPhoto RPC.
 	GameServiceSubmitHunterPhotoProcedure = "/scene_hunter.v1.GameService/SubmitHunterPhoto"
+	// GameServiceGetHunterPhotosProcedure is the fully-qualified name of the GameService's
+	// GetHunterPhotos RPC.
+	GameServiceGetHunterPhotosProcedure = "/scene_hunter.v1.GameService/GetHunterPhotos"
+	// GameServiceSelectWinnersProcedure is the fully-qualified name of the GameService's SelectWinners
+	// RPC.
+	GameServiceSelectWinnersProcedure = "/scene_hunter.v1.GameService/SelectWinners"
 	// GameServiceGetGameStateProcedure is the fully-qualified name of the GameService's GetGameState
 	// RPC.
 	GameServiceGetGameStateProcedure = "/scene_hunter.v1.GameService/GetGameState"
@@ -59,6 +65,8 @@ type GameServiceClient interface {
 	JoinGame(context.Context, *v1.JoinGameRequest) (*v1.JoinGameResponse, error)
 	SubmitGameMasterPhoto(context.Context, *v1.SubmitGameMasterPhotoRequest) (*v1.SubmitGameMasterPhotoResponse, error)
 	SubmitHunterPhoto(context.Context, *v1.SubmitHunterPhotoRequest) (*v1.SubmitHunterPhotoResponse, error)
+	GetHunterPhotos(context.Context, *v1.GetHunterPhotosRequest) (*v1.GetHunterPhotosResponse, error)
+	SelectWinners(context.Context, *v1.SelectWinnersRequest) (*v1.SelectWinnersResponse, error)
 	GetGameState(context.Context, *v1.GetGameStateRequest) (*v1.GetGameStateResponse, error)
 	StartNextRound(context.Context, *v1.StartNextRoundRequest) (*v1.StartNextRoundResponse, error)
 	EndGame(context.Context, *v1.EndGameRequest) (*v1.EndGameResponse, error)
@@ -99,6 +107,18 @@ func NewGameServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(gameServiceMethods.ByName("SubmitHunterPhoto")),
 			connect.WithClientOptions(opts...),
 		),
+		getHunterPhotos: connect.NewClient[v1.GetHunterPhotosRequest, v1.GetHunterPhotosResponse](
+			httpClient,
+			baseURL+GameServiceGetHunterPhotosProcedure,
+			connect.WithSchema(gameServiceMethods.ByName("GetHunterPhotos")),
+			connect.WithClientOptions(opts...),
+		),
+		selectWinners: connect.NewClient[v1.SelectWinnersRequest, v1.SelectWinnersResponse](
+			httpClient,
+			baseURL+GameServiceSelectWinnersProcedure,
+			connect.WithSchema(gameServiceMethods.ByName("SelectWinners")),
+			connect.WithClientOptions(opts...),
+		),
 		getGameState: connect.NewClient[v1.GetGameStateRequest, v1.GetGameStateResponse](
 			httpClient,
 			baseURL+GameServiceGetGameStateProcedure,
@@ -126,6 +146,8 @@ type gameServiceClient struct {
 	joinGame              *connect.Client[v1.JoinGameRequest, v1.JoinGameResponse]
 	submitGameMasterPhoto *connect.Client[v1.SubmitGameMasterPhotoRequest, v1.SubmitGameMasterPhotoResponse]
 	submitHunterPhoto     *connect.Client[v1.SubmitHunterPhotoRequest, v1.SubmitHunterPhotoResponse]
+	getHunterPhotos       *connect.Client[v1.GetHunterPhotosRequest, v1.GetHunterPhotosResponse]
+	selectWinners         *connect.Client[v1.SelectWinnersRequest, v1.SelectWinnersResponse]
 	getGameState          *connect.Client[v1.GetGameStateRequest, v1.GetGameStateResponse]
 	startNextRound        *connect.Client[v1.StartNextRoundRequest, v1.StartNextRoundResponse]
 	endGame               *connect.Client[v1.EndGameRequest, v1.EndGameResponse]
@@ -167,6 +189,24 @@ func (c *gameServiceClient) SubmitHunterPhoto(ctx context.Context, req *v1.Submi
 	return nil, err
 }
 
+// GetHunterPhotos calls scene_hunter.v1.GameService.GetHunterPhotos.
+func (c *gameServiceClient) GetHunterPhotos(ctx context.Context, req *v1.GetHunterPhotosRequest) (*v1.GetHunterPhotosResponse, error) {
+	response, err := c.getHunterPhotos.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// SelectWinners calls scene_hunter.v1.GameService.SelectWinners.
+func (c *gameServiceClient) SelectWinners(ctx context.Context, req *v1.SelectWinnersRequest) (*v1.SelectWinnersResponse, error) {
+	response, err := c.selectWinners.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // GetGameState calls scene_hunter.v1.GameService.GetGameState.
 func (c *gameServiceClient) GetGameState(ctx context.Context, req *v1.GetGameStateRequest) (*v1.GetGameStateResponse, error) {
 	response, err := c.getGameState.CallUnary(ctx, connect.NewRequest(req))
@@ -200,6 +240,8 @@ type GameServiceHandler interface {
 	JoinGame(context.Context, *v1.JoinGameRequest) (*v1.JoinGameResponse, error)
 	SubmitGameMasterPhoto(context.Context, *v1.SubmitGameMasterPhotoRequest) (*v1.SubmitGameMasterPhotoResponse, error)
 	SubmitHunterPhoto(context.Context, *v1.SubmitHunterPhotoRequest) (*v1.SubmitHunterPhotoResponse, error)
+	GetHunterPhotos(context.Context, *v1.GetHunterPhotosRequest) (*v1.GetHunterPhotosResponse, error)
+	SelectWinners(context.Context, *v1.SelectWinnersRequest) (*v1.SelectWinnersResponse, error)
 	GetGameState(context.Context, *v1.GetGameStateRequest) (*v1.GetGameStateResponse, error)
 	StartNextRound(context.Context, *v1.StartNextRoundRequest) (*v1.StartNextRoundResponse, error)
 	EndGame(context.Context, *v1.EndGameRequest) (*v1.EndGameResponse, error)
@@ -236,6 +278,18 @@ func NewGameServiceHandler(svc GameServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(gameServiceMethods.ByName("SubmitHunterPhoto")),
 		connect.WithHandlerOptions(opts...),
 	)
+	gameServiceGetHunterPhotosHandler := connect.NewUnaryHandlerSimple(
+		GameServiceGetHunterPhotosProcedure,
+		svc.GetHunterPhotos,
+		connect.WithSchema(gameServiceMethods.ByName("GetHunterPhotos")),
+		connect.WithHandlerOptions(opts...),
+	)
+	gameServiceSelectWinnersHandler := connect.NewUnaryHandlerSimple(
+		GameServiceSelectWinnersProcedure,
+		svc.SelectWinners,
+		connect.WithSchema(gameServiceMethods.ByName("SelectWinners")),
+		connect.WithHandlerOptions(opts...),
+	)
 	gameServiceGetGameStateHandler := connect.NewUnaryHandlerSimple(
 		GameServiceGetGameStateProcedure,
 		svc.GetGameState,
@@ -264,6 +318,10 @@ func NewGameServiceHandler(svc GameServiceHandler, opts ...connect.HandlerOption
 			gameServiceSubmitGameMasterPhotoHandler.ServeHTTP(w, r)
 		case GameServiceSubmitHunterPhotoProcedure:
 			gameServiceSubmitHunterPhotoHandler.ServeHTTP(w, r)
+		case GameServiceGetHunterPhotosProcedure:
+			gameServiceGetHunterPhotosHandler.ServeHTTP(w, r)
+		case GameServiceSelectWinnersProcedure:
+			gameServiceSelectWinnersHandler.ServeHTTP(w, r)
 		case GameServiceGetGameStateProcedure:
 			gameServiceGetGameStateHandler.ServeHTTP(w, r)
 		case GameServiceStartNextRoundProcedure:
@@ -293,6 +351,14 @@ func (UnimplementedGameServiceHandler) SubmitGameMasterPhoto(context.Context, *v
 
 func (UnimplementedGameServiceHandler) SubmitHunterPhoto(context.Context, *v1.SubmitHunterPhotoRequest) (*v1.SubmitHunterPhotoResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("scene_hunter.v1.GameService.SubmitHunterPhoto is not implemented"))
+}
+
+func (UnimplementedGameServiceHandler) GetHunterPhotos(context.Context, *v1.GetHunterPhotosRequest) (*v1.GetHunterPhotosResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("scene_hunter.v1.GameService.GetHunterPhotos is not implemented"))
+}
+
+func (UnimplementedGameServiceHandler) SelectWinners(context.Context, *v1.SelectWinnersRequest) (*v1.SelectWinnersResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("scene_hunter.v1.GameService.SelectWinners is not implemented"))
 }
 
 func (UnimplementedGameServiceHandler) GetGameState(context.Context, *v1.GetGameStateRequest) (*v1.GetGameStateResponse, error) {

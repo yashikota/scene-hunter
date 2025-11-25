@@ -227,42 +227,39 @@ func (s *Service) SubmitGameMasterPhoto(
 	return imageID, hints, nil
 }
 
-// SubmitHunterPhoto submits hunter's photo and calculates score.
+// SubmitHunterPhoto submits hunter's photo.
 func (s *Service) SubmitHunterPhoto(
 	ctx context.Context,
 	roomID, userID uuid.UUID,
 	imageData []byte,
 	elapsedSeconds int,
-) (int, int, int, error) {
+) (string, bool, error) {
 	// Get game
 	gameSession, err := s.gameRepo.Get(ctx, roomID)
 	if err != nil {
-		return 0, 0, 0, errors.Errorf("failed to get game: %w", err)
+		return "", false, errors.Errorf("failed to get game: %w", err)
 	}
 
 	// Get current round
 	round, err := gameSession.GetCurrentRound()
 	if err != nil {
-		return 0, 0, 0, errors.Errorf("failed to get current round: %w", err)
+		return "", false, errors.Errorf("failed to get current round: %w", err)
 	}
 
 	// Verify round is in hunters' phase
 	if round.TurnStatus != game.TurnStatusHunters {
-		return 0, 0, 0, errors.New("not in hunters' turn")
+		return "", false, errors.New("not in hunters' turn")
 	}
 
 	// Verify game master image has been uploaded
 	if round.GameMasterImageID == "" {
-		return 0, 0, 0, errors.New("game master has not uploaded image yet")
+		return "", false, errors.New("game master has not uploaded image yet")
 	}
 
 	// Verify user is not game master
 	if round.GameMasterUserID == userID {
-		return 0, 0, 0, errors.New("game master cannot submit as hunter")
+		return "", false, errors.New("game master cannot submit as hunter")
 	}
-
-	// Calculate remaining seconds (60 seconds per turn)
-	remainingSeconds := max(60-elapsedSeconds, 0)
 
 	// Generate hunter's image ID and upload
 	hunterImageID := uuid.New().String()
@@ -272,39 +269,107 @@ func (s *Service) SubmitHunterPhoto(
 
 	err = s.blobClient.Put(ctx, hunterImageKey, hunterImageReader, 24*time.Hour)
 	if err != nil {
-		return 0, 0, 0, errors.Errorf("failed to upload hunter image: %w", err)
+		return "", false, errors.Errorf("failed to upload hunter image: %w", err)
 	}
 
-	// Compare images using Gemini
-	gameMasterImageKey := fmt.Sprintf("images/%s/%s", roomID, round.GameMasterImageID)
-
-	score, err := s.compareImages(ctx, gameMasterImageKey, hunterImageKey)
+	// Create hunter submission
+	submission, err := game.NewHunterSubmission(userID, hunterImageID, elapsedSeconds)
 	if err != nil {
-		return 0, 0, 0, errors.Errorf("failed to compare images: %w", err)
+		return "", false, errors.Errorf("failed to create hunter submission: %w", err)
 	}
 
-	// Create round result
-	result, err := game.NewRoundResult(userID, score, remainingSeconds)
-	if err != nil {
-		return 0, 0, 0, errors.Errorf("failed to create round result: %w", err)
-	}
+	// Add submission to round
+	round.AddHunterSubmission(submission)
 
-	// Add result to round
-	round.AddResult(result)
+	// Count total hunters (exclude game master)
+	totalHunters := len(gameSession.Players) - 1
 
-	// Update player points
-	err = gameSession.UpdatePlayerPoints(userID, result.Points)
-	if err != nil {
-		return 0, 0, 0, errors.Errorf("failed to update player points: %w", err)
+	// Check if all hunters have submitted
+	allSubmitted := round.CheckAllHuntersSubmitted(totalHunters)
+	if allSubmitted {
+		round.StartWaitingForSelection()
 	}
 
 	// Update game
 	err = s.gameRepo.Update(ctx, gameSession)
 	if err != nil {
-		return 0, 0, 0, errors.Errorf("failed to update game: %w", err)
+		return "", false, errors.Errorf("failed to update game: %w", err)
 	}
 
-	return score, remainingSeconds, result.Points, nil
+	return hunterImageID, allSubmitted, nil
+}
+
+// GetHunterPhotos returns all hunter photo submissions for the current round.
+func (s *Service) GetHunterPhotos(ctx context.Context, roomID uuid.UUID) ([]*game.HunterSubmission, error) {
+	// Get game
+	gameSession, err := s.gameRepo.Get(ctx, roomID)
+	if err != nil {
+		return nil, errors.Errorf("failed to get game: %w", err)
+	}
+
+	// Get current round
+	round, err := gameSession.GetCurrentRound()
+	if err != nil {
+		return nil, errors.Errorf("failed to get current round: %w", err)
+	}
+
+	return round.HunterSubmissions, nil
+}
+
+// SelectWinners allows the game master to select winners and assign ranks.
+func (s *Service) SelectWinners(
+	ctx context.Context,
+	roomID, gameMasterUserID uuid.UUID,
+	rankings map[uuid.UUID]int,
+) (*game.Game, error) {
+	// Get game
+	gameSession, err := s.gameRepo.Get(ctx, roomID)
+	if err != nil {
+		return nil, errors.Errorf("failed to get game: %w", err)
+	}
+
+	// Get current round
+	round, err := gameSession.GetCurrentRound()
+	if err != nil {
+		return nil, errors.Errorf("failed to get current round: %w", err)
+	}
+
+	// Verify user is game master for this round
+	if round.GameMasterUserID != gameMasterUserID {
+		return nil, errors.New("only game master can select winners")
+	}
+
+	// Verify round is waiting for selection
+	if round.TurnStatus != game.TurnStatusWaitingForSelection {
+		return nil, errors.New("round is not waiting for selection")
+	}
+
+	// Create results from rankings
+	results := make([]*game.RoundResult, 0, len(rankings))
+	for userID, rank := range rankings {
+		result, err := game.NewRoundResult(userID, rank)
+		if err != nil {
+			return nil, errors.Errorf("failed to create round result: %w", err)
+		}
+		results = append(results, result)
+
+		// Update player points
+		err = gameSession.UpdatePlayerPoints(userID, result.Points)
+		if err != nil {
+			return nil, errors.Errorf("failed to update player points: %w", err)
+		}
+	}
+
+	// Set results for the round
+	round.SetResults(results)
+
+	// Update game
+	err = s.gameRepo.Update(ctx, gameSession)
+	if err != nil {
+		return nil, errors.Errorf("failed to update game: %w", err)
+	}
+
+	return gameSession, nil
 }
 
 // GetGameState returns the current game state.
@@ -368,22 +433,4 @@ func parseHints(features []string) ([]*game.Hint, error) {
 	}
 
 	return hints, nil
-}
-
-// compareImages compares two images and returns a similarity score.
-func (s *Service) compareImages(ctx context.Context, image1Key, image2Key string) (int, error) {
-	// This is a simplified implementation
-	// In production, you would use Gemini's vision API to compare images
-	// For now, return a placeholder score
-
-	// TODO: Implement actual image comparison using Gemini
-	// The API might need to support multi-image input or we might need to
-	// concatenate descriptions and ask Gemini to compare them
-
-	// Placeholder: return a random score between 0-100
-	// Using time.Now().UnixNano() as seed to avoid collision within same second
-	//nolint:gosec // This is a placeholder implementation for development
-	score := min(int(time.Now().UnixNano()%101)+time.Now().Nanosecond()%50, 100)
-
-	return score, nil
 }

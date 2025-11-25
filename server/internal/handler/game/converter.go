@@ -29,13 +29,21 @@ func convertGameToProto(gameObj *game.Game) *scene_hunterv1.Game {
 			}
 		}
 
+		pbSubmissions := make([]*scene_hunterv1.HunterSubmission, len(round.HunterSubmissions))
+		for submissionIndex, submission := range round.HunterSubmissions {
+			pbSubmissions[submissionIndex] = &scene_hunterv1.HunterSubmission{
+				UserId:             submission.UserID.String(),
+				ImageId:            submission.ImageID,
+				SubmittedAtSeconds: int32(submission.SubmittedAtSeconds),
+			}
+		}
+
 		pbResults := make([]*scene_hunterv1.RoundResult, len(round.Results))
 		for resultIndex, result := range round.Results {
 			pbResults[resultIndex] = &scene_hunterv1.RoundResult{
-				UserId:           result.UserID.String(),
-				Score:            int32(result.Score),
-				RemainingSeconds: int32(result.RemainingSeconds),
-				Points:           int32(result.Points),
+				UserId: result.UserID.String(),
+				Rank:   int32(result.Rank),
+				Points: int32(result.Points),
 			}
 		}
 
@@ -44,6 +52,7 @@ func convertGameToProto(gameObj *game.Game) *scene_hunterv1.Game {
 			GameMasterUserId:   round.GameMasterUserID.String(),
 			GameMasterImageId:  round.GameMasterImageID,
 			Hints:              pbHints,
+			HunterSubmissions:  pbSubmissions,
 			Results:            pbResults,
 			TurnStatus:         convertTurnStatusToProto(round.TurnStatus),
 			TurnElapsedSeconds: int32(round.TurnElapsedSeconds),
@@ -83,6 +92,8 @@ func convertTurnStatusToProto(status game.TurnStatus) scene_hunterv1.TurnStatus 
 		return scene_hunterv1.TurnStatus_TURN_STATUS_GAME_MASTER
 	case game.TurnStatusHunters:
 		return scene_hunterv1.TurnStatus_TURN_STATUS_HUNTERS
+	case game.TurnStatusWaitingForSelection:
+		return scene_hunterv1.TurnStatus_TURN_STATUS_WAITING_FOR_SELECTION
 	default:
 		return scene_hunterv1.TurnStatus_TURN_STATUS_UNSPECIFIED
 	}

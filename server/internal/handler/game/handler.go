@@ -111,7 +111,7 @@ func (h *Handler) SubmitGameMasterPhoto(
 	}, nil
 }
 
-// SubmitHunterPhoto submits a hunter's photo and calculates score.
+// SubmitHunterPhoto submits a hunter's photo.
 func (h *Handler) SubmitHunterPhoto(
 	ctx context.Context,
 	req *scene_hunterv1.SubmitHunterPhotoRequest,
@@ -126,7 +126,7 @@ func (h *Handler) SubmitHunterPhoto(
 		return nil, errors.Errorf("invalid user_id: %w", err)
 	}
 
-	score, remainingSeconds, points, err := h.service.SubmitHunterPhoto(
+	imageID, allSubmitted, err := h.service.SubmitHunterPhoto(
 		ctx,
 		roomID,
 		userID,
@@ -138,9 +138,74 @@ func (h *Handler) SubmitHunterPhoto(
 	}
 
 	return &scene_hunterv1.SubmitHunterPhotoResponse{
-		Score:            int32(score),
-		RemainingSeconds: int32(remainingSeconds),
-		Points:           int32(points),
+		ImageId:             imageID,
+		AllHuntersSubmitted: allSubmitted,
+	}, nil
+}
+
+// GetHunterPhotos returns all hunter photo submissions for the current round.
+func (h *Handler) GetHunterPhotos(
+	ctx context.Context,
+	req *scene_hunterv1.GetHunterPhotosRequest,
+) (*scene_hunterv1.GetHunterPhotosResponse, error) {
+	roomID, err := uuid.Parse(req.GetRoomId())
+	if err != nil {
+		return nil, errors.Errorf("invalid room_id: %w", err)
+	}
+
+	submissions, err := h.service.GetHunterPhotos(ctx, roomID)
+	if err != nil {
+		return nil, errors.Errorf("failed to get hunter photos: %w", err)
+	}
+
+	pbSubmissions := make([]*scene_hunterv1.HunterSubmission, len(submissions))
+	for i, sub := range submissions {
+		pbSubmissions[i] = &scene_hunterv1.HunterSubmission{
+			UserId:             sub.UserID.String(),
+			ImageId:            sub.ImageID,
+			SubmittedAtSeconds: int32(sub.SubmittedAtSeconds),
+		}
+	}
+
+	return &scene_hunterv1.GetHunterPhotosResponse{
+		Submissions: pbSubmissions,
+	}, nil
+}
+
+// SelectWinners allows game master to select winners and assign ranks.
+func (h *Handler) SelectWinners(
+	ctx context.Context,
+	req *scene_hunterv1.SelectWinnersRequest,
+) (*scene_hunterv1.SelectWinnersResponse, error) {
+	roomID, err := uuid.Parse(req.GetRoomId())
+	if err != nil {
+		return nil, errors.Errorf("invalid room_id: %w", err)
+	}
+
+	gameMasterUserID, err := uuid.Parse(req.GetGameMasterUserId())
+	if err != nil {
+		return nil, errors.Errorf("invalid game_master_user_id: %w", err)
+	}
+
+	// Convert rankings from proto to map
+	rankings := make(map[uuid.UUID]int)
+	for _, rankSel := range req.GetRankings() {
+		userID, err := uuid.Parse(rankSel.GetUserId())
+		if err != nil {
+			return nil, errors.Errorf("invalid user_id in rankings: %w", err)
+		}
+		rankings[userID] = int(rankSel.GetRank())
+	}
+
+	game, err := h.service.SelectWinners(ctx, roomID, gameMasterUserID, rankings)
+	if err != nil {
+		return nil, errors.Errorf("failed to select winners: %w", err)
+	}
+
+	pbGame := convertGameToProto(game)
+
+	return &scene_hunterv1.SelectWinnersResponse{
+		Game: pbGame,
 	}, nil
 }
 

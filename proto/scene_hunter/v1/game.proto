@@ -19,6 +19,7 @@ enum TurnStatus {
   TURN_STATUS_UNSPECIFIED = 0;
   TURN_STATUS_GAME_MASTER = 1; // Game master's turn (taking photo)
   TURN_STATUS_HUNTERS = 2; // Hunters' turn (finding location)
+  TURN_STATUS_WAITING_FOR_SELECTION = 3; // All hunters submitted, waiting for game master to select winners
 }
 
 // Player represents a player in the game.
@@ -43,18 +44,24 @@ message Hint {
   string text = 2;
 }
 
-// RoundResult represents the result of a single round for a player.
-message RoundResult {
+// HunterSubmission represents a hunter's photo submission.
+message HunterSubmission {
   string user_id = 1 [(buf.validate.field).string.uuid = true];
-  int32 score = 2 [(buf.validate.field).int32 = {
-    gte: 0
-    lte: 100
-  }];
-  int32 remaining_seconds = 3 [(buf.validate.field).int32 = {
+  string image_id = 2;
+  int32 submitted_at_seconds = 3 [(buf.validate.field).int32 = {
     gte: 0
     lte: 60
   }];
-  int32 points = 4; // score + remaining_seconds
+}
+
+// RoundResult represents the result of a single round for a player.
+message RoundResult {
+  string user_id = 1 [(buf.validate.field).string.uuid = true];
+  int32 rank = 2 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 20
+  }]; // Rank assigned by game master (1st, 2nd, 3rd, etc.)
+  int32 points = 3; // Points awarded based on rank
 }
 
 // Round represents a single round in the game.
@@ -63,9 +70,10 @@ message Round {
   string game_master_user_id = 2 [(buf.validate.field).string.uuid = true];
   string game_master_image_id = 3; // Image ID of game master's photo
   repeated Hint hints = 4;
-  repeated RoundResult results = 5;
-  TurnStatus turn_status = 6;
-  int32 turn_elapsed_seconds = 7;
+  repeated HunterSubmission hunter_submissions = 5; // Photos submitted by hunters
+  repeated RoundResult results = 6; // Results after game master selects winners
+  TurnStatus turn_status = 7;
+  int32 turn_elapsed_seconds = 8;
 }
 
 // Game represents a game session.
@@ -135,9 +143,8 @@ message SubmitHunterPhotoRequest {
 }
 
 message SubmitHunterPhotoResponse {
-  int32 score = 1;
-  int32 remaining_seconds = 2;
-  int32 points = 3;
+  string image_id = 1;
+  bool all_hunters_submitted = 2; // True if all hunters have submitted their photos
 }
 
 // GetGameStateRequest gets the current game state.
@@ -159,6 +166,35 @@ message StartNextRoundResponse {
   Game game = 1;
 }
 
+// GetHunterPhotosRequest gets all hunter photo submissions for the current round.
+message GetHunterPhotosRequest {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message GetHunterPhotosResponse {
+  repeated HunterSubmission submissions = 1;
+}
+
+// RankSelection represents a ranking assigned by the game master.
+message RankSelection {
+  string user_id = 1 [(buf.validate.field).string.uuid = true];
+  int32 rank = 2 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 20
+  }];
+}
+
+// SelectWinnersRequest allows game master to select winners and assign ranks.
+message SelectWinnersRequest {
+  string room_id = 1 [(buf.validate.field).string.uuid = true];
+  string game_master_user_id = 2 [(buf.validate.field).string.uuid = true];
+  repeated RankSelection rankings = 3;
+}
+
+message SelectWinnersResponse {
+  Game game = 1;
+}
+
 // EndGameRequest ends the game and calculates final rankings.
 message EndGameRequest {
   string room_id = 1 [(buf.validate.field).string.uuid = true];
@@ -174,6 +210,8 @@ service GameService {
   rpc JoinGame(JoinGameRequest) returns (JoinGameResponse);
   rpc SubmitGameMasterPhoto(SubmitGameMasterPhotoRequest) returns (SubmitGameMasterPhotoResponse);
   rpc SubmitHunterPhoto(SubmitHunterPhotoRequest) returns (SubmitHunterPhotoResponse);
+  rpc GetHunterPhotos(GetHunterPhotosRequest) returns (GetHunterPhotosResponse);
+  rpc SelectWinners(SelectWinnersRequest) returns (SelectWinnersResponse);
   rpc GetGameState(GetGameStateRequest) returns (GetGameStateResponse);
   rpc StartNextRound(StartNextRoundRequest) returns (StartNextRoundResponse);
   rpc EndGame(EndGameRequest) returns (EndGameResponse);
