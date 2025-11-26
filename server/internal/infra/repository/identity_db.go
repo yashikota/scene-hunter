@@ -8,23 +8,24 @@ import (
 	"github.com/yashikota/scene-hunter/server/internal/domain/auth"
 	"github.com/yashikota/scene-hunter/server/internal/infra/db"
 	"github.com/yashikota/scene-hunter/server/internal/infra/db/queries"
+	"github.com/yashikota/scene-hunter/server/internal/service"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
-// IdentityRepositoryImpl implements IdentityRepository interface using Postgres.
-type IdentityRepositoryImpl struct {
+// IdentityRepositoryDB implements IdentityRepository interface using Postgres.
+type IdentityRepositoryDB struct {
 	DB *db.Client
 }
 
 // NewIdentityRepository creates a new IdentityRepository.
-func NewIdentityRepository(dbClient *db.Client) IdentityRepository {
-	return &IdentityRepositoryImpl{
+func NewIdentityRepository(dbClient *db.Client) service.IdentityRepository {
+	return &IdentityRepositoryDB{
 		DB: dbClient,
 	}
 }
 
 // CreateIdentity creates a new user identity.
-func (r *IdentityRepositoryImpl) CreateIdentity(
+func (r *IdentityRepositoryDB) CreateIdentity(
 	ctx context.Context,
 	identity *auth.Identity,
 ) error {
@@ -50,7 +51,7 @@ func (r *IdentityRepositoryImpl) CreateIdentity(
 }
 
 // GetIdentityByProviderAndSubject retrieves an identity by provider and subject.
-func (r *IdentityRepositoryImpl) GetIdentityByProviderAndSubject(
+func (r *IdentityRepositoryDB) GetIdentityByProviderAndSubject(
 	ctx context.Context,
 	provider, subject string,
 ) (*auth.Identity, error) {
@@ -76,7 +77,7 @@ func (r *IdentityRepositoryImpl) GetIdentityByProviderAndSubject(
 }
 
 // GetIdentitiesByUserID retrieves all identities for a user.
-func (r *IdentityRepositoryImpl) GetIdentitiesByUserID(
+func (r *IdentityRepositoryDB) GetIdentitiesByUserID(
 	ctx context.Context,
 	userID uuid.UUID,
 ) ([]*auth.Identity, error) {
@@ -101,7 +102,7 @@ func (r *IdentityRepositoryImpl) GetIdentitiesByUserID(
 }
 
 // DeleteIdentity deletes an identity.
-func (r *IdentityRepositoryImpl) DeleteIdentity(ctx context.Context, identityID uuid.UUID) error {
+func (r *IdentityRepositoryDB) DeleteIdentity(ctx context.Context, identityID uuid.UUID) error {
 	err := r.DB.Queries.DeleteUserIdentity(ctx, identityID)
 	if err != nil {
 		return errors.Errorf("failed to delete identity: %w", err)

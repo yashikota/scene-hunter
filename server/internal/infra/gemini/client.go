@@ -5,24 +5,10 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/yashikota/scene-hunter/server/internal/service"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 	"google.golang.org/genai"
 )
-
-// ImageAnalysisResult represents the result of image analysis.
-type ImageAnalysisResult struct {
-	Features []string
-}
-
-// Gemini is an interface for Gemini AI operations.
-type Gemini interface {
-	AnalyzeImage(
-		ctx context.Context,
-		imageData []byte,
-		mimeType string,
-		prompt string,
-	) (*ImageAnalysisResult, error)
-}
 
 // Client is a Gemini AI client.
 type Client struct {
@@ -37,7 +23,7 @@ var ErrEmptyAPIKey = errors.New("API key is required")
 var ErrEmptyModelName = errors.New("model name is required")
 
 // NewClient creates a new Gemini client.
-func NewClient(ctx context.Context, apiKey, modelName string) (Gemini, error) {
+func NewClient(ctx context.Context, apiKey, modelName string) (service.Gemini, error) {
 	if apiKey == "" {
 		return nil, ErrEmptyAPIKey
 	}
@@ -70,7 +56,7 @@ func (c *Client) AnalyzeImage(
 	imageData []byte,
 	mimeType string,
 	prompt string,
-) (*ImageAnalysisResult, error) {
+) (*service.ImageAnalysisResult, error) {
 	schema := &genai.Schema{
 		Type: "object",
 		Properties: map[string]*genai.Schema{
@@ -124,7 +110,7 @@ func (c *Client) AnalyzeImage(
 		return nil, errors.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	return &ImageAnalysisResult{
+	return &service.ImageAnalysisResult{
 		Features: response.Result,
 	}, nil
 }

@@ -12,8 +12,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	slogchi "github.com/samber/slog-chi"
+	"github.com/yashikota/scene-hunter/server/cmd/di"
 	"github.com/yashikota/scene-hunter/server/internal/config"
-	"github.com/yashikota/scene-hunter/server/internal/service/handler"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -28,6 +28,9 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
+	// Initialize DI container
+	container := di.New(ctx, cfg, logger)
 
 	// Initialize router
 	mux := chi.NewRouter()
@@ -50,11 +53,8 @@ func main() {
 		WithRequestID:    true,
 	}))
 
-	// Initialize dependencies
-	deps := handler.InitializeDependencies(ctx, cfg, logger)
-
 	// Register handlers
-	handler.RegisterHandlers(mux, deps)
+	container.RegisterHandlers(mux)
 
 	// Start server
 	server := &http.Server{
@@ -68,9 +68,9 @@ func main() {
 	logger.Info("starting scene-hunter server on http://localhost" + cfg.Server.Port)
 
 	// Cleanup
-	if deps.DBClient != nil {
+	if dbClient := container.GetDBClient(); dbClient != nil {
 		defer func() {
-			err := deps.DBClient.Close()
+			err := dbClient.Close()
 			if err != nil {
 				errors.LogError(
 					context.Background(),
@@ -82,8 +82,8 @@ func main() {
 		}()
 	}
 
-	if deps.KVSClient != nil {
-		defer deps.KVSClient.Close()
+	if kvsClient := container.GetKVSClient(); kvsClient != nil {
+		defer kvsClient.Close()
 	}
 
 	err := server.ListenAndServe()

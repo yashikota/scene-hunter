@@ -1,3 +1,4 @@
+// Package repository provides repository implementations.
 package repository
 
 import (
@@ -7,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/yashikota/scene-hunter/server/internal/domain/game"
-	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
+	"github.com/yashikota/scene-hunter/server/internal/service"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
@@ -25,14 +26,14 @@ const (
 	gameTTL = 24 * time.Hour
 )
 
-// gameRepositoryImpl implements GameRepository interface using KVS.
-type gameRepositoryImpl struct {
-	kvs kvs.KVS
+// GameRepositoryKVS implements GameRepository interface using KVS.
+type GameRepositoryKVS struct {
+	kvs service.KVS
 }
 
 // NewGameRepository creates a new game repository.
-func NewGameRepository(kvsClient kvs.KVS) GameRepository {
-	return &gameRepositoryImpl{
+func NewGameRepository(kvsClient service.KVS) service.GameRepository {
+	return &GameRepositoryKVS{
 		kvs: kvsClient,
 	}
 }
@@ -43,7 +44,7 @@ func gameKey(roomID uuid.UUID) string {
 }
 
 // Create saves a new game to KVS.
-func (r *gameRepositoryImpl) Create(ctx context.Context, gameSession *game.Game) error {
+func (r *GameRepositoryKVS) Create(ctx context.Context, gameSession *game.Game) error {
 	// Serialize game to JSON
 	data, err := json.Marshal(gameSession)
 	if err != nil {
@@ -66,12 +67,12 @@ func (r *gameRepositoryImpl) Create(ctx context.Context, gameSession *game.Game)
 }
 
 // Get retrieves a game from KVS by room ID.
-func (r *gameRepositoryImpl) Get(ctx context.Context, roomID uuid.UUID) (*game.Game, error) {
+func (r *GameRepositoryKVS) Get(ctx context.Context, roomID uuid.UUID) (*game.Game, error) {
 	key := gameKey(roomID)
 
 	data, err := r.kvs.Get(ctx, key)
 	if err != nil {
-		if errors.Is(err, kvs.ErrNotFound) {
+		if errors.Is(err, service.ErrNotFound) {
 			return nil, errors.Errorf("%w: roomID=%s", ErrGameNotFound, roomID)
 		}
 
@@ -89,7 +90,7 @@ func (r *gameRepositoryImpl) Get(ctx context.Context, roomID uuid.UUID) (*game.G
 }
 
 // Update updates an existing game in KVS.
-func (r *gameRepositoryImpl) Update(ctx context.Context, gameSession *game.Game) error {
+func (r *GameRepositoryKVS) Update(ctx context.Context, gameSession *game.Game) error {
 	// Check if game exists
 	_, err := r.Get(ctx, gameSession.RoomID)
 	if err != nil {
@@ -117,7 +118,7 @@ func (r *gameRepositoryImpl) Update(ctx context.Context, gameSession *game.Game)
 }
 
 // Delete removes a game from KVS.
-func (r *gameRepositoryImpl) Delete(ctx context.Context, roomID uuid.UUID) error {
+func (r *GameRepositoryKVS) Delete(ctx context.Context, roomID uuid.UUID) error {
 	// Check if game exists
 	_, err := r.Get(ctx, roomID)
 	if err != nil {
@@ -136,7 +137,7 @@ func (r *gameRepositoryImpl) Delete(ctx context.Context, roomID uuid.UUID) error
 }
 
 // Exists checks if a game exists in KVS.
-func (r *gameRepositoryImpl) Exists(ctx context.Context, roomID uuid.UUID) (bool, error) {
+func (r *GameRepositoryKVS) Exists(ctx context.Context, roomID uuid.UUID) (bool, error) {
 	key := gameKey(roomID)
 
 	exists, err := r.kvs.Exists(ctx, key)

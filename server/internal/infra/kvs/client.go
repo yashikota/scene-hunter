@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/valkey-io/valkey-go"
+	"github.com/yashikota/scene-hunter/server/internal/service"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
@@ -16,7 +17,7 @@ type Client struct {
 	client valkey.Client
 }
 
-func NewClient(addr, password string) (KVS, error) {
+func NewClient(addr, password string) (service.KVS, error) {
 	// Parse redis:// scheme if present
 	parsedAddr := addr
 	if strings.HasPrefix(addr, "redis://") || strings.HasPrefix(addr, "rediss://") {
@@ -79,7 +80,7 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 	val, err := result.ToString()
 	if err != nil {
 		if valkey.IsValkeyNil(err) {
-			return "", ErrNotFound
+			return "", service.ErrNotFound
 		}
 
 		return "", errors.Errorf("get failed: %w", err)

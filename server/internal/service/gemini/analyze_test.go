@@ -6,22 +6,21 @@ import (
 	"strings"
 	"testing"
 
-	infragemini "github.com/yashikota/scene-hunter/server/internal/infra/gemini"
+	. "github.com/ovechkin-dm/mockio/v2/mock"
+	"github.com/yashikota/scene-hunter/server/internal/service"
 	"github.com/yashikota/scene-hunter/server/internal/service/gemini"
-	"go.uber.org/mock/gomock"
 )
 
 func TestNewService(t *testing.T) {
 	t.Parallel()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	ctrl := NewMockController(t)
 
-	blobClient := NewMockBlob(ctrl)
-	geminiClient := NewMockGemini(ctrl)
+	blobClient := Mock[service.Blob](ctrl)
+	geminiClient := Mock[service.Gemini](ctrl)
 
-	service := gemini.NewService(blobClient, geminiClient)
-	if service == nil {
+	svc := gemini.NewService(blobClient, geminiClient)
+	if svc == nil {
 		t.Error("NewService() returned nil")
 	}
 }
@@ -36,7 +35,7 @@ func TestService_AnalyzeImageFromBlob(t *testing.T) {
 		prompt       string
 		blobData     []byte
 		blobError    error
-		geminiResult *infragemini.ImageAnalysisResult
+		geminiResult *service.ImageAnalysisResult
 		geminiError  error
 		wantErr      bool
 	}{
@@ -45,7 +44,7 @@ func TestService_AnalyzeImageFromBlob(t *testing.T) {
 			"Describe 5 features of this image in Japanese",
 			[]byte("fake image data"),
 			nil,
-			&infragemini.ImageAnalysisResult{
+			&service.ImageAnalysisResult{
 				Features: []string{"feature1", "feature2", "feature3", "feature4", "feature5"},
 			},
 			nil,
@@ -57,27 +56,31 @@ func TestService_AnalyzeImageFromBlob(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			ctrl := NewMockController(t)
 
-			blobClient := NewMockBlob(ctrl)
-			geminiClient := NewMockGemini(ctrl)
+			blobClient := Mock[service.Blob](ctrl)
+			geminiClient := Mock[service.Gemini](ctrl)
 
 			// Setup expectations
-			blobClient.EXPECT().
-				Get(gomock.Any(), testCase.imageKey).
-				Return(io.NopCloser(strings.NewReader(string(testCase.blobData))), testCase.blobError).
-				Times(1)
+			//nolint:contextcheck // Mock expectation setup doesn't inherit context
+			WhenDouble(blobClient.Get(Any[context.Context](), Exact(testCase.imageKey))).
+				ThenReturn(io.NopCloser(strings.NewReader(string(testCase.blobData))), testCase.blobError)
 
 			if testCase.blobError == nil {
-				geminiClient.EXPECT().
-					AnalyzeImage(gomock.Any(), testCase.blobData, gomock.Any(), testCase.prompt).
-					Return(testCase.geminiResult, testCase.geminiError).
-					Times(1)
+				//nolint:contextcheck // Mock expectation setup doesn't inherit context
+				WhenDouble(
+					geminiClient.AnalyzeImage(
+						Any[context.Context](),
+						Any[[]byte](),
+						Any[string](),
+						Exact(testCase.prompt),
+					),
+				).
+					ThenReturn(testCase.geminiResult, testCase.geminiError)
 			}
 
-			service := gemini.NewService(blobClient, geminiClient)
-			result, err := service.AnalyzeImageFromBlob(ctx, testCase.imageKey, testCase.prompt)
+			svc := gemini.NewService(blobClient, geminiClient)
+			result, err := svc.AnalyzeImageFromBlob(ctx, testCase.imageKey, testCase.prompt)
 
 			if (err != nil) != testCase.wantErr {
 				t.Errorf("AnalyzeImageFromBlob() error = %v, wantErr %v", err, testCase.wantErr)

@@ -1,4 +1,4 @@
-package handler
+package di
 
 import (
 	"context"
@@ -6,29 +6,27 @@ import (
 	"connectrpc.com/connect"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	imagehandler "github.com/yashikota/scene-hunter/server/internal/handler/image"
-	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
-	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
-	"github.com/yashikota/scene-hunter/server/internal/repository"
+	"github.com/yashikota/scene-hunter/server/internal/service"
 )
 
-// ImageService implements Connect RPC ImageService interface with handler support.
-type ImageService struct {
+// imageServiceHandler implements Connect RPC ImageService interface with handler support.
+type imageServiceHandler struct {
 	handler *imagehandler.ImageHandler
 }
 
-// NewImageService creates a new image service with handler support.
-func NewImageService(
-	blobClient blob.Blob,
-	kvsClient kvs.KVS,
-	roomRepo repository.RoomRepository,
-) *ImageService {
-	return &ImageService{
+// newImageServiceHandler creates a new image service with handler support.
+func newImageServiceHandler(
+	blobClient service.Blob,
+	kvsClient service.KVS,
+	roomRepo service.RoomRepository,
+) *imageServiceHandler {
+	return &imageServiceHandler{
 		handler: imagehandler.NewImageHandler(blobClient, kvsClient, roomRepo),
 	}
 }
 
 // UploadImage uploads an image to blob storage.
-func (s *ImageService) UploadImage(
+func (s *imageServiceHandler) UploadImage(
 	ctx context.Context,
 	req *scene_hunterv1.UploadImageRequest,
 ) (*scene_hunterv1.UploadImageResponse, error) {
@@ -42,7 +40,7 @@ func (s *ImageService) UploadImage(
 }
 
 // GetImage retrieves an image from blob storage.
-func (s *ImageService) GetImage(
+func (s *imageServiceHandler) GetImage(
 	ctx context.Context,
 	req *scene_hunterv1.GetImageRequest,
 ) (*scene_hunterv1.GetImageResponse, error) {
@@ -56,7 +54,7 @@ func (s *ImageService) GetImage(
 }
 
 // ListImages lists all images in a room.
-func (s *ImageService) ListImages(
+func (s *imageServiceHandler) ListImages(
 	ctx context.Context,
 	req *scene_hunterv1.ListImagesRequest,
 ) (*scene_hunterv1.ListImagesResponse, error) {
@@ -70,7 +68,7 @@ func (s *ImageService) ListImages(
 }
 
 // ListImageThumbnails lists all images in a room as thumbnails.
-func (s *ImageService) ListImageThumbnails(
+func (s *imageServiceHandler) ListImageThumbnails(
 	ctx context.Context,
 	req *scene_hunterv1.ListImageThumbnailsRequest,
 ) (*scene_hunterv1.ListImageThumbnailsResponse, error) {

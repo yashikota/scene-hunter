@@ -1,4 +1,4 @@
-package handler
+package di
 
 import (
 	"context"
@@ -13,8 +13,8 @@ type errorLoggingInterceptor struct {
 	logger *slog.Logger
 }
 
-// NewErrorLoggingInterceptor creates a new error logging interceptor.
-func NewErrorLoggingInterceptor(logger *slog.Logger) connect.UnaryInterceptorFunc {
+// newErrorLoggingInterceptor creates a new error logging interceptor.
+func newErrorLoggingInterceptor(logger *slog.Logger) connect.UnaryInterceptorFunc {
 	interceptor := &errorLoggingInterceptor{
 		logger: logger,
 	}
@@ -47,26 +47,13 @@ func (i *errorLoggingInterceptor) logError(ctx context.Context, req connect.AnyR
 		}
 	}
 
-	// Try to extract stack trace from go-errors
-	goErr := &errors.Error{}
-	if errors.As(baseErr, &goErr) {
-		frames := goErr.StackFrames()
-
-		stackFrames := make([]errors.StackFrame, len(frames))
-		for idx, frame := range frames {
-			stackFrames[idx] = errors.StackFrame{
-				File:           frame.File,
-				LineNumber:     frame.LineNumber,
-				Name:           frame.Name,
-				Package:        frame.Package,
-				ProgramCounter: frame.ProgramCounter,
-			}
-		}
-
+	// Try to extract stack trace using our custom errors package
+	traces := errors.StackTraces(baseErr)
+	if len(traces) > 0 {
 		i.logger.ErrorContext(ctx, "RPC error",
 			"procedure", procedure,
-			"error", goErr.Err.Error(),
-			"StackFrames", stackFrames,
+			"error", baseErr.Error(),
+			"stacktraces", traces,
 		)
 	} else {
 		// Fallback to regular error logging

@@ -18,9 +18,7 @@ import (
 	"github.com/google/uuid"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	domainimage "github.com/yashikota/scene-hunter/server/internal/domain/image"
-	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
-	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
-	"github.com/yashikota/scene-hunter/server/internal/repository"
+	"github.com/yashikota/scene-hunter/server/internal/service"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 	_ "golang.org/x/image/webp"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -37,16 +35,16 @@ const TTL = 1 * time.Hour
 
 // ImageHandler handles image operations with infrastructure dependencies.
 type ImageHandler struct {
-	blobClient blob.Blob
-	kvsClient  kvs.KVS
-	roomRepo   repository.RoomRepository
+	blobClient service.Blob
+	kvsClient  service.KVS
+	roomRepo   service.RoomRepository
 }
 
 // NewImageHandler creates a new image handler.
 func NewImageHandler(
-	blobClient blob.Blob,
-	kvsClient kvs.KVS,
-	roomRepo repository.RoomRepository,
+	blobClient service.Blob,
+	kvsClient service.KVS,
+	roomRepo service.RoomRepository,
 ) *ImageHandler {
 	return &ImageHandler{
 		blobClient: blobClient,

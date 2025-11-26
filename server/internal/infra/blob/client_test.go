@@ -9,6 +9,7 @@ import (
 
 	"github.com/testcontainers/testcontainers-go/modules/minio"
 	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
+	"github.com/yashikota/scene-hunter/server/internal/service"
 )
 
 // setupMinio はテスト用のMinIOコンテナをセットアップする.
@@ -30,7 +31,7 @@ func setupMinio(ctx context.Context, t *testing.T) (string, func()) {
 
 	// Wait for MinIO to be fully initialized by attempting to create a client and ping
 	// Retry up to 10 times with 1 second delay between attempts
-	var client blob.Blob
+	var client service.Blob
 	for range 10 {
 		client, err = blob.NewClient(connString, "minioadmin", "minioadmin", "test-bucket", false)
 		if err == nil {

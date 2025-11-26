@@ -14,7 +14,8 @@ import (
 	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
 	infrablob "github.com/yashikota/scene-hunter/server/internal/infra/blob"
 	infrakvs "github.com/yashikota/scene-hunter/server/internal/infra/kvs"
-	"github.com/yashikota/scene-hunter/server/internal/repository"
+	infrarepo "github.com/yashikota/scene-hunter/server/internal/infra/repository"
+	"github.com/yashikota/scene-hunter/server/internal/service"
 	"github.com/yashikota/scene-hunter/server/internal/service/image"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
@@ -23,7 +24,7 @@ import (
 // テーブル駆動テストではなく個別の関数として実装している。
 
 // setupMinio はテスト用のMinIOコンテナをセットアップする.
-func setupMinio(ctx context.Context, t *testing.T) (infrablob.Blob, func()) {
+func setupMinio(ctx context.Context, t *testing.T) (service.Blob, func()) {
 	t.Helper()
 
 	minioContainer, err := minio.Run(ctx, "docker.io/minio/minio:RELEASE.2025-09-07T16-13-09Z")
@@ -36,7 +37,7 @@ func setupMinio(ctx context.Context, t *testing.T) (infrablob.Blob, func()) {
 		t.Fatalf("failed to get connection string: %v", err)
 	}
 
-	var client infrablob.Blob
+	var client service.Blob
 	for range 10 {
 		client, err = infrablob.NewClient(
 			connString,
@@ -71,7 +72,7 @@ func setupMinio(ctx context.Context, t *testing.T) (infrablob.Blob, func()) {
 }
 
 // setupValkey はテスト用のValkeyコンテナをセットアップする.
-func setupValkey(ctx context.Context, t *testing.T) (infrakvs.KVS, func()) {
+func setupValkey(ctx context.Context, t *testing.T) (service.KVS, func()) {
 	t.Helper()
 
 	valkeyContainer, err := valkey.Run(ctx, "docker.io/valkey/valkey:9.0.0")
@@ -121,7 +122,7 @@ func TestGetImage_Success(t *testing.T) {
 	kvsClient, kvsCleanup := setupValkey(ctx, t)
 	defer kvsCleanup()
 
-	roomRepo := repository.NewRoomRepository(kvsClient)
+	roomRepo := infrarepo.NewRoomRepository(kvsClient)
 
 	// テストデータの準備
 	roomID := uuid.New()
@@ -176,7 +177,7 @@ func TestGetImage_RoomNotFound(t *testing.T) {
 	kvsClient, kvsCleanup := setupValkey(ctx, t)
 	defer kvsCleanup()
 
-	roomRepo := repository.NewRoomRepository(kvsClient)
+	roomRepo := infrarepo.NewRoomRepository(kvsClient)
 
 	svc := image.NewService(blobClient, kvsClient, roomRepo)
 	req := &scene_hunterv1.GetImageRequest{
@@ -211,7 +212,7 @@ func TestGetImage_ImageNotFound(t *testing.T) {
 	kvsClient, kvsCleanup := setupValkey(ctx, t)
 	defer kvsCleanup()
 
-	roomRepo := repository.NewRoomRepository(kvsClient)
+	roomRepo := infrarepo.NewRoomRepository(kvsClient)
 
 	// ルームは存在する
 	roomID := uuid.New()
@@ -257,7 +258,7 @@ func TestListImages_Success(t *testing.T) {
 	kvsClient, kvsCleanup := setupValkey(ctx, t)
 	defer kvsCleanup()
 
-	roomRepo := repository.NewRoomRepository(kvsClient)
+	roomRepo := infrarepo.NewRoomRepository(kvsClient)
 
 	// テストデータの準備
 	roomID := uuid.New()
@@ -329,7 +330,7 @@ func TestListImages_EmptyResult(t *testing.T) {
 	kvsClient, kvsCleanup := setupValkey(ctx, t)
 	defer kvsCleanup()
 
-	roomRepo := repository.NewRoomRepository(kvsClient)
+	roomRepo := infrarepo.NewRoomRepository(kvsClient)
 
 	// ルームは存在するが画像は存在しない
 	roomID := uuid.New()
@@ -369,7 +370,7 @@ func TestListImages_RoomNotFound(t *testing.T) {
 	kvsClient, kvsCleanup := setupValkey(ctx, t)
 	defer kvsCleanup()
 
-	roomRepo := repository.NewRoomRepository(kvsClient)
+	roomRepo := infrarepo.NewRoomRepository(kvsClient)
 
 	svc := image.NewService(blobClient, kvsClient, roomRepo)
 	req := &scene_hunterv1.ListImagesRequest{

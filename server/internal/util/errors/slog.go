@@ -2,20 +2,8 @@ package errors
 
 import (
 	"context"
-	"errors"
 	"log/slog"
-
-	goerrors "github.com/go-errors/errors"
 )
-
-// StackFrame represents a single stack frame for structured logging.
-type StackFrame struct {
-	File           string  `json:"File"`
-	LineNumber     int     `json:"LineNumber"`
-	Name           string  `json:"Name"`
-	Package        string  `json:"Package"`
-	ProgramCounter uintptr `json:"ProgramCounter"`
-}
 
 // LogError logs an error with stack trace using the provided logger.
 func LogError(ctx context.Context, logger *slog.Logger, msg string, err error, args ...any) {
@@ -25,27 +13,14 @@ func LogError(ctx context.Context, logger *slog.Logger, msg string, err error, a
 		return
 	}
 
-	// Extract stack trace if it's a go-errors.Error
-	goErr := &goerrors.Error{}
-	if errors.As(err, &goErr) {
-		frames := goErr.StackFrames()
-
-		stackFrames := make([]StackFrame, len(frames))
-		for i, frame := range frames {
-			stackFrames[i] = StackFrame{
-				File:           frame.File,
-				LineNumber:     frame.LineNumber,
-				Name:           frame.Name,
-				Package:        frame.Package,
-				ProgramCounter: frame.ProgramCounter,
-			}
-		}
-
+	// Extract stack trace using our custom StackTraces function
+	traces := StackTraces(err)
+	if len(traces) > 0 {
 		// Create new args slice with error and stack trace
 		logArgs := make([]any, 0, len(args)+4)
 		logArgs = append(logArgs, args...)
-		logArgs = append(logArgs, "error", goErr.Err.Error())
-		logArgs = append(logArgs, "StackFrames", stackFrames)
+		logArgs = append(logArgs, "error", err.Error())
+		logArgs = append(logArgs, "stacktraces", traces)
 
 		logger.ErrorContext(ctx, msg, logArgs...)
 	} else {
