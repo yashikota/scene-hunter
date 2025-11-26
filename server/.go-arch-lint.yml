@@ -1,0 +1,114 @@
+version: 3
+
+workdir: .
+
+allow:
+  depOnAnyVendor: true
+  deepScan: false
+
+excludeFiles:
+  - "_test\\.go$"
+
+components:
+  # Domain layer - innermost layer, no dependencies on other internal packages
+  domain:
+    in: internal/domain/**
+
+  # Service layer - depends only on domain and service (for sub-packages)
+  service:
+    in: internal/service/**
+
+  # Handler layer - depends on service and domain
+  handler:
+    in: internal/handler/**
+
+  # Repository layer - implements service repository interfaces
+  repository:
+    in: internal/repository/**
+
+  # Infrastructure layer - implements service interfaces (kvs, blob, gemini, db)
+  infra:
+    in: internal/infra/**
+
+  # Utility packages - can be used by any layer
+  util:
+    in: internal/util/**
+
+  # Config package - can be used by any layer
+  config:
+    in: internal/config/**
+
+  # Test utilities
+  testutil:
+    in: internal/testutil/**
+
+  # DI container - composition root, can depend on everything
+  di:
+    in: cmd/di/**
+
+  # Main entry point
+  main:
+    in: cmd/**
+
+  # Generated code
+  gen:
+    in: gen/**
+
+commonComponents:
+  - util
+  - config
+  - gen
+
+deps:
+  # Domain has no internal dependencies (only util, config via commonComponents)
+  domain:
+    anyVendorDeps: true
+
+  # Service depends on domain and can reference other service sub-packages
+  service:
+    mayDependOn:
+      - domain
+      - service
+
+  # Handler depends on service and domain
+  handler:
+    mayDependOn:
+      - service
+      - domain
+
+  # Repository implements service repository interfaces, uses domain and infra
+  repository:
+    mayDependOn:
+      - service
+      - domain
+      - infra
+
+  # Infra implements service interfaces, may use domain and other infra packages
+  infra:
+    mayDependOn:
+      - service
+      - domain
+      - infra
+
+  # DI (composition root) can depend on everything
+  di:
+    mayDependOn:
+      - domain
+      - service
+      - handler
+      - repository
+      - infra
+
+  # Main can depend on di and config
+  main:
+    mayDependOn:
+      - di
+
+  # Testutil can depend on anything for testing support
+  testutil:
+    mayDependOn:
+      - domain
+      - service
+      - handler
+      - repository
+      - infra

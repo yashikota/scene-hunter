@@ -14,7 +14,7 @@ import (
 	domainroom "github.com/yashikota/scene-hunter/server/internal/domain/room"
 	infrablob "github.com/yashikota/scene-hunter/server/internal/infra/blob"
 	infrakvs "github.com/yashikota/scene-hunter/server/internal/infra/kvs"
-	infrarepo "github.com/yashikota/scene-hunter/server/internal/infra/repository"
+	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/service"
 	"github.com/yashikota/scene-hunter/server/internal/service/image"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
@@ -122,7 +122,7 @@ func TestGetImage_Success(t *testing.T) {
 	kvsClient, kvsCleanup := setupValkey(ctx, t)
 	defer kvsCleanup()
 
-	roomRepo := infrarepo.NewRoomRepository(kvsClient)
+	roomRepo := repository.NewRoomRepository(kvsClient)
 
 	// テストデータの準備
 	roomID := uuid.New()
@@ -177,7 +177,7 @@ func TestGetImage_RoomNotFound(t *testing.T) {
 	kvsClient, kvsCleanup := setupValkey(ctx, t)
 	defer kvsCleanup()
 
-	roomRepo := infrarepo.NewRoomRepository(kvsClient)
+	roomRepo := repository.NewRoomRepository(kvsClient)
 
 	svc := image.NewService(blobClient, kvsClient, roomRepo)
 	req := &scene_hunterv1.GetImageRequest{
@@ -212,7 +212,7 @@ func TestGetImage_ImageNotFound(t *testing.T) {
 	kvsClient, kvsCleanup := setupValkey(ctx, t)
 	defer kvsCleanup()
 
-	roomRepo := infrarepo.NewRoomRepository(kvsClient)
+	roomRepo := repository.NewRoomRepository(kvsClient)
 
 	// ルームは存在する
 	roomID := uuid.New()
@@ -258,7 +258,7 @@ func TestListImages_Success(t *testing.T) {
 	kvsClient, kvsCleanup := setupValkey(ctx, t)
 	defer kvsCleanup()
 
-	roomRepo := infrarepo.NewRoomRepository(kvsClient)
+	roomRepo := repository.NewRoomRepository(kvsClient)
 
 	// テストデータの準備
 	roomID := uuid.New()
@@ -330,7 +330,7 @@ func TestListImages_EmptyResult(t *testing.T) {
 	kvsClient, kvsCleanup := setupValkey(ctx, t)
 	defer kvsCleanup()
 
-	roomRepo := infrarepo.NewRoomRepository(kvsClient)
+	roomRepo := repository.NewRoomRepository(kvsClient)
 
 	// ルームは存在するが画像は存在しない
 	roomID := uuid.New()
@@ -370,7 +370,7 @@ func TestListImages_RoomNotFound(t *testing.T) {
 	kvsClient, kvsCleanup := setupValkey(ctx, t)
 	defer kvsCleanup()
 
-	roomRepo := infrarepo.NewRoomRepository(kvsClient)
+	roomRepo := repository.NewRoomRepository(kvsClient)
 
 	svc := image.NewService(blobClient, kvsClient, roomRepo)
 	req := &scene_hunterv1.ListImagesRequest{

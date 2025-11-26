@@ -11,19 +11,16 @@ flowchart TB
         direction TB
         subgraph infra_layer[" "]
             direction LR
-            handler["handler<br/>(HTTP/gRPC)"]
-            kvs["infra/kvs"]
-            blob["infra/blob"]
-            gemini["infra/gemini"]
-            db["infra/db"]
-            repo["infra/repository"]
+            handler["handler<br/>(connectRPC)"]
+            infra["infra"]
+            repo["repository"]
         end
     end
 
     subgraph middle["中間: Interface Adapters"]
         direction TB
         subgraph service_layer[" "]
-            service["service<br/>(Use Cases + Interfaces)"]
+            service["service<br/>(Use Cases)"]
         end
     end
 
@@ -38,16 +35,12 @@ flowchart TB
     service --> domain
     repo --> domain
     repo -.->|implements| service
-    kvs -.->|implements| service
-    blob -.->|implements| service
-    gemini -.->|implements| service
+    infra -.->|implements| service
 
     style inner fill:#ffffcc,stroke:#333
     style middle fill:#ccffcc,stroke:#333
     style outer fill:#ccccff,stroke:#333
 ```
-
-依存の方向は **外側 → 内側** のみ。内側は外側を知らない。
 
 ## ディレクトリ構造
 
@@ -85,15 +78,15 @@ server/
     │
     ├── handler/                   # ハンドラ層（プレゼンテーション）
     │   ├── game/                  # ゲームAPI
-    │   ├── auth/                  # 認証API
     │   └── image/                 # 画像API
     │
+    ├── repository/                # Repository層（独立コンポーネント）
+    │   ├── game_kvs.go            # KVS使用
+    │   ├── room_kvs.go            # KVS使用
+    │   ├── anon_kvs.go            # KVS使用
+    │   └── identity_db.go         # PostgreSQL使用
+    │
     ├── infra/                     # インフラ層（外部接続）
-    │   ├── repository/            # Repository実装
-    │   │   ├── game_kvs.go        # KVS使用
-    │   │   ├── room_kvs.go        # KVS使用
-    │   │   ├── anon_kvs.go        # KVS使用
-    │   │   └── identity_db.go     # PostgreSQL使用
     │   ├── kvs/                   # Valkey(Redis互換)クライアント
     │   ├── blob/                  # MinIO/S3互換ストレージクライアント
     │   ├── gemini/                # Google Gemini AIクライアント
@@ -115,59 +108,23 @@ server/
 - ここで interface と実装を結びつける
 - ハンドラの登録もここで行う
 
-## 依存関係
-
-矢印は「依存する」方向を示す。インターフェースは利用側（service）で定義するGoイディオムに従っている。
-
-```mermaid
-flowchart TB
-    subgraph presentation["プレゼンテーション層"]
-        handler["handler"]
-    end
-
-    subgraph application["アプリケーション層"]
-        service["service(インターフェース定義 + ユースケース実装)"]
-    end
-
-    subgraph domain_layer["ドメイン層"]
-        domain["domain(Entity, ValueObject)"]
-    end
-
-    subgraph infrastructure["インフラ層"]
-        infra_repo["infra/repository"]
-        infra_kvs["infra/kvs"]
-        infra_blob["infra/blob"]
-        infra_gemini["infra/gemini"]
-    end
-
-    handler --> service
-    service --> domain
-
-    infra_repo -.->|implements| service
-    infra_repo --> domain
-    infra_kvs -.->|implements| service
-    infra_blob -.->|implements| service
-    infra_gemini -.->|implements| service
-```
-
 ### 許可される依存
 
 | From | To | 説明 |
 |------|-----|------|
-| cmd/di | infra/* | DIコンテナは具体的な実装をワイヤリングする |
+| cmd/di | infra/*, repository | DIコンテナは具体的な実装をワイヤリングする |
 | cmd/di | service/* | DIコンテナはサービスをワイヤリングする |
 | cmd/di | handler/* | DIコンテナはハンドラを登録する |
-| handler | service | ハンドラはサービスを呼び出す |
+| handler | service, domain | ハンドラはサービスを呼び出す |
 | service | domain/* | ドメインロジック・Entity使用 |
-| infra/repository | service | Repositoryインターフェースを実装 |
-| infra/repository | domain/* | Entityの永続化 |
-| infra/kvs, blob, gemini | service | 外部サービスインターフェースを実装 |
+| repository | service, domain, infra | Repositoryインターフェースを実装、infraクライアントを使用 |
+| infra/kvs, blob, gemini, db | service | 外部サービスインターフェースを実装 |
 
 ### 禁止される依存
 
-- `domain` → `service`, `handler`, `infra`（ドメインは外部に依存しない）
-- `service` → `infra`（サービスはインターフェース経由でのみアクセス）
-- `handler` → `infra`（ハンドラは直接インフラにアクセスしない）
+- `domain` → `service`, `handler`, `infra`, `repository`（ドメインは外部に依存しない）
+- `service` → `infra`, `repository`（サービスはインターフェース経由でのみアクセス）
+- `handler` → `infra`, `repository`（ハンドラは直接インフラにアクセスしない）
 
 ※ `cmd/di` は Composition Root として特別扱い。全ての具体実装を知る必要がある。
 
