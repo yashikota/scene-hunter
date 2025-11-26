@@ -9,9 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/yashikota/scene-hunter/server/internal/domain/game"
-	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
-	infragemini "github.com/yashikota/scene-hunter/server/internal/infra/gemini"
-	"github.com/yashikota/scene-hunter/server/internal/repository"
+	"github.com/yashikota/scene-hunter/server/internal/service"
 	servicegemini "github.com/yashikota/scene-hunter/server/internal/service/gemini"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
@@ -31,19 +29,19 @@ const (
 
 // Service implements the GameService.
 type Service struct {
-	gameRepo     repository.GameRepository
-	roomRepo     repository.RoomRepository
-	blobClient   blob.Blob
-	geminiClient infragemini.Gemini
+	gameRepo     service.GameRepository
+	roomRepo     service.RoomRepository
+	blobClient   service.Blob
+	geminiClient service.Gemini
 	geminiSvc    *servicegemini.Service
 }
 
 // NewService creates a new game service.
 func NewService(
-	gameRepo repository.GameRepository,
-	roomRepo repository.RoomRepository,
-	blobClient blob.Blob,
-	geminiClient infragemini.Gemini,
+	gameRepo service.GameRepository,
+	roomRepo service.RoomRepository,
+	blobClient service.Blob,
+	geminiClient service.Gemini,
 ) *Service {
 	return &Service{
 		gameRepo:     gameRepo,

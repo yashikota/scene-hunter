@@ -12,9 +12,7 @@ import (
 	"github.com/google/uuid"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	domainimage "github.com/yashikota/scene-hunter/server/internal/domain/image"
-	"github.com/yashikota/scene-hunter/server/internal/infra/blob"
-	"github.com/yashikota/scene-hunter/server/internal/infra/kvs"
-	"github.com/yashikota/scene-hunter/server/internal/repository"
+	"github.com/yashikota/scene-hunter/server/internal/service"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -29,15 +27,15 @@ var ErrImageNotFound = errors.New("image not found")
 const TTL = 1 * time.Hour
 
 type Service struct {
-	blobClient blob.Blob
-	kvsClient  kvs.KVS
-	roomRepo   repository.RoomRepository
+	blobClient service.Blob
+	kvsClient  service.KVS
+	roomRepo   service.RoomRepository
 }
 
 func NewService(
-	blobClient blob.Blob,
-	kvsClient kvs.KVS,
-	roomRepo repository.RoomRepository,
+	blobClient service.Blob,
+	kvsClient service.KVS,
+	roomRepo service.RoomRepository,
 ) *Service {
 	return &Service{
 		blobClient: blobClient,
