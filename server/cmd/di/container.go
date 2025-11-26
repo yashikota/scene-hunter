@@ -187,48 +187,92 @@ func (c *Container) GetKVSClient() service.KVS {
 
 // RegisterHandlers registers all HTTP handlers to the router.
 func (c *Container) RegisterHandlers(mux *chi.Mux) {
-	c.MustInvoke(func(logger *slog.Logger, chronoProvider chrono.Chrono) {
+	var logger *slog.Logger
+
+	var chronoProvider chrono.Chrono
+
+	c.MustInvoke(func(l *slog.Logger, cp chrono.Chrono) {
+		logger = l
+		chronoProvider = cp
 		registerHealthService(mux, chronoProvider)
 	})
 
-	// Try to register optional services
-	_ = c.container.Invoke(func(
-		logger *slog.Logger,
-		chronoProvider chrono.Chrono,
-		dbClient *infradb.Client,
-		kvsClient service.KVS,
-		blobClient service.Blob,
-	) {
-		registerStatusService(mux, chronoProvider, dbClient, kvsClient, blobClient)
-	})
+	// StatusService should always be registered for health monitoring
+	// Even if some dependencies fail, we want to report their status
+	c.registerStatusServiceWithFallback(mux, logger, chronoProvider)
 
-	_ = c.container.Invoke(func(
+	// Register optional services with error logging
+	if err := c.container.Invoke(func(
 		kvsClient service.KVS,
 		blobClient service.Blob,
 		roomRepo service.RoomRepository,
 	) {
 		registerImageService(mux, kvsClient, blobClient, roomRepo)
-	})
+	}); err != nil {
+		logger.Warn("failed to register ImageService", "error", err)
+	}
 
-	_ = c.container.Invoke(func(roomRepo service.RoomRepository) {
+	if err := c.container.Invoke(func(roomRepo service.RoomRepository) {
 		registerRoomService(mux, roomRepo)
-	})
+	}); err != nil {
+		logger.Warn("failed to register RoomService", "error", err)
+	}
 
-	_ = c.container.Invoke(func(
+	if err := c.container.Invoke(func(
 		cfg *config.AppConfig,
 		dbClient *infradb.Client,
 		anonRepo service.AnonRepository,
 		identityRepo service.IdentityRepository,
 	) {
 		registerAuthService(mux, cfg, dbClient, anonRepo, identityRepo)
-	})
+	}); err != nil {
+		logger.Warn("failed to register AuthService", "error", err)
+	}
 
-	_ = c.container.Invoke(func(
+	if err := c.container.Invoke(func(
 		gameRepo service.GameRepository,
 		roomRepo service.RoomRepository,
 		blobClient service.Blob,
 		geminiClient service.Gemini,
 	) {
 		registerGameService(mux, gameRepo, roomRepo, blobClient, geminiClient)
-	})
+	}); err != nil {
+		logger.Warn("failed to register GameService", "error", err)
+	}
+}
+
+// registerStatusServiceWithFallback registers StatusService even if some dependencies are unavailable.
+func (c *Container) registerStatusServiceWithFallback(
+	mux *chi.Mux,
+	logger *slog.Logger,
+	chronoProvider chrono.Chrono,
+) {
+	// Try to get all dependencies, use nil for unavailable ones
+	var dbClient *infradb.Client
+
+	var kvsClient service.KVS
+
+	var blobClient service.Blob
+
+	// Try to resolve each dependency individually
+	if err := c.container.Invoke(func(db *infradb.Client) {
+		dbClient = db
+	}); err != nil {
+		logger.Warn("DB client unavailable for StatusService", "error", err)
+	}
+
+	if err := c.container.Invoke(func(kvs service.KVS) {
+		kvsClient = kvs
+	}); err != nil {
+		logger.Warn("KVS client unavailable for StatusService", "error", err)
+	}
+
+	if err := c.container.Invoke(func(blob service.Blob) {
+		blobClient = blob
+	}); err != nil {
+		logger.Warn("Blob client unavailable for StatusService", "error", err)
+	}
+
+	// Always register StatusService with whatever dependencies are available
+	registerStatusService(mux, chronoProvider, dbClient, kvsClient, blobClient)
 }

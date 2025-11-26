@@ -23,7 +23,7 @@ var ErrEmptyAPIKey = errors.New("API key is required")
 var ErrEmptyModelName = errors.New("model name is required")
 
 // NewClient creates a new Gemini client.
-func NewClient(ctx context.Context, apiKey, modelName string) (Gemini, error) {
+func NewClient(ctx context.Context, apiKey, modelName string) (service.Gemini, error) {
 	if apiKey == "" {
 		return nil, ErrEmptyAPIKey
 	}
