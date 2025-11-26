@@ -35,6 +35,7 @@ tasks:
     cmds:
       - golangci-lint run --fix
       - golangci-lint fmt
+      - go-arch-lint check
 
   go/test:
     desc: "Test Go code"

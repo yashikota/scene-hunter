@@ -24,3 +24,4 @@ packages:
 - name: sqlc-dev/sqlc@v1.30.0
 - name: kyoh86/richgo@v0.3.12
 - name: uber-go/mock@v0.6.0
+- name: fe3dback/go-arch-lint@v1.14.0
