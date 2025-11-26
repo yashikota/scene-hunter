@@ -1,24 +1,24 @@
-package handler
+package di
 
 import (
 	"context"
 
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	authhandler "github.com/yashikota/scene-hunter/server/internal/handler/auth"
-	"github.com/yashikota/scene-hunter/server/internal/infra/db"
+	infradb "github.com/yashikota/scene-hunter/server/internal/infra/db"
 	authsvc "github.com/yashikota/scene-hunter/server/internal/service/auth"
 )
 
-// AuthService implements Connect RPC AuthService interface with handler support.
-type AuthService struct {
+// authServiceHandler implements Connect RPC AuthService interface with handler support.
+type authServiceHandler struct {
 	service        *authsvc.Service
 	upgradeHandler *authhandler.UpgradeServiceHandler
 	loginHandler   *authhandler.LoginServiceHandler
 }
 
-// NewAuthService creates a new auth service with handler support.
-func NewAuthService(service *authsvc.Service, dbClient *db.Client) *AuthService {
-	return &AuthService{
+// newAuthServiceHandler creates a new auth service with handler support.
+func newAuthServiceHandler(service *authsvc.Service, dbClient *infradb.Client) *authServiceHandler {
+	return &authServiceHandler{
 		service:        service,
 		upgradeHandler: authhandler.NewUpgradeServiceHandler(service, dbClient),
 		loginHandler:   authhandler.NewLoginServiceHandler(service, dbClient),
@@ -26,7 +26,7 @@ func NewAuthService(service *authsvc.Service, dbClient *db.Client) *AuthService 
 }
 
 // IssueAnon issues new anonymous tokens.
-func (s *AuthService) IssueAnon(
+func (s *authServiceHandler) IssueAnon(
 	ctx context.Context,
 	req *scene_hunterv1.IssueAnonRequest,
 ) (*scene_hunterv1.IssueAnonResponse, error) {
@@ -35,7 +35,7 @@ func (s *AuthService) IssueAnon(
 }
 
 // RefreshAnon refreshes anonymous tokens.
-func (s *AuthService) RefreshAnon(
+func (s *authServiceHandler) RefreshAnon(
 	ctx context.Context,
 	req *scene_hunterv1.RefreshAnonRequest,
 ) (*scene_hunterv1.RefreshAnonResponse, error) {
@@ -44,7 +44,7 @@ func (s *AuthService) RefreshAnon(
 }
 
 // RevokeAnon revokes anonymous tokens.
-func (s *AuthService) RevokeAnon(
+func (s *authServiceHandler) RevokeAnon(
 	ctx context.Context,
 	req *scene_hunterv1.RevokeAnonRequest,
 ) (*scene_hunterv1.RevokeAnonResponse, error) {
@@ -53,7 +53,7 @@ func (s *AuthService) RevokeAnon(
 }
 
 // UpgradeAnonWithGoogle upgrades anonymous user with Google OAuth.
-func (s *AuthService) UpgradeAnonWithGoogle(
+func (s *authServiceHandler) UpgradeAnonWithGoogle(
 	ctx context.Context,
 	req *scene_hunterv1.UpgradeAnonWithGoogleRequest,
 ) (*scene_hunterv1.UpgradeAnonWithGoogleResponse, error) {
@@ -62,7 +62,7 @@ func (s *AuthService) UpgradeAnonWithGoogle(
 }
 
 // LoginWithGoogle handles direct Google login without anonymous token.
-func (s *AuthService) LoginWithGoogle(
+func (s *authServiceHandler) LoginWithGoogle(
 	ctx context.Context,
 	req *scene_hunterv1.LoginWithGoogleRequest,
 ) (*scene_hunterv1.LoginWithGoogleResponse, error) {

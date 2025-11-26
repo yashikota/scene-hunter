@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
-	"github.com/yashikota/scene-hunter/server/internal/repository"
+	"github.com/yashikota/scene-hunter/server/internal/service"
 	gamesvc "github.com/yashikota/scene-hunter/server/internal/service/game"
 	"github.com/yashikota/scene-hunter/server/internal/service/middleware"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
@@ -15,13 +15,13 @@ import (
 // Handler wraps the game service.
 type Handler struct {
 	service  *gamesvc.Service
-	roomRepo repository.RoomRepository
+	roomRepo service.RoomRepository
 }
 
 // NewHandler creates a new game handler.
-func NewHandler(service *gamesvc.Service, roomRepo repository.RoomRepository) *Handler {
+func NewHandler(svc *gamesvc.Service, roomRepo service.RoomRepository) *Handler {
 	return &Handler{
-		service:  service,
+		service:  svc,
 		roomRepo: roomRepo,
 	}
 }
