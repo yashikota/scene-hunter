@@ -30,8 +30,22 @@ type Client struct {
 	modelName string
 }
 
+// ErrEmptyAPIKey is returned when API key is empty.
+var ErrEmptyAPIKey = errors.New("API key is required")
+
+// ErrEmptyModelName is returned when model name is empty.
+var ErrEmptyModelName = errors.New("model name is required")
+
 // NewClient creates a new Gemini client.
 func NewClient(ctx context.Context, apiKey, modelName string) (Gemini, error) {
+	if apiKey == "" {
+		return nil, ErrEmptyAPIKey
+	}
+
+	if modelName == "" {
+		return nil, ErrEmptyModelName
+	}
+
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
 		APIKey: apiKey,
 	})
