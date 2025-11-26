@@ -8,6 +8,7 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/yashikota/scene-hunter/server/internal/service"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
 )
 
@@ -23,7 +24,7 @@ func NewClient(
 	secretKey string,
 	bucketName string,
 	useSSL bool,
-) (Blob, error) {
+) (service.Blob, error) {
 	minioClient, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
 		Secure: useSSL,
@@ -132,20 +133,20 @@ func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 	return true, nil
 }
 
-func (c *Client) List(ctx context.Context, prefix string) ([]ObjectInfo, error) {
+func (c *Client) List(ctx context.Context, prefix string) ([]service.ObjectInfo, error) {
 	objectCh := c.client.ListObjects(ctx, c.bucketName, minio.ListObjectsOptions{
 		Prefix:    prefix,
 		Recursive: true,
 	})
 
-	result := make([]ObjectInfo, 0)
+	result := make([]service.ObjectInfo, 0)
 
 	for object := range objectCh {
 		if object.Err != nil {
 			return nil, errors.Errorf("failed to list objects: %w", object.Err)
 		}
 
-		result = append(result, ObjectInfo{
+		result = append(result, service.ObjectInfo{
 			Key:          object.Key,
 			Size:         object.Size,
 			LastModified: object.LastModified,
