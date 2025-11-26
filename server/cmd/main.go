@@ -14,7 +14,9 @@ import (
 	slogchi "github.com/samber/slog-chi"
 	"github.com/yashikota/scene-hunter/server/cmd/di"
 	"github.com/yashikota/scene-hunter/server/internal/config"
+	infraotel "github.com/yashikota/scene-hunter/server/internal/infra/otel"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -28,6 +30,25 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
+	// Initialize OpenTelemetry
+	var otelProvider *infraotel.Provider
+
+	if cfg.Otel.Enabled {
+		var err error
+
+		otelProvider, err = infraotel.Init(ctx, infraotel.Config{
+			ServiceName:    "scene-hunter",
+			ServiceVersion: "1.0.0",
+			Endpoint:       cfg.Otel.Endpoint,
+			Insecure:       cfg.Otel.Insecure,
+		})
+		if err != nil {
+			logger.Error("failed to initialize OpenTelemetry", "error", err)
+		} else {
+			logger.Info("OpenTelemetry initialized", "endpoint", cfg.Otel.Endpoint)
+		}
+	}
 
 	// Initialize DI container
 	container := di.New(ctx, cfg, logger)
@@ -43,6 +64,14 @@ func main() {
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
+
+	// Add OpenTelemetry HTTP middleware
+	if cfg.Otel.Enabled {
+		mux.Use(func(next http.Handler) http.Handler {
+			return otelhttp.NewHandler(next, "scene-hunter")
+		})
+	}
+
 	mux.Use(slogchi.NewWithConfig(logger, slogchi.Config{
 		WithSpanID:       true,
 		WithTraceID:      true,
@@ -84,6 +113,23 @@ func main() {
 
 	if kvsClient := container.GetKVSClient(); kvsClient != nil {
 		defer kvsClient.Close()
+	}
+
+	// Cleanup OpenTelemetry
+	if otelProvider != nil {
+		defer func() {
+			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer shutdownCancel()
+
+			if err := otelProvider.Shutdown(shutdownCtx); err != nil {
+				errors.LogError(
+					context.Background(),
+					logger,
+					"failed to shutdown OpenTelemetry",
+					err,
+				)
+			}
+		}()
 	}
 
 	err := server.ListenAndServe()
