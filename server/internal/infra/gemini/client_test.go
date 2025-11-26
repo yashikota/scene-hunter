@@ -17,6 +17,7 @@ func TestNewClient(t *testing.T) {
 		wantErr           bool
 	}{
 		"empty API key should fail":    {"", "gemini-2.0-flash", true},
+		"empty model name should fail": {"test-api-key", "", true},
 		"valid API key and model name": {"test-api-key", "gemini-2.0-flash", false},
 	}
 
