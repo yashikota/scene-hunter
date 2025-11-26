@@ -38,15 +38,17 @@ func main() {
 		var err error
 
 		otelProvider, err = infraotel.Init(ctx, infraotel.Config{
-			ServiceName:    "scene-hunter",
-			ServiceVersion: "1.0.0",
-			Endpoint:       cfg.Otel.Endpoint,
-			Insecure:       cfg.Otel.Insecure,
+			Endpoint:    cfg.Otel.Endpoint,
+			Insecure:    cfg.Otel.Insecure,
+			SampleRatio: cfg.Otel.SampleRatio,
 		})
 		if err != nil {
 			logger.Error("failed to initialize OpenTelemetry", "error", err)
 		} else {
-			logger.Info("OpenTelemetry initialized", "endpoint", cfg.Otel.Endpoint)
+			logger.Info("OpenTelemetry initialized",
+				"endpoint", cfg.Otel.Endpoint,
+				"sample_ratio", cfg.Otel.SampleRatio,
+			)
 		}
 	}
 
@@ -68,7 +70,7 @@ func main() {
 	// Add OpenTelemetry HTTP middleware
 	if cfg.Otel.Enabled {
 		mux.Use(func(next http.Handler) http.Handler {
-			return otelhttp.NewHandler(next, "scene-hunter")
+			return otelhttp.NewHandler(next, infraotel.ServiceName)
 		})
 	}
 

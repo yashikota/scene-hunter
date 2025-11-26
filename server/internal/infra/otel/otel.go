@@ -3,6 +3,7 @@ package otel
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
@@ -16,12 +17,23 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
+const (
+	// ServiceName is the name of the service for OpenTelemetry.
+	ServiceName = "scene-hunter"
+	// ServiceVersion is the version of the service for OpenTelemetry.
+	ServiceVersion = "1.0.0"
+
+	// defaultBatchTimeout is the default timeout for batching traces.
+	defaultBatchTimeout = 5 * time.Second
+	// defaultMetricInterval is the default interval for exporting metrics.
+	defaultMetricInterval = 30 * time.Second
+)
+
 // Config holds OpenTelemetry configuration.
 type Config struct {
-	ServiceName    string
-	ServiceVersion string
-	Endpoint       string // OTLP endpoint (e.g., "localhost:4317")
-	Insecure       bool   // Use insecure connection (no TLS)
+	Endpoint    string  // OTLP endpoint (e.g., "localhost:4317")
+	Insecure    bool    // Use insecure connection (no TLS)
+	SampleRatio float64 // Sampling ratio (0.0-1.0, default 1.0 = 100%)
 }
 
 // Provider holds OpenTelemetry providers for cleanup.
@@ -47,7 +59,7 @@ func (p *Provider) Shutdown(ctx context.Context) error {
 	}
 
 	if len(errs) > 0 {
-		return errors.Errorf("shutdown errors: %v", errs)
+		return errors.Join(errs...)
 	}
 
 	return nil
@@ -55,7 +67,7 @@ func (p *Provider) Shutdown(ctx context.Context) error {
 
 // Init initializes OpenTelemetry with the given configuration.
 func Init(ctx context.Context, cfg Config) (*Provider, error) {
-	res, err := newResource(cfg)
+	res, err := newResource()
 	if err != nil {
 		return nil, errors.Errorf("failed to create resource: %w", err)
 	}
@@ -67,8 +79,10 @@ func Init(ctx context.Context, cfg Config) (*Provider, error) {
 
 	meterProvider, err := newMeterProvider(ctx, cfg, res)
 	if err != nil {
-		// Cleanup tracer provider on error
-		_ = tracerProvider.Shutdown(ctx)
+		// Cleanup tracer provider on error - log any shutdown error
+		if shutdownErr := tracerProvider.Shutdown(ctx); shutdownErr != nil {
+			slog.Error("failed to shutdown tracer provider during cleanup", "error", shutdownErr)
+		}
 
 		return nil, errors.Errorf("failed to create meter provider: %w", err)
 	}
@@ -87,13 +101,13 @@ func Init(ctx context.Context, cfg Config) (*Provider, error) {
 	}, nil
 }
 
-func newResource(cfg Config) (*resource.Resource, error) {
+func newResource() (*resource.Resource, error) {
 	res, err := resource.Merge(
 		resource.Default(),
 		resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceName(cfg.ServiceName),
-			semconv.ServiceVersion(cfg.ServiceVersion),
+			semconv.ServiceName(ServiceName),
+			semconv.ServiceVersion(ServiceVersion),
 		),
 	)
 	if err != nil {
@@ -121,12 +135,15 @@ func newTracerProvider(
 		return nil, errors.Errorf("failed to create trace exporter: %w", err)
 	}
 
+	// Use configurable sampling ratio with parent-based sampler
+	sampler := sdktrace.ParentBased(sdktrace.TraceIDRatioBased(cfg.SampleRatio))
+
 	return sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exporter,
-			sdktrace.WithBatchTimeout(5*time.Second),
+			sdktrace.WithBatchTimeout(defaultBatchTimeout),
 		),
 		sdktrace.WithResource(res),
-		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithSampler(sampler),
 	), nil
 }
 
@@ -150,7 +167,7 @@ func newMeterProvider(
 
 	return sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter,
-			sdkmetric.WithInterval(30*time.Second),
+			sdkmetric.WithInterval(defaultMetricInterval),
 		)),
 		sdkmetric.WithResource(res),
 	), nil

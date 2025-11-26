@@ -75,9 +75,10 @@ type loggerConfig struct {
 }
 
 type otelConfig struct {
-	Enabled  bool   `mapstructure:"enabled"`
-	Endpoint string `mapstructure:"endpoint"`
-	Insecure bool   `mapstructure:"insecure"`
+	Enabled     bool    `mapstructure:"enabled"`
+	Endpoint    string  `mapstructure:"endpoint"`
+	Insecure    bool    `mapstructure:"insecure"`
+	SampleRatio float64 `mapstructure:"sample_ratio"`
 }
 
 // LoadConfig loads the configuration from the config.toml file.
@@ -107,6 +108,7 @@ func LoadConfigFromPath(configPath string) *AppConfig {
 	viper.SetDefault("otel.enabled", true)
 	viper.SetDefault("otel.endpoint", "localhost:4317")
 	viper.SetDefault("otel.insecure", true)
+	viper.SetDefault("otel.sample_ratio", 1.0)
 
 	// Load environment variables
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
