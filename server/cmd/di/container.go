@@ -13,7 +13,7 @@ import (
 	infradb "github.com/yashikota/scene-hunter/server/internal/infra/db"
 	infragemini "github.com/yashikota/scene-hunter/server/internal/infra/gemini"
 	infrakvs "github.com/yashikota/scene-hunter/server/internal/infra/kvs"
-	infrarepo "github.com/yashikota/scene-hunter/server/internal/infra/repository"
+	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/service"
 	"github.com/yashikota/scene-hunter/server/internal/util/chrono"
 	"go.uber.org/dig"
@@ -135,16 +135,16 @@ func provideInfraClients(
 
 func provideRepositories(container *dig.Container) {
 	// Game Repository
-	_ = container.Provide(infrarepo.NewGameRepository)
+	_ = container.Provide(repository.NewGameRepository)
 
 	// Room Repository
-	_ = container.Provide(infrarepo.NewRoomRepository)
+	_ = container.Provide(repository.NewRoomRepository)
 
 	// Anon Repository
-	_ = container.Provide(infrarepo.NewAnonRepository)
+	_ = container.Provide(repository.NewAnonRepository)
 
 	// Identity Repository
-	_ = container.Provide(infrarepo.NewIdentityRepository)
+	_ = container.Provide(repository.NewIdentityRepository)
 }
 
 // Invoke runs a function with dependencies injected.

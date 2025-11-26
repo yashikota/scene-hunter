@@ -8,7 +8,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/valkey"
 	scene_hunterv1 "github.com/yashikota/scene-hunter/server/gen/scene_hunter/v1"
 	infrakvs "github.com/yashikota/scene-hunter/server/internal/infra/kvs"
-	infrarepo "github.com/yashikota/scene-hunter/server/internal/infra/repository"
+	"github.com/yashikota/scene-hunter/server/internal/repository"
 	"github.com/yashikota/scene-hunter/server/internal/service/middleware"
 	roomsvc "github.com/yashikota/scene-hunter/server/internal/service/room"
 )
@@ -54,7 +54,7 @@ func setupTestService(ctx context.Context, t *testing.T) (*roomsvc.Service, func
 		t.Fatalf("KVS ping failed: %v", err)
 	}
 
-	repo := infrarepo.NewRoomRepository(kvsClient)
+	repo := repository.NewRoomRepository(kvsClient)
 	service := roomsvc.NewService(repo)
 
 	return service, cleanup
