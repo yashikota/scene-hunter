@@ -28,20 +28,22 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// Initialize OpenTelemetry
+	// Initialize OpenTelemetry with separate context
 	var otelProvider *infraotel.Provider
 
 	if cfg.Otel.Enabled {
+		otelCtx, otelCancel := context.WithTimeout(context.Background(), 10*time.Second)
+
 		var err error
 
-		otelProvider, err = infraotel.Init(ctx, infraotel.Config{
+		otelProvider, err = infraotel.Init(otelCtx, infraotel.Config{
 			Endpoint:    cfg.Otel.Endpoint,
 			Insecure:    cfg.Otel.Insecure,
 			SampleRatio: cfg.Otel.SampleRatio,
 		})
+
+		otelCancel()
+
 		if err != nil {
 			logger.Error("failed to initialize OpenTelemetry", "error", err)
 		} else {
@@ -52,8 +54,11 @@ func main() {
 		}
 	}
 
-	// Initialize DI container
-	container := di.New(ctx, cfg, logger)
+	// Initialize DI container with separate context
+	diCtx, diCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	container := di.New(diCtx, cfg, logger)
+
+	diCancel()
 
 	// Initialize router
 	mux := chi.NewRouter()
