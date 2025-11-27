@@ -123,7 +123,10 @@ message JoinGameResponse {
 message SubmitGameMasterPhotoRequest {
   string room_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.uuid = true];
-  bytes image_data = 3;
+  bytes image_data = 3 [(buf.validate.field).bytes = {
+    min_len: 1
+    max_len: 10485760
+  }]; // max 10MB
 }
 
 message SubmitGameMasterPhotoResponse {
@@ -135,7 +138,10 @@ message SubmitGameMasterPhotoResponse {
 message SubmitHunterPhotoRequest {
   string room_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.uuid = true];
-  bytes image_data = 3;
+  bytes image_data = 3 [(buf.validate.field).bytes = {
+    min_len: 1
+    max_len: 10485760
+  }]; // max 10MB
   int32 elapsed_seconds = 4 [(buf.validate.field).int32 = {
     gte: 0
     lte: 60
