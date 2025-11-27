@@ -469,17 +469,17 @@ const file_scene_hunter_v1_room_proto_rawDesc = "" +
 	"deleted_at\x18\x06 \x01(\tR\tdeletedAt\"\x13\n" +
 	"\x11CreateRoomRequest\"?\n" +
 	"\x12CreateRoomResponse\x12)\n" +
-	"\x04room\x18\x01 \x01(\v2\x15.scene_hunter.v1.RoomR\x04room\" \n" +
-	"\x0eGetRoomRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"<\n" +
+	"\x04room\x18\x01 \x01(\v2\x15.scene_hunter.v1.RoomR\x04room\"*\n" +
+	"\x0eGetRoomRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"<\n" +
 	"\x0fGetRoomResponse\x12)\n" +
 	"\x04room\x18\x01 \x01(\v2\x15.scene_hunter.v1.RoomR\x04room\">\n" +
 	"\x11UpdateRoomRequest\x12)\n" +
 	"\x04room\x18\x01 \x01(\v2\x15.scene_hunter.v1.RoomR\x04room\"?\n" +
 	"\x12UpdateRoomResponse\x12)\n" +
-	"\x04room\x18\x01 \x01(\v2\x15.scene_hunter.v1.RoomR\x04room\"#\n" +
-	"\x11DeleteRoomRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"?\n" +
+	"\x04room\x18\x01 \x01(\v2\x15.scene_hunter.v1.RoomR\x04room\"-\n" +
+	"\x11DeleteRoomRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"?\n" +
 	"\x12DeleteRoomResponse\x12)\n" +
 	"\x04room\x18\x01 \x01(\v2\x15.scene_hunter.v1.RoomR\x04room2\xe0\x02\n" +
 	"\vRoomService\x12U\n" +

@@ -22,7 +22,7 @@ message CreateRoomResponse {
 }
 
 message GetRoomRequest {
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.uuid = true];
 }
 
 message GetRoomResponse {
@@ -38,7 +38,7 @@ message UpdateRoomResponse {
 }
 
 message DeleteRoomRequest {
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.uuid = true];
 }
 
 message DeleteRoomResponse {

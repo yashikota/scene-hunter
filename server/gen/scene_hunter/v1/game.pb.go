@@ -805,7 +805,7 @@ type SubmitGameMasterPhotoRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
 	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ImageData     []byte                 `protobuf:"bytes,3,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"`
+	ImageData     []byte                 `protobuf:"bytes,3,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"` // max 10MB
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -918,7 +918,7 @@ type SubmitHunterPhotoRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	RoomId         string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
 	UserId         string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ImageData      []byte                 `protobuf:"bytes,3,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"`
+	ImageData      []byte                 `protobuf:"bytes,3,opt,name=image_data,json=imageData,proto3" json:"image_data,omitempty"` // max 10MB
 	ElapsedSeconds int32                  `protobuf:"varint,4,opt,name=elapsed_seconds,json=elapsedSeconds,proto3" json:"elapsed_seconds,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -1620,20 +1620,20 @@ const file_scene_hunter_v1_game_proto_rawDesc = "" +
 	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12\x1d\n" +
 	"\x04name\x18\x03 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18\x14R\x04name\"=\n" +
 	"\x10JoinGameResponse\x12)\n" +
-	"\x04game\x18\x01 \x01(\v2\x15.scene_hunter.v1.GameR\x04game\"\x83\x01\n" +
+	"\x04game\x18\x01 \x01(\v2\x15.scene_hunter.v1.GameR\x04game\"\x91\x01\n" +
 	"\x1cSubmitGameMasterPhotoRequest\x12!\n" +
 	"\aroom_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06roomId\x12!\n" +
-	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12\x1d\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12+\n" +
 	"\n" +
-	"image_data\x18\x03 \x01(\fR\timageData\"g\n" +
+	"image_data\x18\x03 \x01(\fB\f\xbaH\tz\a\x10\x01\x18\x80\x80\x80\x05R\timageData\"g\n" +
 	"\x1dSubmitGameMasterPhotoResponse\x12\x19\n" +
 	"\bimage_id\x18\x01 \x01(\tR\aimageId\x12+\n" +
-	"\x05hints\x18\x02 \x03(\v2\x15.scene_hunter.v1.HintR\x05hints\"\xb3\x01\n" +
+	"\x05hints\x18\x02 \x03(\v2\x15.scene_hunter.v1.HintR\x05hints\"\xc1\x01\n" +
 	"\x18SubmitHunterPhotoRequest\x12!\n" +
 	"\aroom_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06roomId\x12!\n" +
-	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12\x1d\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06userId\x12+\n" +
 	"\n" +
-	"image_data\x18\x03 \x01(\fR\timageData\x122\n" +
+	"image_data\x18\x03 \x01(\fB\f\xbaH\tz\a\x10\x01\x18\x80\x80\x80\x05R\timageData\x122\n" +
 	"\x0felapsed_seconds\x18\x04 \x01(\x05B\t\xbaH\x06\x1a\x04\x18<(\x00R\x0eelapsedSeconds\"j\n" +
 	"\x19SubmitHunterPhotoResponse\x12\x19\n" +
 	"\bimage_id\x18\x01 \x01(\tR\aimageId\x122\n" +
