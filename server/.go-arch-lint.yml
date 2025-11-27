@@ -99,10 +99,11 @@ deps:
       - repository
       - infra
 
-  # Main can depend on di and config
+  # Main can depend on di, config, and infra (for bootstrap like OTel)
   main:
     mayDependOn:
       - di
+      - infra
 
   # Testutil can depend on anything for testing support
   testutil:

@@ -14,7 +14,9 @@ import (
 	slogchi "github.com/samber/slog-chi"
 	"github.com/yashikota/scene-hunter/server/cmd/di"
 	"github.com/yashikota/scene-hunter/server/internal/config"
+	infraotel "github.com/yashikota/scene-hunter/server/internal/infra/otel"
 	"github.com/yashikota/scene-hunter/server/internal/util/errors"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -26,11 +28,37 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	// Initialize OpenTelemetry with separate context
+	var otelProvider *infraotel.Provider
 
-	// Initialize DI container
-	container := di.New(ctx, cfg, logger)
+	if cfg.Otel.Enabled {
+		otelCtx, otelCancel := context.WithTimeout(context.Background(), 10*time.Second)
+
+		var err error
+
+		otelProvider, err = infraotel.Init(otelCtx, infraotel.Config{
+			Endpoint:    cfg.Otel.Endpoint,
+			Insecure:    cfg.Otel.Insecure,
+			SampleRatio: cfg.Otel.SampleRatio,
+		})
+
+		otelCancel()
+
+		if err != nil {
+			logger.Error("failed to initialize OpenTelemetry", "error", err)
+		} else {
+			logger.Info("OpenTelemetry initialized",
+				"endpoint", cfg.Otel.Endpoint,
+				"sample_ratio", cfg.Otel.SampleRatio,
+			)
+		}
+	}
+
+	// Initialize DI container with separate context
+	diCtx, diCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	container := di.New(diCtx, cfg, logger)
+
+	diCancel()
 
 	// Initialize router
 	mux := chi.NewRouter()
@@ -43,6 +71,14 @@ func main() {
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
+
+	// Add OpenTelemetry HTTP middleware
+	if cfg.Otel.Enabled {
+		mux.Use(func(next http.Handler) http.Handler {
+			return otelhttp.NewHandler(next, infraotel.ServiceName)
+		})
+	}
+
 	mux.Use(slogchi.NewWithConfig(logger, slogchi.Config{
 		WithSpanID:       true,
 		WithTraceID:      true,
@@ -84,6 +120,23 @@ func main() {
 
 	if kvsClient := container.GetKVSClient(); kvsClient != nil {
 		defer kvsClient.Close()
+	}
+
+	// Cleanup OpenTelemetry
+	if otelProvider != nil {
+		defer func() {
+			shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer shutdownCancel()
+
+			if err := otelProvider.Shutdown(shutdownCtx); err != nil {
+				errors.LogError(
+					context.Background(),
+					logger,
+					"failed to shutdown OpenTelemetry",
+					err,
+				)
+			}
+		}()
 	}
 
 	err := server.ListenAndServe()
