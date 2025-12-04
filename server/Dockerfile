@@ -49,7 +49,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 ### ---------------- ###
 ### Production image ###
 ### ---------------- ###
-FROM gcr.io/distroless/static-debian13:nonroot@sha256:423ba16a9ec162509175cb6904f703d3c8a5a3a58cff9b0b4fb2684bb74162c5 AS final
+FROM gcr.io/distroless/static-debian13:nonroot@sha256:b5b9fd04c8dcf72a173183c0b7dee47e053e002246b308a59f3441db7b8b9cc4 AS final
 
 # Copy the executable from the "build" stage.
 COPY --from=build /bin/server /bin/
