@@ -24,7 +24,7 @@ services:
       rustfs:
         condition: service_healthy
   postgres:
-    image: postgres:18@sha256:41bfa2e5b168fff0847a5286694a86cff102bdc4d59719869f6b117bb30b3a24
+    image: postgres:18@sha256:0033c194dc640cc4dcc62ef7c3117e5791365cca5fc1a2998e5c1693254784bc
     container_name: postgres
     restart: always
     user: postgres
