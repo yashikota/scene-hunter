@@ -12,7 +12,7 @@ registries:
   ref: v4.446.0 # renovate: depName=aquaproj/aqua-registry
 packages:
 - name: golang/go@go1.25.5
-- name: go-task/task@v3.46.2
+- name: go-task/task@v3.46.3
 - name: bufbuild/buf@v1.61.0
 - name: fullstorydev/grpcurl@v1.9.3
 - name: protocolbuffers/protobuf-go/protoc-gen-go@v1.36.11
