@@ -14,7 +14,7 @@ require (
 	github.com/lestrrat-go/jwx/v3 v3.0.12
 	github.com/minio/minio-go/v7 v7.0.97
 	github.com/ovechkin-dm/mockio/v2 v2.0.4
-	github.com/samber/slog-chi v1.17.0
+	github.com/samber/slog-chi v1.18.0
 	github.com/spf13/viper v1.21.0
 	github.com/testcontainers/testcontainers-go v0.40.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.40.0
