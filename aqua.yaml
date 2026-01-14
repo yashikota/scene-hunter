@@ -13,7 +13,7 @@ registries:
 packages:
 - name: golang/go@go1.25.5
 - name: go-task/task@v3.46.4
-- name: bufbuild/buf@v1.62.1
+- name: bufbuild/buf@v1.63.0
 - name: fullstorydev/grpcurl@v1.9.3
 - name: protocolbuffers/protobuf-go/protoc-gen-go@v1.36.11
 - name: connectrpc/connect-go/protoc-gen-connect-go@v1.19.1
