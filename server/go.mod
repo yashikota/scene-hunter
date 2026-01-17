@@ -12,7 +12,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/lestrrat-go/jwx/v3 v3.0.12
-	github.com/minio/minio-go/v7 v7.0.97
+	github.com/minio/minio-go/v7 v7.0.98
 	github.com/ovechkin-dm/mockio/v2 v2.0.4
 	github.com/samber/slog-chi v1.18.0
 	github.com/spf13/viper v1.21.0
@@ -30,7 +30,7 @@ require (
 	go.uber.org/dig v1.19.0
 	golang.org/x/image v0.34.0
 	golang.org/x/net v0.48.0
-	google.golang.org/genai v1.40.0
+	google.golang.org/genai v1.41.0
 	google.golang.org/protobuf v1.36.11
 )
 
@@ -78,7 +78,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
-	github.com/klauspost/compress v1.18.0 // indirect
+	github.com/klauspost/compress v1.18.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.11 // indirect
 	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
@@ -91,7 +91,7 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20240513124658-fba389f38bae // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mdelapenya/tlscert v0.2.0 // indirect
-	github.com/minio/crc64nvme v1.1.0 // indirect
+	github.com/minio/crc64nvme v1.1.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/go-archive v0.1.0 // indirect
@@ -122,7 +122,7 @@ require (
 	github.com/stoewer/go-strcase v1.3.1 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/tinylib/msgp v1.3.0 // indirect
+	github.com/tinylib/msgp v1.6.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.14 // indirect
 	github.com/tklauser/numcpus v0.8.0 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
