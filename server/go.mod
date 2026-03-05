@@ -7,7 +7,7 @@ require (
 	connectrpc.com/connect v1.19.1
 	connectrpc.com/validate v0.6.0
 	github.com/anthonynsimon/bild v0.14.0
-	github.com/go-chi/chi/v5 v5.2.3
+	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-chi/cors v1.2.2
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.8.0
