@@ -280,6 +280,8 @@ github.com/valkey-io/valkey-go v1.0.69 h1:1wxexW0IhBFkRsbjz5Zfbd7EYDv18FP9ugHIak
 github.com/valkey-io/valkey-go v1.0.69/go.mod h1:bHmwjIEOrGq/ubOJfh5uMRs7Xj6mV3mQ/ZXUbmqpjqY=
 github.com/valkey-io/valkey-go v1.0.70 h1:mjYNT8qiazxDAJ0QNQ8twWT/YFOkOoRd40ERV2mB49Y=
 github.com/valkey-io/valkey-go v1.0.70/go.mod h1:VGhZ6fs68Qrn2+OhH+6waZH27bjpgQOiLyUQyXuYK5k=
+github.com/valkey-io/valkey-go v1.0.72 h1:iRWt1hJyOchcEgbHSkRY3aKkcBudxvMaVMsmxuYxuxE=
+github.com/valkey-io/valkey-go v1.0.72/go.mod h1:VGhZ6fs68Qrn2+OhH+6waZH27bjpgQOiLyUQyXuYK5k=
 github.com/valyala/fastjson v1.6.4 h1:uAUNq9Z6ymTgGhcm0UynUAB6tlbakBrz6CQFax3BXVQ=
 github.com/valyala/fastjson v1.6.4/go.mod h1:CLCAqky6SMuOcxStkYQvblddUtoRxhYMGLrsQns1aXY=
 github.com/valyala/fastjson v1.6.7 h1:ZE4tRy0CIkh+qDc5McjatheGX2czdn8slQjomexVpBM=
