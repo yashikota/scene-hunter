@@ -30,7 +30,7 @@ require (
 	go.uber.org/dig v1.19.0
 	golang.org/x/image v0.36.0
 	golang.org/x/net v0.51.0
-	google.golang.org/genai v1.40.0
+	google.golang.org/genai v1.48.0
 	google.golang.org/protobuf v1.36.11
 )
 
