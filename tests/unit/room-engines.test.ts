@@ -1,6 +1,11 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
-import { GmEngine, PRESENCE_FLIP_MIN_MS } from '../../src/client/game/gmEngine';
+import {
+  GM_GROUP_MAX_FRAMES,
+  GmEngine,
+  PRESENCE_FLIP_MIN_MS,
+} from '../../src/client/game/gmEngine';
+import { GM_EVENTS_MAX_AGE_MS } from '../../src/client/moq/follow';
 import { claimUntilDone, loadMe, rejoinUntilDone, type Me } from '../../src/client/game/membership';
 import {
   PlayerEngine,
@@ -92,6 +97,27 @@ describe('GmEngine', () => {
     expect(read(`sh:gmlink:${ROOM}`)).toMatchObject({ epoch: 2, eventSeq: 1 });
   });
 
+  it('再開した GM は、ゲームの途中で出た人の p/{pid} を購読しない', async () => {
+    const { relay, startGm } = await setup();
+    const a = startGm();
+    a.dispatch({ type: 'playerJoined', pid: 'p1', name: 'A', at: 0 });
+    a.dispatch({ type: 'playerJoined', pid: 'p2', name: 'B', at: 0 });
+    a.dispatch({ type: 'start', gameId: 'g1' });
+    a.dispatch({ type: 'playerLeft', pid: 'p1' });
+    expect(Object.keys(a.state.players)).toEqual(['p1', 'p2']); // 得点のため一覧には残る
+    await a.flush();
+    a.close();
+    const before = relay.connections.length;
+    const b = startGm();
+    await vi.waitFor(() =>
+      expect(relay.connections.slice(before).flatMap((c) => c.subscribes)).not.toEqual([]),
+    );
+    const paths = relay.connections.slice(before).flatMap((c) => c.subscribes.map((x) => x.path));
+    expect(paths).toContain('p/p2');
+    expect(paths).not.toContain('p/p1');
+    b.close();
+  });
+
   it('GM を引き継ぐときは前の GM の epoch を越える', async () => {
     const { startGm } = await setup();
     const gm = startGm();
@@ -160,6 +186,56 @@ describe('GM とプレイヤー（偽の Relay）', () => {
     // 送ったのは join だけ（resync は無い）
     const sent = relay.tracks.get('p/alice#events')!.groups.flat();
     expect(sent).toHaveLength(1);
+    p.close();
+    gm.close();
+  });
+
+  it('GM の events は lobby と gm_turn の前と GM_GROUP_MAX_FRAMES ごとに区切り、プレイヤーは区切りをまたいで取りこぼさない', async () => {
+    const { relay, startGm, startPlayer } = await setup();
+    const gm = startGm();
+    const { p } = startPlayer();
+    await vi.waitFor(() => expect(p.view.players).toHaveLength(1));
+    // ロビーの出入りのたびの lobby は、1 つずつ新しいグループになる（届き直すのは最新の 1 つだけ）
+    for (let i = 0; i < 5; i++)
+      gm.dispatch({ type: 'playerJoined', pid: `x${i}`, name: 'x', at: 0 });
+    gm.dispatch({ type: 'start', gameId: 'g1' });
+    gm.dispatch({ type: 'gmPhotoUploaded', key: 'k' });
+    // 区切りの数を超えるイベント（hint_error と hinting を交互に）
+    for (let i = 0; i < GM_GROUP_MAX_FRAMES; i++) {
+      gm.dispatch({ type: 'hintsFailed' });
+      gm.dispatch({ type: 'retryHints' });
+    }
+    await gm.flush();
+    const groups = relay.tracks.get('gm/1#events')!.groups;
+    const types = groups.map((g) =>
+      g.map(
+        (b) => (JSON.parse(new TextDecoder().decode(b)) as { body: { type: string } }).body.type,
+      ),
+    );
+    const toggles = Array.from({ length: 2 * GM_GROUP_MAX_FRAMES }, (_, i) =>
+      i % 2 ? 'hinting' : 'hint_error',
+    );
+    expect(types.slice(0, 7)).toEqual([
+      ['lobby'], // alice
+      ['lobby'],
+      ['lobby'],
+      ['lobby'],
+      ['lobby'],
+      ['lobby'],
+      ['gm_turn', 'hinting', ...toggles.slice(0, GM_GROUP_MAX_FRAMES - 2)],
+    ]);
+    expect(Math.max(...groups.map((g) => g.length))).toBe(GM_GROUP_MAX_FRAMES);
+    expect(groups.flat()).toHaveLength(6 + 2 + 2 * GM_GROUP_MAX_FRAMES);
+    // プレイヤーは区切りをまたいで全部受け取り、resync を送らない
+    await vi.waitFor(() => expect(p.view.lastSeq).toBe(read(`sh:gmlink:${ROOM}`).eventSeq));
+    expect(p.view.phase).toBe('hinting');
+    expect(relay.tracks.get('p/alice#events')!.groups.flat()).toHaveLength(1);
+    // 区切りの直前のフレームを読み捨てないよう、events は古いグループも読み切る
+    const eventsSubs = relay.connections
+      .flatMap((c) => c.subscribes)
+      .filter((x) => x.path === 'gm/1' && x.track === 'events');
+    expect(eventsSubs.length).toBeGreaterThan(0);
+    expect(eventsSubs.every((x) => x.maxAgeMs === GM_EVENTS_MAX_AGE_MS)).toBe(true);
     p.close();
     gm.close();
   });
@@ -460,6 +536,91 @@ describe('GM の接続切れ（偽の Relay）', () => {
     vi.advanceTimersByTime(1);
     expect(bob.gmDisconnectedSince).not.toBeNull();
     bob.close();
+  });
+});
+
+describe('自分の接続が切れたとき（偽の Relay）', () => {
+  const bodyOf = (b: Uint8Array) =>
+    (JSON.parse(new TextDecoder().decode(b)) as { body: { type: string; seq: number } }).body;
+  const quiet = () => vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+  it('GM は epoch を 1 つ上げてつなぎ直し、状態とイベントの seq を続ける。プレイヤーは新しい epoch に乗り換える', async () => {
+    const warn = quiet();
+    try {
+      const { relay, startGm, startPlayer } = await setup();
+      const gm = startGm();
+      const { p } = startPlayer();
+      await vi.waitFor(() => expect(gm.state.players.alice).toBeDefined());
+      await vi.waitFor(() => expect(p.epoch).toBe(1));
+      const main = relay.connections.find((c) => c.publishes.some((x) => x.path === 'gm/1'))!;
+      main.drop();
+      await vi.waitFor(() => expect(gm.epoch).toBe(2));
+      expect(read(`sh:gmlink:${ROOM}`)).toMatchObject({ epoch: 2 });
+      // つながるまで（1 秒待つ）のイベントは貯めておき、新しい epoch で届ける
+      gm.dispatch({ type: 'start', gameId: 'g1' });
+      await vi.waitFor(() => expect(p.epoch).toBe(2), { timeout: 4000 });
+      await vi.waitFor(() => expect(p.view.phase).toBe('gmTurn'));
+      expect(gm.state.players.alice).toBeDefined();
+      expect(gm.reconnecting).toBe(false);
+      p.close();
+      gm.close();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('プレイヤーの publish の接続が切れたら、同じ p/{pid} に join から始まる新しいグループで seq を続ける', async () => {
+    const warn = quiet();
+    try {
+      const { relay, startGm, startPlayer } = await setup();
+      const gm = startGm();
+      const { p } = startPlayer();
+      await vi.waitFor(() => expect(gm.state.players.alice).toBeDefined());
+      const pub = relay.connections.find((c) => c.publishes.some((x) => x.path === 'p/alice'))!;
+      pub.drop();
+      await vi.waitFor(() =>
+        expect(
+          relay.connections.filter((c) => c.publishes.some((x) => x.path === 'p/alice')),
+        ).toHaveLength(2),
+      );
+      p.send({ type: 'away' });
+      await p.flush();
+      const groups = relay.tracks.get('p/alice#events')!.groups;
+      const bodies = groups.at(-1)!.map(bodyOf);
+      expect(bodies.map((b) => b.type)).toEqual(['join', 'away']);
+      expect(bodies.map((b) => b.seq)).toEqual([1, 2]); // 最初の join が 0
+      // GM は購読し直して、続きの seq のメッセージを受け付ける
+      await vi.waitFor(() => expect(gm.state.players.alice?.away).toBe(true), { timeout: 3000 });
+      p.close();
+      gm.close();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('プレイヤーの follow の接続が切れたら、購読し直して GM のイベントを受け続ける', async () => {
+    const warn = quiet();
+    try {
+      const { relay, startGm, startPlayer } = await setup();
+      const gm = startGm();
+      const { p } = startPlayer();
+      await vi.waitFor(() => expect(p.view.phase).toBe('lobby'));
+      const follow = relay.connections.find(
+        (c) => c.publishes.length === 0 && c.subscribes.some((x) => x.path === 'gm/1'),
+      )!;
+      follow.drop();
+      await vi.waitFor(() =>
+        expect(
+          relay.connections.filter((c) => !c.closed && c.subscribes.some((x) => x.path === 'gm/1')),
+        ).toHaveLength(1),
+      );
+      gm.dispatch({ type: 'start', gameId: 'g1' });
+      await vi.waitFor(() => expect(p.view.phase).toBe('gmTurn'));
+      p.close();
+      gm.close();
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
 

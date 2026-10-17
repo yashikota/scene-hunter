@@ -23,9 +23,13 @@ export class FakeRelay {
   readonly tracks = new Map<string, FakeTrack>();
   readonly all = new Set<FakeConnection>();
 
+  /** 設定している間は、connector の接続をこの Promise が解けるまで待たせる（つながらない間の再現）。 */
+  gate?: Promise<void>;
+
   readonly connector: MoqConnector = {
     connect: async () => {
       await Promise.resolve();
+      if (this.gate) await this.gate;
       const c = this.connect();
       this.connections.push(c);
       return c;
@@ -53,6 +57,7 @@ export class FakeConnection implements MoqConnection {
   /** いま生きている購読（Track が見つかり、まだ外されていないもの）。 */
   readonly live = new Set<{ path: string; track: string }>();
   closed = false;
+  readonly #onClose: Array<(error?: unknown) => void> = [];
 
   constructor(private readonly relay: FakeRelay) {}
 
@@ -116,7 +121,21 @@ export class FakeConnection implements MoqConnection {
     return () => this.listeners.delete(onPath);
   }
 
+  onClose(cb: (error?: unknown) => void): void {
+    this.#onClose.push(cb);
+  }
+
   close(): void {
+    this.#shut();
+  }
+
+  /** 相手側から接続が切れた（回線の断絶や Relay の切断）ことにする。 */
+  drop(error: unknown = new Error('connection lost')): void {
+    this.#shut(error);
+  }
+
+  #shut(error?: unknown): void {
+    if (this.closed) return;
     this.closed = true;
     this.relay.all.delete(this);
     for (const [key, t] of this.relay.tracks) {
@@ -124,6 +143,8 @@ export class FakeConnection implements MoqConnection {
       this.relay.tracks.delete(key);
       for (const s of t.subs) s.end(new Error('track ended'));
     }
+    // 本物（Established.closed）と同じく、閉じたことは後から知らせる。
+    for (const cb of this.#onClose.splice(0)) queueMicrotask(() => cb(error));
   }
 }
 

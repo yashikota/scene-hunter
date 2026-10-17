@@ -124,5 +124,7 @@
   "disconnected_body": "{name} 回來後會繼續遊戲",
   "disconnected_waiting": "正在等待重新連線（{time}）",
   "disconnected_you": "你目前的成績",
-  "rank_points": "第 {rank} 名 ・ {points} 分"
+  "rank_points": "第 {rank} 名 ・ {points} 分",
+  "keep_screen_on": "請不要關閉螢幕",
+  "reconnecting": "正在重新連線…"
 }

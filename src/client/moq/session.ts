@@ -20,6 +20,11 @@ export interface MoqConnection {
   ): () => void;
   /** announce の購読は接続を張ったときに 1 件だけ出す。ここでは受け取り口を足すだけ。 */
   announced(onPath: (path: string, active: boolean) => void): () => void;
+  /**
+   * 接続（WebTransport セッション）が閉じたら一度だけ呼ぶ。通信の断絶、相手からの切断、自分の close のどれでも呼ぶ
+   * （MoqSession は、いま使っている接続のものだけを見る）。
+   */
+  onClose(cb: (error?: unknown) => void): void;
   close(): void;
 }
 
@@ -80,11 +85,14 @@ interface Pub {
   track: string;
   writer?: MoqTrackWriter;
   group?: MoqGroupWriter;
-  /** 接続が無い間に write されたフレーム。 */
-  pending: Uint8Array[];
+  /** 接続が無い間に write されたフレーム。rotate の区切りごとに 1 グループ（最後のグループに追記する）。 */
+  pending: Uint8Array[][];
   /** 張り直した接続で書き直す、最後のスナップショット。 */
   lastSnapshot?: Uint8Array;
 }
+
+/** 接続が切れたか、つながったか。MoqSession.onStatus で受け取る。 */
+export type SessionStatus = 'up' | 'down';
 
 const RETRY_MIN_MS = 500;
 const RETRY_MAX_MS = 5000;
@@ -102,6 +110,7 @@ export class MoqSession {
     (() => void) | undefined
   >();
   readonly #announcedPaths = new Set<string>();
+  readonly #statusListeners = new Set<(status: SessionStatus) => void>();
 
   constructor(
     private readonly url: string,
@@ -133,7 +142,10 @@ export class MoqSession {
     if (this.#ready()) this.#attachPub(pub);
     return {
       write: (bytes) => {
-        if (!pub.writer) return void pub.pending.push(bytes);
+        if (!pub.writer) {
+          if (!pub.pending.length) pub.pending.push([]);
+          return void pub.pending.at(-1)!.push(bytes);
+        }
         pub.group ??= pub.writer.appendGroup();
         pub.group.writeFrame(bytes);
       },
@@ -142,6 +154,8 @@ export class MoqSession {
         if (pub.writer) writeSnapshot(pub, bytes);
       },
       rotate: () => {
+        // 接続が無い間も区切りを覚えておき、つながったら区切りごとに別のグループで書く。
+        if (!pub.writer && pub.pending.at(-1)?.length) pub.pending.push([]);
         pub.group?.close();
         pub.group = undefined;
       },
@@ -176,8 +190,18 @@ export class MoqSession {
     };
   }
 
+  /**
+   * 接続が切れたとき（'down'）と、接続を張れたとき（'up'、最初の接続と張り直しのたび）に呼ぶ。
+   * 'down' の後、このセッションは自分で張り直す。呼ばれた中で close すれば張り直さない。
+   */
+  onStatus(fn: (status: SessionStatus) => void): () => void {
+    this.#statusListeners.add(fn);
+    return () => this.#statusListeners.delete(fn);
+  }
+
   close(): void {
     this.#closed = true;
+    this.#statusListeners.clear();
     this.#detachAll();
     this.#conn?.close();
     this.#conn = undefined;
@@ -237,6 +261,7 @@ export class MoqSession {
 
   #install(conn: MoqConnection): void {
     if (this.#closed) return conn.close();
+    conn.onClose((error) => this.#dropped(conn, error));
     this.#conn = conn;
     this.#opening = undefined;
     this.#requests = 1; // 接続と同時に出る announce の購読（SUBSCRIBE_NAMESPACE）
@@ -250,6 +275,23 @@ export class MoqSession {
         `MoQ: 張り直した直後のリクエストが ${this.#requests} 件で、予算 ${this.budget} を超えている`,
       );
     }
+    this.#emit('up');
+  }
+
+  /**
+   * いま使っている接続が閉じた（回線の切り替え、NAT の張り替え、Relay の GOAWAY や再起動、無通信での切断など）。
+   * 閉じた接続の上の publish と購読はもう届かないので、張り直してすべてやり直す。
+   */
+  #dropped(conn: MoqConnection, error: unknown): void {
+    if (this.#closed || this.#conn !== conn) return;
+    console.warn('MoQ の接続が切れた', error);
+    this.#emit('down');
+    if (this.#closed || this.#conn !== conn) return; // 受け手が閉じた、または張り直した
+    this.#reconnect();
+  }
+
+  #emit(status: SessionStatus): void {
+    for (const fn of this.#statusListeners) fn(status);
   }
 
   #detachAll(): void {
@@ -275,10 +317,14 @@ export class MoqSession {
     this.#requests++;
     pub.writer = this.#conn!.publish(pub.path, pub.track);
     if (pub.lastSnapshot) writeSnapshot(pub, pub.lastSnapshot);
-    if (pub.pending.length) {
-      pub.group = pub.writer.appendGroup();
-      for (const bytes of pub.pending) pub.group.writeFrame(bytes);
-      pub.pending = [];
+    const groups = pub.pending.filter((g) => g.length > 0);
+    pub.pending = [];
+    for (const [i, frames] of groups.entries()) {
+      const g = pub.writer.appendGroup();
+      for (const bytes of frames) g.writeFrame(bytes);
+      // 最後のグループは開けたままにし、続く write を追記する。
+      if (i < groups.length - 1) g.close();
+      else pub.group = g;
     }
   }
 
@@ -456,6 +502,13 @@ class MoqNetConnection implements MoqConnection {
       sub?.close();
       req.close();
     };
+  }
+
+  onClose(cb: (error?: unknown) => void): void {
+    void this.conn.closed.then(
+      (e) => cb(e ?? undefined),
+      (e: unknown) => cb(e),
+    );
   }
 
   announced(onPath: (path: string, active: boolean) => void): () => void {

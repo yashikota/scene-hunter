@@ -505,3 +505,22 @@ body {
     animation-duration: 2s;
   }
 }
+
+/* 自分の接続が切れて 3 秒以上つなぎ直せていないときだけ、画面の上に重ねて出す */
+.sh-reconnecting {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  max-width: calc(100% - 32px);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-ink);
+  background: var(--color-gold);
+  border: var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  padding: 4px 14px;
+  white-space: nowrap;
+}

@@ -142,5 +142,7 @@
   "disconnected_body": "La partie reprend au retour de {name}",
   "disconnected_waiting": "En attente de reconnexion ({time})",
   "disconnected_you": "Vous jusqu’ici",
-  "rank_points": "Rang {rank} ・ {points} pts"
+  "rank_points": "Rang {rank} ・ {points} pts",
+  "keep_screen_on": "Garde cet écran ouvert",
+  "reconnecting": "Reconnexion…"
 }

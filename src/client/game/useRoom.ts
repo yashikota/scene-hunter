@@ -55,6 +55,8 @@ export interface Room {
   status: 'claiming' | 'rejoining' | 'claimFailed' | null;
   /** プレイヤー：GM の接続が切れたと判断した時刻（ミリ秒）。つながっている間は null。 */
   gmDisconnectedSince: number | null;
+  /** 自分の接続が切れて、3 秒以上つなぎ直せていない（つなぎ直しは自動）。 */
+  reconnecting: boolean;
   actions: RoomActions;
 }
 
@@ -362,6 +364,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     gm: gm && { state: gm.state, dispatch: (a) => gm.dispatch(a) },
     status,
     gmDisconnectedSince: player?.gmDisconnectedSince ?? null,
+    reconnecting: (gm ?? player)?.reconnecting ?? false,
     actions,
   };
 }

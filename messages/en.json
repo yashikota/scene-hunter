@@ -142,5 +142,7 @@
   "disconnected_body": "The game resumes when {name} is back",
   "disconnected_waiting": "Waiting to reconnect ({time})",
   "disconnected_you": "You so far",
-  "rank_points": "Rank {rank} ・ {points} pts"
+  "rank_points": "Rank {rank} ・ {points} pts",
+  "keep_screen_on": "Keep this screen open",
+  "reconnecting": "Reconnecting…"
 }

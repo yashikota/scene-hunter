@@ -367,6 +367,7 @@ describe('ResultsScreen の未提出', () => {
       gmName: 'gm',
       status: null,
       gmDisconnectedSince: null,
+      reconnecting: false,
       view: {
         phase: 'picking',
         round: 1,

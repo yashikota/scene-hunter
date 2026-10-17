@@ -5,6 +5,7 @@ import type { GmEvent, GmSnapshot, PlayerEvent } from '../../shared/protocol';
 import { followGm } from '../moq/follow';
 import { EVENTS_TRACK, gmPath, playerPath } from '../moq/paths';
 import { MoqSession, type FrameWriter, type MoqConnector } from '../moq/session';
+import { LinkWatch } from './linkWatch';
 import type { Me } from './membership';
 import { applyEvent, applySnapshot, hasGap, initialView, type PlayerView } from './playerView';
 import { encodeFrame, keepStarting } from './wire';
@@ -97,12 +98,20 @@ export class PlayerEngine {
   #stopped = false;
   #transferred = false;
   #goneTimer?: ReturnType<typeof setTimeout>;
+  /** 自分の 2 本のセッションが切れていないか（切れたらセッションが自分で張り直す）。 */
+  readonly #link: LinkWatch;
 
   constructor(me: Me, deps: PlayerEngineDeps) {
     this.#me = me;
     this.#deps = deps;
     this.#seq = me.seq;
     this.#seqReserved = me.seq;
+    this.#link = new LinkWatch(deps.now, () => this.#notify());
+  }
+
+  /** 自分の接続が切れて、RECONNECT_NOTICE_MS 以上つなぎ直せていない。 */
+  get reconnecting(): boolean {
+    return this.#link.reconnecting;
   }
 
   start(): void {
@@ -112,6 +121,7 @@ export class PlayerEngine {
 
     const follow = new MoqSession(this.#me.moqUrl, connector);
     this.#followSession = follow;
+    follow.onStatus((st) => this.#link.set('follow', st));
     this.#stopFollow = followGm(follow, verifier, (pid) => this.#isGm(pid), {
       event: (e) => this.#onEvent(e),
       snapshot: (s) => this.#onSnapshot(s),
@@ -225,6 +235,7 @@ export class PlayerEngine {
     clearInterval(this.#rejoinTimer);
     clearInterval(this.#pingTimer);
     clearTimeout(this.#goneTimer);
+    this.#link.close();
     this.#unlisten?.();
     this.#listeners.clear();
     this.#stopFollow?.();
@@ -242,10 +253,26 @@ export class PlayerEngine {
     const session = new MoqSession(this.#me.moqUrl, this.#deps.connector);
     this.#pubSession = session;
     this.#writer = session.publish(playerPath(this.#me.pid), EVENTS_TRACK);
+    session.onStatus((st) => {
+      this.#link.set('pub', st);
+      if (st === 'down') this.#restartGroup();
+    });
     // 新しい Track は最初のフレームで新しいグループを開く
     this.#groupFrames = 0;
     keepStarting(session, () => this.#closed || this.#pubSession !== session);
     this.send({ type: 'join', name: this.#me.name });
+  }
+
+  /**
+   * 接続が切れた。セッションは張り直して同じ p/{pid} に publish し直すので、そこで新しいグループを join から始める
+   * （新しく購読した GM にも、最新のグループだけで一覧に載れるように）。seq はそのまま続ける。
+   * つながるまでに書いたフレームはセッションが貯め、区切りごとのグループで書く。
+   */
+  #restartGroup(): void {
+    if (this.#stopped) return;
+    this.#groupFrames = 0;
+    this.#enqueue(() => this.#writer?.rotate());
+    this.#write({ type: 'join', name: this.#me.name }, this.#deps.now());
   }
 
   /** GM が announce を受け損ねると自分が一覧に載らないので、publish をやり直して announce し直す。 */

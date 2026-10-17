@@ -142,5 +142,7 @@
   "disconnected_body": "Es geht weiter, sobald {name} zurück ist",
   "disconnected_waiting": "Warte auf die Wiederverbindung ({time})",
   "disconnected_you": "Du bisher",
-  "rank_points": "Platz {rank} ・ {points} Pkt."
+  "rank_points": "Platz {rank} ・ {points} Pkt.",
+  "keep_screen_on": "Bildschirm offen lassen",
+  "reconnecting": "Verbinde neu…"
 }

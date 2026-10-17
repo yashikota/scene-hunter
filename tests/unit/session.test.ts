@@ -109,6 +109,95 @@ describe('MoqSession', () => {
   });
 });
 
+describe('MoqSession：接続が切れたとき', () => {
+  it('張り直して、生きている購読と publish をやり直し、down と up を知らせる', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const relay = new FakeRelay();
+      const gm = relay.connect();
+      const gmEvents = gm.publish('gm/1', 'events').appendGroup();
+      const s = new MoqSession('https://relay/x', relay.connector);
+      const statuses: string[] = [];
+      s.onStatus((st) => statuses.push(st));
+      await s.start();
+      const got: string[] = [];
+      s.subscribe('gm/1', 'events', (b) => got.push(text(b)));
+      const w = s.publish('p/me', 'events');
+      w.write(bytes('a'));
+      await flush();
+      expect(statuses).toEqual(['up']);
+
+      let open!: () => void;
+      relay.gate = new Promise((r) => (open = r));
+      relay.connections[0].drop();
+      await flush();
+      expect(statuses).toEqual(['up', 'down']);
+      // つながるまでの書き込みは貯め、区切り（rotate）ごとに別のグループで書く
+      w.write(bytes('b'));
+      w.rotate();
+      w.write(bytes('c'));
+      relay.gate = undefined;
+      open();
+      await vi.waitFor(() => expect(statuses).toEqual(['up', 'down', 'up']));
+      expect(relay.connections).toHaveLength(2);
+      const c2 = relay.connections[1];
+      expect(c2.subscribes.map((x) => x.path)).toEqual(['gm/1']);
+      expect(c2.publishes).toEqual([{ path: 'p/me', track: 'events' }]);
+      expect(relay.tracks.get('p/me#events')!.groups).toEqual([[bytes('b')], [bytes('c')]]);
+      // 新しい接続で受け取り、書いた分は開いているグループに続ける
+      await flush();
+      gmEvents.writeFrame(bytes('hello'));
+      expect(got).toEqual(['hello']);
+      w.write(bytes('d'));
+      expect(relay.tracks.get('p/me#events')!.groups).toEqual([
+        [bytes('b')],
+        [bytes('c'), bytes('d')],
+      ]);
+      s.close();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('自分で閉じた接続（予算での張り直し、close）では down を知らせない', async () => {
+    const relay = new FakeRelay();
+    relay.connect().publish('a', 't');
+    const s = new MoqSession('https://relay/x', relay.connector, 3);
+    const statuses: string[] = [];
+    s.onStatus((st) => statuses.push(st));
+    await s.start();
+    s.subscribe('a', 't', () => {});
+    s.subscribe('a', 't', () => {});
+    s.subscribe('a', 't', () => {}); // 予算で張り直し
+    await flush();
+    await flush();
+    expect(relay.connections).toHaveLength(2);
+    expect(statuses).toEqual(['up', 'up']);
+    s.close();
+    await flush();
+    expect(statuses).toEqual(['up', 'up']);
+    expect(relay.connections).toHaveLength(2);
+  });
+
+  it('down を受けた中で close すれば張り直さない', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const relay = new FakeRelay();
+      const s = new MoqSession('https://relay/x', relay.connector);
+      s.onStatus((st) => {
+        if (st === 'down') s.close();
+      });
+      await s.start();
+      relay.connections[0].drop();
+      await flush();
+      await flush();
+      expect(relay.connections).toHaveLength(1);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+});
+
 describe('MoqSession の後始末と異常系', () => {
   it('subscribe and publish after close do nothing', async () => {
     const relay = new FakeRelay();

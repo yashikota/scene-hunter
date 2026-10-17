@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { m } from '../paraglide/messages';
 import { isRoomFound, joinAndSave, loadMe } from '../game/membership';
 import { useRoom } from '../game/useRoom';
 import { Connecting } from '../screens/Connecting';
@@ -54,6 +55,19 @@ function UnsupportedRoute() {
 
 function RoomScreen({ code }: { code: string }) {
   const room = useRoom(code);
+  return (
+    <>
+      <RoomView room={room} code={code} />
+      {room.reconnecting && (
+        <div role="status" className="sh-reconnecting">
+          {m.reconnecting()}
+        </div>
+      )}
+    </>
+  );
+}
+
+function RoomView({ room, code }: { room: ReturnType<typeof useRoom>; code: string }) {
   const { view, actions } = room;
   if (room.status) {
     return (

@@ -124,5 +124,7 @@
   "disconnected_body": "{name}さんが戻れば、続きから再開します",
   "disconnected_waiting": "再接続を待っています（{time}）",
   "disconnected_you": "ここまでのあなた",
-  "rank_points": "{rank} 位 ・ {points} 点"
+  "rank_points": "{rank} 位 ・ {points} 点",
+  "keep_screen_on": "画面を閉じないでね",
+  "reconnecting": "つなぎ直しています…"
 }

@@ -124,5 +124,7 @@
   "disconnected_body": "Tiếp tục khi {name} quay lại",
   "disconnected_waiting": "Đang chờ kết nối lại ({time})",
   "disconnected_you": "Bạn tính đến lúc này",
-  "rank_points": "Hạng {rank} ・ {points} điểm"
+  "rank_points": "Hạng {rank} ・ {points} điểm",
+  "keep_screen_on": "Đừng tắt màn hình nhé",
+  "reconnecting": "Đang kết nối lại…"
 }

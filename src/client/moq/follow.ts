@@ -36,6 +36,8 @@ interface Watch {
   reject?(): void;
 }
 
+/** publisher 側の Track の maxAge（session.ts の MAX_AGE）と同じ 60 秒。張り直しで届き直す分は seq で捨てる。 */
+export const GM_EVENTS_MAX_AGE_MS = 60_000;
 const FIRST_EPOCH = 1;
 const INITIAL_PROBE_EPOCHS = 5;
 const MIN_DELAY_MS = 500;
@@ -154,8 +156,11 @@ export function followGm(
       keepSubscribed(session, gmPath(epoch), STATE_TRACK, (b) => receive(w, epoch, b), {
         blind: true,
       }),
+      // GM は events のグループを区切るので（gmEngine の GM_GROUP_MAX_FRAMES）、区切りの直前のフレームが
+      // 新しいグループに追い越されても読み捨てないよう、古いグループも GM_EVENTS_MAX_AGE_MS までは読み切る。
       keepSubscribed(session, gmPath(epoch), EVENTS_TRACK, (b) => receive(w, epoch, b), {
         blind: true,
+        maxAgeMs: GM_EVENTS_MAX_AGE_MS,
       }),
     );
     on.epoch(epoch);

@@ -13,6 +13,7 @@ import {
   type GmState,
 } from './gmMachine';
 import { clearGm, loadGm, saveGm } from './gmPersist';
+import { LinkWatch } from './linkWatch';
 import type { Me } from './membership';
 import { applySnapshot, initialView, type PlayerView } from './playerView';
 import { encodeFrame, keepStarting } from './wire';
@@ -41,6 +42,25 @@ export const PRESENCE_SUSPEND_GAP_MS = 5000;
  */
 export const PRESENCE_FLIP_MIN_MS = 2000;
 const PLAYER_PREFIX = 'p/';
+/**
+ * gm/{epoch} の接続が切れたら、epoch を 1 つ上げた新しいセッションでつなぎ直す（同じパスの publish し直しは
+ * PoC で 5 回中 3 回しか届かなかったため、再読み込みと同じく epoch を上げる）。
+ * 切れたセッションが RECONNECT_STABLE_MS 以上続いていればすぐ、そうでなければ RECONNECT_MIN_MS から倍々
+ * （上限 RECONNECT_MAX_MS）待ってからつなぐ（つないではすぐ切れる回線で epoch を上げ続けないように）。
+ */
+export const RECONNECT_STABLE_MS = 30_000;
+export const RECONNECT_MIN_MS = 1000;
+export const RECONNECT_MAX_MS = 8000;
+/**
+ * gm/{epoch} の events は、lobby と gm_turn の直前（それより前の経過はスナップショットが持つ）と、
+ * このフレーム数かこの時間を超えたときに新しいグループに切り替える。新しく購読した人（後から入った人、
+ * 再読み込み、張り直し）には最新のグループがまるごと届き、1 フレームずつ署名を確かめるので、ロビーで away を
+ * 切り替え続ける人がいても、届き直すフレームがこの数を超えないようにする。
+ * 区切りの直前のフレームが新しいグループに追い越されても、受け手（followGm）は古いグループを
+ * GM_EVENTS_MAX_AGE_MS まで読み切るので取りこぼさない。
+ */
+export const GM_GROUP_MAX_FRAMES = 32;
+export const GM_GROUP_MAX_MS = 60_000;
 
 /** gm/{epoch} の epoch と、イベントとスナップショットそれぞれの最後の seq。GM の状態と一緒に保存する。 */
 interface Link {
@@ -118,6 +138,14 @@ export class GmEngine {
   #unlisten?: () => void;
   #stopped = false;
   #closed = false;
+  /** gm/{epoch} のセッションが切れていないか。 */
+  readonly #linkWatch: LinkWatch;
+  #sessionOpenedAt = 0;
+  #reconnectDelay = 0;
+  #reconnectTimer?: ReturnType<typeof setTimeout>;
+  /** いまの events のグループに書いたフレームの数と、グループを始めた時刻。 */
+  #groupFrames = 0;
+  #groupStartedAt = 0;
 
   constructor(me: Me, deps: GmEngineDeps) {
     this.#me = me;
@@ -134,6 +162,12 @@ export class GmEngine {
             rounds: me.rounds,
             limitSec: me.limitSec,
           });
+    this.#linkWatch = new LinkWatch(deps.now, () => this.#notify());
+  }
+
+  /** gm/{epoch} の接続が切れて、RECONNECT_NOTICE_MS 以上つなぎ直せていない。 */
+  get reconnecting(): boolean {
+    return this.#linkWatch.reconnecting;
   }
 
   /**
@@ -142,32 +176,16 @@ export class GmEngine {
    */
   start(minEpoch = 0): void {
     if (this.#closed || this.#session) return;
-    const { connector } = this.#deps;
-    this.epoch = Math.max(this.#link.epoch, minEpoch) + 1;
-    this.#link.epoch = this.epoch;
-    saveLink(this.#me.code, this.#link);
-
-    const session = new MoqSession(this.#me.moqUrl, connector);
-    this.#session = session;
-    this.#events = session.publish(gmPath(this.epoch), EVENTS_TRACK);
-    this.#stateTrack = session.publish(gmPath(this.epoch), STATE_TRACK);
-    this.#inbox = new GmInbox(this.#me.moqUrl, connector, this.#deps.verifier);
+    this.#inbox = new GmInbox(this.#me.moqUrl, this.#deps.connector, this.#deps.verifier);
     // 再開した直後は、全員がたった今まで居たものとして数え始める。
     const now = this.#deps.now();
     for (const pid of Object.keys(this.state.players)) {
+      // 出た人のメッセージはもう受け付けないので、購読もしない（購読し直しを繰り返して予算を使わないように）。
+      if (hasLeft(this.state, pid)) continue;
       this.#lastSeen.set(pid, now);
       this.#listen(pid);
     }
-    session.announced((path, active) => {
-      if (!path.startsWith(PLAYER_PREFIX)) return;
-      const pid = path.slice(PLAYER_PREFIX.length);
-      if (!pid || pid === this.#me.pid || hasLeft(this.state, pid)) return;
-      if (active) this.#listen(pid);
-      else this.#inbox?.remove(pid);
-    });
-    keepStarting(session, () => this.#closed);
-
-    this.#writeSnapshot();
+    this.#open(minEpoch, 0);
     this.#timers.push(
       setInterval(() => this.dispatch({ type: 'tick', now: this.#deps.now() }), TICK_MS),
       setInterval(() => this.#writeSnapshot(), SNAPSHOT_EVERY_MS),
@@ -183,6 +201,52 @@ export class GmEngine {
     }
   }
 
+  /** 前の epoch より 1 つ大きい gm/{epoch} のセッションを作り、delayMs 後につなぎ始める。 */
+  #open(minEpoch: number, delayMs: number): void {
+    this.epoch = Math.max(this.#link.epoch, minEpoch) + 1;
+    this.#link.epoch = this.epoch;
+    saveLink(this.#me.code, this.#link);
+
+    const session = new MoqSession(this.#me.moqUrl, this.#deps.connector);
+    this.#session = session;
+    this.#sessionOpenedAt = this.#deps.now();
+    // つながるまでに書いたイベントとスナップショットはセッションが貯め、つながったら書く。
+    this.#events = session.publish(gmPath(this.epoch), EVENTS_TRACK);
+    this.#groupFrames = 0; // 新しい Track は最初のフレームで新しいグループを開く
+    this.#stateTrack = session.publish(gmPath(this.epoch), STATE_TRACK);
+    session.announced((path, active) => {
+      if (!path.startsWith(PLAYER_PREFIX)) return;
+      const pid = path.slice(PLAYER_PREFIX.length);
+      if (!pid || pid === this.#me.pid || hasLeft(this.state, pid)) return;
+      if (active) this.#listen(pid);
+      else this.#inbox?.remove(pid);
+    });
+    session.onStatus((st) => {
+      this.#linkWatch.set('gm', st);
+      if (st === 'down') this.#reopen(session);
+    });
+    const begin = () => keepStarting(session, () => this.#closed || this.#session !== session);
+    if (delayMs > 0) this.#reconnectTimer = setTimeout(begin, delayMs);
+    else begin();
+    this.#writeSnapshot();
+  }
+
+  /** gm/{epoch} の接続が切れた。epoch を上げた新しいセッションでつなぎ直す（状態はそのまま続ける）。 */
+  #reopen(dropped: MoqSession): void {
+    if (this.#stopped || this.#session !== dropped) return;
+    dropped.close();
+    const lived = this.#deps.now() - this.#sessionOpenedAt;
+    this.#reconnectDelay =
+      lived >= RECONNECT_STABLE_MS
+        ? 0
+        : Math.min(Math.max(this.#reconnectDelay * 2, RECONNECT_MIN_MS), RECONNECT_MAX_MS);
+    this.#open(0, this.#reconnectDelay);
+  }
+
+  #notify(): void {
+    for (const fn of this.#listeners) fn();
+  }
+
   dispatch(action: GmAction): void {
     if (this.#stopped) return;
     const step = gmReduce(this.state, action);
@@ -191,7 +255,7 @@ export class GmEngine {
     for (const e of step.emit) this.#writeEvent(e);
     saveGm(this.#me.code, this.state);
     this.#writeSnapshot();
-    for (const fn of this.#listeners) fn();
+    this.#notify();
   }
 
   /** GM の画面用の表示モデル（プレイヤーと同じ形）。 */
@@ -226,6 +290,8 @@ export class GmEngine {
     if (this.#stopped) return;
     this.#stopped = true;
     for (const t of this.#timers.splice(0)) clearInterval(t);
+    clearTimeout(this.#reconnectTimer);
+    this.#linkWatch.close();
     this.#unlisten?.();
     this.#listeners.clear();
     const shut = () => {
@@ -251,8 +317,8 @@ export class GmEngine {
     const now = this.#deps.now();
     const gap = this.#lastCheckAt === undefined ? 0 : now - this.#lastCheckAt;
     this.#lastCheckAt = now;
-    // GM のタブが止まっていた。届いていないのは GM の側の事情なので、誰も away にしない。
-    if (gap > PRESENCE_SUSPEND_GAP_MS) return this.#reseed();
+    // GM のタブが止まっていた、または GM の接続が切れている。届いていないのは GM の側の事情なので、誰も away にしない。
+    if (gap > PRESENCE_SUSPEND_GAP_MS || this.#linkWatch.down) return this.#reseed();
     for (const [pid, p] of Object.entries(this.state.players)) {
       if (p.away || hasLeft(this.state, pid)) continue;
       const seen = this.#lastSeen.get(pid);
@@ -313,10 +379,27 @@ export class GmEngine {
   }
 
   #writeEvent(e: GmEventBody): void {
+    const now = this.#deps.now();
+    if (
+      this.#groupFrames > 0 &&
+      (e.type === 'lobby' ||
+        e.type === 'gm_turn' ||
+        this.#groupFrames >= GM_GROUP_MAX_FRAMES ||
+        now - this.#groupStartedAt >= GM_GROUP_MAX_MS)
+    ) {
+      // 書く順は 1 本の鎖なので、区切りも同じ鎖に入れる。
+      this.#groupFrames = 0;
+      this.#chain(() => this.#events?.rotate());
+    }
+    if (this.#groupFrames === 0) this.#groupStartedAt = now;
+    this.#groupFrames++;
     const seq = ++this.#link.eventSeq;
     saveLink(this.#me.code, this.#link);
-    const body = { ...e, pid: this.#me.pid, seq, epoch: this.epoch };
-    this.#enqueue(body, (bytes) => this.#events?.write(bytes));
+    // epoch は書く時点のもの（接続が切れて epoch を上げた後に書くフレームも、新しい gm/{epoch} に合わせる）。
+    this.#enqueue(
+      () => ({ ...e, pid: this.#me.pid, seq, epoch: this.epoch }),
+      (bytes) => this.#events?.write(bytes),
+    );
   }
 
   #writeSnapshot(): void {
@@ -324,23 +407,29 @@ export class GmEngine {
     if (this.#stopped || this.state.dissolved) return;
     const seq = ++this.#link.snapshotSeq;
     saveLink(this.#me.code, this.#link);
-    const body: GmSnapshot = {
+    const body: Omit<GmSnapshot, 'epoch'> = {
       ...snapshotOf(this.state, this.#deps.now()),
       pid: this.#me.pid,
       seq,
-      epoch: this.epoch,
       lastEventSeq: this.#link.eventSeq,
     };
-    this.#enqueue(body, (bytes) => this.#stateTrack?.snapshot(bytes));
+    this.#enqueue(
+      (): GmSnapshot => ({ ...body, epoch: this.epoch }),
+      (bytes) => this.#stateTrack?.snapshot(bytes),
+    );
   }
 
-  #enqueue(body: { pid: string }, write: (bytes: Uint8Array) => void): void {
+  #enqueue(make: () => { pid: string }, write: (bytes: Uint8Array) => void): void {
     const { privateKey } = this.#deps;
     const cert = this.#me.cert;
+    this.#chain(async () => write(encodeFrame(await seal(make(), privateKey, cert))));
+  }
+
+  #chain(job: () => void | Promise<void>): void {
     this.#queue = this.#queue
       .then(async () => {
         if (this.#closed) return;
-        write(encodeFrame(await seal(body, privateKey, cert)));
+        await job();
       })
       .catch((err: unknown) => console.error('GM のメッセージを送れなかった', err));
   }

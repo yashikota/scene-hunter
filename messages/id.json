@@ -124,5 +124,7 @@
   "disconnected_body": "Lanjut saat {name} kembali",
   "disconnected_waiting": "Menunggu tersambung kembali ({time})",
   "disconnected_you": "Kamu sejauh ini",
-  "rank_points": "Peringkat {rank} ・ {points} poin"
+  "rank_points": "Peringkat {rank} ・ {points} poin",
+  "keep_screen_on": "Jangan tutup layar ini",
+  "reconnecting": "Menyambung ulang…"
 }

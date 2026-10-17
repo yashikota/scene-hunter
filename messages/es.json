@@ -142,5 +142,7 @@
   "disconnected_body": "Se reanuda cuando vuelva {name}",
   "disconnected_waiting": "Esperando la reconexión ({time})",
   "disconnected_you": "Tú hasta ahora",
-  "rank_points": "Puesto {rank} ・ {points} pts"
+  "rank_points": "Puesto {rank} ・ {points} pts",
+  "keep_screen_on": "No cierres esta pantalla",
+  "reconnecting": "Reconectando…"
 }

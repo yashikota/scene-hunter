@@ -124,5 +124,7 @@
   "disconnected_body": "{name}님이 돌아오면 이어서 해요",
   "disconnected_waiting": "다시 연결되기를 기다리는 중 ({time})",
   "disconnected_you": "지금까지의 나",
-  "rank_points": "{rank}위 ・ {points}점"
+  "rank_points": "{rank}위 ・ {points}점",
+  "keep_screen_on": "화면을 끄지 마세요",
+  "reconnecting": "다시 연결하는 중…"
 }
