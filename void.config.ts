@@ -16,6 +16,8 @@ export default defineConfig({
     // 本番は workers.dev で公開する。preview_urls は Void がデプロイ前の版を確かめるのに使う。
     workers_dev: true,
     preview_urls: true,
+    // 省略すると Void は既存の routes を引き継ごうとし、Void 以外が作った版（secret の変更など）の直後に止まる。
+    routes: [],
     ratelimits: [
       rateLimit('RL_CREATE', '1001', 2), // IP
       rateLimit('RL_JOIN', '1002', 10), // IP
