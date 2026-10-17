@@ -18,6 +18,11 @@ export interface PhotoCheckDeps {
 /** 一覧と写真の取得 1 回あたりの待ち時間。応答なしで止まったら失敗として扱う。 */
 export const PHOTO_TIMEOUT_MS = 10_000;
 const LIST_RETRY_MS = [1000, 2000, 4000];
+/**
+ * 一覧を取る回数の上限（合わせて 30 秒ほど）。GM のトークンが通らなくなった（401）、部屋の記録が消えた
+ * （本番では GET の 404 が SPA の HTML になる）など、やり直しても通らない失敗で止まり続けないように。
+ */
+export const LIST_MAX_TRIES = 10;
 const FETCH_RETRIES = 2;
 const FETCH_RETRY_MS = 1000;
 
@@ -28,17 +33,22 @@ function withTimeout<T>(p: Promise<T>): Promise<T> {
   });
 }
 
-/** 一覧を取れるまで（遠のく間隔で）やり直す。止められたら null。 */
-async function listUntilDone(s: GmState, d: PhotoCheckDeps): Promise<RoundPhoto[] | null> {
-  for (let i = 0; ; i++) {
+/** 一覧を取れるまで（遠のく間隔で）LIST_MAX_TRIES 回までやり直す。止められたら null、取れなければ undefined。 */
+async function listUntilDone(
+  s: GmState,
+  d: PhotoCheckDeps,
+): Promise<RoundPhoto[] | null | undefined> {
+  for (let i = 0; i < LIST_MAX_TRIES; i++) {
     try {
       return await withTimeout(d.listPhotos({ gameId: s.gameId!, round: s.round }));
     } catch (e) {
       console.warn('写真の一覧を取れなかった', e);
+      if (i === LIST_MAX_TRIES - 1) break;
       await d.sleep(LIST_RETRY_MS[Math.min(i, LIST_RETRY_MS.length - 1)]!);
       if (d.stopped()) return null;
     }
   }
+  return undefined;
 }
 
 async function fetchWithRetry(url: string, d: PhotoCheckDeps): Promise<Uint8Array | null> {
@@ -57,8 +67,17 @@ async function fetchWithRetry(url: string, d: PhotoCheckDeps): Promise<Uint8Arra
 /** s は picking に入った時点の GM の状態（提出と shutter のハッシュはここで確定している）。 */
 export async function checkRoundPhotos(s: GmState, d: PhotoCheckDeps): Promise<void> {
   if (!s.gameId) return;
-  const photos = await listUntilDone(s, d);
-  if (!photos || d.stopped()) return;
+  const listed = await listUntilDone(s, d);
+  if (listed === null || d.stopped()) return;
+  if (listed === undefined) {
+    // 写真を見せられないので、提出はすべて無効にして results を送る（選べる写真が無いまま次へ進める）。
+    console.error('写真の一覧を取れないまま、あきらめた');
+    for (const pid of Object.keys(s.submissions))
+      d.dispatch({ type: 'photoChecked', pid, valid: false });
+    d.dispatch({ type: 'resultsReady', gmPhotoUrl: '', photos: [] });
+    return;
+  }
+  const photos = listed;
 
   // 提出のキーと同じ写真だけを使う（同じ人が撮り直しの途中でアップロードした別の写真は無視する）。
   const submitted = Object.entries(s.submissions).flatMap(([pid, sub]) => {

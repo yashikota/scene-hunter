@@ -7,6 +7,7 @@ import {
 } from '../../src/client/game/gmMachine';
 import {
   checkRoundPhotos,
+  LIST_MAX_TRIES,
   PHOTO_TIMEOUT_MS,
   type PhotoCheckDeps,
 } from '../../src/client/game/photoCheck';
@@ -130,6 +131,27 @@ describe('checkRoundPhotos', () => {
     expect(dispatched.at(-1)?.type).toBe('resultsReady');
     vi.useRealTimers();
     vi.restoreAllMocks();
+  });
+
+  it('一覧がやり直しても取れなければ（401 や SPA の HTML）、LIST_MAX_TRIES 回であきらめ、提出を無効にして results を送る', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const listPhotos = vi.fn(async () => {
+      throw Object.assign(new Error('unauthorized'), { status: 401 });
+    });
+    const { d, dispatched } = deps({ listPhotos });
+    const s0 = await pickingState();
+    await checkRoundPhotos(s0, d);
+    expect(listPhotos).toHaveBeenCalledTimes(LIST_MAX_TRIES);
+    expect(dispatched).toEqual([
+      { type: 'photoChecked', pid: 'a', valid: false },
+      { type: 'photoChecked', pid: 'b', valid: false },
+      { type: 'resultsReady', gmPhotoUrl: '', photos: [] },
+    ]);
+    const s = dispatched.reduce((st, a) => gmReduce(st, a).state, s0);
+    expect(s.results).toEqual({ gmPhotoUrl: '', photos: [] });
+    warn.mockRestore();
+    error.mockRestore();
   });
 
   it('GM の機械に通すと photoChecked の無効が results に入り、選べなくなる', async () => {
