@@ -41,6 +41,7 @@ VITE_SERVER_PUBLIC_KEY=60Zo_80nnrlNyFbUl6XrDFko36Vaqj0KTmh0yduAG34
 cf CLI の OAuth では API トークンを作れないので、ダッシュボードで作る。
 
 - Realtime（MoQ）を編集できるアカウント API トークン → `CF_API_TOKEN`
+  - アカウント `scene-hunter` の MoQ Relays を作成・削除できること。確かめ方：`curl -H "Authorization: Bearer <token>" https://api.cloudflare.com/client/v4/accounts/4723b654d7c87a32f3a5b3e260da5eec/moq/relays` が `"success": true` を返す。
 - R2 の API トークン（Object Read & Write、バケット `scene-hunter-storage` に限定） → `R2_ACCESS_KEY_ID` と `R2_SECRET_ACCESS_KEY`
 
 ## 3. 秘密情報を登録する
@@ -72,13 +73,39 @@ CLOUDFLARE_ACCOUNT_ID=4723b654d7c87a32f3a5b3e260da5eec scripts/r2-setup.sh
 ## 5. デプロイ
 
 ```sh
-VITE_SERVER_PUBLIC_KEY=60Zo_80nnrlNyFbUl6XrDFko36Vaqj0KTmh0yduAG34 npx void deploy --platform cloudflare
+CLOUDFLARE_WORKERS_SUBDOMAIN=scene-hunter \
+VITE_SERVER_PUBLIC_KEY=60Zo_80nnrlNyFbUl6XrDFko36Vaqj0KTmh0yduAG34 \
+  npx void deploy --platform cloudflare
 curl https://scene-hunter.scene-hunter.workers.dev/api/health   # {"ok":true}
 ```
 
 Void はブラウザでログインする（`void cloudflare login`）。ブラウザを使えないときは `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` をシェルに渡す。
 
-`VITE_*` の値は `.env` からは読まれないので、ビルドするシェルで渡す。
+`VITE_*` の値は `.env` からは読まれないので、ビルドするシェルで渡す。`CLOUDFLARE_WORKERS_SUBDOMAIN` は、Void がデプロイ前の版をプレビュー URL で確かめるのに使う（成功すると Void が覚える）。
+
+### 初回だけ：workers.dev を有効にする
+
+最初のデプロイでは Worker の workers.dev とプレビュー URL が無効のままになり、Void の確認（`/__void/ready`）が通らなかった。`void.config.ts` の `workers_dev` と `preview_urls` は確認が通った後に反映されるため。一度だけ API で有効にした：
+
+```sh
+curl -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' \
+  -d '{"enabled":true,"previews_enabled":true}' \
+  "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/scene-hunter/subdomain"
+```
+
+## 既知の問題
+
+### Void 1.1.11：秘密情報があると Rate Limiting binding をアップロードできない
+
+- 上流の Issue：<https://github.com/voidzero-dev/void/issues/462>
+- 再現：`void.config.ts` の `cloudflare.ratelimits` に binding を 1 つ置き、`void secret put` で秘密情報を 1 つ登録してから `void deploy --platform cloudflare` を実行する。`Cloudflare binding RL_CREATE cannot be uploaded with pinned secrets.` で止まる。
+- 原因：Worker に秘密情報があると、Void は秘密情報を引き継ぐ専用のアップロード（`uploadPinnedCloudflareVersion`）を使う。そこで binding を API の形に直す `bindingsFromOutput` に Rate Limiting の case が無く、`default` で例外を投げる。
+- 対処：`patches/void@1.1.11.patch`（`pnpm-workspace.yaml` の `patchedDependencies`）で case を足した。ビルド出力では binding が `{ type: "rate-limit", namespace, simple: { limit, period } }` の形で来る（`@cloudflare/codemods` が `ratelimits` を `bindings.rateLimit({ namespace, simple })` に変え、`@cloudflare/config` の型は `type: "rate-limit"`）。これを API の `{ name, type: "ratelimit", namespace_id, simple }` に直す。Issue の修正案は `case "ratelimit"` と `namespaceId` を使っているが、1.1.11 の実際の出力とは名前が違う。
+- 上流で直ったら、Void を上げてパッチと `patchedDependencies` の行を消す。
+
+### Rate Limiting は厳密ではない
+
+Cloudflare の Rate Limiting はデータセンターごとに数え、結果の反映が遅れる。`RL_CREATE`（60 秒に 2 回）でも、続けて 10 回送ると 429 になるのは 6 回目前後からだった。
 
 ## ローカル開発
 

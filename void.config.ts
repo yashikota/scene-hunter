@@ -13,6 +13,9 @@ export default defineConfig({
   inference: { bindings: { kv: true, storage: true } },
   cloudflare: {
     name: 'scene-hunter',
+    // 本番は workers.dev で公開する。preview_urls は Void がデプロイ前の版を確かめるのに使う。
+    workers_dev: true,
+    preview_urls: true,
     ratelimits: [
       rateLimit('RL_CREATE', '1001', 2), // IP
       rateLimit('RL_JOIN', '1002', 10), // IP

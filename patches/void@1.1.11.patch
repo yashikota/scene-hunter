@@ -1,0 +1,25 @@
+diff --git a/dist/deploy-DsW-PrRQ.mjs b/dist/deploy-DsW-PrRQ.mjs
+index 6bcba2d22c97078bd1dd775e93ce2fffe15aec06..91275bf2a7c5558cbec0d6a1a39b8124c74049b6 100644
+--- a/dist/deploy-DsW-PrRQ.mjs
++++ b/dist/deploy-DsW-PrRQ.mjs
+@@ -1978,6 +1978,20 @@ function bindingsFromOutput(env, workerName, activeSecrets, explicitSecrets) {
+ 					type: "version_metadata"
+ 				});
+ 				break;
++			case "rate-limit": {
++				const simple = record(value.simple);
++				if (!simple || typeof simple.limit !== "number" || typeof simple.period !== "number") throw new Error(`Cloudflare binding ${name} has an invalid rate limit.`);
++				bindings.push({
++					name,
++					type: "ratelimit",
++					namespace_id: requiredString(value.namespace, name),
++					simple: {
++						limit: simple.limit,
++						period: simple.period
++					}
++				});
++				break;
++			}
+ 			default: throw new Error(`Cloudflare binding ${name} cannot be uploaded with pinned secrets.`);
+ 		}
+ 	}
