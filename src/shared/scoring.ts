@@ -28,6 +28,13 @@ export function scoreRound(input: {
 }): RoundScore[] {
   const { picks, tMs, limitMs, prevStreak, participants } = input;
 
+  if (picks.length > BASE_POINTS.length) {
+    throw new RangeError(`scoreRound: picks has ${picks.length} entries, max is ${BASE_POINTS.length}`);
+  }
+  if (new Set(picks).size !== picks.length) {
+    throw new RangeError('scoreRound: picks contains duplicate pids');
+  }
+
   return participants.map((pid) => {
     const index = picks.indexOf(pid);
     const picked = index !== -1;

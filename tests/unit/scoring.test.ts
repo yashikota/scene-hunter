@@ -51,6 +51,42 @@ describe('scoring', () => {
     expect(r[0]).toMatchObject({ rank: null, points: 0, bonus: 0, streak: 0 });
   });
 
+  it('throws RangeError when picks has more than 3 entries', () => {
+    expect(() =>
+      scoreRound({
+        picks: ['a', 'b', 'c', 'd'],
+        tMs: { a: 1, b: 2, c: 3, d: 4 },
+        limitMs: T,
+        prevStreak: {},
+        participants: ['a', 'b', 'c', 'd'],
+      }),
+    ).toThrow(RangeError);
+  });
+
+  it('throws RangeError when picks has duplicate pids', () => {
+    expect(() =>
+      scoreRound({
+        picks: ['a', 'a'],
+        tMs: { a: 1 },
+        limitMs: T,
+        prevStreak: {},
+        participants: ['a'],
+      }),
+    ).toThrow(RangeError);
+  });
+
+  it('throws Error when a picked participant has no tMs', () => {
+    expect(() =>
+      scoreRound({
+        picks: ['a'],
+        tMs: {},
+        limitMs: T,
+        prevStreak: {},
+        participants: ['a'],
+      }),
+    ).toThrow(Error);
+  });
+
   it('returns one entry per participant, in participants order', () => {
     const r = scoreRound({
       picks: ['b', 'a'],
