@@ -4,6 +4,19 @@
     "name": "scene-hunter",
     "workers_dev": true,
     "preview_urls": true,
+    "routes": [],
+    "observability": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "logs": {
+        "enabled": true,
+        "invocation_logs": true
+      },
+      "traces": {
+        "enabled": true,
+        "head_sampling_rate": 1
+      }
+    },
     "ratelimits": [
       {
         "name": "RL_CREATE",
@@ -41,6 +54,9 @@
   },
   "resolved": {
     "name": "scene-hunter",
+    "workers_dev": true,
+    "preview_urls": true,
+    "routes": [],
     "ratelimits": [
       {
         "name": "RL_CREATE",
@@ -89,8 +105,18 @@
         "bucket_name": "scene-hunter-storage"
       }
     ],
-    "workers_dev": true,
-    "preview_urls": true
+    "observability": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "logs": {
+        "enabled": true,
+        "invocation_logs": true
+      },
+      "traces": {
+        "enabled": true,
+        "head_sampling_rate": 1
+      }
+    }
   },
-  "text": "{\n  \"name\": \"scene-hunter\",\n  \"ratelimits\": [\n    {\n      \"name\": \"RL_CREATE\",\n      \"namespace_id\": \"1001\",\n      \"simple\": {\n        \"limit\": 2,\n        \"period\": 60\n      }\n    },\n    {\n      \"name\": \"RL_JOIN\",\n      \"namespace_id\": \"1002\",\n      \"simple\": {\n        \"limit\": 10,\n        \"period\": 60\n      }\n    },\n    {\n      \"name\": \"RL_HINTS\",\n      \"namespace_id\": \"1003\",\n      \"simple\": {\n        \"limit\": 3,\n        \"period\": 60\n      }\n    },\n    {\n      \"name\": \"RL_UPLOAD\",\n      \"namespace_id\": \"1004\",\n      \"simple\": {\n        \"limit\": 5,\n        \"period\": 60\n      }\n    }\n  ],\n  \"compatibility_date\": \"2026-02-24\",\n  \"account_id\": \"4723b654d7c87a32f3a5b3e260da5eec\",\n  \"kv_namespaces\": [\n    {\n      \"binding\": \"KV\",\n      \"id\": \"f71a98a89b374bea931f93d5e6c6621a\"\n    }\n  ],\n  \"r2_buckets\": [\n    {\n      \"binding\": \"STORAGE\",\n      \"bucket_name\": \"scene-hunter-storage\"\n    }\n  ],\n  \"workers_dev\": true,\n  \"preview_urls\": true\n}\n"
+  "text": "{\n  \"name\": \"scene-hunter\",\n  \"workers_dev\": true,\n  \"preview_urls\": true,\n  \"routes\": [],\n  \"ratelimits\": [\n    {\n      \"name\": \"RL_CREATE\",\n      \"namespace_id\": \"1001\",\n      \"simple\": {\n        \"limit\": 2,\n        \"period\": 60\n      }\n    },\n    {\n      \"name\": \"RL_JOIN\",\n      \"namespace_id\": \"1002\",\n      \"simple\": {\n        \"limit\": 10,\n        \"period\": 60\n      }\n    },\n    {\n      \"name\": \"RL_HINTS\",\n      \"namespace_id\": \"1003\",\n      \"simple\": {\n        \"limit\": 3,\n        \"period\": 60\n      }\n    },\n    {\n      \"name\": \"RL_UPLOAD\",\n      \"namespace_id\": \"1004\",\n      \"simple\": {\n        \"limit\": 5,\n        \"period\": 60\n      }\n    }\n  ],\n  \"compatibility_date\": \"2026-02-24\",\n  \"account_id\": \"4723b654d7c87a32f3a5b3e260da5eec\",\n  \"kv_namespaces\": [\n    {\n      \"binding\": \"KV\",\n      \"id\": \"f71a98a89b374bea931f93d5e6c6621a\"\n    }\n  ],\n  \"r2_buckets\": [\n    {\n      \"binding\": \"STORAGE\",\n      \"bucket_name\": \"scene-hunter-storage\"\n    }\n  ],\n  \"observability\": {\n    \"enabled\": true,\n    \"head_sampling_rate\": 1,\n    \"logs\": {\n      \"enabled\": true,\n      \"invocation_logs\": true\n    },\n    \"traces\": {\n      \"enabled\": true,\n      \"head_sampling_rate\": 1\n    }\n  }\n}\n"
 }
