@@ -88,4 +88,46 @@ describe('cert', () => {
     expect(await verifyTransfer(pub, t, '000000', 1000)).toBe(false);
     expect(await verifyTransfer(pub, t, '123456', 2001)).toBe(false);
   });
+  it('cert and transfer cert are not interchangeable', async () => {
+    const server = await generateKeyPair();
+    const pub = await exportPublicKey(server.publicKey);
+    const cert = await issueCert(server.privateKey, body());
+    const t = await issueTransfer(server.privateKey, { room: '123456', from: 'p1', to: 'p2', iat: 0, exp: 2000 });
+    expect(await verifyTransfer(pub, cert as never, '123456', 1000)).toBe(false);
+    expect(await verifyCert(pub, t as never, '123456', 1000)).toBe(false);
+    // 形が合っていても typ が違えば署名が通らない
+    const asTransfer = { body: { room: '123456', from: 'p1', to: 'p2', iat: 0, exp: 2000 }, sig: cert.sig };
+    expect(await verifyTransfer(pub, asTransfer, '123456', 1000)).toBe(false);
+  });
+  it('rejects malformed bodies', async () => {
+    const server = await generateKeyPair();
+    const pub = await exportPublicKey(server.publicKey);
+    const bads: unknown[] = [
+      body({ role: 'admin' as never }),
+      body({ iat: NaN }),
+      body({ exp: '2000' as never }),
+      body({ name: 1 as never }),
+      body({ exp: Infinity }),
+    ];
+    for (const b of bads) {
+      const c = await issueCert(server.privateKey, b as CertBody).catch(() => ({ body: b as CertBody, sig: 'AAAA' }));
+      expect(await verifyCert(pub, c, '123456', 1000)).toBe(false);
+    }
+    const t = await issueTransfer(server.privateKey, { room: '123456', from: 'p1', to: 2 as never, iat: 0, exp: 2000 });
+    expect(await verifyTransfer(pub, { ...t, body: { ...t.body, to: 'p2', exp: NaN } }, '123456', 1000)).toBe(false);
+    expect(await verifyTransfer(pub, t, '123456', 1000)).toBe(false);
+  });
+});
+
+describe('canonicalJson unsupported types', () => {
+  it('sign throws and verify returns false', async () => {
+    const kp = await generateKeyPair();
+    const pub = await exportPublicKey(kp.publicKey);
+    const good = await sign(kp.privateKey, { a: 1 });
+    for (const v of [undefined, () => 1, Symbol('x'), 1n, new Date(0), [undefined], NaN, { a: new Date(0) }]) {
+      await expect(sign(kp.privateKey, v)).rejects.toThrow();
+      expect(await verify(pub, v, good)).toBe(false);
+    }
+    await expect(sign(kp.privateKey, { a: () => 1 })).rejects.toThrow();
+  });
 });

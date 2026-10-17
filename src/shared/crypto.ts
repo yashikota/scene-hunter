@@ -23,16 +23,27 @@ export function canonicalJson(value: unknown): string {
 }
 
 function sortKeys(v: unknown): unknown {
+  if (v === null || typeof v === 'string' || typeof v === 'boolean') return v;
+  if (typeof v === 'number') {
+    if (!Number.isFinite(v)) throw new TypeError('canonicalJson: non-finite number');
+    return v;
+  }
   if (Array.isArray(v)) return v.map(sortKeys);
-  if (v !== null && typeof v === 'object') {
+  if (typeof v === 'object') {
+    const proto = Object.getPrototypeOf(v);
+    if (proto !== Object.prototype && proto !== null) {
+      throw new TypeError('canonicalJson: non-plain object');
+    }
     const o = v as Record<string, unknown>;
+    // 値が undefined のプロパティは JSON 化で落ちるので、署名側と検証側で揃えて除く。
     return Object.fromEntries(
       Object.keys(o)
+        .filter((k) => o[k] !== undefined)
         .sort()
         .map((k) => [k, sortKeys(o[k])]),
     );
   }
-  return v;
+  throw new TypeError(`canonicalJson: unsupported type ${typeof v}`);
 }
 
 export function generateKeyPair(): Promise<CryptoKeyPair> {

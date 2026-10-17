@@ -79,4 +79,19 @@ describe('envelope', () => {
       expect(await v.open(bad as never)).toBeNull();
     }
   });
+
+  it('cert-less envelope: pid must match remembered one, and remembered cert expires', async () => {
+    const { mk, serverPub } = await setup();
+    let now = 1000;
+    const v = new EnvelopeVerifier(serverPub, '123456', () => now);
+    const alice = await mk('alice');
+    const bob = await mk('bob');
+    await v.open(await seal({ pid: 'alice' }, alice.kp.privateKey, alice.cert));
+    // bob は未記憶なので cert なしは null。alice の鍵で bob の pid を名乗っても null
+    expect(await v.open(await seal({ pid: 'bob' }, alice.kp.privateKey))).toBeNull();
+    expect(await v.open(await seal({ pid: 'bob' }, bob.kp.privateKey))).toBeNull();
+    expect(await v.open(await seal({ pid: 'alice' }, alice.kp.privateKey))).not.toBeNull();
+    now = 2000;
+    expect(await v.open(await seal({ pid: 'alice' }, alice.kp.privateKey))).toBeNull();
+  });
 });
