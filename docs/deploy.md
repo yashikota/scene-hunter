@@ -83,6 +83,7 @@ pnpm install --frozen-lockfile
 env -u SH_E2E CLOUDFLARE_WORKERS_SUBDOMAIN=scene-hunter pnpm exec void deploy --platform cloudflare
 env -u SH_E2E pnpm deploy:settings   # void.config.ts の observability を Worker に反映する
 curl https://scene-hunter.scene-hunter.workers.dev/api/health   # {"ok":true}
+pnpm exec playwright install chromium && pnpm e2e:prod   # 本番で 1 ゲーム通す（Relay を 1 つ作り、AI を 3 回使う）
 cd -
 git worktree remove ../sh-deploy
 ```
