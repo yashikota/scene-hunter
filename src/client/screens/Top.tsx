@@ -1,12 +1,11 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { isLocale, LOCALE_NAMES, LOCALES, type Locale } from '../../shared/locales';
-import { createAndSave, findRoom } from '../game/membership';
+import { createAndSave, findRoom, isRoomFound } from '../game/membership';
 import { m } from '../paraglide/messages';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { isSupportedBrowser, useBrowserLocale } from '../ui/locale';
 import { Screen } from '../ui/Screen';
-import { Connecting } from './Connecting';
 import { CODE_RE, errorMessage } from './entryErrors';
 import { NameStep } from './NameStep';
 import { Unsupported } from './Unsupported';
@@ -14,14 +13,19 @@ import { Unsupported } from './Unsupported';
 export interface TopDeps {
   /** 部屋を作って資格を保存し、部屋の番号を返す。 */
   create(name: string, locale: Locale): Promise<string>;
-  /** 部屋があるか確かめる。部屋がまだ見えない間は onWaiting を呼ぶ。無ければ reject（404）。 */
-  find(code: string, opts: { onWaiting?: () => void }): Promise<void>;
+  /** 部屋があるか確かめる（数秒で答える）。無ければ reject（404）。 */
+  find(code: string): Promise<void>;
+  /** このタブで、あると確かめ済みの部屋か（省略時は membership の記録）。 */
+  isFound?(code: string): boolean;
 }
 
-const defaultDeps: TopDeps = { create: createAndSave, find: findRoom };
+const defaultDeps: TopDeps = { create: createAndSave, find: (c) => findRoom(c), isFound: isRoomFound };
 
 export interface TopProps {
-  /** 共有されたリンク（/r/{code} か /?code=）から来たときの番号。開いたらすぐに部屋を確かめる。 */
+  /**
+   * 共有されたリンク（/r/{code} か /?code=）から来たときの番号。開いたらすぐに部屋を確かめる。
+   * ただし、確かめ済みの部屋（名前の入力から戻ってきたとき）なら確かめず、番号を入れておくだけにする。
+   */
   initialCode?: string;
   /** 部屋を作った（資格を保存した）、または入る部屋があると確かめた。次は /r/{code}。 */
   onEntered(code: string): void;
@@ -44,7 +48,7 @@ function TopForm({
 }: TopProps & { locale: Locale; onLocale(l: Locale): void }) {
   const ids = useId();
   const [code, setCode] = useState(initialCode);
-  const [status, setStatus] = useState<'idle' | 'checking' | 'preparing' | 'naming'>('idle');
+  const [status, setStatus] = useState<'idle' | 'checking' | 'naming'>('idle');
   const [error, setError] = useState<string | null>(null);
   /** いまの確かめの番号。やめたり番号を変えたりした後に届いた結果は捨てる。 */
   const attempt = useRef(0);
@@ -54,7 +58,7 @@ function TopForm({
     setError(null);
     setStatus('checking');
     try {
-      await deps.find(c, { onWaiting: () => attempt.current === mine && setStatus('preparing') });
+      await deps.find(c);
       if (attempt.current === mine) onEntered(c);
     } catch (err) {
       if (attempt.current !== mine) return;
@@ -63,9 +67,14 @@ function TopForm({
     }
   };
 
+  /** StrictMode の二重実行でも、リンクの番号は 1 回だけ確かめる。 */
+  const autoChecked = useRef<string | null>(null);
   useEffect(() => {
-    // 番号の入ったリンクから来たときは、そのまま部屋を確かめて名前の入力へ進む
-    if (CODE_RE.test(initialCode)) void find(initialCode);
+    // 番号の入ったリンクから来たときは、そのまま部屋を確かめて名前の入力へ進む。
+    // 確かめ済み（名前の入力から「戻る」で来た）なら進まない。進むと戻れなくなる
+    if (!CODE_RE.test(initialCode) || (deps.isFound ?? isRoomFound)(initialCode) || autoChecked.current === initialCode) return;
+    autoChecked.current = initialCode;
+    void find(initialCode);
   }, [initialCode]);
 
   const join = (e: FormEvent) => {
@@ -75,12 +84,6 @@ function TopForm({
     void find(code);
   };
 
-  const cancel = () => {
-    attempt.current++;
-    setStatus('idle');
-  };
-
-  if (status === 'preparing') return <Connecting preparing onLeave={cancel} leaveLabel={m.cancel()} />;
   if (status === 'naming') {
     return (
       <NameStep
@@ -146,6 +149,11 @@ function TopForm({
             onChange={(e) => {
               setCode(e.target.value.replace(/\D/g, '').slice(0, 6));
               setError(null);
+              // 番号を直したら、確かめの途中の結果は捨てる
+              if (checking) {
+                attempt.current++;
+                setStatus('idle');
+              }
             }}
           />
           {error && (
@@ -153,8 +161,9 @@ function TopForm({
               {error}
             </p>
           )}
-          <Button type="submit" variant="primary" disabled={checking}>
-            {checking ? m.joining() : m.join_button()}
+          <Button type="submit" variant="primary" disabled={checking} aria-busy={checking}>
+            {checking && <span className="sh-spinner" aria-hidden="true" />}
+            {m.join_button()}
           </Button>
         </Card>
       </form>

@@ -477,3 +477,26 @@ body {
 .sh-timer {
   white-space: nowrap;
 }
+
+/* ボタンの中の小さな回転（確かめている間）。 */
+@keyframes sh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.sh-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  border: 3px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: sh-spin 0.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sh-spinner {
+    animation-duration: 2s;
+  }
+}

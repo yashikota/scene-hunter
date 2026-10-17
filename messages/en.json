@@ -45,7 +45,7 @@
   "transfer_title": "Who should be the next GM?",
   "cancel": "Cancel",
   "dissolve_button": "Close room",
-  "dissolve_confirm": "Close the room for everyone?",
+  "dissolve_confirm": "Close the room? Everyone will leave",
   "room_badge": "Room {code}",
   "waiting_for_gm": "Waiting for the GM to start",
   "rounds_chip": [
@@ -72,7 +72,6 @@
   "page_link": "Link to this page",
   "copy": "Copy",
   "copied": "Copied",
-  "in_progress": "The game is in progress",
   "dissolved_title": "This room has been closed",
   "back_to_top": "Back to start",
   "claiming_title": "Taking over as GM",

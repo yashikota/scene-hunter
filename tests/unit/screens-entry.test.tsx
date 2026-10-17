@@ -96,7 +96,7 @@ describe('Top', () => {
       fireEvent.change(screen.getByLabelText(m.code_label()), { target: { value: '482913' } });
       fireEvent.click(screen.getByRole('button', { name: m.join_button() }));
       await vi.waitFor(() => expect(onEntered).toHaveBeenCalledWith('482913'));
-      expect(find).toHaveBeenCalledWith('482913', expect.anything());
+      expect(find).toHaveBeenCalledWith('482913');
     });
 
     it('部屋が無ければ番号を残したまま「見つかりません」を出す', async () => {
@@ -112,17 +112,18 @@ describe('Top', () => {
       expect(onEntered).not.toHaveBeenCalled();
     });
 
-    it('部屋がまだ見えない間（onWaiting）は「部屋を準備しています」を出し、やめられる', async () => {
-      const find = vi.fn((_code: string, opts: { onWaiting?: () => void }) => {
-        opts.onWaiting?.();
-        return new Promise<never>(() => {});
-      });
-      render(<Top onEntered={() => {}} deps={{ create: vi.fn(), find }} />);
+    it('確かめている間は全画面の待ちにせず、ボタンを回すだけ。番号を直すと確かめを捨てる', async () => {
+      const find = vi.fn(() => new Promise<never>(() => {}));
+      const onEntered = vi.fn();
+      render(<Top onEntered={onEntered} deps={{ create: vi.fn(), find }} />);
       fireEvent.change(screen.getByLabelText(m.code_label()), { target: { value: '482913' } });
       fireEvent.click(screen.getByRole('button', { name: m.join_button() }));
-      expect(await screen.findByText('部屋を準備しています')).toBeTruthy();
-      fireEvent.click(screen.getByRole('button', { name: m.cancel() }));
-      expect(screen.getByLabelText(m.code_label())).toBeTruthy();
+      const button = screen.getByRole('button', { name: m.join_button() }) as HTMLButtonElement;
+      expect(button.getAttribute('aria-busy')).toBe('true');
+      expect(button.disabled).toBe(true);
+      expect(screen.queryByText(m.preparing_title())).toBeNull();
+      fireEvent.change(screen.getByLabelText(m.code_label()), { target: { value: '48291' } });
+      expect(button.disabled).toBe(false);
     });
 
     it('6 桁でない番号では確かめない', () => {
@@ -182,18 +183,48 @@ describe('/r/{code} を直接開く（まだ入っていない部屋）', () => 
     expect(screen.getByText('246 810')).toBeTruthy();
   });
 
+  it('共有リンク /?code= から名前の入力へ進み、戻るとトップに番号を入れたまま留まる（確かめ直さない）', async () => {
+    const fetchMock = vi.fn(async () => json({ exists: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const router = open('/?code=112233');
+    expect(await screen.findByLabelText(m.name_label())).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/r/112233');
+    await act(async () => router.history.back());
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/'));
+    expect((await screen.findByLabelText(m.code_label()) as HTMLInputElement).value).toBe('112233');
+    await act(() => new Promise((r) => setTimeout(r, 50)));
+    expect(router.state.location.pathname).toBe('/');
+    expect(screen.queryByLabelText(m.name_label())).toBeNull();
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('名前の入力でやめると、番号を入れたトップに置き換わる（確かめ直さない）', async () => {
+    const fetchMock = vi.fn(async () => json({ exists: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const router = open('/?code=445566');
+    await screen.findByLabelText(m.name_label());
+    fireEvent.click(screen.getByRole('button', { name: m.cancel() }));
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/'));
+    expect((await screen.findByLabelText(m.code_label()) as HTMLInputElement).value).toBe('445566');
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it('code は JSON にせず生の文字列で書き出す', () => {
     expect(stringifySearch({ code: '012345' })).toBe('?code=012345');
     expect(stringifySearch({})).toBe('');
   });
 
-  it('部屋が無ければ、番号を入れたトップで「見つかりません」を出す', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => json({ error: 'not_found' }, 404)));
-    // 54 秒の待ち直しを早送りする
+  it('部屋が無ければ、数秒で番号を入れたトップに「見つかりません」を出す（準備中の画面は出さない）', async () => {
+    const fetchMock = vi.fn(async () => json({ error: 'not_found' }, 404));
+    vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers({ toFake: ['setTimeout'] });
     try {
       const router = open('/r/135791');
-      for (let i = 0; i < 12; i++) await act(() => vi.advanceTimersByTimeAsync(6000));
+      await act(() => vi.advanceTimersByTimeAsync(10));
+      expect(screen.queryByText(m.preparing_title())).toBeNull();
+      // 3 秒おきに 2 回だけ確かめ直す（約 6 秒）
+      for (let i = 0; i < 3; i++) await act(() => vi.advanceTimersByTimeAsync(3000));
+      expect(fetchMock).toHaveBeenCalledTimes(3);
       expect(router.state.location.pathname).toBe('/');
       expect(screen.getByRole('alert').textContent).toBe(m.error_not_found());
       expect((screen.getByLabelText(m.code_label()) as HTMLInputElement).value).toBe('135791');
@@ -212,7 +243,7 @@ describe('ルーターの検索文字列から code を読む', () => {
       history: createMemoryHistory({ initialEntries: [`/${search}`] }),
     });
     await router.load();
-    return (router.state.matches.find((x) => x.routeId === '/')?.search as { code?: string }).code;
+    return (router.state.matches.find((x) => x.routeId === '/')?.search as { code?: string } | undefined)?.code;
   };
 
   it('?code=123456 は入る', async () => expect(await codeFor('?code=123456')).toBe('123456'));

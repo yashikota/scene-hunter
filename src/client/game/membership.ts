@@ -117,13 +117,12 @@ const toMe = (j: Joined, keys: { pubkey: string; privateKey: string }): Me => ({
 /** このタブで、あると確かめた部屋の番号。名前の入力はこの部屋にだけ出す。 */
 const foundRooms = new Set<string>();
 
-/** 部屋があるか確かめ、あれば覚えておく。無ければ（待ち直しても 404 なら）投げる。 */
+/** 部屋があるか確かめ、あれば覚えておく。無ければ（数秒待ち直しても 404 なら）投げる。 */
 export async function findRoom(
   code: string,
-  opts: { onWaiting?: () => void } = {},
   api: Pick<typeof import('../api'), 'checkRoom'> = { checkRoom },
 ): Promise<void> {
-  await api.checkRoom(code, opts);
+  await api.checkRoom(code);
   foundRooms.add(code);
 }
 

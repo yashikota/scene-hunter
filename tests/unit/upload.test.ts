@@ -97,15 +97,23 @@ describe('checkRoom', () => {
     expect(String(fetchMock.mock.calls[0]![0])).toContain('/api/rooms/482913');
   });
 
-  it('404 の間は 6 秒おきに待ち直し、54 秒たっても無ければ 404 を投げる（1 分 10 回の上限に収める）', async () => {
+  it('404 なら 3 秒おきに 2 回だけ確かめ直し、それでも無ければ 404 を投げる（打ち間違いはすぐ知らせる）', async () => {
     const fetchMock = vi.fn(async () => json({ error: 'not_found' }, 404));
     vi.stubGlobal('fetch', fetchMock);
     const sleep = vi.fn().mockResolvedValue(undefined);
-    const onWaiting = vi.fn();
-    await expect(checkRoom('482913', { sleep, onWaiting })).rejects.toMatchObject({ status: 404 });
-    expect(sleep).toHaveBeenCalledWith(6000);
-    expect(fetchMock).toHaveBeenCalledTimes(10);
-    expect(onWaiting).toHaveBeenCalledTimes(9);
+    await expect(checkRoom('482913', { sleep })).rejects.toMatchObject({ status: 404 });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(sleep.mock.calls).toEqual([[3000], [3000]]);
+  });
+
+  it('できた直後で 404 でも、確かめ直しで見えれば終わる', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementationOnce(async () => json({ error: 'not_found' }, 404))
+      .mockImplementationOnce(async () => json({ exists: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    await checkRoom('482913', { sleep: async () => {} });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('404 以外はすぐ投げる', async () => {

@@ -45,7 +45,7 @@
   "transfer_title": "À qui passer le rôle de MJ ?",
   "cancel": "Annuler",
   "dissolve_button": "Fermer le salon",
-  "dissolve_confirm": "Fermer la salle pour tout le monde ?",
+  "dissolve_confirm": "Fermer la salle ? Tout le monde sortira",
   "room_badge": "Salon {code}",
   "waiting_for_gm": "En attente du MJ",
   "rounds_chip": [
@@ -72,7 +72,6 @@
   "page_link": "Lien de cette page",
   "copy": "Copier",
   "copied": "Copié",
-  "in_progress": "La partie est en cours",
   "dissolved_title": "Le salon a été fermé",
   "back_to_top": "Retour à l’accueil",
   "claiming_title": "Reprise du rôle de MJ",

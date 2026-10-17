@@ -45,7 +45,7 @@
   "transfer_title": "¿A quién le pasas el GM?",
   "cancel": "Cancelar",
   "dissolve_button": "Cerrar sala",
-  "dissolve_confirm": "¿Cerrar la sala para todos?",
+  "dissolve_confirm": "¿Cerrar la sala? Todos saldrán",
   "room_badge": "Sala {code}",
   "waiting_for_gm": "Esperando a que el GM empiece",
   "rounds_chip": [
@@ -72,7 +72,6 @@
   "page_link": "Enlace a esta página",
   "copy": "Copiar",
   "copied": "Copiado",
-  "in_progress": "La partida está en curso",
   "dissolved_title": "La sala se ha cerrado",
   "back_to_top": "Volver al inicio",
   "claiming_title": "Asumiendo el papel de GM",

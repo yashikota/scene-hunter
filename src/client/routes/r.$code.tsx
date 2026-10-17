@@ -39,7 +39,8 @@ function RoomEntry({ code }: { code: string }) {
           await joinAndSave(code, name, { onWaiting });
           setEntered(true);
         }}
-        onBack={() => void navigate({ to: '/' })}
+        // 番号は残したトップに戻る（確かめ済みなので、トップはそのまま留まる）
+        onBack={() => void navigate({ to: '/', search: { code }, replace: true })}
       />
     );
   }

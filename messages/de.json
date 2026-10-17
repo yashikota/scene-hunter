@@ -45,7 +45,7 @@
   "transfer_title": "Wer soll der nächste GM sein?",
   "cancel": "Abbrechen",
   "dissolve_button": "Raum auflösen",
-  "dissolve_confirm": "Raum für alle auflösen?",
+  "dissolve_confirm": "Raum auflösen? Alle verlassen ihn",
   "room_badge": "Raum {code}",
   "waiting_for_gm": "Warte auf den Start durch den GM",
   "rounds_chip": [
@@ -72,7 +72,6 @@
   "page_link": "Link zu dieser Seite",
   "copy": "Kopieren",
   "copied": "Kopiert",
-  "in_progress": "Das Spiel läuft",
   "dissolved_title": "Der Raum wurde aufgelöst",
   "back_to_top": "Zur Startseite",
   "claiming_title": "Übernehme die GM-Rolle",

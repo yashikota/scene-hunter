@@ -18,18 +18,16 @@ export const PREPARING_FILL_SEC = 50;
 
 /**
  * 部屋につなぐまで、または GM の交代の途中の待ち。文は出さず、題と動きだけにする。
- * preparing は時間で伸びるバーを出す。onLeave を渡すと「部屋を出る」（label で別の文言）を出す。
+ * preparing は時間で伸びるバーを出す。onLeave を渡すと「部屋を出る」を出す。
  */
 export function Connecting({
   kind,
   preparing = false,
   onLeave,
-  leaveLabel,
 }: {
   kind?: WaitKind;
   preparing?: boolean;
   onLeave?: () => void;
-  leaveLabel?: string;
 }) {
   const k = kind ?? (preparing ? 'preparing' : 'connecting');
   const failed = k === 'claimFailed';
@@ -65,7 +63,7 @@ export function Connecting({
       </div>
       {onLeave && (
         <Button variant="quiet" onClick={onLeave}>
-          {leaveLabel ?? m.leave_button()}
+          {m.leave_button()}
         </Button>
       )}
     </Screen>
