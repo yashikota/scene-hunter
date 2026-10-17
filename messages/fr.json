@@ -1,0 +1,5 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "app_name": "Scene Hunter",
+  "unsupported_title": "Impossible de jouer avec ce navigateur"
+}

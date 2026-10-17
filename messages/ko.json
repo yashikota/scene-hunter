@@ -1,0 +1,5 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "app_name": "Scene Hunter",
+  "unsupported_title": "이 브라우저에서는 플레이할 수 없어요"
+}

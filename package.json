@@ -10,6 +10,7 @@
     "typecheck": "void prepare && tsc --noEmit"
   },
   "devDependencies": {
+    "@inlang/paraglide-js": "^2.29.0",
     "@moq/net": "0.4.3",
     "@playwright/test": "^1.64.1",
     "@tanstack/react-router": "^1.170.44",
