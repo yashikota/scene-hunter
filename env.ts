@@ -3,7 +3,7 @@ import { defineEnv, string } from 'void/env';
 // 秘密情報は `void secret put` で登録する（手順は docs/deploy.md）。
 // void deploy は必須の値がリモートに無ければアップロードを止める。
 // QWEN_API_KEY は Workers AI の無料枠を超えたときの切り替え先なので、無くても動く。
-// VITE_SERVER_PUBLIC_KEY は公開値で、ビルドするシェルの環境変数から渡す。
+// VITE_SERVER_PUBLIC_KEY は公開値なので既定値に置く。鍵を作り直したらここも書き換える（docs/deploy.md）。
 export default defineEnv({
   HMAC_SECRET: string(),
   SERVER_SIGNING_KEY: string(),
@@ -13,5 +13,5 @@ export default defineEnv({
   R2_SECRET_ACCESS_KEY: string(),
   R2_BUCKET: string(),
   QWEN_API_KEY: string().optional(),
-  VITE_SERVER_PUBLIC_KEY: string(),
+  VITE_SERVER_PUBLIC_KEY: string().default('60Zo_80nnrlNyFbUl6XrDFko36Vaqj0KTmh0yduAG34'),
 });

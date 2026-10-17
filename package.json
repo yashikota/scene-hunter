@@ -10,7 +10,9 @@
     "test": "vp test run",
     "e2e": "playwright test",
     "pretypecheck": "pnpm i18n:compile",
-    "typecheck": "void prepare && tsc --noEmit"
+    "typecheck": "void prepare && tsc --noEmit",
+    "lint": "vp lint",
+    "deploy:settings": "node scripts/apply-script-settings.mjs"
   },
   "devDependencies": {
     "@inlang/paraglide-js": "^2.29.0",

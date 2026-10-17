@@ -21,7 +21,7 @@ const b64u = (b) => Buffer.from(b).toString('base64url');
   console.log(b64u(await subtle.exportKey('pkcs8', k.privateKey)) + ' ' + b64u(await subtle.exportKey('raw', k.publicKey)));
 })();")
 printf %s "${OUT%% *}" | npx void secret put SERVER_SIGNING_KEY
-echo "VITE_SERVER_PUBLIC_KEY=${OUT##* }"   # 公開鍵。下の「現在の公開鍵」を書き換える
+echo "VITE_SERVER_PUBLIC_KEY=${OUT##* }"   # 公開鍵。env.ts の既定値と下の「現在の公開鍵」を書き換える
 unset OUT
 
 node -e "process.stdout.write(require('crypto').randomBytes(32).toString('base64url'))" \
@@ -73,15 +73,18 @@ CLOUDFLARE_ACCOUNT_ID=4723b654d7c87a32f3a5b3e260da5eec scripts/r2-setup.sh
 ## 5. デプロイ
 
 ```sh
-CLOUDFLARE_WORKERS_SUBDOMAIN=scene-hunter \
-VITE_SERVER_PUBLIC_KEY=60Zo_80nnrlNyFbUl6XrDFko36Vaqj0KTmh0yduAG34 \
-  npx void deploy --platform cloudflare
+CLOUDFLARE_WORKERS_SUBDOMAIN=scene-hunter npx void deploy --platform cloudflare
+pnpm deploy:settings   # void.config.ts の observability を Worker に反映する
 curl https://scene-hunter.scene-hunter.workers.dev/api/health   # {"ok":true}
 ```
 
+Void 1.1.11 は版に属さない設定（observability）を Cloudflare に送らない。`pnpm deploy:settings` は `void.config.ts` の値を script-settings に PATCH する（`CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` が要る）。
+
+`.env` に `CF_API_TOKEN` を置くと Void がそれをデプロイに使うので、置かない（MoQ のトークンは `MOQ_TOKEN` などの別名にする）。
+
 Void はブラウザでログインする（`void cloudflare login`）。ブラウザを使えないときは `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` をシェルに渡す。
 
-`VITE_*` の値は `.env` からは読まれないので、ビルドするシェルで渡す。`CLOUDFLARE_WORKERS_SUBDOMAIN` は、Void がデプロイ前の版をプレビュー URL で確かめるのに使う（成功すると Void が覚える）。
+公開鍵 `VITE_SERVER_PUBLIC_KEY` は `env.ts` の既定値に置いてあるので、シェルで渡さなくてよい。`CLOUDFLARE_WORKERS_SUBDOMAIN` は、Void がデプロイ前の版をプレビュー URL で確かめるのに使う（成功すると Void が覚える）。
 
 ### 初回だけ：workers.dev を有効にする
 
