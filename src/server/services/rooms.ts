@@ -81,25 +81,25 @@ async function issueMember(
 
 const ROOM_CODE = /^\d{6}$/;
 
-function checkCode(code: string): void {
+export function checkCode(code: string): void {
   if (!ROOM_CODE.test(code)) throw new NotFoundError('room not found');
 }
 
 /** トークンを検証し、部屋の記録を返す。GM の操作では、いまの GM 本人であることも確かめる。 */
-async function authorize(
-  d: RoomDeps,
+export async function authorize(
+  d: Pick<RoomDeps, 'store' | 'hmacSecret' | 'now'>,
   token: string,
-  role: Role,
+  role: Role | 'any',
   code: string,
 ): Promise<{ payload: RoomTokenPayload; rec: RoomRecord }> {
   checkCode(code);
   const payload = await verifyRoomToken(d.hmacSecret, token, Math.floor(d.now() / 1000));
   if (!payload) throw new AuthError('invalid token');
-  if (payload.role !== role) throw new AuthError(`${role} token required`);
+  if (role !== 'any' && payload.role !== role) throw new AuthError(`${role} token required`);
   if (payload.room !== code) throw new AuthError('token is for another room');
   const rec = await d.store.get(code);
   if (!rec) throw new NotFoundError('room not found');
-  if (role === 'gm' && payload.pid !== rec.gmPid) throw new AuthError('no longer the GM');
+  if (payload.role === 'gm' && payload.pid !== rec.gmPid) throw new AuthError('no longer the GM');
   return { payload, rec };
 }
 

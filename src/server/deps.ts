@@ -3,6 +3,8 @@ import { env } from 'void/env';
 import { importPrivateKey } from '../shared/crypto';
 import { createRelayApi } from './relay';
 import { createRoomStore, randomRoomCode } from './roomStore';
+import { createPresigner } from './presign';
+import type { PhotoDeps } from './services/photos';
 import type { RoomDeps } from './services/rooms';
 import { AuthError, NotFoundError } from './services/rooms';
 import type { Limiter } from './limits';
@@ -27,6 +29,26 @@ export async function roomDeps(c: Context): Promise<RoomDeps> {
     now: () => Date.now(),
     newId: () => crypto.randomUUID(),
     randomCode: () => randomRoomCode(),
+  };
+}
+
+export function photoDeps(c: Context): PhotoDeps {
+  const bindings = c.env as { KV: KVNamespace; STORAGE: R2Bucket };
+  return {
+    presigner: createPresigner({
+      accountId: secret('CF_ACCOUNT_ID', env.CF_ACCOUNT_ID),
+      bucket: secret('R2_BUCKET', env.R2_BUCKET),
+      accessKeyId: secret('R2_ACCESS_KEY_ID', env.R2_ACCESS_KEY_ID),
+      secretAccessKey: secret('R2_SECRET_ACCESS_KEY', env.R2_SECRET_ACCESS_KEY),
+    }),
+    storage: bindings.STORAGE,
+    store: createRoomStore(bindings.KV),
+    hmacSecret: secret('HMAC_SECRET', env.HMAC_SECRET),
+    now: () => Date.now(),
+    rand: () => {
+      const b = crypto.getRandomValues(new Uint8Array(12));
+      return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_');
+    },
   };
 }
 
