@@ -1,0 +1,15 @@
+# e2e テスト用の moq-relay の設定（scripts/e2e-relay.sh が読む）。
+# 127.0.0.1 では Chrome が localhost を ::1 に解決してつながらないので、[::] で listen する。
+[log]
+level = "info"
+
+[listen]
+bind = "[::]:4443"
+tls.generate = ["localhost"]
+
+# @moq/net は http: の URL なら /certificate.sha256 を取りに来て、その証明書を固定してつなぐ。
+[web.http]
+listen = "[::]:4443"
+
+[auth]
+public = "**"

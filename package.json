@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "vp dev",
     "build": "vite build",
     "i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/client/paraglide",
     "pretest": "pnpm i18n:compile",
