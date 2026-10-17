@@ -113,13 +113,17 @@ export const GmSnapshotSchema = v.object({
   locale: v.picklist(LOCALES),
   players: v.array(LobbyPlayerSchema),
   gmPid: pid,
+  gameId: v.nullable(v.string()),
   /** 出したヒントだけ。 */
   hints: v.array(v.string()),
   /** playerTurn のときだけ、ターン開始からの経過ミリ秒。 */
   turnElapsedMs: v.nullable(v.number()),
   submitted: v.array(pid),
   results: v.nullable(v.object({ gmPhotoUrl: v.string(), photos: v.array(ResultPhotoSchema) })),
-  ranking: v.nullable(v.object({ scores: v.array(RoundScoreSchema), totals: v.array(TotalSchema) })),
+  /** 直近の ranking。round でどのラウンドの結果か分かる。 */
+  ranking: v.nullable(
+    v.object({ round, scores: v.array(RoundScoreSchema), totals: v.array(TotalSchema) }),
+  ),
   final: v.nullable(v.array(TotalSchema)),
 });
 export type GmSnapshot = v.InferOutput<typeof GmSnapshotSchema>;

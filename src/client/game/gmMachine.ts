@@ -74,8 +74,8 @@ export type GmAction =
   | { type: 'hintsFailed' }
   | { type: 'retryHints' }
   | { type: 'tick'; now: number }
-  | { type: 'shutter'; pid: string; hash: string; at: number }
-  | { type: 'submit'; pid: string; key: string; at: number }
+  | { type: 'shutter'; round: number; pid: string; hash: string; at: number }
+  | { type: 'submit'; round: number; pid: string; key: string; at: number }
   | { type: 'photoChecked'; pid: string; valid: boolean }
   | { type: 'resultsReady'; gmPhotoUrl: string; photos: { pid: string; url: string }[] }
   | { type: 'togglePick'; pid: string }
@@ -122,6 +122,10 @@ export function initialGmState(input: {
   };
 }
 
+/** pid は外から来る文字列なので、`__proto__` などでプロトタイプを引かないよう自前のキーだけを見る。 */
+const own = <T>(rec: Record<string, T>, key: string): T | undefined =>
+  Object.hasOwn(rec, key) ? rec[key] : undefined;
+
 const lobbyPlayers = (s: GmState): LobbyPlayer[] =>
   Object.entries(s.players).map(([pid, p]) => ({ pid, name: p.name, label: p.label }));
 
@@ -155,7 +159,19 @@ const eligiblePids = (s: GmState): string[] =>
     .map(([pid]) => pid);
 
 const hasValidSubmission = (s: GmState, pid: string): boolean =>
-  s.submissions[pid] !== undefined && s.photoValid[pid] !== false;
+  own(s.submissions, pid) !== undefined && own(s.photoValid, pid) !== false;
+
+/** 写真 API が発行するキーの先頭（rooms/{room}/{gameId}/{round}/{pid}-）。 */
+const photoKeyPrefix = (s: GmState, pid: string): string =>
+  `rooms/${s.room}/${s.gameId}/${s.round}/${pid}-`;
+
+/** 今の提出と photoValid から results を作り直す。 */
+const resultsOf = (s: GmState, gmPhotoUrl: string, photos: { pid: string; url: string }[]) => ({
+  gmPhotoUrl,
+  photos: photos
+    .filter((ph) => own(s.submissions, ph.pid))
+    .map((ph) => ({ pid: ph.pid, url: ph.url, valid: own(s.photoValid, ph.pid) !== false })),
+});
 
 /** 合計の降順に並べ、同点は同じ順位にする。delta は前回の順位 − 今回の順位。 */
 function rankTotals(players: Record<string, GmPlayer>, prev: Total[] | undefined): Total[] {
@@ -189,7 +205,7 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
 
   switch (action.type) {
     case 'playerJoined': {
-      if (action.pid === s.gmPid || s.players[action.pid]) return none;
+      if (action.pid === s.gmPid || own(s.players, action.pid)) return none;
       const player: GmPlayer = {
         name: action.name,
         label: uniqueLabel(s.players, action.name),
@@ -228,7 +244,10 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       return { state: { ...s, phase: 'hinting' }, emit: [{ type: 'hinting' }] };
 
     case 'hintsReady': {
-      if (s.phase !== 'hinting' || action.hints.length !== HINT_COUNT) return none;
+      if (s.phase !== 'hinting') return none;
+      if (action.hints.length !== HINT_COUNT) {
+        return { state: { ...s, phase: 'hintError' }, emit: [{ type: 'hint_error' }] };
+      }
       const next: GmState = {
         ...s,
         phase: 'playerTurn',
@@ -249,29 +268,30 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       const pastLimit = action.now - s.turnStartedAt > limitMs;
       // T を過ぎても、shutter 済みで 30 秒以内の提出待ちがある人は待つ。
       const waiting = eligiblePids(s).some((pid) => {
-        const sh = s.shutters[pid];
-        return sh && !s.submissions[pid] && action.now - sh.at <= SUBMIT_WINDOW_MS;
+        const sh = own(s.shutters, pid);
+        return sh && !own(s.submissions, pid) && action.now - sh.at <= SUBMIT_WINDOW_MS;
       });
       if (!pastLimit || waiting) return hints;
       return { state: { ...hints.state, phase: 'picking' }, emit: hints.emit };
     }
 
     case 'shutter': {
-      if (s.phase !== 'playerTurn' || s.turnStartedAt === null) return none;
-      const p = s.players[action.pid];
-      if (!p || !isEligible(p, s.round) || s.shutters[action.pid]) return none;
+      if (s.phase !== 'playerTurn' || s.turnStartedAt === null || action.round !== s.round) return none;
+      const p = own(s.players, action.pid);
+      if (!p || !isEligible(p, s.round) || own(s.shutters, action.pid)) return none;
       if (action.at - s.turnStartedAt > limitMs) return none;
       const shutter = { at: action.at, hash: action.hash };
       return { state: { ...s, shutters: { ...s.shutters, [action.pid]: shutter } }, emit: [] };
     }
 
     case 'submit': {
-      if (s.phase !== 'playerTurn') return none;
-      const sh = s.shutters[action.pid];
-      if (!sh || s.submissions[action.pid]) return none;
+      if (s.phase !== 'playerTurn' || action.round !== s.round) return none;
+      const sh = own(s.shutters, action.pid);
+      if (!sh || own(s.submissions, action.pid)) return none;
       if (action.at - sh.at > SUBMIT_WINDOW_MS) return none;
+      if (!action.key.startsWith(photoKeyPrefix(s, action.pid))) return none;
       const submissions = { ...s.submissions, [action.pid]: { key: action.key, at: action.at } };
-      const allIn = eligiblePids(s).every((pid) => submissions[pid]);
+      const allIn = eligiblePids(s).every((pid) => own(submissions, pid));
       return {
         state: { ...s, submissions, phase: allIn ? 'picking' : s.phase },
         emit: [{ type: 'submitted', pids: Object.keys(submissions) }],
@@ -282,17 +302,16 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       if (s.phase !== 'picking') return none;
       const photoValid = { ...s.photoValid, [action.pid]: action.valid };
       const picks = action.valid ? s.picks : s.picks.filter((pid) => pid !== action.pid);
-      return { state: { ...s, photoValid, picks }, emit: [] };
+      const next: GmState = { ...s, photoValid, picks };
+      if (!s.results) return { state: next, emit: [] };
+      // results を送った後に判定が出たら、valid を直した results を送り直す。
+      const results = resultsOf(next, s.results.gmPhotoUrl, s.results.photos);
+      return { state: { ...next, results }, emit: [{ type: 'results', round: s.round, ...results }] };
     }
 
     case 'resultsReady': {
       if (s.phase !== 'picking') return none;
-      const results = {
-        gmPhotoUrl: action.gmPhotoUrl,
-        photos: action.photos
-          .filter((ph) => s.submissions[ph.pid])
-          .map((ph) => ({ ...ph, valid: s.photoValid[ph.pid] !== false })),
-      };
+      const results = resultsOf(s, action.gmPhotoUrl, action.photos);
       return { state: { ...s, results }, emit: [{ type: 'results', round: s.round, ...results }] };
     }
 
@@ -308,17 +327,19 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
     case 'confirmPicks': {
       if (s.phase !== 'picking' || s.turnStartedAt === null) return none;
       const participants = eligiblePids(s);
-      const tMs: Record<string, number> = {};
-      const prevStreak: Record<string, number> = {};
-      for (const pid of participants) {
-        prevStreak[pid] = s.players[pid]!.streak;
-        if (hasValidSubmission(s, pid)) tMs[pid] = s.shutters[pid]!.at - s.turnStartedAt;
-      }
+      const startedAt = s.turnStartedAt;
+      // `obj[pid] = …` だと pid が __proto__ のときにプロトタイプを書き換えるので、fromEntries で作る。
+      const prevStreak = Object.fromEntries(participants.map((pid) => [pid, own(s.players, pid)!.streak]));
+      const tMs = Object.fromEntries(
+        participants
+          .filter((pid) => hasValidSubmission(s, pid))
+          .map((pid) => [pid, own(s.shutters, pid)!.at - startedAt]),
+      );
       const scores = scoreRound({ picks: s.picks, tMs, limitMs, prevStreak, participants });
-      const players = { ...s.players };
+      let players = s.players;
       for (const sc of scores) {
-        const p = players[sc.pid]!;
-        players[sc.pid] = { ...p, total: p.total + sc.points + sc.bonus, streak: sc.streak };
+        const p = own(players, sc.pid)!;
+        players = { ...players, [sc.pid]: { ...p, total: p.total + sc.points + sc.bonus, streak: sc.streak } };
       }
       const totals = rankTotals(players, s.lastRanking?.totals);
       const lastRanking = { round: s.round, scores, totals };
@@ -343,10 +364,12 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
 
     case 'backToLobby': {
       if (s.phase === 'lobby') return none;
-      const players: Record<string, GmPlayer> = {};
-      for (const [pid, p] of Object.entries(s.players)) {
-        players[pid] = { ...p, total: 0, streak: 0, joinedAt: { round: 0, phase: 'lobby' } };
-      }
+      const players: Record<string, GmPlayer> = Object.fromEntries(
+        Object.entries(s.players).map(([pid, p]) => [
+          pid,
+          { ...p, total: 0, streak: 0, joinedAt: { round: 0, phase: 'lobby' as const } },
+        ]),
+      );
       const next: GmState = {
         ...s,
         ...freshRound,
@@ -379,11 +402,12 @@ export function snapshotOf(state: GmState, now: number): Omit<GmSnapshot, 'pid' 
     locale: s.locale,
     players: lobbyPlayers(s),
     gmPid: s.gmPid,
+    gameId: s.gameId,
     hints: s.hints.slice(0, s.hintsSent),
     turnElapsedMs: s.phase === 'playerTurn' && s.turnStartedAt !== null ? now - s.turnStartedAt : null,
     submitted: Object.keys(s.submissions),
     results: s.results,
-    ranking: s.lastRanking && { scores: s.lastRanking.scores, totals: s.lastRanking.totals },
+    ranking: s.lastRanking,
     final: s.phase === 'final' ? (s.lastRanking?.totals ?? rankTotals(s.players, undefined)) : null,
   };
 }

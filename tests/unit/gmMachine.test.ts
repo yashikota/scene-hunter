@@ -41,9 +41,12 @@ const inPlayerTurn = (pids = ['a', 'b']) =>
     { type: 'hintsReady', hints: HINTS, at: START },
   ).state;
 
-const shutterAndSubmit = (pid: string, dt: number): GmAction[] => [
-  { type: 'shutter', pid, hash: `hash-${pid}`, at: START + dt },
-  { type: 'submit', pid, key: `${pid}.jpg`, at: START + dt + 1000 },
+/** 写真 API が発行する形のキー。 */
+const keyOf = (pid: string, round = 1) => `rooms/123456/game1/${round}/${pid}-0123abcd.jpg`;
+
+const shutterAndSubmit = (pid: string, dt: number, round = 1): GmAction[] => [
+  { type: 'shutter', round, pid, hash: `hash-${pid}`, at: START + dt },
+  { type: 'submit', round, pid, key: keyOf(pid, round), at: START + dt + 1000 },
 ];
 
 /** a, b, c が提出し終えて picking に入った状態。 */
@@ -105,34 +108,92 @@ describe('ターンの進行', () => {
     expect(r.emit).toEqual([{ type: 'hinting' }]);
   });
 
-  it('ヒントが 5 つでない hintsReady は無視する', () => {
+  it('ヒントが 5 つでない hintsReady は hintError に移り hint_error を emit する', () => {
     const r = run(init(), join('a'), { type: 'start', gameId: 'game1' }, { type: 'gmPhotoUploaded', key: 'k' });
     const r2 = gmReduce(r.state, { type: 'hintsReady', hints: ['x'], at: START });
-    expect(r2.state.phase).toBe('hinting');
-    expect(r2.emit).toEqual([]);
+    expect(r2.state.phase).toBe('hintError');
+    expect(r2.emit).toEqual([{ type: 'hint_error' }]);
   });
 });
 
 describe('shutter と submit', () => {
   it('turnStartedAt + 6000 の shutter は t = 6000、同じ pid の 2 回目は無視', () => {
-    let s = run(inPlayerTurn(), { type: 'shutter', pid: 'a', hash: 'x', at: START + 6000 }).state;
+    let s = run(inPlayerTurn(), { type: 'shutter', round: 1, pid: 'a', hash: 'x', at: START + 6000 }).state;
     expect(s.shutters.a).toEqual({ at: START + 6000, hash: 'x' });
-    s = run(s, { type: 'shutter', pid: 'a', hash: 'y', at: START + 7000 }).state;
+    s = run(s, { type: 'shutter', round: 1, pid: 'a', hash: 'y', at: START + 7000 }).state;
     expect(s.shutters.a).toEqual({ at: START + 6000, hash: 'x' });
   });
 
   it('turnStartedAt + 60001 の shutter は無視、+60000 は受け付ける', () => {
     const s = run(
       inPlayerTurn(),
-      { type: 'shutter', pid: 'a', hash: 'x', at: START + 60001 },
-      { type: 'shutter', pid: 'b', hash: 'y', at: START + 60000 },
+      { type: 'shutter', round: 1, pid: 'a', hash: 'x', at: START + 60001 },
+      { type: 'shutter', round: 1, pid: 'b', hash: 'y', at: START + 60000 },
     ).state;
     expect(s.shutters.a).toBeUndefined();
     expect(s.shutters.b).toBeDefined();
   });
 
+  it('round が今のラウンドと違う shutter と submit は無視', () => {
+    let s = run(inPlayerTurn(), { type: 'shutter', round: 2, pid: 'a', hash: 'x', at: START + 1000 }).state;
+    expect(s.shutters.a).toBeUndefined();
+    s = run(s, { type: 'shutter', round: 1, pid: 'a', hash: 'x', at: START + 1000 }).state;
+    s = run(s, { type: 'submit', round: 2, pid: 'a', key: keyOf('a'), at: START + 2000 }).state;
+    expect(s.submissions.a).toBeUndefined();
+  });
+
+  it('submit の key が rooms/{room}/{gameId}/{round}/{pid}- で始まらなければ無視', () => {
+    let s = run(inPlayerTurn(), { type: 'shutter', round: 1, pid: 'a', hash: 'x', at: START + 1000 }).state;
+    for (const key of [
+      'a.jpg',
+      keyOf('b'),
+      keyOf('a', 2),
+      'rooms/999999/game1/1/a-0123abcd.jpg',
+      'rooms/123456/game2/1/a-0123abcd.jpg',
+      'rooms/123456/game1/1/ab-0123abcd.jpg',
+    ]) {
+      s = run(s, { type: 'submit', round: 1, pid: 'a', key, at: START + 2000 }).state;
+      expect(s.submissions.a).toBeUndefined();
+    }
+    s = run(s, { type: 'submit', round: 1, pid: 'a', key: keyOf('a'), at: START + 2000 }).state;
+    expect(s.submissions.a).toBeDefined();
+  });
+
+  it('__proto__ などの pid でも Object のプロトタイプを players と取り違えない', () => {
+    const s = inPlayerTurn();
+    for (const pid of ['__proto__', 'constructor', 'toString']) {
+      const r = gmReduce(s, { type: 'shutter', round: 1, pid, hash: 'x', at: START + 1000 });
+      expect(r.state).toBe(s);
+    }
+    const j = run(init(), join('constructor', 'c'), join('toString', 't'));
+    expect(Object.keys(j.state.players)).toEqual(['constructor', 'toString']);
+    expect(j.state.players['toString']?.label).toBe('t');
+  });
+
+  it('pid が __proto__ のプレイヤーも 1 ラウンド通して普通に扱える', () => {
+    const r = run(
+      inPlayerTurn(['__proto__', 'b']),
+      ...shutterAndSubmit('__proto__', 6000),
+      ...shutterAndSubmit('b', 8000),
+      { type: 'togglePick', pid: '__proto__' },
+      { type: 'confirmPicks' },
+      { type: 'nextRound' },
+      { type: 'gmPhotoUploaded', key: 'k' },
+      { type: 'hintsReady', hints: HINTS, at: START },
+      { type: 'tick', now: START + T + 1 },
+      { type: 'confirmPicks' },
+      { type: 'nextRound' },
+    );
+    expect(Object.hasOwn(r.state.players, '__proto__')).toBe(true);
+    expect(Object.getPrototypeOf(r.state.players)).toBe(Object.prototype);
+    expect(r.state.lastRanking?.totals[0]).toMatchObject({ pid: '__proto__', total: 950 });
+    const lobby = run(r.state, { type: 'backToLobby' }).state;
+    expect(Object.getPrototypeOf(lobby.players)).toBe(Object.prototype);
+    expect(Object.keys(lobby.players)).toEqual(['__proto__', 'b']);
+  });
+
   it('shutter の無い submit は無視', () => {
-    const r = run(inPlayerTurn(), { type: 'submit', pid: 'a', key: 'a.jpg', at: START + 1000 });
+    const r = run(inPlayerTurn(), { type: 'submit', round: 1, pid: 'a', key: keyOf('a'), at: START + 1000 });
     expect(r.state.submissions.a).toBeUndefined();
     expect(r.emit).toEqual([]);
   });
@@ -140,13 +201,13 @@ describe('shutter と submit', () => {
   it('shutter から 30001 ms 後の submit は無視、30000 ms は受け付ける', () => {
     const r = run(
       inPlayerTurn(['a', 'b', 'c']),
-      { type: 'shutter', pid: 'a', hash: 'x', at: START + 1000 },
-      { type: 'shutter', pid: 'b', hash: 'y', at: START + 1000 },
-      { type: 'submit', pid: 'a', key: 'a.jpg', at: START + 31001 },
-      { type: 'submit', pid: 'b', key: 'b.jpg', at: START + 31000 },
+      { type: 'shutter', round: 1, pid: 'a', hash: 'x', at: START + 1000 },
+      { type: 'shutter', round: 1, pid: 'b', hash: 'y', at: START + 1000 },
+      { type: 'submit', round: 1, pid: 'a', key: keyOf('a'), at: START + 31001 },
+      { type: 'submit', round: 1, pid: 'b', key: keyOf('b'), at: START + 31000 },
     );
     expect(r.state.submissions.a).toBeUndefined();
-    expect(r.state.submissions.b).toEqual({ key: 'b.jpg', at: START + 31000 });
+    expect(r.state.submissions.b).toEqual({ key: keyOf('b'), at: START + 31000 });
     expect(r.emit).toEqual([{ type: 'submitted', pids: ['b'] }]);
   });
 
@@ -167,17 +228,17 @@ describe('shutter と submit', () => {
   });
 
   it('T を過ぎても shutter から 30 秒以内の提出待ちがあれば待つ', () => {
-    let s = run(inPlayerTurn(), { type: 'shutter', pid: 'a', hash: 'x', at: START + 55000 }).state;
+    let s = run(inPlayerTurn(), { type: 'shutter', round: 1, pid: 'a', hash: 'x', at: START + 55000 }).state;
     s = run(s, { type: 'tick', now: START + T + 1 }).state;
     expect(s.phase).toBe('playerTurn');
-    s = run(s, { type: 'submit', pid: 'a', key: 'a.jpg', at: START + 70000 }).state;
+    s = run(s, { type: 'submit', round: 1, pid: 'a', key: keyOf('a'), at: START + 70000 }).state;
     expect(s.submissions.a).toBeDefined();
     s = run(s, { type: 'tick', now: START + 70001 }).state;
     expect(s.phase).toBe('picking');
   });
 
   it('提出待ちが 30 秒を過ぎたら picking へ', () => {
-    let s = run(inPlayerTurn(), { type: 'shutter', pid: 'a', hash: 'x', at: START + 55000 }).state;
+    let s = run(inPlayerTurn(), { type: 'shutter', round: 1, pid: 'a', hash: 'x', at: START + 55000 }).state;
     s = run(s, { type: 'tick', now: START + 85000 }).state;
     expect(s.phase).toBe('playerTurn');
     s = run(s, { type: 'tick', now: START + 85001 }).state;
@@ -189,7 +250,7 @@ describe('途中参加と名前', () => {
   it('playerTurn 中に入った人はそのラウンドに提出できず、全員提出の判定にも入らない', () => {
     let r = run(inPlayerTurn(['a']), join('late', 'late'));
     expect(r.state.players.late).toBeDefined();
-    r = run(r.state, { type: 'shutter', pid: 'late', hash: 'x', at: START + 1000 });
+    r = run(r.state, { type: 'shutter', round: 1, pid: 'late', hash: 'x', at: START + 1000 });
     expect(r.state.shutters.late).toBeUndefined();
     r = run(r.state, ...shutterAndSubmit('a', 2000));
     expect(r.state.phase).toBe('picking');
@@ -203,7 +264,7 @@ describe('途中参加と名前', () => {
       { type: 'nextRound' },
       { type: 'gmPhotoUploaded', key: 'k' },
       { type: 'hintsReady', hints: HINTS, at: START },
-      ...shutterAndSubmit('late', 3000),
+      ...shutterAndSubmit('late', 3000, 2),
     );
     expect(r.state.submissions.late).toBeDefined();
     expect(r.state.phase).toBe('playerTurn'); // a はまだ出していない
@@ -217,7 +278,7 @@ describe('途中参加と名前', () => {
       join('b'),
       { type: 'gmPhotoUploaded', key: 'k' },
       { type: 'hintsReady', hints: HINTS, at: START },
-      { type: 'shutter', pid: 'b', hash: 'x', at: START + 1000 },
+      { type: 'shutter', round: 1, pid: 'b', hash: 'x', at: START + 1000 },
     ).state;
     expect(s.shutters.b).toBeDefined();
   });
@@ -300,6 +361,26 @@ describe('選択と得点', () => {
     ]);
   });
 
+  it('resultsReady の後の photoChecked は valid を更新した results を再 emit する', () => {
+    const photos = [
+      { pid: 'a', url: 'https://r2/a' },
+      { pid: 'b', url: 'https://r2/b' },
+    ];
+    let r = run(inPicking(), { type: 'photoChecked', pid: 'c', valid: true });
+    expect(r.emit).toEqual([]);
+    r = run(r.state, { type: 'resultsReady', gmPhotoUrl: 'g', photos }, { type: 'photoChecked', pid: 'a', valid: false });
+    expect(r.emit.at(-1)).toEqual({
+      type: 'results',
+      round: 1,
+      gmPhotoUrl: 'g',
+      photos: [
+        { pid: 'a', url: 'https://r2/a', valid: false },
+        { pid: 'b', url: 'https://r2/b', valid: true },
+      ],
+    });
+    expect(r.state.results?.photos[0]?.valid).toBe(false);
+  });
+
   it('confirmPicks で scoreRound の結果が ranking に入り、total と streak が更新される', () => {
     const r = run(
       inPicking(),
@@ -341,9 +422,9 @@ describe('選択と得点', () => {
       { type: 'nextRound' },
       { type: 'gmPhotoUploaded', key: 'k' },
       { type: 'hintsReady', hints: HINTS, at: START },
-      ...shutterAndSubmit('a', 0),
-      ...shutterAndSubmit('b', 60000),
-      ...shutterAndSubmit('c', 60000),
+      ...shutterAndSubmit('a', 0, 2),
+      ...shutterAndSubmit('b', 60000, 2),
+      ...shutterAndSubmit('c', 60000, 2),
       { type: 'togglePick', pid: 'a' },
       { type: 'togglePick', pid: 'b' },
       { type: 'confirmPicks' },
@@ -412,7 +493,7 @@ describe('選択と得点', () => {
     expect(r.state.dissolved).toBe(true);
     for (const a of [
       { type: 'tick', now: START + 20000 },
-      { type: 'shutter', pid: 'a', hash: 'x', at: START + 1000 },
+      { type: 'shutter', round: 1, pid: 'a', hash: 'x', at: START + 1000 },
       { type: 'backToLobby' },
       { type: 'dissolve' },
     ] as GmAction[]) {
@@ -452,12 +533,21 @@ describe('snapshotOf とスキーマ', () => {
       gmPid: 'gm',
       hints: ['h0', 'h1'],
       turnElapsedMs: 15000,
+      gameId: 'game1',
       submitted: [],
       results: null,
       ranking: null,
       final: null,
     });
     expect(v.is(GmSnapshotSchema, { ...snap, pid: 'gm', seq: 3 })).toBe(true);
+  });
+
+  it('reveal のスナップショットの ranking はラウンド番号を持つ', () => {
+    const s = run(inPicking(), { type: 'togglePick', pid: 'a' }, { type: 'confirmPicks' }).state;
+    const snap = snapshotOf(s, START);
+    expect(snap.ranking?.round).toBe(1);
+    expect(snap.ranking?.scores.find((x) => x.pid === 'a')?.rank).toBe(1);
+    expect(v.is(GmSnapshotSchema, { ...snap, pid: 'gm', seq: 9 })).toBe(true);
   });
 
   it('emit はすべて GmEventSchema を満たす', () => {
@@ -498,6 +588,16 @@ describe('gmPersist', () => {
     saveGm('123456', s);
     expect(store.has('sh:gm:123456')).toBe(true);
     expect(loadGm('123456')).toEqual(s);
+  });
+
+  it('localStorage が例外を投げても saveGm は投げない', () => {
+    vi.stubGlobal('localStorage', {
+      getItem: () => null,
+      setItem: () => {
+        throw new DOMException('quota', 'QuotaExceededError');
+      },
+    });
+    expect(() => saveGm('123456', init())).not.toThrow();
   });
 
   it('無い部屋と壊れた JSON は null', () => {
