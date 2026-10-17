@@ -1,0 +1,17 @@
+[
+  {
+    "allowed": {
+      "origins": [
+        "https://scene-hunter.test"
+      ],
+      "methods": [
+        "PUT",
+        "GET"
+      ],
+      "headers": [
+        "content-type"
+      ]
+    },
+    "maxAgeSeconds": 600
+  }
+]
