@@ -3,7 +3,10 @@
  *
  * 出典と確度（2026-10-17 に確認）:
  * - Workers AI: https://developers.cloudflare.com/workers-ai/models/qwen3.8-27b/
- *   モデル ID `@cf/qwen/qwen3.8-27b`、reasoning_effort は low / medium / xhigh。
+ *   モデル ID `@cf/qwen/qwen3.8-27b`。思考は chat_template_kwargs.enable_thinking=false で止める
+ *   （2026-10-17 に 720p の JPEG で計測：reasoning_effort: 'low' でも推論トークンが約 330 出たが、
+ *   止めると出力は 50〜90 トークンで、JSON は choices[0].message.content に入る。待ち時間の大半は
+ *   Workers AI の待ち行列で、1 回 6.7〜78 秒とばらつく）。
  *   JSON モードは https://developers.cloudflare.com/workers-ai/features/json-mode/ の形
  *   （response_format.json_schema に素のスキーマ、応答は { response: {...} }）。
  *   画像部分の形と、無料枠超過のエラーの形はドキュメントに無く未確認。
@@ -11,8 +14,12 @@
  * - Qwen 公式 API: モデル ID `qwen3.8-27b`（https://help.aliyun.com/en/model-studio/qwen3-8-27b ）。
  *   OpenAI 互換（https://www.alibabacloud.com/help/en/model-studio/qwen-api-via-openai-chat-completions ）で、
  *   画像は image_url の data URL、構造化出力は response_format.json_schema{name,strict,schema}、
- *   reasoning_effort は low / medium / xhigh。シンガポールの base URL は
+ *   シンガポールの base URL は
  *   https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1（旧 dashscope-intl も可）。
+ * - TODO(未確認): 公式 API で思考を止める enable_thinking: false（DashScope の OpenAI 互換の文書にある
+ *   トップレベルの値）が qwen3.8-27b にも効くか。
+ * - AI への呼び出しは同時に 1 本だけ。やり直しは前の呼び出しが終わってから。ai.run は途中で取り消せないので、
+ *   1 回ごとの時間切れも設けない（打ち切って次を出すと、課金される呼び出しが並行して走るため）。
  * - TODO(未確認): ai.provider('qwen') が AI Gateway 経由でこの base URL に届くか。
  *   届かない場合は QWEN_BASE_URL を直接 fetch する形に変える（呼び出し側は変わらない）。
  */
@@ -131,12 +138,12 @@ export async function generateHints(
               type: 'json_schema',
               json_schema: { name: 'hints', strict: true, schema: HINT_SCHEMA },
             },
-            reasoning_effort: 'low',
+            enable_thinking: false,
           })
         : await d.ai.run(HINT_MODEL, {
             messages: msgs,
             response_format: { type: 'json_schema', json_schema: HINT_SCHEMA },
-            reasoning_effort: 'low',
+            chat_template_kwargs: { enable_thinking: false },
           });
       return extractHints(result);
     } catch (e) {

@@ -68,6 +68,30 @@ describe('generateHints', () => {
   });
 });
 
+describe('AI への呼び出しは同時に 1 本', () => {
+  it('前の呼び出しが終わるまで次を出さない', async () => {
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const results: unknown[] = [{ response: {} }, new Error('x'), ok];
+    const d = {
+      ai: {
+        run: async () => {
+          inFlight++;
+          maxInFlight = Math.max(maxInFlight, inFlight);
+          await new Promise((r) => setTimeout(r, 5));
+          inFlight--;
+          const r = results.shift();
+          if (r instanceof Error) throw r;
+          return r;
+        },
+      },
+      qwen: async () => ok,
+    };
+    expect(await generateHints(d, img, 'ja')).toEqual(five);
+    expect(maxInFlight).toBe(1);
+  });
+});
+
 describe('isQuotaError', () => {
   it('detects 429 and known messages', () => {
     expect(isQuotaError({ status: 429 })).toBe(true);
@@ -94,7 +118,9 @@ describe('request bodies', () => {
     const d = { ai: { run: async (m: string, i: unknown) => ((got = { m, i }), ok) }, qwen: async () => ok };
     await generateHints(d, img, 'ko');
     expect(got.m).toBe(HINT_MODEL);
-    expect(got.i.reasoning_effort).toBe('low');
+    // 思考を止める（推論トークンを出さない）。reasoning_effort は送らない
+    expect(got.i.chat_template_kwargs).toEqual({ enable_thinking: false });
+    expect(got.i).not.toHaveProperty('reasoning_effort');
     expect(got.i.response_format).toEqual({ type: 'json_schema', json_schema: HINT_SCHEMA });
     expect(got.i.messages[0].content).toEqual([
       { type: 'text', text: buildHintPrompt('ko') },
@@ -110,7 +136,8 @@ describe('request bodies', () => {
     };
     await generateHints(d, img, 'ko');
     expect(got.model).toBe(QWEN_MODEL);
-    expect(got.reasoning_effort).toBe('low');
+    expect(got.enable_thinking).toBe(false);
+    expect(got).not.toHaveProperty('reasoning_effort');
     expect(got.response_format).toEqual({
       type: 'json_schema',
       json_schema: { name: 'hints', strict: true, schema: HINT_SCHEMA },
