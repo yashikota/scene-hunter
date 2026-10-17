@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test';
 // 番号の打ち間違い：無い部屋の番号は、名前を聞く前に 10 秒以内で「見つかりません」と知らせる。
 
 test('無い部屋の番号を入れると、10 秒以内に「部屋が見つかりません」と出る', async ({ page }) => {
+  // dev サーバーが部屋の API をまだ一度も組み立てていないと最初の応答が遅いので、時間を測る前に一度呼んでおく
+  await page.request.get('/api/rooms/000000');
   await page.goto('/');
   // 6 桁でない番号は、サーバーに聞かずにその場で知らせる
   await page.getByPlaceholder('部屋の番号').fill('123');

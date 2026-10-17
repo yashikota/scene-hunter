@@ -55,7 +55,8 @@ jobs:
       - name: E2E tests
         run: pnpm e2e
       - name: Upload Playwright report
-        if: failure()
+        # retries: 1 で 2 回目に通った（不安定な）テストの記録も残す
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report

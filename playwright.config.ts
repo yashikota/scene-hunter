@@ -66,7 +66,8 @@ export default defineConfig({
       url: `${RELAY_URL}certificate.sha256`,
       // 初回は moq-relay を落とすので長めに待つ
       timeout: 120_000,
-      reuseExistingServer: !ci,
+      // 4443 番で別の何か（設定や版の違う relay）が動いていたら、使い回さずに起動の失敗で知らせる
+      reuseExistingServer: false,
       stdout: 'ignore',
       stderr: 'pipe',
     },

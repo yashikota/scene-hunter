@@ -115,7 +115,8 @@ test('第三者が自分の鍵で署名した GM のイベントには、プレ�
     // 1. 本物の GM の pid と参加証を付け、第三者の鍵で署名したもの（署名が参加証の公開鍵に合わない）
     await forge(forger.page, { body: dissolved(100_000), cert: real.cert });
     await forger.page.waitForTimeout(SETTLE_MS);
-    // 2. 自分で署名した GM の参加証を付けたもの（参加証がサーバーの鍵で署名されていない）
+    // 2. 自分で署名した GM の参加証を付け、別の pid を名乗るもの（参加証がサーバーの鍵で署名されておらず、
+    //    pid も従っている GM と違う。どちらで捨てられたかまでは区別しない）
     await forge(forger.page, { body: dissolved(100_001, 'forger-pid'), fakeGmCert: code });
     await forger.page.waitForTimeout(SETTLE_MS);
 
