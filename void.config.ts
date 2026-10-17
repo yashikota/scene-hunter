@@ -7,13 +7,24 @@ const rateLimit = (name: string, namespaceId: string, limit: number) => ({
   simple: { limit, period: 60 },
 });
 
+// e2e テストのモード（SH_E2E=1）は手元の dev サーバーだけで使う。設定を読むのは vite（dev / build）と void の CLI
+// （deploy など）で、どちらも argv[2] がコマンド名になる。SH_E2E が残ったシェルでビルドやデプロイをすると
+// AI の binding の無い Worker ができてしまうので、そのときは止める。
+const command = process.argv[2];
+if (process.env.SH_E2E && (command === 'build' || command === 'deploy')) {
+  throw new Error(
+    `SH_E2E is set (${JSON.stringify(process.env.SH_E2E)}); refusing to run "${command}". Unset SH_E2E before building or deploying.`,
+  );
+}
+const e2eDev = process.env.SH_E2E === '1' && command === 'dev';
+
 export default defineConfig({
   target: 'cloudflare',
   // void/kv と void/storage の import ではなく素の binding を使うので、明示する。
   // e2e テスト（SH_E2E=1 の dev）では AI を呼ばない（src/server/e2e.ts）。Workers AI の binding は dev でも
-  // Cloudflare につなぐので、認証の無い CI では dev が起動できない。そのため e2e のときだけ binding を外す。
+  // Cloudflare につなぐので、認証の無い CI では dev が起動できない。そのため e2e の dev のときだけ binding を外す。
   inference: {
-    bindings: { kv: true, storage: true, ...(process.env.SH_E2E ? { ai: false } : {}) },
+    bindings: { kv: true, storage: true, ...(e2eDev ? { ai: false } : {}) },
   },
   cloudflare: {
     name: 'scene-hunter',

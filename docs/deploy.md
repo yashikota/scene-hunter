@@ -72,6 +72,8 @@ CLOUDFLARE_ACCOUNT_ID=4723b654d7c87a32f3a5b3e260da5eec scripts/r2-setup.sh
 
 ## 5. デプロイ
 
+`SH_E2E`（e2e テストのモード）を export したシェルではデプロイしない。`void.config.ts` は `SH_E2E` があると build と deploy を止める（そのまま進むと Workers AI の binding の無い Worker ができる）。
+
 ```sh
 CLOUDFLARE_WORKERS_SUBDOMAIN=scene-hunter npx void deploy --platform cloudflare
 pnpm deploy:settings   # void.config.ts の observability を Worker に反映する
