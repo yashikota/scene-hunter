@@ -2,8 +2,8 @@ import { describe, expect, test } from 'vite-plus/test';
 import type { GmEvent, GmSnapshot } from '../../src/shared/protocol';
 import { applyEvent, applySnapshot, hasGap, initialView } from '../../src/client/game/playerView';
 
-type Body = GmEvent extends infer E ? (E extends unknown ? Omit<E, 'pid' | 'seq'> : never) : never;
-const ev = (seq: number, b: Body): GmEvent => ({ pid: 'gm', seq, ...b }) as GmEvent;
+type Body = GmEvent extends infer E ? (E extends unknown ? Omit<E, 'pid' | 'seq' | 'epoch'> : never) : never;
+const ev = (seq: number, b: Body): GmEvent => ({ pid: 'gm', seq, epoch: 1, ...b }) as GmEvent;
 
 const lobby = (seq = 0, locale: 'ja' | 'en' = 'ja') =>
   ev(seq, {
@@ -84,6 +84,7 @@ describe('playerView', () => {
     const s: GmSnapshot = {
       pid: 'gm',
       seq: 9,
+      epoch: 1,
       type: 'snapshot',
       phase: 'playerTurn',
       round: 2,

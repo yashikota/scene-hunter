@@ -54,7 +54,9 @@ const TransferCertSchema = v.object({
   sig: v.string(),
 });
 
-const gm = { pid, seq: nonNegInt };
+// epoch は送ったパス gm/{epoch} の epoch。別の epoch に流し直したフレームを受け手が捨てるために入れる。
+const epoch = v.pipe(v.number(), v.integer(), v.minValue(1));
+const gm = { pid, seq: nonNegInt, epoch };
 
 export const GmEventSchema = v.variant('type', [
   v.object({
@@ -98,9 +100,9 @@ export const GmEventSchema = v.variant('type', [
 ]);
 export type GmEvent = v.InferOutput<typeof GmEventSchema>;
 
-/** union の各要素から pid と seq を外す（送信側が付ける前の本体）。 */
+/** union の各要素から pid、seq、epoch を外す（送信側が付ける前の本体）。 */
 export type GmEventBody = WithoutHeader<GmEvent>;
-type WithoutHeader<E> = E extends unknown ? Omit<E, 'pid' | 'seq'> : never;
+type WithoutHeader<E> = E extends unknown ? Omit<E, 'pid' | 'seq' | 'epoch'> : never;
 
 /** `state` Track に流す丸ごとの状態。途中参加と再同期に使う。 */
 export const GmSnapshotSchema = v.object({
@@ -128,10 +130,13 @@ export const GmSnapshotSchema = v.object({
 });
 export type GmSnapshot = v.InferOutput<typeof GmSnapshotSchema>;
 
+// seq は送信者ごとに単調に増やす。受け手（GmInbox）は seq が増えていないフレームを重複として捨てる。
+const player = { pid, seq: nonNegInt };
+
 export const PlayerEventSchema = v.variant('type', [
-  v.object({ pid, type: v.literal('join'), name: v.string() }),
-  v.object({ pid, type: v.literal('shutter'), round, hash: v.string() }),
-  v.object({ pid, type: v.literal('submit'), round, key: v.string() }),
-  v.object({ pid, type: v.literal('resync') }),
+  v.object({ ...player, type: v.literal('join'), name: v.string() }),
+  v.object({ ...player, type: v.literal('shutter'), round, hash: v.string() }),
+  v.object({ ...player, type: v.literal('submit'), round, key: v.string() }),
+  v.object({ ...player, type: v.literal('resync') }),
 ]);
 export type PlayerEvent = v.InferOutput<typeof PlayerEventSchema>;

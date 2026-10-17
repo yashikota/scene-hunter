@@ -539,7 +539,7 @@ describe('snapshotOf とスキーマ', () => {
       ranking: null,
       final: null,
     });
-    expect(v.is(GmSnapshotSchema, { ...snap, pid: 'gm', seq: 3 })).toBe(true);
+    expect(v.is(GmSnapshotSchema, { ...snap, pid: 'gm', seq: 3, epoch: 1 })).toBe(true);
   });
 
   it('reveal のスナップショットの ranking はラウンド番号を持つ', () => {
@@ -547,7 +547,7 @@ describe('snapshotOf とスキーマ', () => {
     const snap = snapshotOf(s, START);
     expect(snap.ranking?.round).toBe(1);
     expect(snap.ranking?.scores.find((x) => x.pid === 'a')?.rank).toBe(1);
-    expect(v.is(GmSnapshotSchema, { ...snap, pid: 'gm', seq: 9 })).toBe(true);
+    expect(v.is(GmSnapshotSchema, { ...snap, pid: 'gm', seq: 9, epoch: 1 })).toBe(true);
   });
 
   it('emit はすべて GmEventSchema を満たす', () => {
@@ -558,16 +558,17 @@ describe('snapshotOf とスキーマ', () => {
       { type: 'confirmPicks' },
       { type: 'nextRound' },
     );
-    for (const e of r.emit) expect(v.is(GmEventSchema, { ...e, pid: 'gm', seq: 1 })).toBe(true);
-    expect(v.is(GmEventSchema, { type: 'hint', pid: 'gm', seq: 1, round: 1, index: 5, text: 'x' })).toBe(false);
+    for (const e of r.emit) expect(v.is(GmEventSchema, { ...e, pid: 'gm', seq: 1, epoch: 1 })).toBe(true);
+    expect(v.is(GmEventSchema, { type: 'hint', pid: 'gm', seq: 1, epoch: 1, round: 1, index: 5, text: 'x' })).toBe(false);
   });
 
   it('PlayerEventSchema', () => {
-    expect(v.is(PlayerEventSchema, { pid: 'a', type: 'join', name: 'あ' })).toBe(true);
-    expect(v.is(PlayerEventSchema, { pid: 'a', type: 'shutter', round: 1, hash: 'h' })).toBe(true);
-    expect(v.is(PlayerEventSchema, { pid: 'a', type: 'submit', round: 1, key: 'k' })).toBe(true);
-    expect(v.is(PlayerEventSchema, { pid: 'a', type: 'resync' })).toBe(true);
-    expect(v.is(PlayerEventSchema, { pid: 'a', type: 'shutter', round: 1 })).toBe(false);
+    expect(v.is(PlayerEventSchema, { pid: 'a', seq: 0, type: 'join', name: 'あ' })).toBe(true);
+    expect(v.is(PlayerEventSchema, { pid: 'a', seq: 0, type: 'shutter', round: 1, hash: 'h' })).toBe(true);
+    expect(v.is(PlayerEventSchema, { pid: 'a', seq: 0, type: 'submit', round: 1, key: 'k' })).toBe(true);
+    expect(v.is(PlayerEventSchema, { pid: 'a', seq: 0, type: 'resync' })).toBe(true);
+    expect(v.is(PlayerEventSchema, { pid: 'a', seq: 0, type: 'shutter', round: 1 })).toBe(false);
+    expect(v.is(PlayerEventSchema, { pid: 'a', type: 'resync' })).toBe(false); // seq が無い
   });
 });
 

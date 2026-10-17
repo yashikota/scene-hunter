@@ -44,6 +44,8 @@ export class FakeConnection implements MoqConnection {
   readonly subscribes: { path: string; track: string; announced: boolean }[] = [];
   readonly publishes: { path: string; track: string }[] = [];
   readonly listeners = new Set<(path: string, active: boolean) => void>();
+  /** いま生きている購読（Track が見つかり、まだ外されていないもの）。 */
+  readonly live = new Set<{ path: string; track: string }>();
   closed = false;
 
   constructor(private readonly relay: FakeRelay) {}
@@ -75,16 +77,26 @@ export class FakeConnection implements MoqConnection {
     this.subscribes.push({ path, track, announced: opts.announced });
     let t: FakeTrack | undefined;
     let live = true;
+    const entry = { path, track };
+    const wrapped: TrackSink = {
+      frame: (b) => sink.frame(b),
+      end: (e) => {
+        this.live.delete(entry);
+        sink.end(e);
+      },
+    };
     queueMicrotask(() => {
       if (!live) return;
       t = this.relay.tracks.get(`${path}#${track}`);
       if (!t) return sink.end(new Error('Track not found'));
+      this.live.add(entry);
       for (const f of t.groups.at(-1) ?? []) sink.frame(f);
-      t.subs.add(sink);
+      t.subs.add(wrapped);
     });
     return () => {
       live = false;
-      t?.subs.delete(sink);
+      this.live.delete(entry);
+      t?.subs.delete(wrapped);
     };
   }
 
