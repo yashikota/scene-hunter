@@ -18,6 +18,8 @@ export interface RoomDeps {
   now: () => number;
   newId: () => string;
   randomCode: () => string;
+  /** Relay のトークンからクライアントがつなぐ URL を作る。省略時は Cloudflare の Relay（e2e では差し替える）。 */
+  moqUrl?: (token: string) => string;
 }
 
 export interface Joined {
@@ -155,7 +157,7 @@ export async function createRoom(
       pid,
       roomToken,
       cert,
-      moqUrl: moqUrl(relay.token),
+      moqUrl: (d.moqUrl ?? moqUrl)(relay.token),
       locale: input.locale,
       rounds,
       limitSec,
@@ -197,7 +199,7 @@ export async function joinRoom(
     pid,
     roomToken,
     cert,
-    moqUrl: moqUrl(rec.moqToken),
+    moqUrl: (d.moqUrl ?? moqUrl)(rec.moqToken),
     locale: rec.locale,
     rounds: rec.rounds,
     limitSec: rec.limitSec,

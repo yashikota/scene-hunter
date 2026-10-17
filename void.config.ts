@@ -10,7 +10,11 @@ const rateLimit = (name: string, namespaceId: string, limit: number) => ({
 export default defineConfig({
   target: 'cloudflare',
   // void/kv と void/storage の import ではなく素の binding を使うので、明示する。
-  inference: { bindings: { kv: true, storage: true } },
+  // e2e テスト（SH_E2E=1 の dev）では AI を呼ばない（src/server/e2e.ts）。Workers AI の binding は dev でも
+  // Cloudflare につなぐので、認証の無い CI では dev が起動できない。そのため e2e のときだけ binding を外す。
+  inference: {
+    bindings: { kv: true, storage: true, ...(process.env.SH_E2E ? { ai: false } : {}) },
+  },
   cloudflare: {
     name: 'scene-hunter',
     // 本番は workers.dev で公開する。preview_urls は Void がデプロイ前の版を確かめるのに使う。

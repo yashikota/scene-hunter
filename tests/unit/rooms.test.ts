@@ -122,6 +122,19 @@ describe('createRoom', () => {
     });
   });
 
+  it('moqUrl は既定で Cloudflare の Relay、差し替えがあればそれを使う（e2e）', async () => {
+    const { d } = setup();
+    const j = await createRoom(d, { ...input, pubkey });
+    expect(j.moqUrl).toBe('https://draft-16.cloudflare.mediaoverquic.com/TOKEN1');
+    const e2e = setup();
+    e2e.d.moqUrl = (t) => `http://localhost:4443/${t}`;
+    const k = await createRoom(e2e.d, { ...input, pubkey });
+    expect(k.moqUrl).toBe('http://localhost:4443/TOKEN1');
+    expect(
+      (await joinRoom(e2e.d, k.code, { ...input, pubkey })) as { moqUrl: string },
+    ).toMatchObject({ moqUrl: 'http://localhost:4443/TOKEN1' });
+  });
+
   it('名前の前後の空白を落とす', async () => {
     const { d } = setup();
     const j = await createRoom(d, { ...input, name: '  ab  ', pubkey });

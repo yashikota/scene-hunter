@@ -13,5 +13,8 @@ export default defineEnv({
   R2_SECRET_ACCESS_KEY: string(),
   R2_BUCKET: string(),
   QWEN_API_KEY: string().optional(),
+  // e2e テスト（pnpm e2e）の void dev だけで '1' にする。本番では設定しない（src/server/e2e.ts）。
+  SH_E2E: string().optional(),
+  SH_E2E_RELAY_URL: string().optional(),
   VITE_SERVER_PUBLIC_KEY: string().default('60Zo_80nnrlNyFbUl6XrDFko36Vaqj0KTmh0yduAG34'),
 });

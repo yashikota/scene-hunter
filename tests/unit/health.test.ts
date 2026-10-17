@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vite-plus/test';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { GET } from '../../routes/api/health';
+
+// 回数制限の binding を選ぶとき e2e のモードか（SH_E2E）を読む。worker の外なので void/env を差し替える。
+vi.mock('void/env', () => ({ env: {} }));
 
 describe('GET /api/health', () => {
   it('ok: true を返す', async () => {
