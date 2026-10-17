@@ -2,7 +2,21 @@ import { EVENTS_TRACK, playerPath } from './paths';
 import { keepSubscribed, MoqSession, type MoqConnector } from './session';
 
 // GM がプレイヤーの `p/{pid}` の events を受け取るための購読の束。
-// 1 セッションのリクエスト予算に収まるよう、perSession 人ごとに別の MoqSession を張る。
+// 1 セッションのリクエスト予算（40）に余裕を残すよう、perSession 人ごとに別の MoqSession を張る。
+// 張り直しで開いたグループが最初から届き直すので、PlayerEvent の seq が増えていないフレームは捨てる。
+
+const RESUBSCRIBE_MAX_MS = 10_000;
+const decoder = new TextDecoder();
+
+/** 封筒の body.seq（数でなければ undefined）。署名の検証は受け取った側が行う。 */
+function seqOf(bytes: Uint8Array): number | undefined {
+  try {
+    const seq: unknown = JSON.parse(decoder.decode(bytes))?.body?.seq;
+    return typeof seq === 'number' && Number.isFinite(seq) ? seq : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 interface Pool {
   session: MoqSession;
@@ -16,7 +30,7 @@ export class GmInbox {
   constructor(
     private readonly url: string,
     private readonly connector: MoqConnector,
-    private readonly perSession = 35,
+    private readonly perSession = 20,
   ) {}
 
   add(pid: string, onFrame: (bytes: Uint8Array) => void): void {
@@ -34,8 +48,21 @@ export class GmInbox {
       connect();
     }
     pool.pids.add(pid);
-    // プレイヤーは後から publish することもあるので、announce を待たずに購読し、終わったらやり直す
-    const stop = keepSubscribed(pool.session, playerPath(pid), EVENTS_TRACK, onFrame, { blind: true });
+    let lastSeq = -1;
+    const receive = (bytes: Uint8Array) => {
+      const seq = seqOf(bytes);
+      if (seq !== undefined) {
+        if (seq <= lastSeq) return;
+        lastSeq = seq;
+      }
+      onFrame(bytes);
+    };
+    // プレイヤーは後から publish することもあるので、announce を待たずに購読し、終わったらやり直す。
+    // まだ publish していない人への再購読で予算を使い切らないよう、間隔の上限は 10 秒にする。
+    const stop = keepSubscribed(pool.session, playerPath(pid), EVENTS_TRACK, receive, {
+      blind: true,
+      maxDelayMs: RESUBSCRIBE_MAX_MS,
+    });
     this.#stops.set(pid, { pool, stop });
   }
 

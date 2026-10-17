@@ -69,6 +69,7 @@ interface Pub {
 
 const RETRY_MIN_MS = 500;
 const RETRY_MAX_MS = 5000;
+const CONNECT_TIMEOUT_MS = 10_000;
 
 export class MoqSession {
   #conn?: MoqConnection;
@@ -93,7 +94,7 @@ export class MoqSession {
 
   start(): Promise<void> {
     if (this.#conn) return Promise.resolve();
-    this.#opening ??= this.connector.connect(this.url).then(
+    this.#opening ??= this.#connect().then(
       (conn) => this.#install(conn),
       (e: unknown) => {
         this.#opening = undefined;
@@ -104,6 +105,7 @@ export class MoqSession {
   }
 
   publish(path: string, track: string): FrameWriter {
+    if (this.#closed) return { write: () => {}, snapshot: () => {} };
     const pub: Pub = { path, track, pending: [] };
     this.#pubs.push(pub);
     if (this.#ready()) this.#attachPub(pub);
@@ -126,6 +128,7 @@ export class MoqSession {
     onFrame: (bytes: Uint8Array) => void,
     opts: SubscribeOptions = {},
   ): () => void {
+    if (this.#closed) return () => {};
     const sub: Sub = { path, track, onFrame, opts };
     this.#subs.add(sub);
     if (this.#ready()) this.#attachSub(sub);
@@ -171,7 +174,7 @@ export class MoqSession {
       let delay = RETRY_MIN_MS;
       while (!this.#closed) {
         try {
-          return this.#install(await this.connector.connect(this.url));
+          return this.#install(await this.#connect());
         } catch (e) {
           console.warn('MoQ の再接続に失敗した', e);
           await new Promise((r) => setTimeout(r, delay));
@@ -179,6 +182,28 @@ export class MoqSession {
         }
       }
     })();
+  }
+
+  /** connector.connect に 10 秒の期限を付ける。期限後に張れた接続は閉じる。 */
+  #connect(): Promise<MoqConnection> {
+    return new Promise((resolve, reject) => {
+      let late = false;
+      const timer = setTimeout(() => {
+        late = true;
+        reject(new Error('MoQ の接続がタイムアウトした'));
+      }, CONNECT_TIMEOUT_MS);
+      this.connector.connect(this.url).then(
+        (conn) => {
+          clearTimeout(timer);
+          if (late) conn.close();
+          else resolve(conn);
+        },
+        (e: unknown) => {
+          clearTimeout(timer);
+          reject(e);
+        },
+      );
+    });
   }
 
   #install(conn: MoqConnection): void {
@@ -190,6 +215,9 @@ export class MoqSession {
     for (const fn of this.#announceListeners.keys()) this.#announceListeners.set(fn, conn.announced(fn));
     for (const pub of this.#pubs) this.#attachPub(pub);
     for (const sub of this.#subs) this.#attachSub(sub);
+    if (this.#requests >= this.budget) {
+      console.warn(`MoQ: 張り直した直後のリクエストが ${this.#requests} 件で、予算 ${this.budget} を超えている`);
+    }
   }
 
   #detachAll(): void {
@@ -254,7 +282,7 @@ function writeSnapshot(pub: Pub, bytes: Uint8Array): void {
 }
 
 /**
- * 購読が終わったら 500ms → 2s のバックオフでやり直し続ける。
+ * 購読が終わったら 500ms から倍々（上限 maxDelayMs、既定 2s）のバックオフでやり直し続ける。
  * `Track not found`（announce 直後や、まだ publish されていないパス）と publisher の再接続を拾うため。
  */
 export function keepSubscribed(
@@ -262,8 +290,9 @@ export function keepSubscribed(
   path: string,
   track: string,
   onFrame: (bytes: Uint8Array) => void,
-  opts: { blind?: boolean } = {},
+  opts: { blind?: boolean; maxDelayMs?: number } = {},
 ): () => void {
+  const maxDelay = opts.maxDelayMs ?? 2000;
   let stopped = false;
   let delay = 500;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -283,7 +312,7 @@ export function keepSubscribed(
           off = undefined;
           if (stopped) return;
           timer = setTimeout(attempt, delay);
-          delay = Math.min(delay * 2, 2000);
+          delay = Math.min(delay * 2, maxDelay);
         },
       },
     );

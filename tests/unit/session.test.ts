@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vite-plus/test';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { GmInbox } from '../../src/client/moq/gmInbox';
 import { MoqSession } from '../../src/client/moq/session';
 import { FakeRelay, flush } from './fakeMoq';
@@ -107,17 +107,100 @@ describe('MoqSession', () => {
   });
 });
 
+describe('MoqSession の後始末と異常系', () => {
+  it('subscribe and publish after close do nothing', async () => {
+    const relay = new FakeRelay();
+    const s = new MoqSession('https://relay/x', relay.connector);
+    await s.start();
+    s.close();
+    const off = s.subscribe('a', 't', () => {});
+    const w = s.publish('p/me', 'events');
+    w.write(bytes('x'));
+    w.snapshot(bytes('y'));
+    off();
+    expect(relay.connections[0].subscribes).toEqual([]);
+    expect(relay.connections[0].publishes).toEqual([]);
+  });
+
+  it('gives up connecting after 10 seconds', async () => {
+    vi.useFakeTimers();
+    try {
+      const s = new MoqSession('https://relay/x', { connect: () => new Promise(() => {}) });
+      const started = s.start();
+      const assertion = expect(started).rejects.toThrow('タイムアウト');
+      await vi.advanceTimersByTimeAsync(10_000);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('warns when the live requests alone exceed the budget after reconnecting', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const relay = new FakeRelay();
+      relay.connect().publish('a', 't');
+      const s = new MoqSession('https://relay/x', relay.connector, 3);
+      await s.start();
+      s.subscribe('a', 't', () => {});
+      s.subscribe('a', 't', () => {}); // 3 件
+      s.subscribe('a', 't', () => {}); // 張り直し。生きた購読 3 本 + announce で 4 件
+      await flush();
+      await flush();
+      expect(warn).toHaveBeenCalledTimes(1);
+      s.close();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+});
+
 describe('GmInbox', () => {
-  it('opens a separate session for every 35 players', async () => {
+  it('opens a separate session for every 20 players', async () => {
     const relay = new FakeRelay();
     const inbox = new GmInbox('https://relay/x', relay.connector);
-    for (let i = 0; i < 36; i++) inbox.add(`p${i}`, () => {});
+    for (let i = 0; i < 21; i++) inbox.add(`p${i}`, () => {});
     await flush();
     await flush();
     expect(relay.connections).toHaveLength(2);
-    expect(relay.connections[0].subscribes).toHaveLength(35);
-    expect(relay.connections[1].subscribes.map((x) => x.path)).toEqual(['p/p35']);
+    expect(relay.connections[0].subscribes).toHaveLength(20);
+    expect(relay.connections[1].subscribes.map((x) => x.path)).toEqual(['p/p20']);
     inbox.close();
+  });
+
+  it('drops player frames whose seq did not increase', async () => {
+    const relay = new FakeRelay();
+    const alice = relay.connect().publish('p/alice', 'events').appendGroup();
+    const inbox = new GmInbox('https://relay/x', relay.connector);
+    const got: number[] = [];
+    inbox.add('alice', (b) => got.push(JSON.parse(text(b)).body.seq));
+    await flush();
+    await flush();
+    for (const seq of [1, 1, 2, 0, 3]) alice.writeFrame(bytes(JSON.stringify({ body: { pid: 'alice', seq }, sig: 'x' })));
+    expect(got).toEqual([1, 2, 3]);
+    inbox.close();
+  });
+
+  it('backs off resubscribing to a player who has not published yet up to 10 seconds', async () => {
+    vi.useFakeTimers();
+    try {
+      const relay = new FakeRelay();
+      const inbox = new GmInbox('https://relay/x', relay.connector);
+      inbox.add('ghost', () => {});
+      const count = () => relay.connections[0]?.subscribes.length ?? 0;
+      await vi.advanceTimersByTimeAsync(0);
+      expect(count()).toBe(1);
+      // 0.5 + 1 + 2 + 4 + 8 + 10 + 10 秒
+      await vi.advanceTimersByTimeAsync(35_500);
+      expect(count()).toBe(8);
+      await vi.advanceTimersByTimeAsync(9_000);
+      expect(count()).toBe(8);
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(count()).toBe(9);
+      inbox.close();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('delivers player frames and stops after remove', async () => {
