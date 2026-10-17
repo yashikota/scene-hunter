@@ -201,12 +201,29 @@ const hasValidSubmission = (s: GmState, pid: string): boolean =>
 const photoKeyPrefix = (s: GmState, pid: string): string =>
   `rooms/${s.room}/${s.gameId}/${s.round}/${pid}-`;
 
+/** 文字列の 32 ビットのハッシュ（FNV-1a）。並べ替えの鍵にだけ使う。 */
+function hash32(text: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+/**
+ * 結果の写真の並び。提出の順のままだと、選ぶ画面で誰が速かったかが分かり、速さで選びがぶれる。
+ * ゲームとラウンドごとに混ぜ、同じラウンドの送り直し（判定の更新、退出）では並びを変えない。
+ */
+const shuffleKey = (s: GmState, pid: string): number => hash32(`${s.gameId}:${s.round}:${pid}`);
+
 /** 今の提出と photoValid から results を作り直す。 */
 const resultsOf = (s: GmState, gmPhotoUrl: string, photos: { pid: string; url: string }[]) => ({
   gmPhotoUrl,
   photos: photos
     .filter((ph) => own(s.submissions, ph.pid))
-    .map((ph) => ({ pid: ph.pid, url: ph.url, valid: own(s.photoValid, ph.pid) !== false })),
+    .map((ph) => ({ pid: ph.pid, url: ph.url, valid: own(s.photoValid, ph.pid) !== false }))
+    .sort((a, b) => shuffleKey(s, a.pid) - shuffleKey(s, b.pid) || (a.pid < b.pid ? -1 : 1)),
 });
 
 /** 合計の降順に並べ、同点は同じ順位にする。delta は前回の順位 − 今回の順位。 */

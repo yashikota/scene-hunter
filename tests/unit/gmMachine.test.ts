@@ -29,6 +29,13 @@ const run = (state: GmState, ...actions: GmAction[]) => {
   return { state: s, emit };
 };
 
+/** 結果の写真は混ぜて並べるので、順番を問わずに中身だけ比べる。 */
+const anyOrder = <T>(items: T[]) =>
+  expect.toSatisfy(
+    (xs: T[]) => xs.length === items.length && items.every((x) => xs.some((y) => equal(x, y))),
+  );
+const equal = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
 const join = (pid: string, name = pid, at = 0): GmAction => ({
   type: 'playerJoined',
   pid,
@@ -420,13 +427,33 @@ describe('選択と得点', () => {
         type: 'results',
         round: 1,
         gmPhotoUrl: 'https://r2/gm',
-        photos: [
+        photos: anyOrder([
           { pid: 'a', url: 'https://r2/a', valid: true },
           { pid: 'b', url: 'https://r2/b', valid: false },
           { pid: 'c', url: 'https://r2/c', valid: true },
-        ],
+        ]),
       },
     ]);
+  });
+
+  it('results の写真は提出の順ではなく、ゲームとラウンドごとに決まった順で混ぜる', () => {
+    const pids = Array.from({ length: 8 }, (_, i) => `p${i}`);
+    const resultsFor = (gameId: string, round: number) => {
+      let st: GmState = { ...init(), phase: 'picking', round, gameId, turnStartedAt: START };
+      st = {
+        ...st,
+        submissions: Object.fromEntries(pids.map((pid) => [pid, { key: pid, at: START }])),
+      };
+      const photos = pids.map((pid) => ({ pid, url: pid }));
+      const r = run(st, { type: 'resultsReady', gmPhotoUrl: 'g', photos });
+      return r.state.results!.photos.map((p) => p.pid);
+    };
+    const order = resultsFor('game1', 1);
+    expect([...order].sort()).toEqual(pids);
+    expect(order).not.toEqual(pids); // 提出の順のままではない
+    expect(resultsFor('game1', 1)).toEqual(order); // 同じラウンドなら同じ並び
+    expect(resultsFor('game1', 2)).not.toEqual(order);
+    expect(resultsFor('game2', 1)).not.toEqual(order);
   });
 
   it('resultsReady の後の photoChecked は valid を更新した results を再 emit する', () => {
@@ -445,12 +472,12 @@ describe('選択と得点', () => {
       type: 'results',
       round: 1,
       gmPhotoUrl: 'g',
-      photos: [
+      photos: anyOrder([
         { pid: 'a', url: 'https://r2/a', valid: false },
         { pid: 'b', url: 'https://r2/b', valid: true },
-      ],
+      ]),
     });
-    expect(r.state.results?.photos[0]?.valid).toBe(false);
+    expect(r.state.results?.photos.find((p) => p.pid === 'a')?.valid).toBe(false);
   });
 
   it('confirmPicks で scoreRound の結果が ranking に入り、total と streak が更新される', () => {
@@ -825,10 +852,10 @@ describe('部屋を出た人と、通信が切れた人', () => {
         type: 'results',
         round: 1,
         gmPhotoUrl: 'g',
-        photos: [
+        photos: anyOrder([
           { pid: 'a', url: 'a', valid: true },
           { pid: 'b', url: 'b', valid: true },
-        ],
+        ]),
       },
     ]);
     s = run(r.state, { type: 'togglePick', pid: 'a' }, { type: 'confirmPicks' }).state;

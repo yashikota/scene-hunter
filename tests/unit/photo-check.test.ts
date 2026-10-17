@@ -137,7 +137,7 @@ describe('checkRoundPhotos', () => {
     const { d, dispatched } = deps();
     await checkRoundPhotos(s0, d);
     const s = dispatched.reduce((st, a) => gmReduce(st, a).state, s0);
-    expect(s.results?.photos).toEqual([
+    expect([...(s.results?.photos ?? [])].sort((x, y) => (x.pid < y.pid ? -1 : 1))).toEqual([
       { pid: 'a', url: 'u:a', valid: true },
       { pid: 'b', url: 'u:b', valid: false },
     ]);
