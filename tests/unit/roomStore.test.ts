@@ -17,10 +17,13 @@ const rec = (o: Partial<RoomRecord> = {}): RoomRecord => ({
 function fakeKv(overwriteOnPut?: (v: string) => string) {
   const m = new Map<string, string>();
   const puts: { key: string; opts: unknown }[] = [];
+  const gets: { key: string; opts: unknown }[] = [];
   const kv = {
-    async get(key: string, type?: string) {
+    async get(key: string, opts?: string | { type?: string; cacheTtl?: number }) {
+      gets.push({ key, opts });
       const v = m.get(key);
       if (v === undefined) return null;
+      const type = typeof opts === 'string' ? opts : opts?.type;
       return type === 'json' ? JSON.parse(v) : v;
     },
     async put(key: string, value: string, opts?: unknown) {
@@ -31,16 +34,18 @@ function fakeKv(overwriteOnPut?: (v: string) => string) {
       m.delete(key);
     },
   };
-  return { kv: kv as never, m, puts };
+  return { kv: kv as never, m, puts, gets };
 }
 
 describe('roomStore', () => {
   it('round-trips with ttl 43200', async () => {
-    const { kv, puts } = fakeKv();
+    const { kv, puts, gets } = fakeKv();
     const s = createRoomStore(kv);
     expect(await s.put(rec())).toBe(true);
     expect(await s.get('012345')).toEqual(rec());
     expect(puts[0]).toEqual({ key: 'room:012345', opts: { expirationTtl: 43200 } });
+    // 読み取り（無かった結果も）を拠点で覚える時間は最短の 30 秒
+    expect(gets.at(-1)).toEqual({ key: 'room:012345', opts: { type: 'json', cacheTtl: 30 } });
   });
 
   it('returns false when another relayUid is read back', async () => {

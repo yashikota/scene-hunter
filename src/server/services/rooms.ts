@@ -130,6 +130,9 @@ export async function createRoom(
 
   for (let attempt = 0; attempt < MAX_CREATE_ATTEMPTS; attempt++) {
     const code = d.randomCode();
+    // 使われている番号を上書きすると、その部屋の GM のトークンが通らなくなり、後から入る人が別の Relay に行く。
+    // KV に比較して書く操作は無いので、先に確かめ、書いた後の読み直し（put）でも確かめる。
+    if (await d.store.get(code)) continue;
     const relay = await d.relay.create(`sh-${code}`);
     const pid = d.newId();
     let stored = false;

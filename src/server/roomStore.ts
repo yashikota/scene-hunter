@@ -15,12 +15,18 @@ export interface RoomRecord {
 }
 
 const ROOM_TTL_SEC = 43200;
+/** KV の読み取りを各拠点で覚える時間の下限（秒）。 */
+const KV_CACHE_TTL_SEC = 30;
 
 const key = (code: string) => `room:${code}`;
 
 export function createRoomStore(kv: Pick<KVNamespace, 'get' | 'put' | 'delete'>) {
   async function get(code: string): Promise<RoomRecord | null> {
-    return (await kv.get<RoomRecord>(key(code), 'json')) ?? null;
+    // KV は無かったという結果も各拠点で覚える（既定 60 秒）。できた直後の部屋や GM の交代が見えるのを早めるため、
+    // 覚える時間を最短の 30 秒にする。
+    return (
+      (await kv.get<RoomRecord>(key(code), { type: 'json', cacheTtl: KV_CACHE_TTL_SEC })) ?? null
+    );
   }
 
   async function put(rec: RoomRecord): Promise<boolean> {

@@ -179,6 +179,24 @@ describe('createRoom', () => {
     spy.mockRestore();
   });
 
+  it('使われている番号は上書きせず、別の番号で作る（Relay も作らない）', async () => {
+    const { d, kvMap, deleted } = setup({ codes: ['111111', '111111', '222222'] });
+    const first = await createRoom(d, { ...input, pubkey });
+    const before = kvMap.get('room:111111');
+    const second = await createRoom(d, { ...input, pubkey });
+    expect(second.code).toBe('222222');
+    expect(kvMap.get('room:111111')).toBe(before);
+    expect(JSON.parse(kvMap.get('room:111111')!).gmPid).toBe(first.pid);
+    expect(second.moqUrl.endsWith('/TOKEN2')).toBe(true); // 衝突した番号の Relay は作っていない
+    expect(deleted).toEqual([]);
+  });
+
+  it('使われている番号ばかりなら、3 回であきらめる', async () => {
+    const { d } = setup({ codes: ['111111', '111111', '111111', '111111'] });
+    await createRoom(d, { ...input, pubkey });
+    await expect(createRoom(d, { ...input, pubkey })).rejects.toThrow('could not allocate');
+  });
+
   it('GM の pid を KV に保存する', async () => {
     const { d, kvMap } = setup();
     await createRoom(d, { ...input, pubkey });
