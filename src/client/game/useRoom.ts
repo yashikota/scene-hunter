@@ -9,6 +9,7 @@ import { switchLocale } from '../ui/locale';
 import type { GmAction, GmState } from './gmMachine';
 import { forgetGm, GmEngine } from './gmEngine';
 import { claimUntilDone, clearMe, loadMe, rejoinUntilDone, saveMe, type Me } from './membership';
+import { checkRoundPhotos } from './photoCheck';
 import { PlayerEngine } from './playerEngine';
 import { initialView, type PlayerView } from './playerView';
 
@@ -18,7 +19,8 @@ import { initialView, type PlayerView } from './playerView';
 // 写真とヒントのうち、ここで受け持つのは「撮った写真（JPEG の Blob）を受け取ってから先」：
 // - GM：アップロード → gmPhotoUploaded → ヒントの生成 → hintsReady / hintsFailed（retryHints でやり直し）
 // - プレイヤー：SHA-256 → shutter を送る → アップロード → submit を送る
-// カメラと JPEG への変換（Task 16）、picking での写真の検証と results（Task 17）は画面側で足す。
+// - GM：picking に入ったら、写真を集めてハッシュを確かめ（photoChecked）、results を送る（resultsReady）
+// カメラと JPEG への変換（Task 16）は画面側で足す。
 
 export interface RoomActions {
   start(): void;
@@ -51,6 +53,8 @@ export interface Room {
    * claimFailed：取り直せなかった（部屋が無い、交代証の期限切れなど）。
    */
   status: 'claiming' | 'rejoining' | 'claimFailed' | null;
+  /** プレイヤー：GM の接続が切れたと判断した時刻（ミリ秒）。つながっている間は null。 */
+  gmDisconnectedSince: number | null;
   actions: RoomActions;
 }
 
@@ -227,6 +231,29 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     setAppliedLocale(roomLocale);
   }, [roomLocale, appliedLocale]);
 
+  // GM：picking に入ったら（results がまだ無ければ）写真を確かめて results を送る。
+  const checkKey = gmState?.phase === 'picking' && gmState.results === null ? `${gmState.gameId}:${gmState.round}` : null;
+  useEffect(() => {
+    if (!gm || checkKey === null) return;
+    let stopped = false;
+    const s = gm.state;
+    checkRoundPhotos(s, {
+      listPhotos: (query) => api.listPhotos(code, meRef.current.roomToken, query),
+      fetchBytes: async (url) => {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`photo ${res.status}`);
+        return new Uint8Array(await res.arrayBuffer());
+      },
+      sha256Hex,
+      dispatch: (a) => gm.dispatch(a),
+      stopped: () => stopped,
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+    }).catch((e: unknown) => console.error('写真を確かめられなかった', e));
+    return () => {
+      stopped = true;
+    };
+  }, [gm, checkKey, code]);
+
   const actions = useMemo<RoomActions>(() => {
     const dispatch = (a: GmAction) => gm?.dispatch(a);
     const uploader = (token: string) => ({
@@ -319,6 +346,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     view,
     gm: gm && { state: gm.state, dispatch: (a) => gm.dispatch(a) },
     status,
+    gmDisconnectedSince: player?.gmDisconnectedSince ?? null,
     actions,
   };
 }

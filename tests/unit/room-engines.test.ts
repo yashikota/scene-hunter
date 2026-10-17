@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { GmEngine } from '../../src/client/game/gmEngine';
 import { claimUntilDone, loadMe, rejoinUntilDone, type Me } from '../../src/client/game/membership';
-import { PlayerEngine, REJOIN_AFTER_MS } from '../../src/client/game/playerEngine';
+import { PlayerEngine, REJOIN_AFTER_MS, TRANSFER_GRACE_MS } from '../../src/client/game/playerEngine';
 import { newGameId } from '../../src/client/game/useRoom';
 import { issueCert, issueTransfer, type Cert } from '../../src/shared/cert';
 import { FakeRelay } from './fakeMoq';
@@ -359,4 +359,90 @@ describe('一覧に載らないときの publish のやり直し', () => {
     p.close();
     gm.close();
   }, 20_000);
+});
+
+describe('GM の接続切れ（偽の Relay）', () => {
+  it('GM の announce が消えたら接続切れ、新しい epoch に乗り換えたら戻る', async () => {
+    const { relay, startGm, startPlayer } = await setup();
+    const gm = startGm();
+    const { p } = startPlayer();
+    await vi.waitFor(() => expect(p.view.phase).toBe('lobby'));
+    expect(p.gmDisconnectedSince).toBeNull();
+
+    const changed = vi.fn();
+    p.subscribe(changed);
+    gm.close();
+    relay.announce('gm/1', false);
+    expect(p.gmDisconnectedSince).toBeGreaterThan(0);
+    expect(changed).toHaveBeenCalled();
+    expect(p.view.phase).toBe('lobby'); // 画面の段階は変えない
+
+    const back = startGm(); // epoch 2 で戻る
+    await vi.waitFor(() => expect(p.epoch).toBe(2));
+    expect(p.gmDisconnectedSince).toBeNull();
+    p.close();
+    back.close();
+  });
+
+  it('同じ epoch の announce が戻っても接続切れを解く。古い epoch の announce が消えても気にしない', async () => {
+    const { relay, startGm, startPlayer } = await setup();
+    const gm = startGm();
+    const { p } = startPlayer();
+    await vi.waitFor(() => expect(p.epoch).toBe(1));
+    relay.announce('gm/0', false);
+    relay.announce('p/alice', false);
+    expect(p.gmDisconnectedSince).toBeNull();
+    relay.announce('gm/1', false);
+    expect(p.gmDisconnectedSince).not.toBeNull();
+    relay.announce('gm/1', true);
+    expect(p.gmDisconnectedSince).toBeNull();
+    p.close();
+    gm.close();
+  });
+
+  it('GM を渡した後は、交代先が出てこないまま待ち時間が過ぎたときだけ接続切れにする', async () => {
+    const keys = await makeIdentities();
+    const relay = new FakeRelay();
+    const gmId = await keys.mk('gm', 'gm');
+    const bobId = await keys.mk('bob', 'player');
+    const gm = new GmEngine(meOf(gmId, 'gm'), {
+      connector: relay.connector,
+      verifier: keys.verifier(),
+      privateKey: gmId.kp.privateKey,
+      now: () => Date.now(),
+    });
+    gm.start();
+    const bob = new PlayerEngine(meOf(bobId, 'player'), {
+      connector: relay.connector,
+      verifier: keys.verifier(),
+      privateKey: bobId.kp.privateKey,
+      serverPub: keys.serverPub,
+      now: () => Date.now(),
+      saveSeq: () => {},
+      onTransferToMe: () => {},
+    });
+    bob.start();
+    await vi.waitFor(() => expect(bob.view.phase).toBe('lobby'));
+    const nowSec = Math.floor(Date.now() / 1000);
+    const transfer = await issueTransfer(keys.server.privateKey, {
+      room: ROOM,
+      from: 'gm',
+      to: 'carol',
+      iat: nowSec,
+      exp: nowSec + 600,
+    });
+    gm.dispatch({ type: 'transferred', transfer });
+    await gm.flush();
+    await vi.waitFor(() => expect(bob.gmPid).toBe('carol'));
+    gm.close();
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    relay.announce('gm/1', false);
+    expect(bob.gmDisconnectedSince).toBeNull();
+    vi.advanceTimersByTime(TRANSFER_GRACE_MS - 1);
+    expect(bob.gmDisconnectedSince).toBeNull();
+    vi.advanceTimersByTime(1);
+    expect(bob.gmDisconnectedSince).not.toBeNull();
+    bob.close();
+  });
 });

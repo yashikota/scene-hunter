@@ -1,18 +1,17 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { loadMe } from '../game/membership';
-import { useRoom, type Room } from '../game/useRoom';
-import { m } from '../paraglide/messages';
+import { useRoom } from '../game/useRoom';
 import { Connecting } from '../screens/Connecting';
+import { Disconnected } from '../screens/Disconnected';
+import { Dissolved } from '../screens/Dissolved';
 import { LobbyGm } from '../screens/LobbyGm';
 import { LobbyPlayer } from '../screens/LobbyPlayer';
+import { ResultsScreen } from '../screens/ResultsScreen';
 import { Top } from '../screens/Top';
 import { TurnScreen } from '../screens/TurnScreen';
 import { Unsupported } from '../screens/Unsupported';
-import { Button } from '../ui/Button';
 import { isSupportedBrowser, useBrowserLocale } from '../ui/locale';
-import { Screen } from '../ui/Screen';
-import { formatCode, TopBar } from '../ui/TopBar';
 
 export const Route = createFileRoute('/r/$code')({
   component: RoomRoute,
@@ -56,6 +55,20 @@ function RoomScreen({ code }: { code: string }) {
       />
     );
   }
+  if (room.gmDisconnectedSince !== null && view.phase !== 'connecting' && view.phase !== 'dissolved') {
+    const mine = view.players.find((p) => p.pid === room.me.pid);
+    return (
+      <Disconnected
+        code={code}
+        round={view.round}
+        rounds={view.rounds}
+        gmName={room.gmName}
+        since={room.gmDisconnectedSince}
+        me={mine ? { rank: mine.rank, total: mine.total } : null}
+        onLeave={() => void actions.leave()}
+      />
+    );
+  }
   switch (view.phase) {
     case 'connecting':
       return <Connecting />;
@@ -83,30 +96,17 @@ function RoomScreen({ code }: { code: string }) {
         />
       );
     case 'dissolved':
-      return <Placeholder room={room} code={code} title={m.dissolved_title()} />;
+      return <Dissolved code={code} onLeave={() => void actions.leave()} />;
     case 'gmTurn':
     case 'hinting':
     case 'hintError':
     case 'playerTurn':
       return <TurnScreen room={room} code={code} />;
+    case 'picking':
+    case 'reveal':
+    case 'final':
+      return <ResultsScreen room={room} code={code} />;
     default:
-      // 中間結果以降の画面は Task 17 で差し替える。
-      return <Placeholder room={room} code={code} title={m.in_progress()} />;
+      return <Connecting />;
   }
-}
-
-/** まだ画面が無い段階の仮の表示。 */
-function Placeholder({ room, code, title }: { room: Room; code: string; title: string }) {
-  const dissolved = room.view.phase === 'dissolved';
-  return (
-    <Screen>
-      <TopBar left={room.view.phase} right={<span>{m.room_badge({ code: formatCode(code) })}</span>} />
-      <h1 className="sh-display" style={{ fontSize: 24, textAlign: 'center', margin: 'auto 0' }}>
-        {title}
-      </h1>
-      <Button variant="quiet" onClick={() => void room.actions.leave()}>
-        {dissolved ? m.back_to_top() : room.role === 'gm' ? m.dissolve_button() : m.leave_button()}
-      </Button>
-    </Screen>
-  );
 }

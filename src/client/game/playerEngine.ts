@@ -3,7 +3,7 @@ import type { EnvelopeVerifier } from '../../shared/envelope';
 import { seal } from '../../shared/envelope';
 import type { GmEvent, GmSnapshot, PlayerEvent } from '../../shared/protocol';
 import { followGm } from '../moq/follow';
-import { EVENTS_TRACK, playerPath } from '../moq/paths';
+import { EVENTS_TRACK, gmPath, playerPath } from '../moq/paths';
 import { MoqSession, type FrameWriter, type MoqConnector } from '../moq/session';
 import type { Me } from './membership';
 import { applyEvent, applySnapshot, hasGap, initialView, type PlayerView } from './playerView';
@@ -24,6 +24,11 @@ const RESYNC_MIN_MS = 3000;
  */
 export const REJOIN_AFTER_MS = 8000;
 export const REJOIN_MAX_MS = 60_000;
+/**
+ * GM を渡した後は、渡した GM の接続が閉じるのは普通のことなので、交代先が新しい epoch で出てくるのをこの時間だけ待ってから
+ * 「GM の接続が切れた」とする（交代先の引き継ぎが失敗し続けても、残った人が待ち続けないように）。
+ */
+export const TRANSFER_GRACE_MS = 45_000;
 
 export interface PlayerEngineDeps {
   connector: MoqConnector;
@@ -44,6 +49,12 @@ export class PlayerEngine {
   epoch = -1;
   /** いま従っている GM。最初の GM のフレームを受けるまでは null（role が gm の参加証なら受け付ける）。 */
   gmPid: string | null = null;
+  /**
+   * いま追いかけている GM の broadcast（gm/{epoch}）の announce が消えたときの時刻（自分の時計）。
+   * 新しい epoch に乗り換えるか、同じ broadcast が announce し直されたら null に戻る。
+   * GM を渡した後は TRANSFER_GRACE_MS の間、null のまま待つ。
+   */
+  gmDisconnectedSince: number | null = null;
   readonly #me: Me;
   readonly #deps: PlayerEngineDeps;
   readonly #listeners = new Set<() => void>();
@@ -58,6 +69,8 @@ export class PlayerEngine {
   #queue: Promise<void> = Promise.resolve();
   #lastResyncAt = -Infinity;
   #closed = false;
+  #transferred = false;
+  #goneTimer?: ReturnType<typeof setTimeout>;
 
   constructor(me: Me, deps: PlayerEngineDeps) {
     this.#me = me;
@@ -77,7 +90,14 @@ export class PlayerEngine {
       snapshot: (s) => this.#onSnapshot(s),
       epoch: (n) => {
         this.epoch = n;
+        this.#transferred = false;
+        this.#gmBack();
       },
+    });
+    follow.announced((path, active) => {
+      if (path !== gmPath(this.epoch)) return;
+      if (active) this.#gmBack();
+      else this.#gmGone();
     });
     keepStarting(follow, () => this.#closed);
     this.#rejoinTimer = setInterval(() => this.#checkListed(), 1000);
@@ -119,6 +139,7 @@ export class PlayerEngine {
     if (this.#closed) return;
     this.#closed = true;
     clearInterval(this.#rejoinTimer);
+    clearTimeout(this.#goneTimer);
     this.#listeners.clear();
     this.#stopFollow?.();
     this.#followSession?.close();
@@ -151,6 +172,29 @@ export class PlayerEngine {
     this.#publish();
   }
 
+  #gmGone(): void {
+    if (this.#closed || this.#goneTimer || this.gmDisconnectedSince !== null || this.view.phase === 'dissolved') return;
+    const mark = () => {
+      this.#goneTimer = undefined;
+      this.gmDisconnectedSince = this.#deps.now();
+      this.#notify();
+    };
+    if (this.#transferred) this.#goneTimer = setTimeout(mark, TRANSFER_GRACE_MS);
+    else mark();
+  }
+
+  #gmBack(): void {
+    clearTimeout(this.#goneTimer);
+    this.#goneTimer = undefined;
+    if (this.gmDisconnectedSince === null) return;
+    this.gmDisconnectedSince = null;
+    this.#notify();
+  }
+
+  #notify(): void {
+    for (const fn of this.#listeners) fn();
+  }
+
   #isGm(pid: string): boolean {
     if (this.gmPid !== null) return pid === this.gmPid;
     return this.#deps.verifier.certOf(pid)?.body.role === 'gm';
@@ -181,6 +225,7 @@ export class PlayerEngine {
     if (this.#closed || this.gmPid !== e.pid) return;
     // 以後は交代先だけに従う。新しい GM の seq は 0 から数えるので、取りこぼしの判定も最初から。
     this.gmPid = transfer.body.to;
+    this.#transferred = true;
     this.#set({ ...this.view, lastSeq: -1 });
     if (transfer.body.to === this.#me.pid) this.#deps.onTransferToMe(transfer);
   }
@@ -196,6 +241,6 @@ export class PlayerEngine {
     // 解散したら、その後に届くもの（古いスナップショットなど）では画面を変えない。
     if (v === this.view || this.view.phase === 'dissolved') return;
     this.view = v;
-    for (const fn of this.#listeners) fn();
+    this.#notify();
   }
 }
