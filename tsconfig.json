@@ -12,5 +12,5 @@
     "verbatimModuleSyntax": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "routes", "tests", "env.ts", "*.config.ts", ".void/*.d.ts"]
+  "include": ["src", "routes", "crons", "tests", "env.ts", "*.config.ts", ".void/*.d.ts"]
 }
