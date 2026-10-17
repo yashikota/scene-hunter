@@ -26,6 +26,8 @@
   "lobby_label": "大廳",
   "you_are_gm": "你是 GM",
   "share_code": "把房間號碼告訴大家，邀請他們加入吧",
+  "copy_link": "複製連結",
+  "link_copied": "已複製",
   "players_heading": "玩家",
   "players_count": "{count} 人",
   "gm_tag": "{name}（GM）",

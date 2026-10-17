@@ -26,6 +26,8 @@
   "lobby_label": "로비",
   "you_are_gm": "당신이 GM",
   "share_code": "이 번호를 알려 주고 모두를 초대하세요",
+  "copy_link": "링크 복사",
+  "link_copied": "복사했어요",
   "players_heading": "참가자",
   "players_count": "{count}명",
   "gm_tag": "{name} (GM)",

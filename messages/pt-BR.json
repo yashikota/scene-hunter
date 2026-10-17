@@ -26,6 +26,8 @@
   "lobby_label": "SALA DE ESPERA",
   "you_are_gm": "Você é o GM",
   "share_code": "Compartilhe este número para todos entrarem",
+  "copy_link": "Copiar link",
+  "link_copied": "Link copiado",
   "players_heading": "Jogadores",
   "players_count": [
     {

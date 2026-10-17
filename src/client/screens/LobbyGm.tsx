@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { m } from '../paraglide/messages';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -59,10 +59,31 @@ export interface LobbyGmProps {
   onDissolve(): void;
 }
 
+/** 共有するリンク。開くと番号が入ったトップになる。 */
+export const shareLink = (code: string) => `${location.origin}/?code=${code}`;
+
 export function LobbyGm({ code, gmName, players, rounds, limitSec, onStart, onTransfer, onDissolve }: LobbyGmProps) {
   const [choosing, setChoosing] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [manual, setManual] = useState(false);
+  const linkRef = useRef<HTMLInputElement>(null);
+
+  const copyLink = () => {
+    setCopied(false);
+    navigator.clipboard.writeText(shareLink(code)).then(
+      () => {
+        setManual(false);
+        setCopied(true);
+      },
+      () => {
+        // 許可されないなどでコピーできない。リンクを選んだ状態で見せて、手でコピーしてもらう
+        setManual(true);
+        setTimeout(() => linkRef.current?.select(), 0);
+      },
+    );
+  };
 
   const transfer = async (pid: string) => {
     setTransferring(true);
@@ -94,6 +115,20 @@ export function LobbyGm({ code, gmName, players, rounds, limitSec, onStart, onTr
         <span className="sh-sub" style={{ fontSize: 12, textAlign: 'center' }}>
           {m.share_code()}
         </span>
+        <Button variant="quiet" onClick={copyLink} style={{ marginTop: 8 }}>
+          {copied ? m.link_copied() : m.copy_link()}
+        </Button>
+        {manual && (
+          <input
+            ref={linkRef}
+            readOnly
+            className="sh-input"
+            aria-label={m.copy_link()}
+            value={shareLink(code)}
+            onFocus={(e) => e.currentTarget.select()}
+            style={{ fontSize: 13, textAlign: 'center' }}
+          />
+        )}
       </Card>
 
       <PlayerTiles gmName={gmName} players={players} />

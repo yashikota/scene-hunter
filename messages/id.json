@@ -26,6 +26,8 @@
   "lobby_label": "LOBI",
   "you_are_gm": "Kamu GM-nya",
   "share_code": "Bagikan nomor ini agar semua bisa masuk",
+  "copy_link": "Salin tautan",
+  "link_copied": "Tautan disalin",
   "players_heading": "Pemain",
   "players_count": "{count} pemain",
   "gm_tag": "{name} (GM)",

@@ -26,6 +26,8 @@
   "lobby_label": "ロビー",
   "you_are_gm": "あなたが GM",
   "share_code": "この番号を伝えて、みんなに入ってもらおう",
+  "copy_link": "リンクをコピー",
+  "link_copied": "コピーしました",
   "players_heading": "参加者",
   "players_count": "{count} 人",
   "gm_tag": "{name}（GM）",

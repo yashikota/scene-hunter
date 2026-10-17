@@ -26,6 +26,8 @@
   "lobby_label": "SALON",
   "you_are_gm": "Tu es le MJ",
   "share_code": "Partage ce numéro pour que tout le monde rejoigne",
+  "copy_link": "Copier le lien",
+  "link_copied": "Lien copié",
   "players_heading": "Joueurs",
   "players_count": [
     {

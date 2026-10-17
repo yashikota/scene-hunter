@@ -26,6 +26,8 @@
   "lobby_label": "SẢNH CHỜ",
   "you_are_gm": "Bạn là GM",
   "share_code": "Chia sẻ mã này để mọi người cùng vào",
+  "copy_link": "Sao chép liên kết",
+  "link_copied": "Đã sao chép",
   "players_heading": "Người chơi",
   "players_count": "{count} người",
   "gm_tag": "{name} (GM)",

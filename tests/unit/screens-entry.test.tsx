@@ -6,6 +6,7 @@ import { setLocale } from '../../src/client/paraglide/runtime';
 import { Connecting } from '../../src/client/screens/Connecting';
 import { LobbyGm } from '../../src/client/screens/LobbyGm';
 import { LobbyPlayer } from '../../src/client/screens/LobbyPlayer';
+import { parseCodeParam } from '../../src/client/routes/index';
 import { Top } from '../../src/client/screens/Top';
 import { LOCALE_NAMES, LOCALES } from '../../src/shared/locales';
 
@@ -100,6 +101,30 @@ describe('Top', () => {
   });
 });
 
+describe('?code= で開く', () => {
+  beforeEach(() => vi.stubGlobal('WebTransport', class {}));
+
+  it('Top は initialCode を番号の入力に入れ、名前に合わせる', () => {
+    render(<Top initialCode="123456" onEntered={() => {}} />);
+    expect((screen.getByLabelText(m.code_label()) as HTMLInputElement).value).toBe('123456');
+    expect(document.activeElement).toBe(screen.getByLabelText(m.name_label()));
+  });
+
+  it('番号が無いときは空のままで、名前に合わせない', () => {
+    render(<Top onEntered={() => {}} />);
+    expect((screen.getByLabelText(m.code_label()) as HTMLInputElement).value).toBe('');
+    expect(document.activeElement).not.toBe(screen.getByLabelText(m.name_label()));
+  });
+
+  it('6 桁の数字以外の code は無視する', () => {
+    expect(parseCodeParam('123456')).toBe('123456');
+    expect(parseCodeParam('000123')).toBe('000123');
+    for (const bad of ['12345', '1234567', 'abcdef', '12345a', '', ' 123456', undefined, null, ['123456'], {}]) {
+      expect(parseCodeParam(bad)).toBeUndefined();
+    }
+  });
+});
+
 describe('Connecting', () => {
   it('部屋を準備中なら「部屋を準備しています」', () => {
     render(<Connecting preparing />);
@@ -118,6 +143,7 @@ describe('LobbyGm', () => {
     expect(screen.getByText(m.limit_label()).parentElement?.textContent).toContain('60');
     // ボタンは開始、交代、解散だけで、ラウンド数と制限時間を変える入力も無い
     expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual([
+      m.copy_link(),
       m.start_button(),
       m.transfer_button(),
       m.dissolve_button(),
@@ -148,6 +174,27 @@ describe('LobbyGm', () => {
     expect(screen.getByText('4 players')).toBeTruthy();
     expect(screen.getByText('60 sec')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Start the game' })).toBeTruthy();
+  });
+});
+
+describe('LobbyGm のリンクのコピー', () => {
+  it('?code= の URL を clipboard に書く', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { ...window.navigator, clipboard: { writeText } });
+    render(lobbyGm());
+    fireEvent.click(screen.getByRole('button', { name: m.copy_link() }));
+    expect(writeText).toHaveBeenCalledWith(`${location.origin}/?code=482913`);
+    expect(await screen.findByRole('button', { name: m.link_copied() })).toBeTruthy();
+  });
+
+  it('書けなかったら、リンクを入れた読み取り専用の入力を出す', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('denied'));
+    vi.stubGlobal('navigator', { ...window.navigator, clipboard: { writeText } });
+    render(lobbyGm());
+    fireEvent.click(screen.getByRole('button', { name: m.copy_link() }));
+    const input = (await screen.findByRole('textbox')) as HTMLInputElement;
+    expect(input.readOnly).toBe(true);
+    expect(input.value).toBe(`${location.origin}/?code=482913`);
   });
 });
 

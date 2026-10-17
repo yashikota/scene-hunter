@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { isLocale, LOCALE_NAMES, LOCALES, type Locale } from '../../shared/locales';
 import { createAndSave, joinAndSave } from '../game/membership';
 import { m } from '../paraglide/messages';
@@ -19,7 +19,7 @@ export interface TopDeps {
 const defaultDeps: TopDeps = { create: createAndSave, join: joinAndSave };
 
 export interface TopProps {
-  /** 共有されたリンク（/r/{code}）から来たときの番号。 */
+  /** 共有されたリンク（/r/{code} か /?code=）から来たときの番号。 */
   initialCode?: string;
   /** 部屋の資格を保存できた。 */
   onEntered(code: string): void;
@@ -51,6 +51,11 @@ function TopForm({
   onLocale,
 }: TopProps & { locale: Locale; onLocale(l: Locale): void }) {
   const ids = useId();
+  const nameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    // 番号が入った状態で開いたときは、名前だけ入れればよいので名前に合わせる
+    if (CODE_RE.test(initialCode)) nameRef.current?.focus();
+  }, [initialCode]);
   const [code, setCode] = useState(initialCode);
   const [name, setName] = useState('');
   const [status, setStatus] = useState<'idle' | 'joining' | 'creating' | 'preparing'>('idle');
@@ -164,6 +169,7 @@ function TopForm({
             </label>
             <input
               id={`${ids}-name`}
+              ref={nameRef}
               className="sh-input"
               autoComplete="nickname"
               maxLength={NAME_MAX}

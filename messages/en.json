@@ -26,6 +26,8 @@
   "lobby_label": "LOBBY",
   "you_are_gm": "You are the GM",
   "share_code": "Share this number so everyone can join",
+  "copy_link": "Copy link",
+  "link_copied": "Link copied",
   "players_heading": "Players",
   "players_count": [
     {
