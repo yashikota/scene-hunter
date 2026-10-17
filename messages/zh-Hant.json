@@ -59,5 +59,10 @@
   "copied": "已複製",
   "in_progress": "遊戲進行中",
   "dissolved_title": "房間已解散",
-  "back_to_top": "回到首頁"
+  "back_to_top": "回到首頁",
+  "claiming_title": "正在接任 GM",
+  "rejoining_title": "正在以玩家身分重新加入",
+  "retrying_body": "連線不穩時會自動重試，請稍候",
+  "claim_failed_title": "未能接任 GM",
+  "claim_failed_body": "請離開房間後重新加入"
 }

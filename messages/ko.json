@@ -59,5 +59,10 @@
   "copied": "복사했어요",
   "in_progress": "게임이 진행 중이에요",
   "dissolved_title": "방이 닫혔어요",
-  "back_to_top": "처음으로"
+  "back_to_top": "처음으로",
+  "claiming_title": "GM을 넘겨받는 중이에요",
+  "rejoining_title": "플레이어로 다시 들어가는 중이에요",
+  "retrying_body": "연결이 불안정하면 자동으로 다시 시도해요. 잠시만 기다려 주세요",
+  "claim_failed_title": "GM을 넘겨받지 못했어요",
+  "claim_failed_body": "방을 나간 뒤 다시 들어와 주세요"
 }

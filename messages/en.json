@@ -87,5 +87,10 @@
   "copied": "Copied",
   "in_progress": "The game is in progress",
   "dissolved_title": "This room has been closed",
-  "back_to_top": "Back to start"
+  "back_to_top": "Back to start",
+  "claiming_title": "Taking over as GM",
+  "rejoining_title": "Rejoining as a player",
+  "retrying_body": "If the connection is slow, we'll keep retrying. Please wait.",
+  "claim_failed_title": "Couldn't take over as GM",
+  "claim_failed_body": "Please leave the room and join again."
 }

@@ -1,6 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import type { TransferCert } from '../../shared/cert';
 import { importPrivateKey, sha256Hex } from '../../shared/crypto';
 import { EnvelopeVerifier } from '../../shared/envelope';
 import * as api from '../api';
@@ -9,7 +8,7 @@ import { uploadPhoto } from '../photo/upload';
 import { switchLocale } from '../ui/locale';
 import type { GmAction, GmState } from './gmMachine';
 import { forgetGm, GmEngine } from './gmEngine';
-import { clearMe, joinAndSave, loadMe, saveMe, type Me } from './membership';
+import { claimUntilDone, clearMe, loadMe, rejoinUntilDone, saveMe, type Me } from './membership';
 import { PlayerEngine } from './playerEngine';
 import { initialView, type PlayerView } from './playerView';
 
@@ -46,6 +45,12 @@ export interface Room {
   gmName: string;
   view: PlayerView;
   gm?: { state: GmState; dispatch(a: GmAction): void };
+  /**
+   * GM の交代の途中なら、その段階（この間は部屋の画面の代わりに待ちの画面を出す）。
+   * claiming：交代先として GM の参加証を取り直している。rejoining：GM を渡し、プレイヤーとして入り直している。
+   * claimFailed：取り直せなかった（部屋が無い、交代証の期限切れなど）。
+   */
+  status: 'claiming' | 'rejoining' | 'claimFailed' | null;
   actions: RoomActions;
 }
 
@@ -75,43 +80,48 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     return m;
   });
   const [engine, setEngine] = useState<Engine | null>(null);
+  const [claimFailed, setClaimFailed] = useState(false);
   const [, rerender] = useReducer((n: number) => n + 1, 0);
-  /** GM を引き継いだときに越える、前の GM の epoch。 */
-  const epochFloor = useRef(0);
-  /** 閉じるときに待つ時間（GM の交代や解散の直後だけ）。 */
+  /** 閉じるときに待つ時間（解散の直後だけ）。 */
   const linger = useRef(0);
-  /** GM を渡した直後にプレイヤーとして入り直すとき、従う相手（交代先）。 */
-  const nextGmPid = useRef<string | null>(null);
   const meRef = useRef(me);
   meRef.current = me;
 
-  const becomeGm = useCallback(
-    async (transfer: TransferCert, fromEpoch: number) => {
-      // seq は保存したものが最新
-      const cur = loadMe(code) ?? meRef.current;
-      const { roomToken, cert } = await withRetry(() =>
-        api.claim(code, cur.roomToken, { transfer, pubkey: cur.pubkey, name: cur.name }),
-      );
-      epochFloor.current = fromEpoch;
-      const next: Me = { ...cur, role: 'gm', roomToken, cert };
+  /** 資格を保存して画面の me にも反映する。seq は保存したものが最新なので、それを引き継ぐ。 */
+  const updateMe = useCallback(
+    (patch: (cur: Me) => Me) => {
+      const next = patch(loadMe(code) ?? meRef.current);
       saveMe(next);
       setMe(next);
     },
     [code],
   );
 
+  const exit = useCallback(() => {
+    clearMe(code);
+    void navigate({ to: '/' });
+  }, [code, navigate]);
+
+  const pending = me.pending;
+  // 入り直しの最中は MoQ を使わない（GM の接続は交代のときに閉じた）。
+  const rejoining = pending?.kind === 'rejoin';
+
   useEffect(() => {
+    if (rejoining) {
+      setEngine(null);
+      return;
+    }
     let cancelled = false;
     let made: Engine | null = null;
-    // StrictMode の付け外しで epoch を無駄に進めないよう、次の tick で始める。
-    const timer = setTimeout(async () => {
+    const start = async () => {
       const privateKey = await importPrivateKey(me.privateKey);
       if (cancelled) return;
       const verifier = new EnvelopeVerifier(serverPub(), code, () => Math.floor(nowMs() / 1000));
       if (me.role === 'gm') {
         const gm = new GmEngine(me, { connector, verifier, privateKey, now: nowMs });
         gm.subscribe(rerender);
-        gm.start(epochFloor.current);
+        // 交代先として GM になったときは、前の GM の epoch を越える
+        gm.start(meRef.current.gmEpochFloor ?? 0);
         made = { kind: 'gm', gm };
       } else {
         // 使った seq は保存した方に入っている（state の me は seq を更新しない）
@@ -121,18 +131,32 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
           privateKey,
           serverPub: serverPub(),
           now: nowMs,
-          saveSeq: (seq) => saveMe({ ...meRef.current, seq }),
-          onTransferToMe: (t) => {
-            becomeGm(t, player.epoch).catch((e: unknown) => console.error('GM を引き継げなかった', e));
-          },
+          saveSeq: (seq) => saveMe({ ...(loadMe(code) ?? meRef.current), seq }),
+          onTransferToMe: (transfer) =>
+            updateMe((cur) =>
+              cur.pending?.kind === 'claim'
+                ? cur
+                : { ...cur, pending: { kind: 'claim', transfer, fromEpoch: player.epoch } },
+            ),
         });
-        player.gmPid = nextGmPid.current;
-        nextGmPid.current = null;
+        // GM を渡して入り直した直後は、自分の古い GM のフレームと取り違えないよう交代先だけに従う
+        const follow = loadMe(code)?.followGmPid;
+        player.gmPid = follow ?? null;
+        // 使うのは入り直した直後だけ（後で GM がまた替わってから再読み込みしても古い GM に固定しない）
+        if (follow) saveMe({ ...(loadMe(code) ?? me), followGmPid: undefined });
         player.subscribe(rerender);
         player.start();
         made = { kind: 'player', player };
       }
       setEngine(made);
+    };
+    // StrictMode の付け外しで epoch を無駄に進めないよう、次の tick で始める。
+    const timer = setTimeout(() => {
+      start().catch((e: unknown) => {
+        // 保存した資格が壊れている（鍵を読み込めないなど）。入り直してもらう。
+        console.error('部屋につなげなかった', e);
+        if (!cancelled) exit();
+      });
     }, 0);
     return () => {
       cancelled = true;
@@ -141,7 +165,46 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
       if (made?.kind === 'player') made.player.close();
       linger.current = 0;
     };
-  }, [code, me.role, me.pid, me.privateKey, connector, becomeGm]);
+  }, [code, me.role, me.pid, me.privateKey, rejoining, connector, updateMe, exit]);
+
+  // 交代先に選ばれたら、交代証で GM の参加証を取り直す（再読み込みしても保存した交代証で続ける）。
+  useEffect(() => {
+    if (pending?.kind !== 'claim') return;
+    let stopped = false;
+    const timer = setTimeout(() => {
+      claimUntilDone(loadMe(code) ?? meRef.current, pending, { stopped: () => stopped })
+        .then((next) => {
+          if (stopped) return;
+          if (next) return updateMe(() => ({ ...next, gmEpochFloor: pending.fromEpoch }));
+          updateMe((cur) => ({ ...cur, pending: undefined }));
+          setClaimFailed(true);
+        })
+        .catch((e: unknown) => console.error('GM を引き継げなかった', e));
+    }, 0);
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+    };
+  }, [pending, code, updateMe]);
+
+  // GM を渡した後は、新しい鍵でプレイヤーとして入り直す（入れるまで間隔を伸ばしながら）。
+  useEffect(() => {
+    if (pending?.kind !== 'rejoin') return;
+    let stopped = false;
+    const timer = setTimeout(() => {
+      rejoinUntilDone(loadMe(code) ?? meRef.current, { stopped: () => stopped })
+        .then((next) => {
+          if (stopped) return;
+          if (!next) return exit();
+          updateMe(() => ({ ...next, followGmPid: pending.gmPid }));
+        })
+        .catch((e: unknown) => console.error('プレイヤーとして入り直せなかった', e));
+    }, 0);
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+    };
+  }, [pending, code, updateMe, exit]);
 
   const gm = engine?.kind === 'gm' ? engine.gm : undefined;
   const player = engine?.kind === 'player' ? engine.player : undefined;
@@ -161,11 +224,6 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     switchLocale(roomLocale);
     setAppliedLocale(roomLocale);
   }, [roomLocale, appliedLocale]);
-
-  const exit = useCallback(() => {
-    clearMe(code);
-    void navigate({ to: '/' });
-  }, [code, navigate]);
 
   const actions = useMemo<RoomActions>(() => {
     const dispatch = (a: GmAction) => gm?.dispatch(a);
@@ -225,13 +283,12 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
         const cert = await api.transfer(code, me.roomToken, pid);
         gm.dispatch({ type: 'transferred', transfer: cert });
         await gm.flush();
-        // GM の参加証のままではプレイヤーになれないので、新しい鍵で入り直す。
-        const next = await joinAndSave(code, me.name);
+        // 交代のイベントを流したら GM としては何もしない（接続は交代のイベントが届くよう少し残して閉じる）。
+        // 先に閉じるので、この後に状態や epoch が書き戻されることも無い。
+        gm.close(TRANSFER_LINGER_MS);
         forgetGm(code);
-        linger.current = TRANSFER_LINGER_MS;
-        // 自分の古い GM のフレームを新しい GM と取り違えないよう、交代先だけに従う。
-        nextGmPid.current = pid;
-        setMe(next);
+        // GM の参加証のままではプレイヤーになれないので、新しい鍵で入り直す（再読み込みしても続ける）。
+        updateMe((cur) => ({ ...cur, pending: { kind: 'rejoin', gmPid: pid } }));
       },
       dissolve,
       leave: async () => {
@@ -239,33 +296,26 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
         exit();
       },
     };
-  }, [gm, player, code, me.roomToken, me.name, exit]);
+  }, [gm, player, code, me.roomToken, exit, updateMe]);
 
   const label =
     me.role === 'gm' ? me.name : (view.players.find((p) => p.pid === me.pid)?.label ?? me.name);
+  const status = claimFailed
+    ? 'claimFailed'
+    : pending?.kind === 'claim'
+      ? 'claiming'
+      : pending?.kind === 'rejoin'
+        ? 'rejoining'
+        : null;
   return {
     role: me.role,
     me: { pid: me.pid, label },
     gmName: gm ? me.name : (player?.gmName() ?? ''),
     view,
     gm: gm && { state: gm.state, dispatch: (a) => gm.dispatch(a) },
+    status,
     actions,
   };
-}
-
-const CLAIM_ATTEMPTS = 3;
-const CLAIM_RETRY_MS = 1500;
-
-/** 交代先が参加証を取り直せないと全員が止まるので、通信の失敗は数回やり直す。 */
-async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
-  for (let i = 1; ; i++) {
-    try {
-      return await fn();
-    } catch (e) {
-      if (i >= CLAIM_ATTEMPTS) throw e;
-      await new Promise((r) => setTimeout(r, CLAIM_RETRY_MS));
-    }
-  }
 }
 
 let sharedConnector: MoqConnector | undefined;

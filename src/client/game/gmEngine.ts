@@ -175,7 +175,8 @@ export class GmEngine {
    * GM の交代や解散では、最後のイベントが Relay に届くよう少し待ってから閉じる。
    */
   close(lingerMs = 0): void {
-    if (this.#closed) return;
+    // 2 回目以降は何もしない（先に決めた待ち時間を短くしない）
+    if (this.#stopped) return;
     this.#stopped = true;
     for (const t of this.#timers.splice(0)) clearInterval(t);
     this.#listeners.clear();

@@ -87,5 +87,10 @@
   "copied": "Copié",
   "in_progress": "La partie est en cours",
   "dissolved_title": "Le salon a été fermé",
-  "back_to_top": "Retour à l’accueil"
+  "back_to_top": "Retour à l’accueil",
+  "claiming_title": "Reprise du rôle de MJ",
+  "rejoining_title": "Retour en tant que joueur",
+  "retrying_body": "Si la connexion est lente, on réessaie automatiquement. Patiente un instant.",
+  "claim_failed_title": "Impossible de reprendre le rôle de MJ",
+  "claim_failed_body": "Quitte le salon puis rejoins-le à nouveau."
 }

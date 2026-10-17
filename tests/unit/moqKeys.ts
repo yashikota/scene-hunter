@@ -25,5 +25,5 @@ export async function makeIdentities() {
     return { kp, cert, frame };
   };
   const verifier = () => new EnvelopeVerifier(serverPub, ROOM, () => 1000);
-  return { mk, verifier };
+  return { mk, verifier, server, serverPub };
 }

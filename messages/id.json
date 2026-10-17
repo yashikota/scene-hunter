@@ -59,5 +59,10 @@
   "copied": "Tersalin",
   "in_progress": "Permainan sedang berlangsung",
   "dissolved_title": "Ruang telah dibubarkan",
-  "back_to_top": "Kembali ke awal"
+  "back_to_top": "Kembali ke awal",
+  "claiming_title": "Sedang mengambil alih GM",
+  "rejoining_title": "Masuk lagi sebagai pemain",
+  "retrying_body": "Jika koneksi lambat, kami akan mencoba lagi otomatis. Mohon tunggu.",
+  "claim_failed_title": "Gagal mengambil alih GM",
+  "claim_failed_body": "Keluar dari ruang lalu masuk lagi."
 }

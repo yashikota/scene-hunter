@@ -1,7 +1,7 @@
-import type { Cert } from '../../shared/cert';
+import type { Cert, TransferCert } from '../../shared/cert';
 import { exportPrivateKey, exportPublicKey, generateKeyPair } from '../../shared/crypto';
 import { isLocale, type Locale } from '../../shared/locales';
-import { createRoom, joinRoom, type Joined } from '../api';
+import { claim, createRoom, joinRoom, type Joined } from '../api';
 
 // 部屋の一員としての資格（参加証、秘密鍵、部屋トークン）を sessionStorage の `sh:me:{code}` に置く。
 // 再読み込みしても同じ pid のまま戻れるように、プレイヤーが送るイベントの seq もここに置く
@@ -24,7 +24,21 @@ export interface Me {
   limitSec: number;
   /** 次に送る PlayerEvent の seq。 */
   seq: number;
+  /**
+   * GM の交代の途中。再読み込みしても続きからやり直せるよう、終わるまで保存しておく。
+   * - claim：交代先に選ばれた。交代証で GM の参加証を取り直す（fromEpoch は前の GM の epoch）。
+   * - rejoin：GM を渡した。新しい鍵でプレイヤーとして入り直す（gmPid は交代先）。
+   */
+  pending?: PendingStep;
+  /** 交代先として GM になったとき、越える前の GM の epoch。 */
+  gmEpochFloor?: number;
+  /** GM を渡して入り直したとき、最初から従う GM（交代先）。 */
+  followGmPid?: string;
 }
+
+export type PendingStep =
+  | { kind: 'claim'; transfer: TransferCert; fromEpoch: number }
+  | { kind: 'rejoin'; gmPid: string };
 
 const keyOf = (code: string) => `sh:me:${code}`;
 
@@ -60,6 +74,8 @@ export function loadMe(code: string): Me | null {
     ) {
       return null;
     }
+    const pending = o.pending as Partial<PendingStep> | undefined;
+    if (pending !== undefined && pending?.kind !== 'claim' && pending?.kind !== 'rejoin') return null;
     return o as Me;
   } catch {
     return null;
@@ -122,4 +138,78 @@ export async function joinAndSave(
   const me = toMe(joined, keys);
   saveMe(me);
   return me;
+}
+
+const statusOf = (e: unknown): number | undefined =>
+  e instanceof Error ? (e as { status?: number }).status : undefined;
+
+/** やり直しても変わらない失敗（部屋が無い、トークンや交代証が通らない）。 */
+const isPermanent = (e: unknown): boolean => {
+  const status = statusOf(e);
+  return status !== undefined && status >= 400 && status < 500 && status !== 408 && status !== 429;
+};
+
+export interface RetryDeps {
+  sleep(ms: number): Promise<void>;
+  /** UNIX 秒。 */
+  nowSec(): number;
+}
+
+const defaultRetry: RetryDeps = {
+  sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+  nowSec: () => Math.floor(Date.now() / 1000),
+};
+
+const MIN_RETRY_MS = 1000;
+const MAX_RETRY_MS = 30_000;
+
+/**
+ * 交代証で GM の参加証を取り直す。通信の失敗は間隔を伸ばしながら交代証の期限までやり直す。
+ * やり直しても通らない失敗か期限切れなら null。
+ */
+export async function claimUntilDone(
+  me: Me,
+  step: Extract<PendingStep, { kind: 'claim' }>,
+  opts: { claim?: typeof claim; retry?: RetryDeps; stopped?: () => boolean } = {},
+): Promise<Me | null> {
+  const doClaim = opts.claim ?? claim;
+  const { sleep, nowSec } = opts.retry ?? defaultRetry;
+  for (let delay = MIN_RETRY_MS; !opts.stopped?.() && nowSec() < step.transfer.body.exp; ) {
+    try {
+      const { roomToken, cert } = await doClaim(me.code, me.roomToken, {
+        transfer: step.transfer,
+        pubkey: me.pubkey,
+        name: me.name,
+      });
+      return { ...me, role: 'gm', roomToken, cert, pending: undefined };
+    } catch (e) {
+      console.warn('GM の参加証を取り直せなかった', e);
+      if (isPermanent(e)) return null;
+      await sleep(delay);
+      delay = Math.min(delay * 2, MAX_RETRY_MS);
+    }
+  }
+  return null;
+}
+
+/**
+ * GM を渡した後、新しい鍵でプレイヤーとして入り直す。通信の失敗は間隔を伸ばしながらやり直す。
+ * 部屋が無いなど、やり直しても通らない失敗なら null。
+ */
+export async function rejoinUntilDone(
+  me: Me,
+  opts: { join?: typeof joinRoom; retry?: RetryDeps; stopped?: () => boolean } = {},
+): Promise<Me | null> {
+  const { sleep } = opts.retry ?? defaultRetry;
+  for (let delay = MIN_RETRY_MS; !opts.stopped?.(); ) {
+    try {
+      return await joinAndSave(me.code, me.name, {}, { joinRoom: opts.join ?? joinRoom });
+    } catch (e) {
+      console.warn('プレイヤーとして入り直せなかった', e);
+      if (isPermanent(e)) return null;
+      await sleep(delay);
+      delay = Math.min(delay * 2, MAX_RETRY_MS);
+    }
+  }
+  return null;
 }

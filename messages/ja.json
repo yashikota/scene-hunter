@@ -59,5 +59,10 @@
   "copied": "コピーしました",
   "in_progress": "ゲームが進んでいます",
   "dissolved_title": "部屋は解散しました",
-  "back_to_top": "トップに戻る"
+  "back_to_top": "トップに戻る",
+  "claiming_title": "GM を引き継いでいます",
+  "rejoining_title": "プレイヤーとして入り直しています",
+  "retrying_body": "つながりにくいときは自動でやり直します。このまま待ってください",
+  "claim_failed_title": "GM を引き継げませんでした",
+  "claim_failed_body": "部屋を出て、もう一度入り直してください"
 }

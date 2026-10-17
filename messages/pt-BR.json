@@ -87,5 +87,10 @@
   "copied": "Copiado",
   "in_progress": "O jogo está em andamento",
   "dissolved_title": "A sala foi encerrada",
-  "back_to_top": "Voltar ao início"
+  "back_to_top": "Voltar ao início",
+  "claiming_title": "Assumindo como GM",
+  "rejoining_title": "Entrando de novo como jogador",
+  "retrying_body": "Se a conexão falhar, tentaremos de novo automaticamente. Aguarde.",
+  "claim_failed_title": "Não foi possível assumir como GM",
+  "claim_failed_body": "Saia da sala e entre de novo."
 }

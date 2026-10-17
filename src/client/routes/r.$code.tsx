@@ -47,6 +47,14 @@ function UnsupportedRoute() {
 function RoomScreen({ code }: { code: string }) {
   const room = useRoom(code);
   const { view, actions } = room;
+  if (room.status) {
+    return (
+      <Connecting
+        kind={room.status}
+        onLeave={room.status === 'claimFailed' ? () => void actions.leave() : undefined}
+      />
+    );
+  }
   switch (view.phase) {
     case 'connecting':
       return <Connecting />;

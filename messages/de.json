@@ -87,5 +87,10 @@
   "copied": "Kopiert",
   "in_progress": "Das Spiel läuft",
   "dissolved_title": "Der Raum wurde aufgelöst",
-  "back_to_top": "Zur Startseite"
+  "back_to_top": "Zur Startseite",
+  "claiming_title": "Übernehme die GM-Rolle",
+  "rejoining_title": "Trete als Mitspieler erneut bei",
+  "retrying_body": "Bei schlechter Verbindung versuchen wir es automatisch erneut. Bitte warten.",
+  "claim_failed_title": "Die GM-Rolle konnte nicht übernommen werden",
+  "claim_failed_body": "Verlass den Raum und tritt erneut bei."
 }

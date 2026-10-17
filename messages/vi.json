@@ -59,5 +59,10 @@
   "copied": "Đã sao chép",
   "in_progress": "Trò chơi đang diễn ra",
   "dissolved_title": "Phòng đã giải tán",
-  "back_to_top": "Về trang đầu"
+  "back_to_top": "Về trang đầu",
+  "claiming_title": "Đang nhận vai GM",
+  "rejoining_title": "Đang vào lại với tư cách người chơi",
+  "retrying_body": "Nếu kết nối chập chờn, hệ thống sẽ tự thử lại. Hãy chờ một chút.",
+  "claim_failed_title": "Không thể nhận vai GM",
+  "claim_failed_body": "Hãy rời phòng rồi vào lại."
 }
