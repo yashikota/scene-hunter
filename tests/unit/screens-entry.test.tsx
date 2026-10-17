@@ -215,7 +215,7 @@ describe('/r/{code} を直接開く（まだ入っていない部屋）', () => 
   });
 
   it('部屋が無ければ、数秒で番号を入れたトップに「見つかりません」を出す（準備中の画面は出さない）', async () => {
-    const fetchMock = vi.fn(async () => json({ error: 'not_found' }, 404));
+    const fetchMock = vi.fn(async () => json({ exists: false }));
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers({ toFake: ['setTimeout'] });
     try {

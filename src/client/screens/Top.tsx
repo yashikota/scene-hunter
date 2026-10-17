@@ -13,7 +13,7 @@ import { Unsupported } from './Unsupported';
 export interface TopDeps {
   /** 部屋を作って資格を保存し、部屋の番号を返す。 */
   create(name: string, locale: Locale): Promise<string>;
-  /** 部屋があるか確かめる（数秒で答える）。無ければ reject（404）。 */
+  /** 部屋があるか確かめる（数秒で答える）。無ければ reject（status 404）。 */
   find(code: string): Promise<void>;
   /** このタブで、あると確かめ済みの部屋か（省略時は membership の記録）。 */
   isFound?(code: string): boolean;

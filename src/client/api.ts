@@ -26,7 +26,7 @@ export type HintsResult =
 const JOIN_RETRY_MS = 3000;
 const JOIN_TIMEOUT_MS = 60_000;
 /**
- * 部屋があるかの確かめで、404 を待ち直す回数と間隔。打ち間違いはすぐ知らせたいので短くし、
+ * 部屋があるかの確かめで、{ exists: false } を待ち直す回数と間隔。打ち間違いはすぐ知らせたいので短くし、
  * できた直後の部屋が KV に見えるまでの数秒だけを待つ（合わせて 3 回、約 6 秒）。
  */
 const CHECK_RETRIES = 2;
@@ -73,17 +73,22 @@ export async function joinRoom(
   }
 }
 
-/** 部屋があるか確かめる。404 なら 3 秒おきに 2 回まで確かめ直し、それでも無ければ 404 を投げる。 */
+/** 404 として扱う失敗（部屋が無い）。画面の文言は状態で選ぶ。 */
+const notFound = () => Object.assign(new Error('room not found'), { status: 404 });
+
+/**
+ * 部屋があるか確かめる。{ exists: false } なら 3 秒おきに 2 回まで確かめ直し、それでも無ければ
+ * status 404 の Error を投げる。JSON の { exists: true } 以外（SPA の HTML など）は、あるとみなさず失敗にする。
+ */
 export async function checkRoom(code: string, opts: { sleep?: (ms: number) => Promise<void> } = {}): Promise<void> {
   const sleep = opts.sleep ?? sleepMs;
   for (let retry = 0; ; retry++) {
-    try {
-      await fetch('/api/rooms/:code', { params: { code }, retry: 0 });
-      return;
-    } catch (e) {
-      if (statusOf(e) !== 404 || retry >= CHECK_RETRIES) throw e;
-      await sleep(CHECK_RETRY_MS);
-    }
+    const res = (await fetch('/api/rooms/:code', { params: { code }, retry: 0 })) as unknown;
+    const exists = typeof res === 'object' && res !== null ? (res as { exists?: unknown }).exists : undefined;
+    if (exists === true) return;
+    if (exists !== false) throw new Error('unexpected response from room check');
+    if (retry >= CHECK_RETRIES) throw notFound();
+    await sleep(CHECK_RETRY_MS);
   }
 }
 
@@ -111,8 +116,10 @@ export async function listPhotos(
     headers: auth(token),
     query: { gameId: query.gameId, round: String(query.round) },
     retry: 0,
-  })) as { photos: RoundPhoto[] };
-  return res.photos;
+  })) as { photos?: unknown } | null;
+  // 本番では GET の 404 が SPA の HTML（200）に差し替わる。形が違う応答は失敗として扱い、呼び出し側にやり直させる
+  if (!Array.isArray(res?.photos)) throw new Error('unexpected response from photo list');
+  return res.photos as RoundPhoto[];
 }
 
 export async function requestHints(code: string, token: string, key: string): Promise<HintsResult> {

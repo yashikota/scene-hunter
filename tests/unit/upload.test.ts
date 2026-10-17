@@ -97,8 +97,8 @@ describe('checkRoom', () => {
     expect(String(fetchMock.mock.calls[0]![0])).toContain('/api/rooms/482913');
   });
 
-  it('404 なら 3 秒おきに 2 回だけ確かめ直し、それでも無ければ 404 を投げる（打ち間違いはすぐ知らせる）', async () => {
-    const fetchMock = vi.fn(async () => json({ error: 'not_found' }, 404));
+  it('exists: false なら 3 秒おきに 2 回だけ確かめ直し、それでも無ければ 404 を投げる（打ち間違いはすぐ知らせる）', async () => {
+    const fetchMock = vi.fn(async () => json({ exists: false }));
     vi.stubGlobal('fetch', fetchMock);
     const sleep = vi.fn().mockResolvedValue(undefined);
     await expect(checkRoom('482913', { sleep })).rejects.toMatchObject({ status: 404 });
@@ -106,19 +106,43 @@ describe('checkRoom', () => {
     expect(sleep.mock.calls).toEqual([[3000], [3000]]);
   });
 
-  it('できた直後で 404 でも、確かめ直しで見えれば終わる', async () => {
+  it('できた直後で exists: false でも、確かめ直しで見えれば終わる', async () => {
     const fetchMock = vi
       .fn()
-      .mockImplementationOnce(async () => json({ error: 'not_found' }, 404))
+      .mockImplementationOnce(async () => json({ exists: false }))
       .mockImplementationOnce(async () => json({ exists: true }));
     vi.stubGlobal('fetch', fetchMock);
     await checkRoom('482913', { sleep: async () => {} });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it('SPA の index.html（200 の HTML）は、あるとみなさず失敗にする', async () => {
+    const html = () =>
+      new Response('<!doctype html><html><body><div id="root"></div></body></html>', {
+        status: 200,
+        headers: { 'content-type': 'text/html' },
+      });
+    const fetchMock = vi.fn(async () => html());
+    vi.stubGlobal('fetch', fetchMock);
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    await expect(checkRoom('482913', { sleep })).rejects.toThrow();
+    // 部屋が無いとは言い切れないので確かめ直さない（打ち間違いの 404 とは区別する）
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it('404 以外はすぐ投げる', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => json({ error: 'rate_limited' }, 429)));
     await expect(checkRoom('482913')).rejects.toMatchObject({ status: 429 });
+  });
+});
+
+describe('listPhotos', () => {
+  it('SPA の index.html（GET の 404 の差し替え）は失敗として投げる', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('<!doctype html><html></html>', { status: 200, headers: { 'content-type': 'text/html' } })),
+    );
+    await expect(listPhotos('482913', 'tok', { gameId: 'g', round: 1 })).rejects.toThrow();
   });
 });
 
