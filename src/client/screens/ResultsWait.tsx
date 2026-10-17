@@ -58,14 +58,6 @@ export function ResultsWait({ code, round, rounds, gmName, gmPhotoUrl, photos, m
           </ul>
         </>
       )}
-      <div
-        role="status"
-        className="sh-card"
-        style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 14, fontWeight: 800, padding: '12px 16px' }}
-      >
-        <span className="sh-pulse" aria-hidden="true" style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--color-accent)', border: 'var(--border)' }} />
-        {m.results_wait_note()}
-      </div>
     </Screen>
   );
 }

@@ -106,7 +106,7 @@ export function LobbyGm({ code, gmName, players, rounds, limitSec, onStart, onTr
 
   return (
     <Screen>
-      <TopBar left={m.lobby_label()} right={<span className="sh-badge">{m.you_are_gm()}</span>} />
+      <TopBar left={m.app_name()} right={<span className="sh-badge">{m.you_are_gm()}</span>} />
 
       <Card raised style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
         <span className="sh-sub" style={{ fontSize: 13, fontWeight: 800 }}>
@@ -114,9 +114,6 @@ export function LobbyGm({ code, gmName, players, rounds, limitSec, onStart, onTr
         </span>
         <span className="sh-display" style={{ fontSize: 42, letterSpacing: '0.12em' }}>
           {formatCode(code)}
-        </span>
-        <span className="sh-sub" style={{ fontSize: 12, textAlign: 'center' }}>
-          {m.share_code()}
         </span>
         <Button variant="quiet" onClick={copyLink} style={{ marginTop: 8 }}>
           {copied ? m.link_copied() : m.copy_link()}
@@ -136,20 +133,9 @@ export function LobbyGm({ code, gmName, players, rounds, limitSec, onStart, onTr
 
       <PlayerTiles gmName={gmName} players={players} />
 
-      <Card style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 14, fontWeight: 800 }}>{m.rounds_label()}</span>
-          <span className="sh-display" style={{ fontSize: 20 }}>
-            {rounds}
-          </span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 14, fontWeight: 800 }}>{m.limit_label()}</span>
-          <span className="sh-display" style={{ fontSize: 20 }}>
-            {m.seconds({ count: limitSec })}
-          </span>
-        </div>
-      </Card>
+      <p className="sh-sub" style={{ margin: 0, fontSize: 14, fontWeight: 800, textAlign: 'center' }}>
+        {m.rounds_chip({ count: rounds })} · {m.seconds({ count: limitSec })}
+      </p>
 
       {failed && (
         <p role="alert" className="sh-error">

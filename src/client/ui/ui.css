@@ -345,3 +345,95 @@ body {
   color: var(--color-timer);
   flex-shrink: 0;
 }
+.sh-hint-body {
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sh-hint-preview {
+  font-weight: 500;
+}
+
+/* 公開までの進み。useNow の刻み（250 ms）の間を transition でつなぐ。 */
+.sh-bar {
+  display: block;
+  height: 10px;
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.sh-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--color-timer);
+  transform-origin: left center;
+  transition: transform 250ms linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sh-bar-fill {
+    transition: none;
+  }
+}
+
+/* 画面の中央に題と動きを置く待ちの画面。 */
+.sh-center {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.sh-bar--wide {
+  width: min(280px, 80%);
+  height: 16px;
+}
+/* 時間で伸びるバー（長さは animation-duration で決める）。終わりに近づくほどゆっくりにする。 */
+@keyframes sh-fill-over {
+  from {
+    transform: scaleX(0.04);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.sh-fill-over {
+  transform: scaleX(1);
+  animation: sh-fill-over 50s cubic-bezier(0.2, 0.6, 0.35, 1) both;
+}
+
+/* 遊び方の 3 行（アイコンと短い文）。 */
+.sh-howto {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-sub);
+}
+.sh-howto li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+/* 終わりの見えない待ち：減速しながら 90 % まで伸び、そこで止まる。 */
+@keyframes sh-fill-90 {
+  from {
+    transform: scaleX(0.04);
+  }
+  to {
+    transform: scaleX(0.9);
+  }
+}
+.sh-fill-90 {
+  transform: scaleX(0.9);
+  animation: sh-fill-90 30s cubic-bezier(0.15, 0.7, 0.3, 1) both;
+}

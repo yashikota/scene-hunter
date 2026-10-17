@@ -141,15 +141,12 @@ function TopForm({
         <h1 className="sh-display" style={{ fontSize: 34, letterSpacing: '0.02em' }}>
           {m.app_name()}
         </h1>
-        <p className="sh-sub sh-pre" style={{ margin: 0, fontSize: 15, textAlign: 'center', lineHeight: 1.6 }}>
-          {m.top_tagline()}
-        </p>
       </div>
 
       <form onSubmit={join} noValidate>
         <Card raised style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div className="sh-field">
-            <label htmlFor={`${ids}-code`} className="sh-label">
+            <label htmlFor={`${ids}-code`} className="sh-sr-only">
               {m.code_label()}
             </label>
             <input
@@ -158,13 +155,13 @@ function TopForm({
               inputMode="numeric"
               autoComplete="off"
               maxLength={6}
-              placeholder={m.code_placeholder()}
+              placeholder={m.code_label()}
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
             />
           </div>
           <div className="sh-field">
-            <label htmlFor={`${ids}-name`} className="sh-label">
+            <label htmlFor={`${ids}-name`} className="sh-sr-only">
               {m.name_label()}
             </label>
             <input
@@ -173,7 +170,7 @@ function TopForm({
               className="sh-input"
               autoComplete="nickname"
               maxLength={NAME_MAX}
-              placeholder={m.name_placeholder()}
+              placeholder={m.name_label()}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -199,9 +196,6 @@ function TopForm({
         {status === 'creating' ? m.creating() : m.create_button()}
       </Button>
 
-      <p className="sh-sub sh-pre" style={{ margin: 0, marginTop: 'auto', fontSize: 12, textAlign: 'center', lineHeight: 1.6 }}>
-        {m.top_note()}
-      </p>
     </Screen>
   );
 }

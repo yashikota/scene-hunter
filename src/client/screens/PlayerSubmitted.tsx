@@ -58,9 +58,6 @@ export function PlayerSubmitted({ round, rounds, startedAt, limitSec, photoUrl, 
             </span>
           )}
         </div>
-        <p className="sh-sub" style={{ margin: 0, fontSize: 12, textAlign: 'center' }}>
-          {m.sent_secret()}
-        </p>
       </Card>
       <Card style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800 }}>
@@ -68,9 +65,6 @@ export function PlayerSubmitted({ round, rounds, startedAt, limitSec, photoUrl, 
           <span>{m.people_ratio({ done: submitted, total })}</span>
         </div>
         <progress value={submitted} max={Math.max(total, 1)} style={{ width: '100%' }} />
-        <p className="sh-sub" style={{ margin: 0, fontSize: 12 }}>
-          {m.sent_note()}
-        </p>
       </Card>
     </Screen>
   );

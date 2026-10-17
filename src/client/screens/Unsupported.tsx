@@ -39,9 +39,6 @@ export function Unsupported() {
         <h1 className="sh-display" style={{ fontSize: 24, lineHeight: 1.4 }}>
           {m.unsupported_title()}
         </h1>
-        <p className="sh-pre" style={{ margin: 0, fontSize: 15, lineHeight: 1.7 }}>
-          {m.unsupported_body()}
-        </p>
       </div>
 
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -55,9 +52,6 @@ export function Unsupported() {
           </li>
         ))}
       </ul>
-      <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: 'center' }}>
-        {m.unsupported_ios()}
-      </p>
 
       <div className="sh-field" style={{ marginTop: 'auto', gap: 8 }}>
         <label htmlFor="page-link" className="sh-label">

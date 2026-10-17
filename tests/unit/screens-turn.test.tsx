@@ -28,6 +28,7 @@ const stop = vi.fn();
 const revoke = vi.fn();
 /** setInterval を偽にしているので、waitFor の定期確認が動かない。非同期の処理を進めてから確かめる。 */
 const settle = () => act(() => vi.advanceTimersByTimeAsync(50));
+const bar = (n: number) => screen.getByRole('progressbar', { name: m.hint_bar_label({ n }) });
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
@@ -65,13 +66,22 @@ const playerTurn = (over: Partial<PlayerTurnProps> = {}) => (
 );
 
 describe('PlayerTurn', () => {
-  it('届いたヒントを出し、まだのヒントには公開までの秒数を出す', async () => {
+  it('届いたヒントを出し、まだのヒントは公開までの進みをバーで出す（秒数の文は出さない）', async () => {
     render(playerTurn());
     expect(screen.getByText('赤いものが写っている')).toBeTruthy();
     expect(screen.getByText('見上げる角度で撮っている')).toBeTruthy();
-    expect(screen.getByText(m.hint_in({ count: 6 }))).toBeTruthy();
-    expect(screen.getByText(m.hint_in({ count: 16 }))).toBeTruthy();
+    // 経過 24 秒：ヒント 4（30 秒で公開）は 20〜30 秒の間で伸びて 40 %、ヒント 5（40 秒）はまだ 0 %
+    expect(bar(4).getAttribute('aria-valuenow')).toBe('40');
+    expect(bar(5).getAttribute('aria-valuenow')).toBe('0');
+    expect(screen.queryByRole('progressbar', { name: m.hint_bar_label({ n: 3 }) })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/あと \d+ 秒/);
     expect(screen.getByRole('timer').textContent).toContain('36');
+  });
+
+  it('バーの幅は同じ割合', () => {
+    render(playerTurn());
+    const fill = bar(4).firstElementChild as HTMLElement;
+    expect(fill.style.transform).toBe('scaleX(0.4)');
   });
 
   it('撮り直しのボタンを置かない', () => {
@@ -87,7 +97,9 @@ describe('PlayerTurn', () => {
       vi.advanceTimersByTime(250);
     });
     expect(screen.getByRole('timer').textContent).toContain('26');
-    expect(screen.getByText(m.hint_in({ count: 6 }))).toBeTruthy();
+    // 経過 34.25 秒：ヒント 4 は公開の時刻を過ぎて 100 %（届くのを待つ）、ヒント 5 は 43 %
+    expect(bar(4).getAttribute('aria-valuenow')).toBe('100');
+    expect(bar(5).getAttribute('aria-valuenow')).toBe('43');
   });
 
   it('シャッターで JPEG にして出し、カメラを止めて提出済みの画面にする', async () => {
@@ -269,7 +281,7 @@ describe('GmTurn', () => {
 });
 
 describe('PlayerTurnGm', () => {
-  it('提出状況と、未公開のヒントの公開までの秒数を出す', () => {
+  it('提出状況と、未公開のヒントの文言と公開までのバーを出す', () => {
     render(
       <PlayerTurnGm
         round={2}
@@ -288,6 +300,9 @@ describe('PlayerTurnGm', () => {
     expect(screen.getByText('1 / 2 人')).toBeTruthy();
     expect(screen.getByText('提出済み')).toBeTruthy();
     expect(screen.getByText('撮影中')).toBeTruthy();
-    expect(screen.getByText(/d（あと 6 秒で公開）/)).toBeTruthy();
+    expect(screen.getByText('d')).toBeTruthy();
+    expect(bar(4).getAttribute('aria-valuenow')).toBe('40');
+    expect(bar(5).getAttribute('aria-valuenow')).toBe('0');
+    expect(screen.queryByRole('progressbar', { name: m.hint_bar_label({ n: 3 }) })).toBeNull();
   });
 });

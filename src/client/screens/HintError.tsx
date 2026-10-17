@@ -63,9 +63,6 @@ export function HintError({ round, rounds, onRetry, onDissolve }: HintErrorProps
         </Button>
         <Button onClick={onDissolve}>{m.hint_dissolve()}</Button>
       </div>
-      <p className="sh-sub" style={{ margin: 0, fontSize: 12, textAlign: 'center' }}>
-        {m.hint_error_note()}
-      </p>
     </Screen>
   );
 }

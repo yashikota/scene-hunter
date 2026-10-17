@@ -8,7 +8,8 @@ import { formatCode, TopBar } from '../ui/TopBar';
 import { useNow } from '../ui/useNow';
 import { CameraBlocked } from './CameraBlocked';
 import { PlayerSubmitted } from './PlayerSubmitted';
-import { HINT_COUNT, hintWaitSec, remainingSec } from './turnTime';
+import { HintList } from './HintList';
+import { remainingSec } from './turnTime';
 
 export interface PlayerTurnProps {
   code: string;
@@ -139,19 +140,7 @@ export function PlayerTurn(props: PlayerTurnProps) {
               <small> {m.sec_suffix()}</small>
             </span>
           </div>
-          <ol className="sh-hints">
-            {Array.from({ length: HINT_COUNT }, (_, i) => {
-              const text = hints[i];
-              return (
-                <li key={i} className={`sh-hint ${text === undefined ? 'sh-hint--locked' : ''}`}>
-                  <span className="sh-hint-no">{i + 1}</span>
-                  <span>
-                    {text ?? m.hint_in({ count: hintWaitSec(i, turnStartedLocalAt, now) })}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
+          <HintList hints={hints} shown={hints.length} turnStartedLocalAt={turnStartedLocalAt} now={now} />
           <CameraFrame videoRef={cam.videoRef}>
             {cam.state === 'starting' && <span style={{ fontSize: 14 }}>{m.camera_starting()}</span>}
           </CameraFrame>

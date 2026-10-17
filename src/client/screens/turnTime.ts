@@ -13,7 +13,11 @@ export function remainingSec(startedAt: number | null, limitSec: number, now: nu
   return Math.max(0, Math.ceil(limitSec - elapsedSec(startedAt, now)));
 }
 
-/** ヒント index（0 始まり）が公開されるまでの秒数。通信の遅れで過ぎていても 1 秒以上で返す。 */
-export function hintWaitSec(index: number, startedAt: number | null, now: number): number {
-  return Math.max(1, Math.ceil(index * HINT_INTERVAL_SEC - elapsedSec(startedAt, now)));
+/**
+ * ヒント index（0 始まり）の公開までの進み（0〜1）。公開の直前の 10 秒で 0 から 1 まで伸びる
+ * （次に出るヒントのバーだけが動き、その先のヒントは 0 のまま待つ）。
+ */
+export function hintProgress(index: number, startedAt: number | null, now: number): number {
+  const p = (elapsedSec(startedAt, now) - (index - 1) * HINT_INTERVAL_SEC) / HINT_INTERVAL_SEC;
+  return Math.min(1, Math.max(0, p));
 }

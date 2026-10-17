@@ -30,7 +30,7 @@ export function Disconnected({ code, round, rounds, gmName, since, me, onLeave }
   return (
     <Screen>
       <TopBar
-        left={round > 0 ? m.round_label({ round, rounds }) : m.lobby_label()}
+        left={round > 0 ? m.round_label({ round, rounds }) : m.app_name()}
         right={<span>{m.room_badge({ code: formatCode(code) })}</span>}
       />
       <div

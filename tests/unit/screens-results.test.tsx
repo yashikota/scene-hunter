@@ -100,7 +100,6 @@ describe('ResultsPick', () => {
     expect(screen.getByText(m.results_checking())).toBeTruthy();
     expect((screen.getAllByRole('button').at(-1) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.queryByText(/秒 ・/)).toBeNull();
-    expect(screen.getByText(m.pick_secret_note())).toBeTruthy();
   });
 });
 

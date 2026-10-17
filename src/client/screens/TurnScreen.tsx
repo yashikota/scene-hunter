@@ -45,7 +45,7 @@ export function TurnScreen({ room, code }: { room: Room; code: string }) {
         />
       );
     case 'hinting':
-      return <HintWait {...common} code={code} />;
+      return <HintWait {...common} code={code} gm={isGm} />;
     case 'hintError':
       return isGm ? (
         <HintError {...common} onRetry={actions.retryHints} onDissolve={() => void actions.dissolve()} />

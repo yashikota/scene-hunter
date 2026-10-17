@@ -155,6 +155,14 @@ describe('Connecting', () => {
     render(<Connecting preparing />);
     expect(screen.getByRole('heading', { name: '部屋を準備しています' })).toBeTruthy();
   });
+
+  it('待ちの画面は題だけで、説明の文を出さない', () => {
+    for (const kind of ['connecting', 'preparing', 'claiming', 'rejoining'] as const) {
+      const { container, unmount } = render(<Connecting kind={kind} />);
+      expect(container.querySelector('p')).toBeNull();
+      unmount();
+    }
+  });
 });
 
 describe('LobbyGm', () => {
@@ -164,8 +172,8 @@ describe('LobbyGm', () => {
     expect(screen.getByText('ゆうき（GM）')).toBeTruthy();
     for (const p of players) expect(screen.getByText(p.label)).toBeTruthy();
     expect(screen.getByText('4 人')).toBeTruthy(); // GM を含める
-    expect(screen.getByText(m.rounds_label()).parentElement?.textContent).toContain('3');
-    expect(screen.getByText(m.limit_label()).parentElement?.textContent).toContain('60');
+    // 設定の枠ではなく、1 行の固定表示
+    expect(screen.getByText('3 ラウンド · 60 秒')).toBeTruthy();
     // ボタンは開始、交代、解散だけで、ラウンド数と制限時間を変える入力も無い
     expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual([
       m.copy_link(),
@@ -197,7 +205,7 @@ describe('LobbyGm', () => {
     render(lobbyGm());
     expect(screen.getByText('You are the GM')).toBeTruthy();
     expect(screen.getByText('4 players')).toBeTruthy();
-    expect(screen.getByText('60 sec')).toBeTruthy();
+    expect(screen.getByText('3 rounds · 60 sec')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Start the game' })).toBeTruthy();
   });
 });
@@ -249,11 +257,10 @@ describe('LobbyPlayer', () => {
         onLeave={onLeave}
       />,
     );
-    expect(screen.getByText('はるか として参加中')).toBeTruthy();
     expect(screen.getByText('はるか（あなた）')).toBeTruthy();
     expect(screen.getByText('ゆうき（GM）')).toBeTruthy();
     expect(screen.getByText('3 ラウンド')).toBeTruthy();
-    expect(screen.getByText('制限時間 60 秒')).toBeTruthy();
+    expect(screen.getByText('60 秒')).toBeTruthy();
     expect(screen.getByText('部屋 482 913')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: m.leave_button() }));
     expect(onLeave).toHaveBeenCalled();

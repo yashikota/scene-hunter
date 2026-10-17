@@ -3,7 +3,8 @@ import { Card } from '../ui/Card';
 import { Screen } from '../ui/Screen';
 import { TopBar } from '../ui/TopBar';
 import { useNow } from '../ui/useNow';
-import { HINT_COUNT, hintWaitSec, remainingSec } from './turnTime';
+import { HintList } from './HintList';
+import { remainingSec } from './turnTime';
 
 export interface PlayerTurnGmProps {
   round: number;
@@ -64,20 +65,7 @@ export function PlayerTurnGm(props: PlayerTurnGmProps) {
         <h2 className="sh-display" style={{ fontSize: 17 }}>
           {m.hints_heading()}
         </h2>
-        <ol className="sh-hints">
-          {Array.from({ length: HINT_COUNT }, (_, i) => {
-            const locked = i >= shown;
-            return (
-              <li key={i} className={`sh-hint ${locked ? 'sh-hint--locked' : ''}`}>
-                <span className="sh-hint-no">{i + 1}</span>
-                <span>
-                  {hints[i]}
-                  {locked && m.hint_opens_in({ count: hintWaitSec(i, turnStartedLocalAt, now) })}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
+        <HintList hints={hints} shown={shown} turnStartedLocalAt={turnStartedLocalAt} now={now} />
       </section>
 
       <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

@@ -46,7 +46,7 @@ export function ResultsPick({ round, rounds, gmPhotoUrl, photos, missing, picks,
           {m.results_pick_hint()}
         </p>
       </div>
-      <TopicCard url={gmPhotoUrl} note={m.topic_note_gm()} />
+      <TopicCard url={gmPhotoUrl} />
       {photos === null ? (
         <Collecting text={m.results_checking()} />
       ) : (
@@ -135,9 +135,6 @@ export function ResultsPick({ round, rounds, gmPhotoUrl, photos, missing, picks,
         </ul>
       )}
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: 'center' }}>
-          {m.pick_secret_note()}
-        </p>
         <Button variant="primary" disabled={photos === null || left > 0} onClick={onConfirm}>
           {left > 0 ? m.pick_need_more({ count: left }) : m.pick_confirm()}
         </Button>

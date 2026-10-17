@@ -91,10 +91,6 @@ export function Final({ code, rounds, totals, players, mePid, isGm, onBackToLobb
         </ol>
       )}
 
-      <p className="sh-sub sh-pre" style={{ margin: 0, fontSize: 13, textAlign: 'center', lineHeight: 1.7 }}>
-        {m.final_note()}
-      </p>
-
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {isGm ? (
           <Button variant="primary" onClick={onBackToLobby}>
