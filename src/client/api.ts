@@ -11,6 +11,8 @@ export interface Joined {
   locale: Locale;
   rounds: number;
   limitSec: number;
+  /** いまの GM の pid（サーバーの部屋の記録のもの）。 */
+  gmPid: string;
 }
 
 export interface RoundPhoto {

@@ -31,6 +31,11 @@ export interface Joined {
   locale: Locale;
   rounds: number;
   limitSec: number;
+  /**
+   * いまの GM の pid（KV の部屋の記録のもの）。プレイヤーはこの pid の GM の参加証だけに従う
+   * （GM を渡した元の GM が、まだ有効な GM の参加証で後から入った人を乗っ取れないように）。
+   */
+  gmPid: string;
 }
 
 /** トークンが不正、または役割が足りない。 */
@@ -161,6 +166,7 @@ export async function createRoom(
       locale: input.locale,
       rounds,
       limitSec,
+      gmPid: pid,
     };
   }
   throw new Error('could not allocate a room code');
@@ -203,6 +209,7 @@ export async function joinRoom(
     locale: rec.locale,
     rounds: rec.rounds,
     limitSec: rec.limitSec,
+    gmPid: rec.gmPid,
   };
 }
 

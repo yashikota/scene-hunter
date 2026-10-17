@@ -57,6 +57,8 @@ export interface PlayerEngineDeps {
   now: () => number;
   /** seq を使うたびに、次の seq を渡す（保存して再読み込みでも続けるため）。 */
   saveSeq(next: number): void;
+  /** 従う GM が交代で替わった（保存して、再読み込みしても交代先だけに従うため）。 */
+  saveGmPid(pid: string): void;
   /** 自分が GM の交代先に選ばれた。 */
   onTransferToMe(transfer: TransferCert): void;
 }
@@ -65,8 +67,11 @@ export class PlayerEngine {
   view: PlayerView = initialView();
   /** 追いかけている gm/{epoch}。まだ見つけていなければ -1。 */
   epoch = -1;
-  /** いま従っている GM。最初の GM のフレームを受けるまでは null（role が gm の参加証なら受け付ける）。 */
-  gmPid: string | null = null;
+  /**
+   * いま従っている GM。サーバーから受け取った pid（Me.gmPid）から始め、検証した交代のイベントで替える。
+   * null（古い保存）なら、最初に届いた role が gm の参加証のフレームの送り主に従う。
+   */
+  gmPid: string | null;
   /**
    * いま追いかけている GM の broadcast（gm/{epoch}）の announce が消えたときの時刻（自分の時計）。
    * 新しい epoch に乗り換えるか、同じ broadcast が announce し直されたら null に戻る。
@@ -106,6 +111,7 @@ export class PlayerEngine {
     this.#deps = deps;
     this.#seq = me.seq;
     this.#seqReserved = me.seq;
+    this.gmPid = me.gmPid ?? null;
     this.#link = new LinkWatch(deps.now, () => this.#notify());
   }
 
@@ -321,9 +327,10 @@ export class PlayerEngine {
     for (const fn of this.#listeners) fn();
   }
 
+  /** 従う GM のフレームか。GM の参加証（role が gm）で、従っている pid のものだけ。 */
   #isGm(pid: string): boolean {
-    if (this.gmPid !== null) return pid === this.gmPid;
-    return this.#deps.verifier.certOf(pid)?.body.role === 'gm';
+    if (this.#deps.verifier.certOf(pid)?.body.role !== 'gm') return false;
+    return this.gmPid === null || pid === this.gmPid;
   }
 
   #onEvent(e: GmEvent): void {
@@ -353,6 +360,7 @@ export class PlayerEngine {
     if (this.#closed || this.gmPid !== e.pid) return;
     // 以後は交代先だけに従う。新しい GM の seq は 0 から数えるので、取りこぼしの判定も最初から。
     this.gmPid = transfer.body.to;
+    this.#deps.saveGmPid(transfer.body.to);
     this.#transferred = true;
     this.#set({ ...this.view, lastSeq: -1 });
     if (transfer.body.to === this.#me.pid) this.#deps.onTransferToMe(transfer);

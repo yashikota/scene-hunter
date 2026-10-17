@@ -64,6 +64,7 @@ async function setup() {
       serverPub: '',
       now: () => Date.now(),
       saveSeq: (n) => saved.push(n),
+      saveGmPid: () => {},
       onTransferToMe: () => {},
     });
     p.start();
@@ -273,6 +274,7 @@ describe('GM の交代（偽の Relay）', () => {
     });
     gm.start();
     const transfers: unknown[] = [];
+    const pinned: string[] = [];
     const player = (id: Identity) => {
       const p = new PlayerEngine(meOf(id, 'player'), {
         connector: relay.connector,
@@ -281,6 +283,7 @@ describe('GM の交代（偽の Relay）', () => {
         serverPub: keys.serverPub,
         now,
         saveSeq: () => {},
+        saveGmPid: (pid) => pinned.push(`${id.cert.body.pid}:${pid}`),
         onTransferToMe: (t) => transfers.push(t),
       });
       p.start();
@@ -305,6 +308,8 @@ describe('GM の交代（偽の Relay）', () => {
     await vi.waitFor(() => expect(transfers).toEqual([transfer]));
     await vi.waitFor(() => expect(bob.gmPid).toBe('alice'));
     expect(bob.view.lastSeq).toBe(-1); // 新しい GM の seq は 0 から
+    // 交代先は保存して、再読み込みしても交代先だけに従う
+    expect(pinned.sort()).toEqual(['alice:alice', 'bob:alice']);
     gm.close();
 
     // 1 回目の claim は通信の失敗。やり直しで GM の参加証を受け取る。
@@ -339,6 +344,58 @@ describe('GM の交代（偽の Relay）', () => {
     expect(bob.gmName()).toBe('alice');
     bob.close();
     newGm.close();
+  });
+
+  it('GM を渡した元の GM の参加証には、従う GM の pid を持つプレイヤー（後から入った人、再読み込みした人）は従わない', async () => {
+    const keys = await makeIdentities();
+    const relay = new FakeRelay();
+    // 元の GM（gm）は GM の参加証を持ったまま、gm/7 で偽のゲームを出す
+    const oldId = await keys.mk('gm', 'gm');
+    const old = new GmEngine(meOf(oldId, 'gm'), {
+      connector: relay.connector,
+      verifier: keys.verifier(),
+      privateKey: oldId.kp.privateKey,
+      now: () => Date.now(),
+    });
+    old.start(6);
+    expect(old.epoch).toBe(7);
+    // サーバーの記録では、いまの GM は carol（/join の gmPid か、交代を受けて保存した pid）
+    const bobId = await keys.mk('bob', 'player');
+    const bob = new PlayerEngine(
+      { ...meOf(bobId, 'player'), gmPid: 'carol' },
+      {
+        connector: relay.connector,
+        verifier: keys.verifier(),
+        privateKey: bobId.kp.privateKey,
+        serverPub: keys.serverPub,
+        now: () => Date.now(),
+        saveSeq: () => {},
+        saveGmPid: () => {},
+        onTransferToMe: () => {},
+      },
+    );
+    bob.start();
+    expect(bob.gmPid).toBe('carol');
+    relay.announce('gm/7', true); // 元の GM の epoch を announce でも見つける
+    await new Promise((r) => setTimeout(r, 300));
+    expect(bob.epoch).toBe(-1);
+    expect(bob.view.phase).toBe('connecting');
+
+    // 本当の GM（carol）が出てくれば従う
+    const carolId = await keys.mk('carol', 'gm');
+    const carol = new GmEngine(meOf(carolId, 'gm'), {
+      connector: relay.connector,
+      verifier: keys.verifier(),
+      privateKey: carolId.kp.privateKey,
+      now: () => Date.now(),
+    });
+    localStorage.clear(); // carol は別の端末
+    carol.start(7);
+    await vi.waitFor(() => expect(bob.epoch).toBe(8), { timeout: 4000 });
+    expect(bob.view.gmPid).toBe('carol');
+    bob.close();
+    old.close();
+    carol.close();
   });
 
   it('claim はやり直しても通らない失敗ならあきらめ、交代証の期限が過ぎてもあきらめる', async () => {
@@ -426,6 +483,7 @@ describe('一覧に載らないときの publish のやり直し', () => {
       serverPub: keys.serverPub,
       now: () => (checks++, clock),
       saveSeq: () => {},
+      saveGmPid: () => {},
       onTransferToMe: () => {},
     });
     p.start();
@@ -511,6 +569,7 @@ describe('GM の接続切れ（偽の Relay）', () => {
       serverPub: keys.serverPub,
       now: () => Date.now(),
       saveSeq: () => {},
+      saveGmPid: () => {},
       onTransferToMe: () => {},
     });
     bob.start();
@@ -645,6 +704,7 @@ describe('部屋を出る、通信が切れる（偽の Relay）', () => {
         serverPub: keys.serverPub,
         now: () => Date.now(),
         saveSeq: () => {},
+        saveGmPid: () => {},
         onTransferToMe: () => {},
       });
       p.start();
@@ -765,6 +825,7 @@ describe('部屋を出る、通信が切れる（偽の Relay）', () => {
       serverPub: keys.serverPub,
       now: () => Date.now(),
       saveSeq: () => {},
+      saveGmPid: () => {},
       onTransferToMe: () => {},
     });
     p.start();
@@ -931,6 +992,7 @@ describe('プレイヤーの Track のグループと seq（偽の Relay）', ()
         serverPub: keys.serverPub,
         now: () => clock,
         saveSeq: (n) => saved.push(n),
+        saveGmPid: () => {},
         onTransferToMe: () => {},
       });
     const p = mk(seq);

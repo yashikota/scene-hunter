@@ -278,6 +278,17 @@ describe('GM 交代', () => {
     await expect(transferGm(d, c.roomToken, gm.pid, '111111')).resolves.toBeDefined();
   });
 
+  it('create と join はいまの GM の pid を返し、claim の後に入った人には交代先の pid を返す', async () => {
+    const { d, gm, p, ppub } = await lobby();
+    expect(gm.gmPid).toBe(gm.pid);
+    expect(p.gmPid).toBe(gm.pid);
+    const t = await transferGm(d, gm.roomToken, p.pid, '111111');
+    await claimGm(d, p.roomToken, t, claimInput(ppub), '111111');
+    const late = await joinRoom(d, '111111', { name: 'late', pubkey: ppub });
+    if ('error' in late) throw new Error('unexpected');
+    expect(late.gmPid).toBe(p.pid);
+  });
+
   it('claimGm の名前は join と同じ検証', async () => {
     const { d, gm, p, ppub } = await lobby();
     const t = await transferGm(d, gm.roomToken, p.pid, '111111');

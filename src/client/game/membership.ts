@@ -32,8 +32,12 @@ export interface Me {
   pending?: PendingStep;
   /** 交代先として GM になったとき、越える前の GM の epoch。 */
   gmEpochFloor?: number;
-  /** GM を渡して入り直したとき、最初から従う GM（交代先）。 */
-  followGmPid?: string;
+  /**
+   * プレイヤーが従う GM の pid。入ったときにサーバーの部屋の記録から受け取り、検証した交代のイベントで書き換える
+   * （再読み込みしても、この pid の GM の参加証だけに従う）。GM を渡して入り直したときは交代先。
+   * 古い保存には無いことがあり、そのときは最初に届いた GM の参加証のフレームに従う。
+   */
+  gmPid?: string;
 }
 
 export type PendingStep =
@@ -70,7 +74,8 @@ export function loadMe(code: string): Me | null {
       !isLocale(o.locale) ||
       typeof o.rounds !== 'number' ||
       typeof o.limitSec !== 'number' ||
-      !Number.isInteger(o.seq)
+      !Number.isInteger(o.seq) ||
+      (o.gmPid !== undefined && typeof o.gmPid !== 'string')
     ) {
       return null;
     }
@@ -113,6 +118,7 @@ const toMe = (j: Joined, keys: { pubkey: string; privateKey: string }): Me => ({
   rounds: j.rounds,
   limitSec: j.limitSec,
   seq: 0,
+  gmPid: j.gmPid,
 });
 
 /** このタブで、あると確かめた部屋の番号。名前の入力はこの部屋にだけ出す。 */

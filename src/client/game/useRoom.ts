@@ -144,6 +144,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
           serverPub: serverPub(),
           now: nowMs,
           saveSeq: (seq) => saveMe({ ...(loadMe(code) ?? meRef.current), seq }),
+          saveGmPid: (gmPid) => saveMe({ ...(loadMe(code) ?? meRef.current), gmPid }),
           onTransferToMe: (transfer) =>
             updateMe((cur) =>
               cur.pending?.kind === 'claim'
@@ -151,11 +152,6 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
                 : { ...cur, pending: { kind: 'claim', transfer, fromEpoch: player.epoch } },
             ),
         });
-        // GM を渡して入り直した直後は、自分の古い GM のフレームと取り違えないよう交代先だけに従う
-        const follow = loadMe(code)?.followGmPid;
-        player.gmPid = follow ?? null;
-        // 使うのは入り直した直後だけ（後で GM がまた替わってから再読み込みしても古い GM に固定しない）
-        if (follow) saveMe({ ...(loadMe(code) ?? me), followGmPid: undefined });
         player.subscribe(rerender);
         player.start();
         made = { kind: 'player', player };
@@ -208,7 +204,8 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
         .then((next) => {
           if (stopped) return;
           if (!next) return exit();
-          updateMe(() => ({ ...next, followGmPid: pending.gmPid }));
+          // サーバーの記録はまだ交代先の claim 前のこともあるので、自分が渡した交代先に従う
+          updateMe(() => ({ ...next, gmPid: pending.gmPid }));
         })
         .catch((e: unknown) => console.error('プレイヤーとして入り直せなかった', e));
     }, 0);
