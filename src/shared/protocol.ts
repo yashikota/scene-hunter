@@ -109,6 +109,12 @@ type WithoutHeader<E> = E extends unknown ? Omit<E, 'pid' | 'seq' | 'epoch'> : n
 export const GmSnapshotSchema = v.object({
   ...gm,
   type: v.literal('snapshot'),
+  /**
+   * このスナップショットに反映済みの最後のイベントの seq（まだ 1 つも送っていなければ -1）。
+   * seq はスナップショットどうしの通し番号で、イベントの seq とは別に数えるので、
+   * 受け手はイベントの取りこぼしの判定（lastSeq）をこちらに合わせる。
+   */
+  lastEventSeq: v.pipe(v.number(), v.integer(), v.minValue(-1)),
   phase: PhaseSchema,
   round: nonNegInt,
   rounds: round,

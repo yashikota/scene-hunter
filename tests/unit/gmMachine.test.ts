@@ -543,7 +543,8 @@ describe('snapshotOf とスキーマ', () => {
       ranking: null,
       final: null,
     });
-    expect(v.is(GmSnapshotSchema, { ...snap, pid: 'gm', seq: 3, epoch: 1 })).toBe(true);
+    expect(v.is(GmSnapshotSchema, { ...snap, pid: 'gm', seq: 3, epoch: 1, lastEventSeq: 7 })).toBe(true);
+    expect(v.is(GmSnapshotSchema, { ...snap, pid: 'gm', seq: 3, epoch: 1 })).toBe(false); // lastEventSeq が無い
   });
 
   it('reveal のスナップショットの ranking はラウンド番号を持つ', () => {
@@ -551,7 +552,7 @@ describe('snapshotOf とスキーマ', () => {
     const snap = snapshotOf(s, START);
     expect(snap.ranking?.round).toBe(1);
     expect(snap.ranking?.scores.find((x) => x.pid === 'a')?.rank).toBe(1);
-    expect(v.is(GmSnapshotSchema, { ...snap, pid: 'gm', seq: 9, epoch: 1 })).toBe(true);
+    expect(v.is(GmSnapshotSchema, { ...snap, pid: 'gm', seq: 9, epoch: 1, lastEventSeq: 12 })).toBe(true);
   });
 
   it('emit はすべて GmEventSchema を満たす', () => {

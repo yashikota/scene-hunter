@@ -171,6 +171,6 @@ export function applySnapshot(v: PlayerView, s: GmSnapshot, localNow: number): P
     results: s.results,
     ranking: s.ranking,
     final: s.final,
-    lastSeq: s.seq,
+    lastSeq: s.lastEventSeq,
   };
 }

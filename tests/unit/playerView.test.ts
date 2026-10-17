@@ -80,11 +80,12 @@ describe('playerView', () => {
     expect(v.phase).toBe('dissolved');
   });
 
-  test('applySnapshot は経過時間から開始時刻を戻し lastSeq を合わせる', () => {
+  test('applySnapshot は経過時間から開始時刻を戻し lastSeq をスナップショットの lastEventSeq に合わせる', () => {
     const s: GmSnapshot = {
       pid: 'gm',
-      seq: 9,
+      seq: 4,
       epoch: 1,
+      lastEventSeq: 9,
       type: 'snapshot',
       phase: 'playerTurn',
       round: 2,

@@ -396,8 +396,11 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
   }
 }
 
-/** `state` Track に流すスナップショット（pid、seq、epoch は送信側で付ける）。 */
-export function snapshotOf(state: GmState, now: number): Omit<GmSnapshot, 'pid' | 'seq' | 'epoch'> {
+/** `state` Track に流すスナップショット（pid、seq、epoch、lastEventSeq は送信側で付ける）。 */
+export function snapshotOf(
+  state: GmState,
+  now: number,
+): Omit<GmSnapshot, 'pid' | 'seq' | 'epoch' | 'lastEventSeq'> {
   const s = state;
   return {
     type: 'snapshot',

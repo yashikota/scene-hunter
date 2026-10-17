@@ -58,6 +58,7 @@ function gmBroadcast(relay: FakeRelay, epoch: number) {
 const snapshotBody = (epoch: number, seq: number) => ({
   epoch,
   seq,
+  lastEventSeq: -1,
   type: 'snapshot',
   phase: 'lobby',
   round: 0,
