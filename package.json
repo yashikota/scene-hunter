@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vp dev",
-    "build": "vite build",
+    "build": "vp build",
     "i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/client/paraglide",
     "pretest": "pnpm i18n:compile",
     "test": "vp test run",
