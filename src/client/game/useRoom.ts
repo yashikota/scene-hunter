@@ -8,6 +8,7 @@ import { uploadPhoto } from '../photo/upload';
 import { switchLocale } from '../ui/locale';
 import type { GmAction, GmState } from './gmMachine';
 import { forgetGm, GmEngine } from './gmEngine';
+import { hintsToResume, requestHintsAction } from './hintRequest';
 import { claimUntilDone, clearMe, loadMe, rejoinUntilDone, saveMe, type Me } from './membership';
 import { checkRoundPhotos } from './photoCheck';
 import { PlayerEngine } from './playerEngine';
@@ -260,17 +261,26 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     };
   }, [gm, checkKey, code]);
 
+  // GM：再読み込みで hinting のまま戻ったら、ヒントを頼み直す（前の依頼は再読み込みで消えた）。
+  const resumed = useRef(new WeakSet<GmEngine>());
+  useEffect(() => {
+    if (!gm || resumed.current.has(gm)) return;
+    resumed.current.add(gm);
+    const key = hintsToResume(gm.state);
+    if (key === null) return;
+    void requestHintsAction(() => api.requestHints(code, meRef.current.roomToken, key), nowMs).then(
+      (a) => gm.dispatch(a),
+    );
+  }, [gm, code]);
+
   const actions = useMemo<RoomActions>(() => {
     const dispatch = (a: GmAction) => gm?.dispatch(a);
     const uploader = (token: string) => ({
       requestUpload: (input: { gameId: string; round: number; size: number }) =>
         api.requestUpload(code, token, input),
     });
-    const askHints = async (key: string) => {
-      const r = await api.requestHints(code, me.roomToken, key);
-      if (r.ok) dispatch({ type: 'hintsReady', hints: r.hints, at: nowMs() });
-      else dispatch({ type: 'hintsFailed' });
-    };
+    const askHints = async (key: string) =>
+      dispatch(await requestHintsAction(() => api.requestHints(code, me.roomToken, key), nowMs));
     const dissolve = async () => {
       if (!gm) return;
       gm.dispatch({ type: 'dissolve' });
