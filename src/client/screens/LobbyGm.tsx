@@ -10,7 +10,7 @@ export interface LobbyMember {
   label: string;
 }
 
-/** 参加者の一覧（GM を先頭に、2 列のタイル）。 */
+/** 参加者の一覧（GM を先頭に、2 列のタイル）。人数は GM を含める。 */
 export function PlayerTiles({
   gmName,
   players,
@@ -27,7 +27,7 @@ export function PlayerTiles({
           {m.players_heading()}
         </h2>
         <span className="sh-sub" style={{ fontSize: 13 }}>
-          {m.players_count({ count: players.length })}
+          {m.players_count({ count: players.length + 1 })}
         </span>
       </div>
       <ul className="sh-tiles">

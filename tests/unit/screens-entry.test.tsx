@@ -113,7 +113,7 @@ describe('LobbyGm', () => {
     expect(screen.getByText(m.you_are_gm())).toBeTruthy();
     expect(screen.getByText('ゆうき（GM）')).toBeTruthy();
     for (const p of players) expect(screen.getByText(p.label)).toBeTruthy();
-    expect(screen.getByText('3 人')).toBeTruthy();
+    expect(screen.getByText('4 人')).toBeTruthy(); // GM を含める
     expect(screen.getByText(m.rounds_label()).parentElement?.textContent).toContain('3');
     expect(screen.getByText(m.limit_label()).parentElement?.textContent).toContain('60');
     // ボタンは開始、交代、解散だけで、ラウンド数と制限時間を変える入力も無い
@@ -145,7 +145,7 @@ describe('LobbyGm', () => {
     setLocale('en', { reload: false });
     render(lobbyGm());
     expect(screen.getByText('You are the GM')).toBeTruthy();
-    expect(screen.getByText('3 players')).toBeTruthy();
+    expect(screen.getByText('4 players')).toBeTruthy();
     expect(screen.getByText('60 sec')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Start the game' })).toBeTruthy();
   });

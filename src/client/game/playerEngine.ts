@@ -18,8 +18,12 @@ type WithoutHeader<E> = E extends unknown ? Omit<E, 'pid' | 'seq'> : never;
 
 /** resync を送る最短の間隔。 */
 const RESYNC_MIN_MS = 3000;
-/** ロビーの一覧に自分が載らないまま、この時間が過ぎたら publish をやり直す（GM が announce を受け損ねたとき）。 */
+/**
+ * ロビーの一覧に自分が載らないまま、この時間が過ぎたら publish をやり直す（GM が announce を受け損ねたとき）。
+ * やり直すたびに倍にし、REJOIN_MAX_MS で止める。一覧に載ったら最初に戻す。
+ */
 export const REJOIN_AFTER_MS = 8000;
+export const REJOIN_MAX_MS = 60_000;
 
 export interface PlayerEngineDeps {
   connector: MoqConnector;
@@ -50,6 +54,7 @@ export class PlayerEngine {
   #stopFollow?: () => void;
   #rejoinTimer?: ReturnType<typeof setInterval>;
   #unlistedSince: number | null = null;
+  #rejoinAfterMs = REJOIN_AFTER_MS;
   #queue: Promise<void> = Promise.resolve();
   #lastResyncAt = -Infinity;
   #closed = false;
@@ -135,12 +140,14 @@ export class PlayerEngine {
     const listed = v.players.some((p) => p.pid === this.#me.pid);
     if (listed || v.phase === 'connecting' || v.phase === 'dissolved') {
       this.#unlistedSince = null;
+      if (listed) this.#rejoinAfterMs = REJOIN_AFTER_MS;
       return;
     }
     const now = this.#deps.now();
     this.#unlistedSince ??= now;
-    if (now - this.#unlistedSince < REJOIN_AFTER_MS) return;
+    if (now - this.#unlistedSince < this.#rejoinAfterMs) return;
     this.#unlistedSince = now;
+    this.#rejoinAfterMs = Math.min(this.#rejoinAfterMs * 2, REJOIN_MAX_MS);
     this.#publish();
   }
 
@@ -151,7 +158,10 @@ export class PlayerEngine {
 
   #onEvent(e: GmEvent): void {
     this.gmPid ??= e.pid;
-    if (e.type === 'transfer') return void this.#onTransfer(e);
+    if (e.type === 'transfer') {
+      this.#onTransfer(e).catch((err: unknown) => console.error('GM の交代を処理できなかった', err));
+      return;
+    }
     if (hasGap(this.view, e)) this.#resync();
     this.#set(applyEvent(this.view, e, this.#deps.now()));
   }
