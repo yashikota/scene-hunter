@@ -1,5 +1,91 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Scene Hunter",
-  "unsupported_title": "No se puede jugar en este navegador"
+  "unsupported_title": "No se puede jugar en este navegador",
+  "language_label": "Idioma",
+  "top_tagline": "Sigue las pistas de la IA\ny saca la misma foto que el GM",
+  "code_label": "Número de sala",
+  "code_placeholder": "6 dígitos",
+  "name_label": "Nombre",
+  "name_placeholder": "El nombre que verán todos",
+  "join_button": "Entrar a la sala",
+  "joining": "Entrando…",
+  "or": "o",
+  "create_button": "Crear sala (ser el GM)",
+  "creating": "Creando la sala…",
+  "top_note": "No necesitas cuenta.\nJuega con Chrome en Android, o con Chrome y Edge en el ordenador.",
+  "error_code": "Escribe los 6 dígitos",
+  "error_name": "Escribe un nombre de 1 a 12 caracteres",
+  "error_not_found": "No encontramos la sala. Revisa el número.",
+  "error_rate_limited": "Espera un momento y vuelve a intentarlo.",
+  "error_failed": "Algo salió mal. Inténtalo de nuevo.",
+  "connecting_title": "Conectando con la sala",
+  "connecting_body": "Espera un momento.",
+  "preparing_title": "Preparando la sala",
+  "preparing_body": "Una sala recién creada puede tardar un poco en abrirse (hasta 1 minuto).",
+  "lobby_label": "SALA DE ESPERA",
+  "you_are_gm": "Eres el GM",
+  "share_code": "Comparte este número para que todos entren",
+  "players_heading": "Jugadores",
+  "players_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} jugador",
+        "countPlural=*": "{count} jugadores"
+      }
+    }
+  ],
+  "gm_tag": "{name} (GM)",
+  "you_tag": "{name} (tú)",
+  "rounds_label": "Rondas",
+  "limit_label": "Tiempo límite",
+  "seconds": "{count} s",
+  "start_button": "Empezar la partida",
+  "start_waiting": "Esperando a que entren jugadores",
+  "transfer_button": "Ceder el GM",
+  "transfer_title": "¿A quién le pasas el GM?",
+  "cancel": "Cancelar",
+  "dissolve_button": "Cerrar sala",
+  "dissolve_confirm": "¿Cerrar la sala? Todos saldrán.",
+  "room_badge": "Sala {code}",
+  "joined_as": "Juegas como {name}",
+  "waiting_for_gm": "Esperando a que el GM\nempiece la partida",
+  "rounds_chip": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} ronda",
+        "countPlural=*": "{count} rondas"
+      }
+    }
+  ],
+  "limit_chip": "Límite de {count} s",
+  "howto_heading": "Cómo se juega",
+  "howto_1": "El GM saca una foto secreta",
+  "howto_2": "Con las pistas de la IA, una cada 10 segundos, saca la misma foto",
+  "howto_3": "Cuanto más parecida y más rápida, más puntos",
+  "leave_button": "Salir de la sala",
+  "unsupported_body": "Scene Hunter usa una tecnología de comunicación llamada WebTransport.\nVuelve a abrir la página en uno de estos navegadores.",
+  "unsupported_android": "Chrome en Android",
+  "unsupported_desktop": "Chrome o Edge en el ordenador",
+  "unsupported_ios": "No funciona en iPhone ni iPad.",
+  "page_link": "Enlace a esta página",
+  "copy": "Copiar",
+  "copied": "Copiado",
+  "in_progress": "La partida está en curso",
+  "dissolved_title": "La sala se ha cerrado",
+  "back_to_top": "Volver al inicio"
 }

@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { routeTree } from './routeTree.gen';
 import './ui/tokens.css';
+import './ui/ui.css';
 
 const router = createRouter({ routeTree });
 

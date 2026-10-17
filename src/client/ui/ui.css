@@ -1,0 +1,253 @@
+/* 画面の共通の見た目。色、線、影、角丸、フォントは tokens.css の変数だけを使う。 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body), sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+.sh-screen {
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sh-screen--top {
+  padding-top: 40px;
+  gap: 22px;
+}
+
+.sh-display {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-weight: var(--font-display-weight);
+}
+
+.sh-sub {
+  color: var(--color-sub);
+}
+
+.sh-pre {
+  white-space: pre-line;
+}
+
+.sh-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--color-sub);
+}
+
+.sh-badge {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: normal;
+  color: var(--color-ink);
+  background: var(--color-gold);
+  border: var(--border);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.sh-chip {
+  font-size: 13px;
+  font-weight: 800;
+  background: var(--color-bg);
+  border: var(--border);
+  border-radius: 999px;
+  padding: 3px 12px;
+}
+
+.sh-card {
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.sh-card--raised {
+  box-shadow: var(--shadow);
+}
+
+.sh-icon-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--color-ink);
+  box-shadow: var(--shadow);
+}
+
+.sh-btn {
+  font-family: var(--font-display), sans-serif;
+  font-weight: var(--font-display-weight);
+  font-size: 18px;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-button);
+  box-shadow: 2px 2px 0 var(--color-ink);
+  padding: 14px;
+  min-height: 52px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out;
+}
+.sh-btn--primary {
+  background: var(--color-accent);
+}
+.sh-btn--quiet {
+  font-family: var(--font-body), sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  box-shadow: none;
+  padding: 12px;
+  min-height: 48px;
+}
+.sh-btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--color-ink);
+}
+.sh-btn--quiet:active:not(:disabled) {
+  transform: translate(1px, 1px);
+}
+.sh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sh-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sh-label {
+  font-size: 13px;
+  font-weight: 800;
+}
+.sh-input {
+  font-family: var(--font-body), sans-serif;
+  font-size: 17px;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  width: 100%;
+  min-width: 0;
+}
+.sh-input--code {
+  font-family: var(--font-display), sans-serif;
+  font-weight: var(--font-display-weight);
+  font-size: 26px;
+  letter-spacing: 0.3em;
+  text-align: center;
+  padding: 10px 12px;
+  background: var(--color-bg);
+}
+.sh-input--code::placeholder {
+  font-family: var(--font-body), sans-serif;
+  font-weight: 400;
+  font-size: 17px;
+  letter-spacing: normal;
+}
+
+.sh-btn:focus-visible,
+.sh-input:focus-visible,
+.sh-select:focus-visible {
+  outline: 3px solid var(--color-timer);
+  outline-offset: 2px;
+}
+
+.sh-select {
+  font-family: var(--font-body), sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  min-height: 36px;
+}
+
+.sh-error {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-ink);
+  background: var(--color-gold);
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.sh-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sh-tile {
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.sh-tile--gm {
+  background: var(--color-gold);
+  font-weight: 800;
+}
+.sh-tile--me {
+  background: var(--color-accent);
+  font-weight: 800;
+}
+
+.sh-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@keyframes sh-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.82);
+  }
+}
+.sh-pulse {
+  animation: sh-pulse 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sh-pulse {
+    animation: none;
+  }
+  .sh-btn {
+    transition: none;
+  }
+}

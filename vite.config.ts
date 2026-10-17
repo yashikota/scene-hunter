@@ -27,5 +27,11 @@ export default defineConfig({
       ],
   test: {
     include: ['tests/unit/**/*.test.{ts,tsx}'],
+    // 画面のテスト（happy-dom）で Google Fonts の CSS を取りに行かない
+    environmentOptions: {
+      happyDOM: {
+        settings: { disableCSSFileLoading: true, handleDisabledFileLoadingAsSuccess: true },
+      },
+    },
   },
 });

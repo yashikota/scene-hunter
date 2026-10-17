@@ -1,5 +1,91 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Scene Hunter",
-  "unsupported_title": "Impossible de jouer avec ce navigateur"
+  "unsupported_title": "Impossible de jouer avec ce navigateur",
+  "language_label": "Langue",
+  "top_tagline": "Suis les indices de l'IA\net prends la même photo que le MJ",
+  "code_label": "Numéro du salon",
+  "code_placeholder": "6 chiffres",
+  "name_label": "Nom",
+  "name_placeholder": "Le nom que tout le monde verra",
+  "join_button": "Rejoindre le salon",
+  "joining": "Connexion…",
+  "or": "ou",
+  "create_button": "Créer un salon (être le MJ)",
+  "creating": "Création du salon…",
+  "top_note": "Aucun compte nécessaire.\nJoue avec Chrome sur Android, ou Chrome et Edge sur ordinateur.",
+  "error_code": "Saisis les 6 chiffres",
+  "error_name": "Saisis un nom de 1 à 12 caractères",
+  "error_not_found": "Salon introuvable. Vérifie le numéro.",
+  "error_rate_limited": "Patiente un instant puis réessaie.",
+  "error_failed": "Un problème est survenu. Réessaie.",
+  "connecting_title": "Connexion au salon",
+  "connecting_body": "Patiente un instant.",
+  "preparing_title": "Préparation du salon",
+  "preparing_body": "Un salon tout juste créé peut mettre un peu de temps à ouvrir (jusqu’à 1 minute).",
+  "lobby_label": "SALON",
+  "you_are_gm": "Tu es le MJ",
+  "share_code": "Partage ce numéro pour que tout le monde rejoigne",
+  "players_heading": "Joueurs",
+  "players_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} joueur",
+        "countPlural=*": "{count} joueurs"
+      }
+    }
+  ],
+  "gm_tag": "{name} (MJ)",
+  "you_tag": "{name} (toi)",
+  "rounds_label": "Manches",
+  "limit_label": "Temps limite",
+  "seconds": "{count} s",
+  "start_button": "Lancer la partie",
+  "start_waiting": "En attente de joueurs",
+  "transfer_button": "Passer le rôle de MJ",
+  "transfer_title": "À qui passer le rôle de MJ ?",
+  "cancel": "Annuler",
+  "dissolve_button": "Fermer le salon",
+  "dissolve_confirm": "Fermer le salon ? Tout le monde en sortira.",
+  "room_badge": "Salon {code}",
+  "joined_as": "Tu joues en tant que {name}",
+  "waiting_for_gm": "En attente du MJ\npour lancer la partie",
+  "rounds_chip": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} manche",
+        "countPlural=*": "{count} manches"
+      }
+    }
+  ],
+  "limit_chip": "Limite de {count} s",
+  "howto_heading": "Comment jouer",
+  "howto_1": "Le MJ prend une photo secrète",
+  "howto_2": "Grâce aux indices de l’IA, un toutes les 10 secondes, prends la même photo",
+  "howto_3": "Plus c’est ressemblant et rapide, plus tu marques",
+  "leave_button": "Quitter le salon",
+  "unsupported_body": "Scene Hunter utilise une technologie de communication appelée WebTransport.\nRouvre cette page dans l’un de ces navigateurs.",
+  "unsupported_android": "Chrome sur Android",
+  "unsupported_desktop": "Chrome ou Edge sur ordinateur",
+  "unsupported_ios": "L’iPhone et l’iPad ne sont pas pris en charge.",
+  "page_link": "Lien de cette page",
+  "copy": "Copier",
+  "copied": "Copié",
+  "in_progress": "La partie est en cours",
+  "dissolved_title": "Le salon a été fermé",
+  "back_to_top": "Retour à l’accueil"
 }

@@ -1,5 +1,91 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Scene Hunter",
-  "unsupported_title": "In diesem Browser kann man nicht spielen"
+  "unsupported_title": "In diesem Browser kann man nicht spielen",
+  "language_label": "Sprache",
+  "top_tagline": "Folge den Hinweisen der KI\nund mach dasselbe Foto wie der GM",
+  "code_label": "Raumnummer",
+  "code_placeholder": "6-stellige Nummer",
+  "name_label": "Name",
+  "name_placeholder": "Der Name, den alle sehen",
+  "join_button": "Raum beitreten",
+  "joining": "Trete bei…",
+  "or": "oder",
+  "create_button": "Raum erstellen (GM werden)",
+  "creating": "Raum wird erstellt…",
+  "top_note": "Kein Konto nötig.\nSpielbar mit Chrome auf Android oder mit Chrome und Edge am Computer.",
+  "error_code": "Gib die 6-stellige Nummer ein",
+  "error_name": "Gib einen Namen mit 1–12 Zeichen ein",
+  "error_not_found": "Raum nicht gefunden. Prüf die Nummer.",
+  "error_rate_limited": "Warte kurz und versuch es noch einmal.",
+  "error_failed": "Etwas ist schiefgelaufen. Versuch es noch einmal.",
+  "connecting_title": "Verbinde mit dem Raum",
+  "connecting_body": "Einen Moment bitte.",
+  "preparing_title": "Der Raum wird vorbereitet",
+  "preparing_body": "Ein gerade erstellter Raum braucht etwas, bis man beitreten kann (bis zu 1 Minute).",
+  "lobby_label": "LOBBY",
+  "you_are_gm": "Du bist der GM",
+  "share_code": "Teile diese Nummer, damit alle beitreten können",
+  "players_heading": "Mitspieler",
+  "players_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} Person",
+        "countPlural=*": "{count} Personen"
+      }
+    }
+  ],
+  "gm_tag": "{name} (GM)",
+  "you_tag": "{name} (du)",
+  "rounds_label": "Runden",
+  "limit_label": "Zeitlimit",
+  "seconds": "{count} Sek.",
+  "start_button": "Spiel starten",
+  "start_waiting": "Warte auf Mitspieler",
+  "transfer_button": "GM abgeben",
+  "transfer_title": "Wer soll der nächste GM sein?",
+  "cancel": "Abbrechen",
+  "dissolve_button": "Raum auflösen",
+  "dissolve_confirm": "Raum auflösen? Alle verlassen den Raum.",
+  "room_badge": "Raum {code}",
+  "joined_as": "Du spielst als {name}",
+  "waiting_for_gm": "Warte darauf, dass der GM\ndas Spiel startet",
+  "rounds_chip": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} Runde",
+        "countPlural=*": "{count} Runden"
+      }
+    }
+  ],
+  "limit_chip": "{count} Sek. Zeitlimit",
+  "howto_heading": "So wird gespielt",
+  "howto_1": "Der GM macht ein geheimes Foto",
+  "howto_2": "Mit den KI-Hinweisen, alle 10 Sekunden einer, machst du dasselbe Foto",
+  "howto_3": "Je ähnlicher und schneller, desto mehr Punkte",
+  "leave_button": "Raum verlassen",
+  "unsupported_body": "Scene Hunter nutzt eine Übertragungstechnik namens WebTransport.\nÖffne die Seite bitte in einem dieser Browser.",
+  "unsupported_android": "Chrome auf Android",
+  "unsupported_desktop": "Chrome oder Edge am Computer",
+  "unsupported_ios": "iPhone und iPad werden nicht unterstützt.",
+  "page_link": "Link zu dieser Seite",
+  "copy": "Kopieren",
+  "copied": "Kopiert",
+  "in_progress": "Das Spiel läuft",
+  "dissolved_title": "Der Raum wurde aufgelöst",
+  "back_to_top": "Zur Startseite"
 }

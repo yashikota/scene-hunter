@@ -1,5 +1,91 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_name": "Scene Hunter",
-  "unsupported_title": "This browser can't play the game"
+  "unsupported_title": "This browser can't play the game",
+  "language_label": "Language",
+  "top_tagline": "Follow the AI's hints\nand snap the same photo as the GM",
+  "code_label": "Room number",
+  "code_placeholder": "6-digit number",
+  "name_label": "Name",
+  "name_placeholder": "The name everyone will see",
+  "join_button": "Join room",
+  "joining": "Joining…",
+  "or": "or",
+  "create_button": "Create a room (be the GM)",
+  "creating": "Creating the room…",
+  "top_note": "No account needed.\nPlay in Chrome on Android, or Chrome and Edge on a computer.",
+  "error_code": "Enter the 6-digit number",
+  "error_name": "Enter a name of 1–12 characters",
+  "error_not_found": "Room not found. Check the number.",
+  "error_rate_limited": "Please wait a moment and try again.",
+  "error_failed": "Something went wrong. Please try again.",
+  "connecting_title": "Connecting to the room",
+  "connecting_body": "Hang on a moment.",
+  "preparing_title": "Getting the room ready",
+  "preparing_body": "A brand-new room can take a little while to open (up to 1 minute).",
+  "lobby_label": "LOBBY",
+  "you_are_gm": "You are the GM",
+  "share_code": "Share this number so everyone can join",
+  "players_heading": "Players",
+  "players_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} player",
+        "countPlural=*": "{count} players"
+      }
+    }
+  ],
+  "gm_tag": "{name} (GM)",
+  "you_tag": "{name} (you)",
+  "rounds_label": "Rounds",
+  "limit_label": "Time limit",
+  "seconds": "{count} sec",
+  "start_button": "Start the game",
+  "start_waiting": "Waiting for players to join",
+  "transfer_button": "Hand over GM",
+  "transfer_title": "Who should be the next GM?",
+  "cancel": "Cancel",
+  "dissolve_button": "Close room",
+  "dissolve_confirm": "Close this room? Everyone will leave.",
+  "room_badge": "Room {code}",
+  "joined_as": "Playing as {name}",
+  "waiting_for_gm": "Waiting for the GM\nto start the game",
+  "rounds_chip": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} round",
+        "countPlural=*": "{count} rounds"
+      }
+    }
+  ],
+  "limit_chip": "{count} sec limit",
+  "howto_heading": "How to play",
+  "howto_1": "The GM takes a secret photo",
+  "howto_2": "Use the AI hints, one every 10 seconds, to take the same photo",
+  "howto_3": "The closer and faster, the more points",
+  "leave_button": "Leave room",
+  "unsupported_body": "Scene Hunter uses a networking technology called WebTransport.\nPlease reopen this page in one of these browsers.",
+  "unsupported_android": "Chrome on Android",
+  "unsupported_desktop": "Chrome or Edge on a computer",
+  "unsupported_ios": "iPhone and iPad are not supported.",
+  "page_link": "Link to this page",
+  "copy": "Copy",
+  "copied": "Copied",
+  "in_progress": "The game is in progress",
+  "dissolved_title": "This room has been closed",
+  "back_to_top": "Back to start"
 }

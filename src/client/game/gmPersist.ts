@@ -27,3 +27,12 @@ export function loadGm(room: string): GmState | null {
     return null;
   }
 }
+
+/** 解散や GM の交代の後に、保存した状態を消す。 */
+export function clearGm(room: string): void {
+  try {
+    localStorage.removeItem(keyOf(room));
+  } catch {
+    // 消せなくても、次に GM になったときは gmPid の違いで使わない。
+  }
+}

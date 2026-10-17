@@ -1,0 +1,275 @@
+import { useNavigate } from '@tanstack/react-router';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import type { TransferCert } from '../../shared/cert';
+import { importPrivateKey, sha256Hex } from '../../shared/crypto';
+import { EnvelopeVerifier } from '../../shared/envelope';
+import * as api from '../api';
+import { createMoqNetConnector, type MoqConnector } from '../moq/session';
+import { uploadPhoto } from '../photo/upload';
+import { switchLocale } from '../ui/locale';
+import type { GmAction, GmState } from './gmMachine';
+import { forgetGm, GmEngine } from './gmEngine';
+import { clearMe, joinAndSave, loadMe, saveMe, type Me } from './membership';
+import { PlayerEngine } from './playerEngine';
+import { initialView, type PlayerView } from './playerView';
+
+// 部屋の画面が使う 1 つの入り口。役割（GM / プレイヤー）に応じて GmEngine か PlayerEngine を回し、
+// 画面には同じ形の表示モデル（PlayerView）と操作（actions）を渡す。
+//
+// 写真とヒントのうち、ここで受け持つのは「撮った写真（JPEG の Blob）を受け取ってから先」：
+// - GM：アップロード → gmPhotoUploaded → ヒントの生成 → hintsReady / hintsFailed（retryHints でやり直し）
+// - プレイヤー：SHA-256 → shutter を送る → アップロード → submit を送る
+// カメラと JPEG への変換（Task 16）、picking での写真の検証と results（Task 17）は画面側で足す。
+
+export interface RoomActions {
+  start(): void;
+  /** 撮った写真（encodeJpeg 済み）を出す。GM はお題、プレイヤーは提出。失敗は reject する。 */
+  shutter(blob: Blob): Promise<void>;
+  /** GM：ヒントの生成に失敗した後にやり直す。 */
+  retryHints(): Promise<void>;
+  pickToggle(pid: string): void;
+  confirmPicks(): void;
+  nextRound(): void;
+  backToLobby(): void;
+  /** GM：ロビーで GM を渡す。渡した後は新しい pid のプレイヤーとして入り直す。 */
+  transfer(pid: string): Promise<void>;
+  /** GM：解散のイベントを流してから部屋を閉じ、トップに戻る。 */
+  dissolve(): Promise<void>;
+  /** プレイヤー：部屋を出てトップに戻る（GM は解散）。 */
+  leave(): Promise<void>;
+}
+
+export interface Room {
+  role: 'gm' | 'player';
+  me: { pid: string; label: string };
+  /** GM の名前（参加証の名前）。まだ分からなければ空文字。 */
+  gmName: string;
+  view: PlayerView;
+  gm?: { state: GmState; dispatch(a: GmAction): void };
+  actions: RoomActions;
+}
+
+/** 解散のイベントが Relay に届くのを待ってから部屋を閉じる。 */
+const DISSOLVE_LINGER_MS = 5000;
+/** GM を渡した後、交代のイベントが届くまで古い GM の接続を残す。 */
+const TRANSFER_LINGER_MS = 5000;
+
+const serverPub = (): string => import.meta.env.VITE_SERVER_PUBLIC_KEY ?? '';
+const nowMs = () => Date.now();
+
+/** start に渡す GameId：16 文字の小文字の 16 進数。 */
+export function newGameId(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+type Engine = { kind: 'gm'; gm: GmEngine } | { kind: 'player'; player: PlayerEngine };
+
+export function useRoom(code: string, connector: MoqConnector = defaultConnector()): Room {
+  const navigate = useNavigate();
+  const [me, setMe] = useState<Me>(() => {
+    const m = loadMe(code);
+    if (!m) throw new Error(`no membership for room ${code}`);
+    // 部屋の言語は、入った時点の値で先に切り替えておく（つなぐまでの画面もその言語で出す）。
+    switchLocale(m.locale);
+    return m;
+  });
+  const [engine, setEngine] = useState<Engine | null>(null);
+  const [, rerender] = useReducer((n: number) => n + 1, 0);
+  /** GM を引き継いだときに越える、前の GM の epoch。 */
+  const epochFloor = useRef(0);
+  /** 閉じるときに待つ時間（GM の交代や解散の直後だけ）。 */
+  const linger = useRef(0);
+  /** GM を渡した直後にプレイヤーとして入り直すとき、従う相手（交代先）。 */
+  const nextGmPid = useRef<string | null>(null);
+  const meRef = useRef(me);
+  meRef.current = me;
+
+  const becomeGm = useCallback(
+    async (transfer: TransferCert, fromEpoch: number) => {
+      // seq は保存したものが最新
+      const cur = loadMe(code) ?? meRef.current;
+      const { roomToken, cert } = await withRetry(() =>
+        api.claim(code, cur.roomToken, { transfer, pubkey: cur.pubkey, name: cur.name }),
+      );
+      epochFloor.current = fromEpoch;
+      const next: Me = { ...cur, role: 'gm', roomToken, cert };
+      saveMe(next);
+      setMe(next);
+    },
+    [code],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    let made: Engine | null = null;
+    // StrictMode の付け外しで epoch を無駄に進めないよう、次の tick で始める。
+    const timer = setTimeout(async () => {
+      const privateKey = await importPrivateKey(me.privateKey);
+      if (cancelled) return;
+      const verifier = new EnvelopeVerifier(serverPub(), code, () => Math.floor(nowMs() / 1000));
+      if (me.role === 'gm') {
+        const gm = new GmEngine(me, { connector, verifier, privateKey, now: nowMs });
+        gm.subscribe(rerender);
+        gm.start(epochFloor.current);
+        made = { kind: 'gm', gm };
+      } else {
+        // 使った seq は保存した方に入っている（state の me は seq を更新しない）
+        const player: PlayerEngine = new PlayerEngine(loadMe(code) ?? me, {
+          connector,
+          verifier,
+          privateKey,
+          serverPub: serverPub(),
+          now: nowMs,
+          saveSeq: (seq) => saveMe({ ...meRef.current, seq }),
+          onTransferToMe: (t) => {
+            becomeGm(t, player.epoch).catch((e: unknown) => console.error('GM を引き継げなかった', e));
+          },
+        });
+        player.gmPid = nextGmPid.current;
+        nextGmPid.current = null;
+        player.subscribe(rerender);
+        player.start();
+        made = { kind: 'player', player };
+      }
+      setEngine(made);
+    }, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      if (made?.kind === 'gm') made.gm.close(linger.current);
+      if (made?.kind === 'player') made.player.close();
+      linger.current = 0;
+    };
+  }, [code, me.role, me.pid, me.privateKey, connector, becomeGm]);
+
+  const gm = engine?.kind === 'gm' ? engine.gm : undefined;
+  const player = engine?.kind === 'player' ? engine.player : undefined;
+  const gmState = gm?.state;
+  const playerView = player?.view;
+  const view = useMemo(
+    () => (gm ? gm.view() : (playerView ?? initialView())),
+    // gm.view() は gm.state から作るので、gmState が変わったら作り直す
+    [gm, gmState, playerView],
+  );
+
+  // 部屋の言語を lobby で受け取ったら、画面をその言語にする。
+  const roomLocale = view.phase === 'connecting' ? me.locale : view.locale;
+  const [appliedLocale, setAppliedLocale] = useState(me.locale);
+  useEffect(() => {
+    if (roomLocale === appliedLocale) return;
+    switchLocale(roomLocale);
+    setAppliedLocale(roomLocale);
+  }, [roomLocale, appliedLocale]);
+
+  const exit = useCallback(() => {
+    clearMe(code);
+    void navigate({ to: '/' });
+  }, [code, navigate]);
+
+  const actions = useMemo<RoomActions>(() => {
+    const dispatch = (a: GmAction) => gm?.dispatch(a);
+    const uploader = (token: string) => ({
+      requestUpload: (input: { gameId: string; round: number; size: number }) =>
+        api.requestUpload(code, token, input),
+    });
+    const askHints = async (key: string) => {
+      const r = await api.requestHints(code, me.roomToken, key);
+      if (r.ok) dispatch({ type: 'hintsReady', hints: r.hints, at: nowMs() });
+      else dispatch({ type: 'hintsFailed' });
+    };
+    const dissolve = async () => {
+      if (!gm) return;
+      gm.dispatch({ type: 'dissolve' });
+      await gm.flush();
+      linger.current = DISSOLVE_LINGER_MS;
+      try {
+        await api.closeRoom(code, me.roomToken);
+      } catch (e) {
+        // 部屋の後始末は cron と有効期限でも行われるので、トップには戻す。
+        console.error('部屋を閉じられなかった', e);
+      }
+      forgetGm(code);
+      exit();
+    };
+    return {
+      start: () => dispatch({ type: 'start', gameId: newGameId() }),
+      shutter: async (blob) => {
+        if (gm) {
+          const s = gm.state;
+          if (s.phase !== 'gmTurn' || !s.gameId) return;
+          const key = await uploadPhoto(uploader(me.roomToken), blob, { gameId: s.gameId, round: s.round });
+          gm.dispatch({ type: 'gmPhotoUploaded', key });
+          await askHints(key);
+        } else if (player) {
+          const { round, gameId } = player.view;
+          if (!gameId) return;
+          const hash = await sha256Hex(new Uint8Array(await blob.arrayBuffer()));
+          player.send({ type: 'shutter', round, hash });
+          const key = await uploadPhoto(uploader(me.roomToken), blob, { gameId, round });
+          player.send({ type: 'submit', round, key });
+        }
+      },
+      retryHints: async () => {
+        const key = gm?.state.gmPhotoKey;
+        if (!gm || gm.state.phase !== 'hintError' || !key) return;
+        gm.dispatch({ type: 'retryHints' });
+        await askHints(key);
+      },
+      pickToggle: (pid) => dispatch({ type: 'togglePick', pid }),
+      confirmPicks: () => dispatch({ type: 'confirmPicks' }),
+      nextRound: () => dispatch({ type: 'nextRound' }),
+      backToLobby: () => dispatch({ type: 'backToLobby' }),
+      transfer: async (pid) => {
+        if (!gm || gm.state.phase !== 'lobby') return;
+        const cert = await api.transfer(code, me.roomToken, pid);
+        gm.dispatch({ type: 'transferred', transfer: cert });
+        await gm.flush();
+        // GM の参加証のままではプレイヤーになれないので、新しい鍵で入り直す。
+        const next = await joinAndSave(code, me.name);
+        forgetGm(code);
+        linger.current = TRANSFER_LINGER_MS;
+        // 自分の古い GM のフレームを新しい GM と取り違えないよう、交代先だけに従う。
+        nextGmPid.current = pid;
+        setMe(next);
+      },
+      dissolve,
+      leave: async () => {
+        if (gm) return dissolve();
+        exit();
+      },
+    };
+  }, [gm, player, code, me.roomToken, me.name, exit]);
+
+  const label =
+    me.role === 'gm' ? me.name : (view.players.find((p) => p.pid === me.pid)?.label ?? me.name);
+  return {
+    role: me.role,
+    me: { pid: me.pid, label },
+    gmName: gm ? me.name : (player?.gmName() ?? ''),
+    view,
+    gm: gm && { state: gm.state, dispatch: (a) => gm.dispatch(a) },
+    actions,
+  };
+}
+
+const CLAIM_ATTEMPTS = 3;
+const CLAIM_RETRY_MS = 1500;
+
+/** 交代先が参加証を取り直せないと全員が止まるので、通信の失敗は数回やり直す。 */
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (i >= CLAIM_ATTEMPTS) throw e;
+      await new Promise((r) => setTimeout(r, CLAIM_RETRY_MS));
+    }
+  }
+}
+
+let sharedConnector: MoqConnector | undefined;
+function defaultConnector(): MoqConnector {
+  sharedConnector ??= createMoqNetConnector();
+  return sharedConnector;
+}
