@@ -36,7 +36,7 @@ const inPlayerTurn = (pids = ['a', 'b']) =>
   run(
     init(),
     ...pids.map((p) => join(p)),
-    { type: 'start' },
+    { type: 'start', gameId: 'game1' },
     { type: 'gmPhotoUploaded', key: 'gm.jpg' },
     { type: 'hintsReady', hints: HINTS, at: START },
   ).state;
@@ -57,7 +57,7 @@ const inPicking = () =>
 
 describe('ターンの進行', () => {
   it('start → gmTurn, gmPhotoUploaded → hinting, hintsReady → playerTurn', () => {
-    let r = run(init(), join('a'), { type: 'start' });
+    let r = run(init(), join('a'), { type: 'start', gameId: 'game1' });
     expect(r.state.phase).toBe('gmTurn');
     expect(r.state.round).toBe(1);
     expect(r.emit).toContainEqual({ type: 'gm_turn', round: 1, gameId: r.state.gameId });
@@ -96,7 +96,7 @@ describe('ターンの進行', () => {
   });
 
   it('hintsFailed で hintError、retryHints で hinting', () => {
-    let r = run(init(), join('a'), { type: 'start' }, { type: 'gmPhotoUploaded', key: 'k' });
+    let r = run(init(), join('a'), { type: 'start', gameId: 'game1' }, { type: 'gmPhotoUploaded', key: 'k' });
     r = run(r.state, { type: 'hintsFailed' });
     expect(r.state.phase).toBe('hintError');
     expect(r.emit).toEqual([{ type: 'hint_error' }]);
@@ -106,7 +106,7 @@ describe('ターンの進行', () => {
   });
 
   it('ヒントが 5 つでない hintsReady は無視する', () => {
-    const r = run(init(), join('a'), { type: 'start' }, { type: 'gmPhotoUploaded', key: 'k' });
+    const r = run(init(), join('a'), { type: 'start', gameId: 'game1' }, { type: 'gmPhotoUploaded', key: 'k' });
     const r2 = gmReduce(r.state, { type: 'hintsReady', hints: ['x'], at: START });
     expect(r2.state.phase).toBe('hinting');
     expect(r2.emit).toEqual([]);
@@ -213,7 +213,7 @@ describe('途中参加と名前', () => {
     const s = run(
       init(),
       join('a'),
-      { type: 'start' },
+      { type: 'start', gameId: 'game1' },
       join('b'),
       { type: 'gmPhotoUploaded', key: 'k' },
       { type: 'hintsReady', hints: HINTS, at: START },
@@ -398,6 +398,29 @@ describe('選択と得点', () => {
     const transfer = { body: { room: '123456', from: 'gm', to: 'a', iat: 0, exp: 1 }, sig: 's' };
     const r = run(init(), join('a'), { type: 'transferred', transfer });
     expect(r.emit.at(-1)).toEqual({ type: 'transfer', transfer });
+  });
+
+  it('start で渡した gameId を使う', () => {
+    const r = run(init(), join('a'), { type: 'start', gameId: 'abc_123' });
+    expect(r.state.gameId).toBe('abc_123');
+    expect(r.emit).toContainEqual({ type: 'gm_turn', round: 1, gameId: 'abc_123' });
+  });
+
+  it('dissolve はどのフェーズからでも dissolved を emit し、以後のアクションを無視する', () => {
+    const r = run(inPlayerTurn(), { type: 'dissolve' });
+    expect(r.emit).toEqual([{ type: 'dissolved' }]);
+    expect(r.state.dissolved).toBe(true);
+    for (const a of [
+      { type: 'tick', now: START + 20000 },
+      { type: 'shutter', pid: 'a', hash: 'x', at: START + 1000 },
+      { type: 'backToLobby' },
+      { type: 'dissolve' },
+    ] as GmAction[]) {
+      const r2 = gmReduce(r.state, a);
+      expect(r2.state).toBe(r.state);
+      expect(r2.emit).toEqual([]);
+    }
+    expect(run(init(), { type: 'dissolve' }).emit).toEqual([{ type: 'dissolved' }]);
   });
 
   it('フェーズに合わないアクションは何もしない', () => {

@@ -48,8 +48,6 @@ export interface GmState {
   /** ロビーでは 0、ゲーム中は 1〜rounds。 */
   round: number;
   gameId: string | null;
-  /** これまでに始めたゲームの数。gameId を作るのに使う。 */
-  games: number;
   players: Record<string, GmPlayer>;
   gmPhotoKey: string | null;
   /** player_turn を送った時刻（GM の時計）。撮影秒数 t の起点。 */
@@ -62,13 +60,15 @@ export interface GmState {
   picks: string[];
   results: { gmPhotoUrl: string; photos: { pid: string; url: string; valid: boolean }[] } | null;
   lastRanking: { round: number; scores: RoundScore[]; totals: Total[] } | null;
+  /** 解散したら true。以後のアクションはすべて無視する。 */
+  dissolved: boolean;
   /** 送信側が使う通し番号。gmReduce は触らない。 */
   seq: number;
 }
 
 export type GmAction =
   | { type: 'playerJoined'; pid: string; name: string; at: number }
-  | { type: 'start' }
+  | { type: 'start'; gameId: string }
   | { type: 'gmPhotoUploaded'; key: string }
   | { type: 'hintsReady'; hints: string[]; at: number }
   | { type: 'hintsFailed' }
@@ -82,7 +82,8 @@ export type GmAction =
   | { type: 'confirmPicks' }
   | { type: 'nextRound' }
   | { type: 'backToLobby' }
-  | { type: 'transferred'; transfer: TransferCert };
+  | { type: 'transferred'; transfer: TransferCert }
+  | { type: 'dissolve' };
 
 export interface GmStep {
   state: GmState;
@@ -113,10 +114,10 @@ export function initialGmState(input: {
     phase: 'lobby',
     round: 0,
     gameId: null,
-    games: 0,
     players: {},
     ...freshRound,
     lastRanking: null,
+    dissolved: false,
     seq: 0,
   };
 }
@@ -184,6 +185,7 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
   const s = state;
   const none: GmStep = { state: s, emit: [] };
   const limitMs = s.limitSec * 1000;
+  if (s.dissolved) return none;
 
   switch (action.type) {
     case 'playerJoined': {
@@ -202,17 +204,15 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
 
     case 'start': {
       if (s.phase !== 'lobby') return none;
-      const games = s.games + 1;
       const next: GmState = {
         ...s,
         ...freshRound,
         phase: 'gmTurn',
         round: 1,
-        games,
-        gameId: `${s.gmPid}-${games}`,
+        gameId: action.gameId,
         lastRanking: null,
       };
-      return { state: next, emit: [{ type: 'gm_turn', round: 1, gameId: next.gameId! }] };
+      return { state: next, emit: [{ type: 'gm_turn', round: 1, gameId: action.gameId }] };
     }
 
     case 'gmPhotoUploaded':
@@ -361,6 +361,9 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
     case 'transferred':
       if (s.phase !== 'lobby') return none;
       return { state: s, emit: [{ type: 'transfer', transfer: action.transfer }] };
+
+    case 'dissolve':
+      return { state: { ...s, dissolved: true }, emit: [{ type: 'dissolved' }] };
   }
 }
 
