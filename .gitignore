@@ -9,3 +9,7 @@ test-results/
 playwright-report/
 .wrangler/
 .cache/
+
+# superpowers の計画、設計、作業の記録は手元だけに置く
+.superpowers/
+docs/superpowers/
