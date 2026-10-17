@@ -11,6 +11,13 @@ import { keepSubscribed, MoqSession, type MoqConnector } from './session';
 // seq は検証を通ったフレームでだけ進める（偽のフレームの大きな seq で本人のメッセージが捨てられないように）。
 
 const RESUBSCRIBE_MAX_MS = 10_000;
+/**
+ * プレイヤーは events のグループを区切るので（playerEngine の GROUP_MAX_FRAMES）、区切りの直前のフレームが
+ * 新しいグループに追い越されても捨てられないよう、古いグループもこの時間までは読み切る。
+ * publisher 側の Track の maxAge（session.ts の MAX_AGE）と同じ 60 秒にする（PoC で 60 秒にした理由と同じ）。
+ * 張り直しのときは、この時間内の古いグループも届き直すが、seq の重複として捨てる。
+ */
+export const PLAYER_TRACK_MAX_AGE_MS = 60_000;
 const decoder = new TextDecoder();
 
 interface Pool {
@@ -69,6 +76,7 @@ export class GmInbox {
     const stop = keepSubscribed(pool.session, playerPath(pid), EVENTS_TRACK, receive, {
       blind: true,
       maxDelayMs: RESUBSCRIBE_MAX_MS,
+      maxAgeMs: PLAYER_TRACK_MAX_AGE_MS,
     });
     this.#stops.set(pid, {
       pool,

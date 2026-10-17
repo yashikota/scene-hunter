@@ -46,7 +46,8 @@ export class FakeRelay {
 }
 
 export class FakeConnection implements MoqConnection {
-  readonly subscribes: { path: string; track: string; announced: boolean }[] = [];
+  readonly subscribes: { path: string; track: string; announced: boolean; maxAgeMs?: number }[] =
+    [];
   readonly publishes: { path: string; track: string }[] = [];
   readonly listeners = new Set<(path: string, active: boolean) => void>();
   /** いま生きている購読（Track が見つかり、まだ外されていないもの）。 */
@@ -81,10 +82,10 @@ export class FakeConnection implements MoqConnection {
   subscribe(
     path: string,
     track: string,
-    opts: { announced: boolean },
+    opts: { announced: boolean; maxAgeMs?: number },
     sink: TrackSink,
   ): () => void {
-    this.subscribes.push({ path, track, announced: opts.announced });
+    this.subscribes.push({ path, track, announced: opts.announced, maxAgeMs: opts.maxAgeMs });
     let t: FakeTrack | undefined;
     let live = true;
     const entry = { path, track };

@@ -12,6 +12,7 @@ import {
 import { newGameId } from '../../src/client/game/useRoom';
 import { issueCert, issueTransfer, type Cert } from '../../src/shared/cert';
 import { FakeRelay, flush } from './fakeMoq';
+import { PLAYER_TRACK_MAX_AGE_MS } from '../../src/client/moq/gmInbox';
 import { makeIdentities, ROOM } from './moqKeys';
 import { encodeFrame } from '../../src/client/game/wire';
 import { seal } from '../../src/shared/envelope';
@@ -820,6 +821,32 @@ describe('プレイヤーの Track のグループと seq（偽の Relay）', ()
     expect(late[0]).toBe('join');
     expect(late.length).toBeLessThanOrEqual(GROUP_MAX_FRAMES);
     conn.close();
+    p.close();
+    gm.close();
+  });
+
+  it('区切るのは ping の直前だけ。区切りの直前の submit も GM に届いて扱われる', async () => {
+    const { gm, p, relay, groups, decode } = await playerSetup();
+    gm.dispatch({ type: 'start', gameId: 'g1' });
+    gm.dispatch({ type: 'gmPhotoUploaded', key: 'k' });
+    gm.dispatch({ type: 'hintsReady', hints: ['a', 'b', 'c', 'd', 'e'], at: Date.now() });
+    // join と ping 11 回でグループがいっぱいになる
+    for (let i = 0; i < GROUP_MAX_FRAMES - 1; i++) p.send({ type: 'ping' });
+    // いっぱいでも、shutter と submit では区切らない
+    p.send({ type: 'shutter', round: 1, hash: 'h' });
+    p.send({ type: 'submit', round: 1, key: `rooms/${ROOM}/g1/1/alice-0123abcd.jpg` });
+    // 直後の ping の前で区切る
+    p.send({ type: 'ping' });
+    await p.flush();
+    const gs = groups();
+    expect(gs).toHaveLength(2);
+    expect(gs[0].map((b) => decode(b).type).slice(-2)).toEqual(['shutter', 'submit']);
+    expect(gs[1].map((b) => decode(b).type)).toEqual(['join', 'ping']);
+    await vi.waitFor(() => expect(gm.state.submissions.alice).toBeDefined());
+    // GM はプレイヤーの Track を、古いグループも読み切るよう maxAge を付けて購読する
+    const subs = relay.connections.flatMap((c) => c.subscribes).filter((x) => x.path === 'p/alice');
+    expect(subs.length).toBeGreaterThan(0);
+    for (const x of subs) expect(x.maxAgeMs).toBe(PLAYER_TRACK_MAX_AGE_MS);
     p.close();
     gm.close();
   });

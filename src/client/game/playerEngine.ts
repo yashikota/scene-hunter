@@ -32,9 +32,12 @@ export const TRANSFER_GRACE_MS = 45_000;
 /** 生きている知らせ（ping）を送る間隔。GM は PRESENCE_TIMEOUT_MS（20 秒）届かなければ away にする。 */
 export const PING_EVERY_MS = 5000;
 /**
- * p/{pid} の events は、このフレーム数かこの時間で新しいグループに切り替える。
+ * p/{pid} の events は、このフレーム数かこの時間を超えたら、次の ping の直前で新しいグループに切り替える。
  * 新しく購読した GM（再読み込み、交代、張り直し）には最新のグループがまるごと届き、1 フレームずつ署名を確かめるので、
  * 1 つのグループを伸ばし続けないようにする。新しいグループは join から始め、それだけで GM の一覧に載れるようにする。
+ * 区切るのは ping の直前だけにする：shutter や submit の直後に区切ると、その最後のフレームを新しいグループが追い越し、
+ * 受け手が古いグループを読み捨てることがある（GM 側も maxAge を延ばして古いグループを読み切るが、念のため両方で防ぐ）。
+ * ping は 5 秒ごとなので、グループはおよそ GROUP_MAX_FRAMES + 5 秒分のフレームまでに収まる。
  */
 export const GROUP_MAX_FRAMES = 12;
 export const GROUP_MAX_MS = 60_000;
@@ -152,13 +155,14 @@ export class PlayerEngine {
     if (this.#stopped) return;
     const now = this.#deps.now();
     if (
-      this.#groupFrames >= GROUP_MAX_FRAMES ||
-      (this.#groupFrames > 0 && now - this.#groupStartedAt >= GROUP_MAX_MS)
+      body.type === 'ping' &&
+      (this.#groupFrames >= GROUP_MAX_FRAMES ||
+        (this.#groupFrames > 0 && now - this.#groupStartedAt >= GROUP_MAX_MS))
     ) {
       // 書く順は送った順（1 本の鎖）なので、区切りも同じ鎖に入れる。
       this.#groupFrames = 0;
       this.#enqueue(() => this.#writer?.rotate());
-      if (body.type !== 'join') this.#write({ type: 'join', name: this.#me.name }, now);
+      this.#write({ type: 'join', name: this.#me.name }, now);
     }
     this.#write(body, now);
   }

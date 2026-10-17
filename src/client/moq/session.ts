@@ -8,8 +8,16 @@ import * as Moq from '@moq/net';
 export interface MoqConnection {
   /** パスの broadcast を announce し（まだなら）、Track を作る。 */
   publish(path: string, track: string): MoqTrackWriter;
-  /** announced が false なら announce を待たずに購読する。 */
-  subscribe(path: string, track: string, opts: { announced: boolean }, sink: TrackSink): () => void;
+  /**
+   * announced が false なら announce を待たずに購読する。
+   * maxAgeMs：最新でないグループを、この時間までは読み捨てずに読み切る（省略すると最新のグループだけを追う）。
+   */
+  subscribe(
+    path: string,
+    track: string,
+    opts: { announced: boolean; maxAgeMs?: number },
+    sink: TrackSink,
+  ): () => void;
   /** announce の購読は接続を張ったときに 1 件だけ出す。ここでは受け取り口を足すだけ。 */
   announced(onPath: (path: string, active: boolean) => void): () => void;
   close(): void;
@@ -52,6 +60,11 @@ export interface SubscribeOptions {
   blind?: boolean;
   /** Track が終わったときに呼ぶ。この購読は終わったものとして扱い、張り直しでもやり直さない。 */
   onEnd?: (error?: unknown) => void;
+  /**
+   * 最新でないグループを読み捨てるまでの時間（ミリ秒）。@moq/net の既定は 0 で、新しいグループが来ると
+   * 読みかけの古いグループを捨てる。古いグループの最後のフレームまで要る Track（プレイヤーの events）で指定する。
+   */
+  maxAgeMs?: number;
 }
 
 interface Sub {
@@ -275,7 +288,7 @@ export class MoqSession {
     const cancel = this.#conn!.subscribe(
       sub.path,
       sub.track,
-      { announced: !sub.opts.blind },
+      { announced: !sub.opts.blind, maxAgeMs: sub.opts.maxAgeMs },
       {
         frame: (bytes) => {
           if (live) sub.onFrame(bytes);
@@ -314,7 +327,7 @@ export function keepSubscribed(
   path: string,
   track: string,
   onFrame: (bytes: Uint8Array) => void,
-  opts: { blind?: boolean; maxDelayMs?: number } = {},
+  opts: { blind?: boolean; maxDelayMs?: number; maxAgeMs?: number } = {},
 ): () => void {
   const maxDelay = opts.maxDelayMs ?? 2000;
   let stopped = false;
@@ -332,6 +345,7 @@ export function keepSubscribed(
       },
       {
         blind: opts.blind,
+        maxAgeMs: opts.maxAgeMs,
         onEnd: () => {
           off = undefined;
           if (stopped) return;
@@ -398,7 +412,7 @@ class MoqNetConnection implements MoqConnection {
   subscribe(
     path: string,
     track: string,
-    opts: { announced: boolean },
+    opts: { announced: boolean; maxAgeMs?: number },
     sink: TrackSink,
   ): () => void {
     let cancelled = false;
@@ -415,7 +429,10 @@ class MoqNetConnection implements MoqConnection {
           if (cancelled) return;
           active = req.active.peek();
         }
-        sub = active.track(track).subscribe({ priority: 0 });
+        sub = active.track(track).subscribe({
+          priority: 0,
+          ...(opts.maxAgeMs ? { maxAge: opts.maxAgeMs as Moq.Time.Milli } : {}),
+        });
         if (cancelled) return sub.close();
         for (;;) {
           const group = await sub.recvGroup();

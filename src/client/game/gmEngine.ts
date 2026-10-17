@@ -241,7 +241,12 @@ export class GmEngine {
     this.#inbox?.add(pid, (e) => this.#onPlayer(e));
   }
 
-  /** しばらくメッセージの届かない人を away にする。 */
+  /**
+   * しばらくメッセージの届かない人を away にする。
+   * 既知の制限：GM のタブが長く隠れていると、Chrome はタイマーを 1 分おき程度に間引く。そのときは毎回
+   * 判定の間隔が PRESENCE_SUSPEND_GAP_MS を超えて数え直すので、黙って途切れた人を away にできない
+   * （away を送った人と leave は扱える）。遊んでいる間の GM はタブを表に出している前提で、直さない。
+   */
   #checkPresence(): void {
     const now = this.#deps.now();
     const gap = this.#lastCheckAt === undefined ? 0 : now - this.#lastCheckAt;
