@@ -20,12 +20,12 @@ const b64u = (b) => Buffer.from(b).toString('base64url');
   const k = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   console.log(b64u(await subtle.exportKey('pkcs8', k.privateKey)) + ' ' + b64u(await subtle.exportKey('raw', k.publicKey)));
 })();")
-printf %s "${OUT%% *}" | npx void secret put SERVER_SIGNING_KEY
+printf %s "${OUT%% *}" | pnpm exec void secret put SERVER_SIGNING_KEY
 echo "VITE_SERVER_PUBLIC_KEY=${OUT##* }"   # 公開鍵。env.ts の既定値と下の「現在の公開鍵」を書き換える
 unset OUT
 
 node -e "process.stdout.write(require('crypto').randomBytes(32).toString('base64url'))" \
-  | npx void secret put HMAC_SECRET
+  | pnpm exec void secret put HMAC_SECRET
 ```
 
 署名鍵を作り直したら、同じ公開鍵でビルドし直す（公開鍵はブラウザの JS に埋め込まれる）。
@@ -49,13 +49,13 @@ cf CLI の OAuth では API トークンを作れないので、ダッシュボ�
 `void secret put` は標準入力から値を読む。
 
 ```sh
-printf %s 4723b654d7c87a32f3a5b3e260da5eec | npx void secret put CF_ACCOUNT_ID
-printf %s scene-hunter-storage | npx void secret put R2_BUCKET
-npx void secret put CF_API_TOKEN          # 対話で入力（伏せ字）
-npx void secret put R2_ACCESS_KEY_ID
-npx void secret put R2_SECRET_ACCESS_KEY
-npx void secret put QWEN_API_KEY          # 任意。Workers AI の無料枠を超えたときの切り替え先
-npx void secret list
+printf %s 4723b654d7c87a32f3a5b3e260da5eec | pnpm exec void secret put CF_ACCOUNT_ID
+printf %s scene-hunter-storage | pnpm exec void secret put R2_BUCKET
+pnpm exec void secret put CF_API_TOKEN          # 対話で入力（伏せ字）
+pnpm exec void secret put R2_ACCESS_KEY_ID
+pnpm exec void secret put R2_SECRET_ACCESS_KEY
+pnpm exec void secret put QWEN_API_KEY          # 任意。Workers AI の無料枠を超えたときの切り替え先
+pnpm exec void secret list
 ```
 
 `env.ts` の必須の値（`QWEN_API_KEY` 以外）がリモートに無いと、`void deploy` はアップロードしない。
@@ -72,15 +72,26 @@ CLOUDFLARE_ACCOUNT_ID=4723b654d7c87a32f3a5b3e260da5eec scripts/r2-setup.sh
 
 ## 5. デプロイ
 
-`SH_E2E`（e2e テストのモード）を export したシェルではデプロイしない。`void.config.ts` は `SH_E2E` があると build と deploy を止める（そのまま進むと Workers AI の binding の無い Worker ができる）。
+デプロイは、コミット済みの HEAD をきれいに取り出した作業ツリーから行う。手元の作業ツリーには、まだコミットしていない変更や作業中のファイルが残っていることがあり、そのままデプロイするとそれも本番に載る（一度、作業中の変更を載せてしまい、すぐに HEAD から出し直した）。
+
+`SH_E2E`（e2e テストのモード）を export したシェルではデプロイしない。`void.config.ts` は `SH_E2E` があると build と deploy を止める（そのまま進むと Workers AI の binding の無い Worker ができる）。下の手順では、念のため `env -u SH_E2E` で外して実行する。
 
 ```sh
-CLOUDFLARE_WORKERS_SUBDOMAIN=scene-hunter npx void deploy --platform cloudflare
-pnpm deploy:settings   # void.config.ts の observability を Worker に反映する
+git worktree add --detach ../sh-deploy HEAD   # HEAD だけの作業ツリー（ブランチは作らない）
+cd ../sh-deploy
+pnpm install --frozen-lockfile
+env -u SH_E2E CLOUDFLARE_WORKERS_SUBDOMAIN=scene-hunter pnpm exec void deploy --platform cloudflare
+env -u SH_E2E pnpm deploy:settings   # void.config.ts の observability を Worker に反映する
 curl https://scene-hunter.scene-hunter.workers.dev/api/health   # {"ok":true}
+cd -
+git worktree remove ../sh-deploy
 ```
 
+`git worktree remove` は、取り出した作業ツリーに変更があると止まる。そのときは中身を確かめてから `--force` で消す。
+
 Void 1.1.11 は版に属さない設定（observability）を Cloudflare に送らない。`pnpm deploy:settings` は `void.config.ts` の値を script-settings に PATCH する（`CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` が要る）。
+
+Qwen への切り替え（Workers AI の無料枠を使い切ったときのヒントの生成）は、`QWEN_API_KEY` を登録するまで動かない。いまは登録しておらず、本物のキーで呼んだことも無い（`QWEN_MODEL` と Alibaba への振り分けは未確認）。登録していない間に Workers AI の無料枠を使い切ると、ヒントの生成は失敗し、GM の画面にやり直しと解散のボタンが出る。キーを登録する前に、本物のキーで 1 回呼んで確かめ、部屋ごとの `RL_HINTS`（60 秒に 3 回）より厳しい上限を Qwen の側に置く。
 
 `.env` に `CF_API_TOKEN` を置くと Void がそれをデプロイに使うので、置かない（MoQ のトークンは `MOQ_TOKEN` などの別名にする）。
 
