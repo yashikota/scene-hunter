@@ -62,8 +62,10 @@ export function isQuotaError(e: unknown): boolean {
     if (o.status === 429 || o.statusCode === 429) return true;
   }
   const msg = e instanceof Error ? e.message : typeof e === 'string' ? e : '';
-  return /neurons|4006|daily free allocation/i.test(msg);
+  return /neurons|\b4006\b|daily free allocation/i.test(msg);
 }
+
+export class HintGenerationError extends Error {}
 
 export interface HintDeps {
   ai: { run(model: string, input: unknown): Promise<unknown> };
@@ -142,5 +144,5 @@ export async function generateHints(
       if (!useQwen && isQuotaError(e)) useQwen = true;
     }
   }
-  throw new Error('hint generation failed', { cause: last });
+  throw new HintGenerationError('hint generation failed', { cause: last });
 }

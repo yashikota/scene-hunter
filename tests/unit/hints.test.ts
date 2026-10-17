@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { buildHintPrompt, generateHints, isQuotaError } from '../../src/server/hints';
+import {
+  buildHintPrompt,
+  generateHints,
+  HINT_MODEL,
+  HINT_SCHEMA,
+  HintGenerationError,
+  isQuotaError,
+  QWEN_MODEL,
+} from '../../src/server/hints';
 
 const five = ['a', 'b', 'c', 'd', 'e'];
 const ok = { response: { hints: five } };
@@ -55,7 +63,7 @@ describe('generateHints', () => {
 
   it('throws when every attempt fails', async () => {
     const { d, calls } = fakes([new Error('x'), { response: {} }, 'oops']);
-    await expect(generateHints(d, img, 'ja')).rejects.toThrow(Error);
+    await expect(generateHints(d, img, 'ja')).rejects.toThrow(HintGenerationError);
     expect(calls.ai).toBe(3);
   });
 });
@@ -66,6 +74,8 @@ describe('isQuotaError', () => {
     expect(isQuotaError(new Error('exceeded neurons'))).toBe(true);
     expect(isQuotaError(new Error('network down'))).toBe(false);
     expect(isQuotaError(undefined)).toBe(false);
+    expect(isQuotaError(new Error('took 14006 ms'))).toBe(false);
+    expect(isQuotaError(new Error('error 4006'))).toBe(true);
   });
 });
 
@@ -73,5 +83,41 @@ describe('buildHintPrompt', () => {
   it('names the language in English', () => {
     expect(buildHintPrompt('ko')).toContain('Korean');
     expect(buildHintPrompt('ja')).toContain('Japanese');
+  });
+});
+
+describe('request bodies', () => {
+  const dataUrl = 'data:image/jpeg;base64,AQID';
+
+  it('sends the Workers AI input', async () => {
+    let got: any;
+    const d = { ai: { run: async (m: string, i: unknown) => ((got = { m, i }), ok) }, qwen: async () => ok };
+    await generateHints(d, img, 'ko');
+    expect(got.m).toBe(HINT_MODEL);
+    expect(got.i.reasoning_effort).toBe('low');
+    expect(got.i.response_format).toEqual({ type: 'json_schema', json_schema: HINT_SCHEMA });
+    expect(got.i.messages[0].content).toEqual([
+      { type: 'text', text: buildHintPrompt('ko') },
+      { type: 'image_url', image_url: { url: dataUrl } },
+    ]);
+  });
+
+  it('sends the Qwen API body', async () => {
+    let got: any;
+    const d = {
+      ai: { run: async () => { throw Object.assign(new Error('x'), { status: 429 }); } },
+      qwen: async (b: unknown) => ((got = b), ok),
+    };
+    await generateHints(d, img, 'ko');
+    expect(got.model).toBe(QWEN_MODEL);
+    expect(got.reasoning_effort).toBe('low');
+    expect(got.response_format).toEqual({
+      type: 'json_schema',
+      json_schema: { name: 'hints', strict: true, schema: HINT_SCHEMA },
+    });
+    expect(got.messages[0].content).toEqual([
+      { type: 'text', text: buildHintPrompt('ko') },
+      { type: 'image_url', image_url: { url: dataUrl } },
+    ]);
   });
 });

@@ -3,8 +3,8 @@ import { defineHandler } from 'void';
 import { ai } from 'void/ai';
 import { allow } from '../../../../src/server/limits';
 import { bearer, errorResponse, limiter, roomDeps, tooMany } from '../../../../src/server/deps';
-import { generateHints } from '../../../../src/server/hints';
-import { parsePhotoKey } from '../../../../src/server/presign';
+import { generateHints, HintGenerationError } from '../../../../src/server/hints';
+import { MAX_PHOTO_BYTES, parsePhotoKey } from '../../../../src/server/presign';
 import { authorize, NotFoundError } from '../../../../src/server/services/rooms';
 
 export const POST = defineHandler.withValidator({
@@ -21,6 +21,7 @@ export const POST = defineHandler.withValidator({
     }
     const obj = await (c.env as { STORAGE: R2Bucket }).STORAGE.get(body.key);
     if (!obj) throw new NotFoundError('photo not found');
+    if (obj.size > MAX_PHOTO_BYTES) return c.json({ error: 'payload_too_large' }, 413);
     const image = new Uint8Array(await obj.arrayBuffer());
     const qwen = ai.provider('qwen', {
       apiKeyEnv: 'QWEN_API_KEY',
@@ -41,6 +42,7 @@ export const POST = defineHandler.withValidator({
     );
     return { hints };
   } catch (e) {
+    if (e instanceof HintGenerationError) return c.json({ error: 'hint_generation_failed' }, 502);
     return errorResponse(c, e);
   }
 });
