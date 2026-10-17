@@ -18,6 +18,13 @@ export default defineConfig({
     preview_urls: true,
     // 省略すると Void は既存の routes を引き継ごうとし、Void 以外が作った版（secret の変更など）の直後に止まる。
     routes: [],
+    // Workers Logs（console 出力と呼び出しログ）とトレースを全件残す。
+    observability: {
+      enabled: true,
+      head_sampling_rate: 1,
+      logs: { enabled: true, invocation_logs: true },
+      traces: { enabled: true, head_sampling_rate: 1 },
+    },
     ratelimits: [
       rateLimit('RL_CREATE', '1001', 2), // IP
       rateLimit('RL_JOIN', '1002', 10), // IP
