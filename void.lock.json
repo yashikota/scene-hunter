@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "source": {
+    "name": "scene-hunter"
+  },
+  "resolved": {
+    "name": "scene-hunter",
+    "compatibility_date": "2026-02-24"
+  },
+  "text": "{\n  \"name\": \"scene-hunter\",\n  \"compatibility_date\": \"2026-02-24\"\n}\n"
+}

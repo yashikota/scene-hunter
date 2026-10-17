@@ -3,3 +3,7 @@ node_modules/
 .env.*
 dist/
 .void/
+
+.void-wrangler.jsonc
+test-results/
+playwright-report/

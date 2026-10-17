@@ -1,0 +1,16 @@
+:root {
+  --color-bg: #e8f4fd;
+  --color-surface: #ffffff;
+  --color-ink: #1a1a1a;
+  --color-sub: #56606b;
+  --color-accent: #ff9447;
+  --color-timer: #3d6bf0;
+  --color-gold: #ffe36b;
+  --font-display: 'Mochiy Pop One';
+  --font-body: 'M PLUS Rounded 1c';
+  --border: 2px solid #1a1a1a;
+  --shadow: 4px 4px 0 #1a1a1a;
+  --radius-sm: 10px;
+  --radius-lg: 20px;
+  --radius-button: 12px;
+}

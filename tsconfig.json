@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src", "routes", "tests", "env.ts", "*.config.ts", ".void/*.d.ts"]
+}
