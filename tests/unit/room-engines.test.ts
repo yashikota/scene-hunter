@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
-import { GmEngine } from '../../src/client/game/gmEngine';
+import { GmEngine, PRESENCE_TIMEOUT_MS } from '../../src/client/game/gmEngine';
 import { claimUntilDone, loadMe, rejoinUntilDone, type Me } from '../../src/client/game/membership';
 import {
   PlayerEngine,
@@ -11,6 +11,8 @@ import { newGameId } from '../../src/client/game/useRoom';
 import { issueCert, issueTransfer, type Cert } from '../../src/shared/cert';
 import { FakeRelay } from './fakeMoq';
 import { makeIdentities, ROOM } from './moqKeys';
+import { encodeFrame } from '../../src/client/game/wire';
+import { seal } from '../../src/shared/envelope';
 
 type Identity = Awaited<ReturnType<Awaited<ReturnType<typeof makeIdentities>>['mk']>>;
 
@@ -454,4 +456,167 @@ describe('GM の接続切れ（偽の Relay）', () => {
     expect(bob.gmDisconnectedSince).not.toBeNull();
     bob.close();
   });
+});
+
+describe('部屋を出る、通信が切れる（偽の Relay）', () => {
+  it('leave を受けた GM は一覧から外し、プレイヤーの画面の一覧からも消える', async () => {
+    const keys = await makeIdentities();
+    const relay = new FakeRelay();
+    const gmId = await keys.mk('gm', 'gm');
+    const gm = new GmEngine(meOf(gmId, 'gm'), {
+      connector: relay.connector,
+      verifier: keys.verifier(),
+      privateKey: gmId.kp.privateKey,
+      now: () => Date.now(),
+    });
+    gm.start();
+    const mkPlayer = async (pid: string) => {
+      const id = await keys.mk(pid, 'player');
+      const p = new PlayerEngine(meOf(id, 'player'), {
+        connector: relay.connector,
+        verifier: keys.verifier(),
+        privateKey: id.kp.privateKey,
+        serverPub: keys.serverPub,
+        now: () => Date.now(),
+        saveSeq: () => {},
+        onTransferToMe: () => {},
+      });
+      p.start();
+      return p;
+    };
+    const alice = await mkPlayer('alice');
+    const bob = await mkPlayer('bob');
+    await vi.waitFor(() => expect(alice.view.players).toHaveLength(2));
+    bob.leave();
+    bob.close(50);
+    await vi.waitFor(() => expect(Object.keys(gm.state.players)).toEqual(['alice']));
+    await vi.waitFor(() => expect(alice.view.players.map((x) => x.pid)).toEqual(['alice']));
+    expect(gm.state.left).toEqual(['bob']);
+    alice.close();
+    gm.close();
+  });
+
+  it('偽の leave（ほかの人の鍵、別のサーバーの参加証、ほかの人の Track）は無視し、本人の leave の後は join も受けない', async () => {
+    const keys = await makeIdentities();
+    const relay = new FakeRelay();
+    const gmId = await keys.mk('gm', 'gm');
+    const aliceId = await keys.mk('alice', 'player');
+    const malloryId = await keys.mk('mallory', 'player');
+    const forged = await (await makeIdentities()).mk('alice', 'player'); // 別のサーバーが出した alice
+    const gm = new GmEngine(meOf(gmId, 'gm'), {
+      connector: relay.connector,
+      verifier: keys.verifier(),
+      privateKey: gmId.kp.privateKey,
+      now: () => Date.now(),
+    });
+    gm.start();
+    // GM が announce を聞き始めてから publish する
+    await vi.waitFor(() => expect(relay.connections.some((c) => c.listeners.size > 0)).toBe(true));
+    const out = relay.connect();
+    const aliceTrack = out.publish('p/alice', 'events').appendGroup();
+    const malloryTrack = out.publish('p/mallory', 'events').appendGroup();
+    const write = async (
+      g: { writeFrame(b: Uint8Array): void },
+      body: { pid: string; [k: string]: unknown },
+      key: CryptoKey,
+      cert: Cert,
+    ) => g.writeFrame(encodeFrame(await seal(body, key, cert)));
+    const alice = { key: aliceId.kp.privateKey, cert: aliceId.cert as Cert };
+    await write(
+      aliceTrack,
+      { pid: 'alice', seq: 0, type: 'join', name: 'x' },
+      alice.key,
+      alice.cert,
+    );
+    await write(
+      malloryTrack,
+      { pid: 'mallory', seq: 0, type: 'join', name: 'x' },
+      malloryId.kp.privateKey,
+      malloryId.cert as Cert,
+    );
+    await vi.waitFor(() => expect(Object.keys(gm.state.players)).toEqual(['alice', 'mallory']));
+
+    // alice の参加証に mallory の鍵で署名した leave
+    await write(
+      aliceTrack,
+      { pid: 'alice', seq: 1, type: 'leave' },
+      malloryId.kp.privateKey,
+      alice.cert,
+    );
+    // 別のサーバーの参加証で alice を名乗る leave
+    await write(
+      aliceTrack,
+      { pid: 'alice', seq: 2, type: 'leave' },
+      forged.kp.privateKey,
+      forged.cert as Cert,
+    );
+    // mallory の Track に載せた、alice を名乗る leave（mallory 本人の署名）
+    await write(
+      malloryTrack,
+      { pid: 'alice', seq: 1, type: 'leave' },
+      malloryId.kp.privateKey,
+      malloryId.cert as Cert,
+    );
+    // 偽のフレームが処理し終わったことを、後に続く本物の away（届くと away になる）で確かめる
+    await write(aliceTrack, { pid: 'alice', seq: 3, type: 'away' }, alice.key, alice.cert);
+    await vi.waitFor(() => expect(gm.state.players.alice?.away).toBe(true));
+    await new Promise((r) => setTimeout(r, 50)); // mallory の Track の分
+    expect(Object.keys(gm.state.players)).toEqual(['alice', 'mallory']);
+    expect(gm.state.left).toEqual([]);
+
+    await write(aliceTrack, { pid: 'alice', seq: 4, type: 'leave' }, alice.key, alice.cert);
+    await vi.waitFor(() => expect(Object.keys(gm.state.players)).toEqual(['mallory']));
+    // 出た人の後のメッセージ（join し直しも）は無視する
+    await write(
+      aliceTrack,
+      { pid: 'alice', seq: 5, type: 'join', name: 'x' },
+      alice.key,
+      alice.cert,
+    );
+    await new Promise((r) => setTimeout(r, 100));
+    expect(Object.keys(gm.state.players)).toEqual(['mallory']);
+    out.close();
+    gm.close();
+  });
+
+  it('20 秒メッセージが無い人は away、何か届けば戻る。タブを閉じる（pagehide）とすぐ away', async () => {
+    const keys = await makeIdentities();
+    const relay = new FakeRelay();
+    const gmId = await keys.mk('gm', 'gm');
+    const aliceId = await keys.mk('alice', 'player');
+    let clock = Date.now();
+    const gm = new GmEngine(meOf(gmId, 'gm'), {
+      connector: relay.connector,
+      verifier: keys.verifier(),
+      privateKey: gmId.kp.privateKey,
+      now: () => clock,
+    });
+    gm.start();
+    const p = new PlayerEngine(meOf(aliceId, 'player'), {
+      connector: relay.connector,
+      verifier: keys.verifier(),
+      privateKey: aliceId.kp.privateKey,
+      serverPub: keys.serverPub,
+      now: () => Date.now(),
+      saveSeq: () => {},
+      onTransferToMe: () => {},
+    });
+    p.start();
+    await vi.waitFor(() => expect(p.view.players).toHaveLength(1));
+    clock += PRESENCE_TIMEOUT_MS - 1000;
+    await new Promise((r) => setTimeout(r, 1200));
+    expect(gm.state.players.alice.away).toBeFalsy();
+    clock += 2000;
+    await vi.waitFor(() => expect(gm.state.players.alice.away).toBe(true), { timeout: 2000 });
+    await vi.waitFor(() => expect(p.view.players[0].away).toBe(true));
+
+    p.send({ type: 'ping' });
+    await vi.waitFor(() => expect(gm.state.players.alice.away).toBe(false));
+    await vi.waitFor(() => expect(p.view.players[0].away).toBe(false));
+
+    window.dispatchEvent(new Event('pagehide'));
+    await vi.waitFor(() => expect(gm.state.players.alice.away).toBe(true));
+    p.close();
+    gm.close();
+  }, 10_000);
 });

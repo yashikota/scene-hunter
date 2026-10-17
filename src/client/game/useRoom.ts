@@ -62,6 +62,8 @@ export interface Room {
 const DISSOLVE_LINGER_MS = 5000;
 /** GM を渡した後、交代のイベントが届くまで古い GM の接続を残す。 */
 const TRANSFER_LINGER_MS = 5000;
+/** 部屋を出た後、leave が Relay に届くまでプレイヤーの接続を残す。 */
+const LEAVE_LINGER_MS = 3000;
 
 const serverPub = (): string => import.meta.env.VITE_SERVER_PUBLIC_KEY ?? '';
 const nowMs = () => Date.now();
@@ -170,7 +172,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
       cancelled = true;
       clearTimeout(timer);
       if (made?.kind === 'gm') made.gm.close(linger.current);
-      if (made?.kind === 'player') made.player.close();
+      if (made?.kind === 'player') made.player.close(linger.current);
       linger.current = 0;
     };
   }, [code, me.role, me.pid, me.privateKey, rejoining, connector, updateMe, exit]);
@@ -333,6 +335,11 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
       dissolve,
       leave: async () => {
         if (gm) return dissolve();
+        if (player) {
+          // GM に出たことを知らせ、届くまで少し接続を残す（閉じるのは画面を離れたとき）。
+          player.leave();
+          linger.current = LEAVE_LINGER_MS;
+        }
         exit();
       },
     };

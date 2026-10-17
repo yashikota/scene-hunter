@@ -1,4 +1,4 @@
-import { eligiblePids } from '../game/gmMachine';
+import { activeEligiblePids } from '../game/gmMachine';
 import type { Room } from '../game/useRoom';
 import { Final } from './Final';
 import { ResultsPick, type ResultPhotoView } from './ResultsPick';
@@ -24,9 +24,9 @@ export function ResultsScreen({ room, code }: { room: Room; code: string }) {
           gmPhotoUrl={gmPhotoUrl}
           photos={photos}
           missing={
-            // そのラウンドの対象者（プレイヤーのターンの前に入った人）だけ
+            // そのラウンドの対象者（プレイヤーのターンの前に入った人）のうち、通信が切れていない人だけ
             room.gm
-              ? eligiblePids(room.gm.state)
+              ? activeEligiblePids(room.gm.state)
                   .filter((pid) => !photos?.some((x) => x.pid === pid))
                   .map(labelOf)
               : []

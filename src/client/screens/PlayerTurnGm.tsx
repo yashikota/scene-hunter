@@ -18,7 +18,7 @@ export interface PlayerTurnGmProps {
   /** GM が撮った（選んだ）お題の写真。再読み込みなどで手元に無いときは undefined。 */
   photoUrl?: string;
   /** GM を除くプレイヤー。 */
-  players: readonly { pid: string; label: string }[];
+  players: readonly { pid: string; label: string; away?: boolean }[];
   submitted: readonly string[];
 }
 
@@ -36,7 +36,9 @@ export function PlayerTurnGm(props: PlayerTurnGmProps) {
     submitted,
   } = props;
   const now = useNow();
-  const done = players.filter((p) => submitted.includes(p.pid)).length;
+  // 数えるのは提出した人と、つながっている人（通信が切れたらしい人は待たない）。
+  const counted = players.filter((p) => !p.away || submitted.includes(p.pid));
+  const done = counted.filter((p) => submitted.includes(p.pid)).length;
   return (
     <Screen>
       <TopBar
@@ -91,17 +93,20 @@ export function PlayerTurnGm(props: PlayerTurnGmProps) {
             {m.submissions_heading()}
           </h2>
           <span className="sh-sub" style={{ fontSize: 13 }}>
-            {m.people_ratio({ done, total: players.length })}
+            {m.people_ratio({ done, total: counted.length })}
           </span>
         </div>
         <ul className="sh-tiles">
           {players.map((p) => {
             const ok = submitted.includes(p.pid);
             return (
-              <li key={p.pid} className={`sh-tile ${ok ? 'sh-tile--me' : ''}`}>
+              <li
+                key={p.pid}
+                className={`sh-tile ${ok ? 'sh-tile--me' : p.away ? 'sh-tile--away' : ''}`}
+              >
                 <span>{p.label}</span>{' '}
                 <span style={{ fontSize: 12 }}>
-                  {ok ? m.status_submitted() : m.status_shooting()}
+                  {ok ? m.status_submitted() : p.away ? m.status_away() : m.status_shooting()}
                 </span>
               </li>
             );

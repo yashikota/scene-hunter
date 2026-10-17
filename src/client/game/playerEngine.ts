@@ -29,6 +29,8 @@ export const REJOIN_MAX_MS = 60_000;
  * 「GM の接続が切れた」とする（交代先の引き継ぎが失敗し続けても、残った人が待ち続けないように）。
  */
 export const TRANSFER_GRACE_MS = 45_000;
+/** 生きている知らせ（ping）を送る間隔。GM は PRESENCE_TIMEOUT_MS（20 秒）届かなければ away にする。 */
+export const PING_EVERY_MS = 5000;
 
 export interface PlayerEngineDeps {
   connector: MoqConnector;
@@ -64,11 +66,15 @@ export class PlayerEngine {
   #followSession?: MoqSession;
   #stopFollow?: () => void;
   #rejoinTimer?: ReturnType<typeof setInterval>;
+  #pingTimer?: ReturnType<typeof setInterval>;
+  #unlisten?: () => void;
   #unlistedSince: number | null = null;
   #rejoinAfterMs = REJOIN_AFTER_MS;
   #queue: Promise<void> = Promise.resolve();
   #lastResyncAt = -Infinity;
   #closed = false;
+  /** close を呼んだ後（接続はまだ閉じていないこともある）。以後は何も送らない。 */
+  #stopped = false;
   #transferred = false;
   #goneTimer?: ReturnType<typeof setTimeout>;
 
@@ -101,10 +107,25 @@ export class PlayerEngine {
     });
     keepStarting(follow, () => this.#closed);
     this.#rejoinTimer = setInterval(() => this.#checkListed(), 1000);
+    this.#pingTimer = setInterval(() => this.send({ type: 'ping' }), PING_EVERY_MS);
+    // タブを閉じる（かもしれない）ときは away を送る。再読み込みでも起きるので leave にはしない
+    // （再読み込みした後の join で GM は away を解く）。届かなくても ping が途切れて away になる。
+    if (typeof window !== 'undefined') {
+      const hide = () => this.send({ type: 'away' });
+      const show = (e: PageTransitionEvent) => {
+        if (e.persisted) this.send({ type: 'ping' });
+      };
+      window.addEventListener('pagehide', hide);
+      window.addEventListener('pageshow', show);
+      this.#unlisten = () => {
+        window.removeEventListener('pagehide', hide);
+        window.removeEventListener('pageshow', show);
+      };
+    }
   }
 
   send(body: PlayerEventBody): void {
-    if (this.#closed) return;
+    if (this.#stopped) return;
     const seq = this.#seq++;
     this.#deps.saveSeq(this.#seq);
     const env = { ...body, pid: this.#me.pid, seq };
@@ -135,15 +156,31 @@ export class PlayerEngine {
     return () => this.#listeners.delete(fn);
   }
 
-  close(): void {
-    if (this.#closed) return;
-    this.#closed = true;
+  /** 部屋を出たことを GM に知らせる。この後に close(lingerMs) で閉じる。 */
+  leave(): void {
+    this.send({ type: 'leave' });
+  }
+
+  /**
+   * 何も送らないようにし、lingerMs 後（それまでに送ったメッセージを書き終えてから）接続を閉じる。
+   * 部屋を出るときは、leave が Relay に届くよう少し待ってから閉じる。
+   */
+  close(lingerMs = 0): void {
+    if (this.#stopped) return;
+    this.#stopped = true;
     clearInterval(this.#rejoinTimer);
+    clearInterval(this.#pingTimer);
     clearTimeout(this.#goneTimer);
+    this.#unlisten?.();
     this.#listeners.clear();
     this.#stopFollow?.();
     this.#followSession?.close();
-    this.#pubSession?.close();
+    const shut = () => {
+      this.#closed = true;
+      this.#pubSession?.close();
+    };
+    if (lingerMs > 0) setTimeout(() => void this.#queue.then(shut), lingerMs);
+    else shut();
   }
 
   #publish(): void {

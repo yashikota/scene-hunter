@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { activePlayers } from '../game/playerView';
 import { m } from '../paraglide/messages';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -8,7 +9,17 @@ import { formatCode, TopBar } from '../ui/TopBar';
 export interface LobbyMember {
   pid: string;
   label: string;
+  /** 通信が切れたらしい人。薄く出し、人数には入れない。 */
+  away?: boolean;
 }
+
+/** 通信が切れたらしい人に添える「通信なし」。 */
+const AwayNote = () => (
+  <span className="sh-sub" style={{ fontSize: 12 }}>
+    {' '}
+    {m.status_away()}
+  </span>
+);
 
 /** 参加者の一覧（GM を先頭に、2 列のタイル）。人数は GM を含める。 */
 export function PlayerTiles({
@@ -27,7 +38,7 @@ export function PlayerTiles({
           {m.players_heading()}
         </h2>
         <span className="sh-sub" style={{ fontSize: 13 }}>
-          {m.players_count({ count: players.length + 1 })}
+          {m.players_count({ count: activePlayers(players).length + 1 })}
         </span>
       </div>
       <ul className="sh-tiles">
@@ -38,8 +49,9 @@ export function PlayerTiles({
               {m.you_tag({ name: p.label })}
             </li>
           ) : (
-            <li key={p.pid} className="sh-tile">
+            <li key={p.pid} className={`sh-tile ${p.away ? 'sh-tile--away' : ''}`}>
               {p.label}
+              {p.away && <AwayNote />}
             </li>
           ),
         )}
@@ -77,6 +89,8 @@ export function LobbyGm({
   const [failed, setFailed] = useState(false);
   const [copied, setCopied] = useState(false);
   const [manual, setManual] = useState(false);
+  // 通信が切れたらしい人には GM を渡さない。始めるのにも、つながっている人が 1 人は要る。
+  const active = activePlayers(players);
   const linkRef = useRef<HTMLInputElement>(null);
 
   const copyLink = () => {
@@ -159,19 +173,19 @@ export function LobbyGm({
       )}
 
       <div className="sh-actions">
-        {players.length === 0 && (
+        {active.length === 0 && (
           <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: 'center' }}>
             {m.start_waiting()}
           </p>
         )}
-        <Button variant="primary" onClick={onStart} disabled={players.length === 0 || transferring}>
+        <Button variant="primary" onClick={onStart} disabled={active.length === 0 || transferring}>
           {m.start_button()}
         </Button>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
           <Button
             variant="quiet"
             onClick={() => setChoosing(true)}
-            disabled={players.length === 0 || transferring}
+            disabled={active.length === 0 || transferring}
             aria-haspopup="dialog"
           >
             {m.transfer_button()}
@@ -184,7 +198,7 @@ export function LobbyGm({
 
       {choosing && (
         <TransferSheet
-          players={players}
+          players={active}
           busy={transferring}
           onPick={transfer}
           onCancel={() => setChoosing(false)}

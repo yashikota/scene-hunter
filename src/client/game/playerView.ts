@@ -13,7 +13,13 @@ export interface ViewPlayer {
   total: number;
   /** 直近の ranking の順位。ranking がまだ届いていなければ null。 */
   rank: number | null;
+  /** GM がしばらくこの人のメッセージを受け取っていない。人数や全員提出の数には入れない。 */
+  away: boolean;
 }
+
+/** away でない人だけ（人数や「2 / 3 人」の数に使う）。 */
+export const activePlayers = <P extends { away?: boolean }>(players: readonly P[]): P[] =>
+  players.filter((p) => !p.away);
 
 export interface PlayerView {
   phase: Phase | 'connecting' | 'disconnected' | 'dissolved';
@@ -67,7 +73,13 @@ function withTotals(players: ViewPlayer[], totals: readonly Total[]): ViewPlayer
 }
 
 function fromLobby(players: readonly LobbyPlayer[]): ViewPlayer[] {
-  return players.map((p) => ({ pid: p.pid, label: p.label, total: 0, rank: null }));
+  return players.map((p) => ({
+    pid: p.pid,
+    label: p.label,
+    total: 0,
+    rank: null,
+    away: p.away ?? false,
+  }));
 }
 
 export function applyEvent(v: PlayerView, e: GmEvent, localNow: number): PlayerView {

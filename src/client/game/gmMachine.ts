@@ -30,6 +30,8 @@ export interface GmPlayer {
   joinedAt: { round: number; phase: Phase };
   total: number;
   streak: number;
+  /** しばらくメッセージが届いていない（GmEngine が決める）。全員提出の判定と未提出の一覧から外す。得点は残す。 */
+  away?: boolean;
 }
 
 export interface GmState {
@@ -43,6 +45,8 @@ export interface GmState {
   round: number;
   gameId: string | null;
   players: Record<string, GmPlayer>;
+  /** 部屋を出た pid。以後この pid のメッセージはすべて無視する（保存が古ければ無い）。 */
+  left?: string[];
   gmPhotoKey: string | null;
   /** player_turn を送った時刻（GM の時計）。撮影秒数 t の起点。 */
   turnStartedAt: number | null;
@@ -62,6 +66,10 @@ export interface GmState {
 
 export type GmAction =
   | { type: 'playerJoined'; pid: string; name: string; at: number }
+  /** プレイヤーが部屋を出た（署名つきの leave を受けた）。 */
+  | { type: 'playerLeft'; pid: string }
+  /** メッセージが途切れた（active: false）か、また届いた（active: true）。 */
+  | { type: 'presence'; pid: string; active: boolean }
   | { type: 'start'; gameId: string }
   | { type: 'gmPhotoUploaded'; key: string }
   | { type: 'hintsReady'; hints: string[]; at: number }
@@ -109,6 +117,7 @@ export function initialGmState(input: {
     round: 0,
     gameId: null,
     players: {},
+    left: [],
     ...freshRound,
     lastRanking: null,
     dissolved: false,
@@ -121,7 +130,14 @@ const own = <T>(rec: Record<string, T>, key: string): T | undefined =>
   Object.hasOwn(rec, key) ? rec[key] : undefined;
 
 const lobbyPlayers = (s: GmState): LobbyPlayer[] =>
-  Object.entries(s.players).map(([pid, p]) => ({ pid, name: p.name, label: p.label }));
+  Object.entries(s.players).map(([pid, p]) => ({
+    pid,
+    name: p.name,
+    label: p.label,
+    ...(p.away ? { away: true } : {}),
+  }));
+
+export const hasLeft = (s: GmState, pid: string): boolean => (s.left ?? []).includes(pid);
 
 const lobbyEvent = (s: GmState): GmEventBody => ({
   type: 'lobby',
@@ -151,6 +167,28 @@ export const eligiblePids = (s: GmState): string[] =>
   Object.entries(s.players)
     .filter(([, p]) => isEligible(p, s.round))
     .map(([pid]) => pid);
+
+/** そのラウンドの対象者のうち、away でない人。全員提出の判定と未提出の一覧に使う。 */
+export const activeEligiblePids = (s: GmState): string[] =>
+  eligiblePids(s).filter((pid) => !own(s.players, pid)!.away);
+
+/** 対象者のうち away でない人が 1 人以上いて、その全員が提出していれば true。 */
+const allSubmitted = (s: GmState, submissions: GmState['submissions']): boolean => {
+  const active = activeEligiblePids(s);
+  return active.length > 0 && active.every((pid) => own(submissions, pid));
+};
+
+/** playerTurn で、人が抜けた結果ほかの全員が提出済みになったら picking に進める。 */
+function endTurnIfAllIn(s: GmState, emit: GmEventBody[]): GmStep {
+  if (s.phase !== 'playerTurn' || !allSubmitted(s, s.submissions)) return { state: s, emit };
+  return {
+    state: { ...s, phase: 'picking' },
+    emit: [...emit, { type: 'picking', round: s.round }],
+  };
+}
+
+const without = <T>(rec: Record<string, T>, key: string): Record<string, T> =>
+  Object.fromEntries(Object.entries(rec).filter(([k]) => k !== key));
 
 const hasValidSubmission = (s: GmState, pid: string): boolean =>
   own(s.submissions, pid) !== undefined && own(s.photoValid, pid) !== false;
@@ -199,7 +237,8 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
 
   switch (action.type) {
     case 'playerJoined': {
-      if (action.pid === s.gmPid || own(s.players, action.pid)) return none;
+      if (action.pid === s.gmPid || own(s.players, action.pid) || hasLeft(s, action.pid))
+        return none;
       const player: GmPlayer = {
         name: action.name,
         label: uniqueLabel(s.players, action.name),
@@ -210,6 +249,48 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       const next = { ...s, players: { ...s.players, [action.pid]: player } };
       // ゲーム中の参加者の一覧は state Track のスナップショットで伝える。
       return { state: next, emit: s.phase === 'lobby' ? [lobbyEvent(next)] : [] };
+    }
+
+    case 'playerLeft': {
+      if (!own(s.players, action.pid)) return none;
+      const pid = action.pid;
+      const players = without(s.players, pid);
+      let next: GmState = {
+        ...s,
+        players,
+        left: [...(s.left ?? []), pid],
+        shutters: without(s.shutters, pid),
+        submissions: without(s.submissions, pid),
+        photoValid: without(s.photoValid, pid),
+        picks: s.picks.filter((p) => p !== pid),
+      };
+      if (s.lastRanking) {
+        // 出た人は順位から外す（残った人の順位を詰める。前回からの上下はそのまま）。
+        const kept = s.lastRanking.totals.filter((t) => t.pid !== pid);
+        const totals = kept.map((t) => ({
+          ...t,
+          rank: kept.findIndex((x) => x.total === t.total) + 1,
+        }));
+        const scores = s.lastRanking.scores.filter((sc) => sc.pid !== pid);
+        next = { ...next, lastRanking: { ...s.lastRanking, scores, totals } };
+      }
+      if (s.phase === 'lobby') return { state: next, emit: [lobbyEvent(next)] };
+      const emit: GmEventBody[] = [];
+      if (s.results) {
+        const results = resultsOf(next, s.results.gmPhotoUrl, s.results.photos);
+        next = { ...next, results };
+        emit.push({ type: 'results', round: s.round, ...results });
+      }
+      return endTurnIfAllIn(next, emit);
+    }
+
+    case 'presence': {
+      const p = own(s.players, action.pid);
+      if (!p || !p.away === action.active) return none;
+      const players = { ...s.players, [action.pid]: { ...p, away: !action.active } };
+      const next: GmState = { ...s, players };
+      if (s.phase === 'lobby') return { state: next, emit: [lobbyEvent(next)] };
+      return action.active ? { state: next, emit: [] } : endTurnIfAllIn(next, []);
     }
 
     case 'start': {
@@ -264,7 +345,7 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       const hints = emitDueHints(s, action.now);
       const pastLimit = action.now - s.turnStartedAt > limitMs;
       // T を過ぎても、shutter 済みで 30 秒以内の提出待ちがある人は待つ。
-      const waiting = eligiblePids(s).some((pid) => {
+      const waiting = activeEligiblePids(s).some((pid) => {
         const sh = own(s.shutters, pid);
         return sh && !own(s.submissions, pid) && action.now - sh.at <= SUBMIT_WINDOW_MS;
       });
@@ -292,7 +373,7 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       if (action.at - sh.at > SUBMIT_WINDOW_MS) return none;
       if (!action.key.startsWith(photoKeyPrefix(s, action.pid))) return none;
       const submissions = { ...s.submissions, [action.pid]: { key: action.key, at: action.at } };
-      const allIn = eligiblePids(s).every((pid) => own(submissions, pid));
+      const allIn = allSubmitted(s, submissions);
       return {
         state: { ...s, submissions, phase: allIn ? 'picking' : s.phase },
         emit: [

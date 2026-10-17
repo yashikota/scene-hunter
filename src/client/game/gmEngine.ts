@@ -4,7 +4,14 @@ import type { GmEventBody, GmSnapshot, PlayerEvent } from '../../shared/protocol
 import { GmInbox } from '../moq/gmInbox';
 import { EVENTS_TRACK, gmPath, STATE_TRACK } from '../moq/paths';
 import { MoqSession, type FrameWriter, type MoqConnector } from '../moq/session';
-import { gmReduce, initialGmState, snapshotOf, type GmAction, type GmState } from './gmMachine';
+import {
+  gmReduce,
+  hasLeft,
+  initialGmState,
+  snapshotOf,
+  type GmAction,
+  type GmState,
+} from './gmMachine';
 import { clearGm, loadGm, saveGm } from './gmPersist';
 import type { Me } from './membership';
 import { applySnapshot, initialView, type PlayerView } from './playerView';
@@ -18,6 +25,10 @@ export const TICK_MS = 250;
 export const SNAPSHOT_EVERY_MS = 5000;
 /** resync の要求に応えてスナップショットを書く最短の間隔。 */
 const RESYNC_MIN_MS = 1000;
+/** この時間、何のメッセージも届かなかったプレイヤーを away にする（プレイヤーは PING_EVERY_MS ごとに ping を送る）。 */
+export const PRESENCE_TIMEOUT_MS = 20_000;
+/** away の判定を見直す間隔。 */
+const PRESENCE_CHECK_MS = 1000;
 const PLAYER_PREFIX = 'p/';
 
 /** gm/{epoch} の epoch と、イベントとスナップショットそれぞれの最後の seq。GM の状態と一緒に保存する。 */
@@ -88,6 +99,8 @@ export class GmEngine {
   /** 封筒の署名は非同期なので、書く順番を保つために 1 本の鎖でつなぐ。 */
   #queue: Promise<void> = Promise.resolve();
   #lastResyncAt = -Infinity;
+  /** プレイヤーごとの、最後に検証済みのメッセージを受けた時刻（GM の時計）。保存はしない。 */
+  readonly #lastSeen = new Map<string, number>();
   #stopped = false;
   #closed = false;
 
@@ -124,11 +137,16 @@ export class GmEngine {
     this.#events = session.publish(gmPath(this.epoch), EVENTS_TRACK);
     this.#stateTrack = session.publish(gmPath(this.epoch), STATE_TRACK);
     this.#inbox = new GmInbox(this.#me.moqUrl, connector, this.#deps.verifier);
-    for (const pid of Object.keys(this.state.players)) this.#listen(pid);
+    // 再開した直後は、全員がたった今まで居たものとして数え始める。
+    const now = this.#deps.now();
+    for (const pid of Object.keys(this.state.players)) {
+      this.#lastSeen.set(pid, now);
+      this.#listen(pid);
+    }
     session.announced((path, active) => {
       if (!path.startsWith(PLAYER_PREFIX)) return;
       const pid = path.slice(PLAYER_PREFIX.length);
-      if (!pid || pid === this.#me.pid) return;
+      if (!pid || pid === this.#me.pid || hasLeft(this.state, pid)) return;
       if (active) this.#listen(pid);
       else this.#inbox?.remove(pid);
     });
@@ -138,6 +156,7 @@ export class GmEngine {
     this.#timers.push(
       setInterval(() => this.dispatch({ type: 'tick', now: this.#deps.now() }), TICK_MS),
       setInterval(() => this.#writeSnapshot(), SNAPSHOT_EVERY_MS),
+      setInterval(() => this.#checkPresence(), PRESENCE_CHECK_MS),
     );
   }
 
@@ -198,12 +217,38 @@ export class GmEngine {
     this.#inbox?.add(pid, (e) => this.#onPlayer(e));
   }
 
+  /** しばらくメッセージの届かない人を away にする。 */
+  #checkPresence(): void {
+    const now = this.#deps.now();
+    for (const [pid, p] of Object.entries(this.state.players)) {
+      if (p.away) continue;
+      const seen = this.#lastSeen.get(pid);
+      if (seen === undefined) this.#lastSeen.set(pid, now);
+      else if (now - seen > PRESENCE_TIMEOUT_MS)
+        this.dispatch({ type: 'presence', pid, active: false });
+    }
+  }
+
   #onPlayer(e: PlayerEvent): void {
     // プレイヤーの参加証を持つ人のメッセージだけを受け付ける（GmInbox が署名と pid の一致を確かめた後）。
     const cert = this.#deps.verifier.certOf(e.pid);
     if (cert?.body.role !== 'player') return;
+    // 部屋を出た人のメッセージは、もう何も受け付けない。
+    if (hasLeft(this.state, e.pid)) return;
     const at = this.#deps.now();
+    this.#lastSeen.set(e.pid, at);
+    if (e.type === 'leave') {
+      this.#lastSeen.delete(e.pid);
+      this.dispatch({ type: 'playerLeft', pid: e.pid });
+      this.#inbox?.remove(e.pid);
+      return;
+    }
+    if (e.type === 'away') return this.dispatch({ type: 'presence', pid: e.pid, active: false });
+    // away だった人は、何か届いた時点で戻す（提出などの処理より先に。away でなければ何も起きない）。
+    this.dispatch({ type: 'presence', pid: e.pid, active: true });
     switch (e.type) {
+      case 'ping':
+        return;
       case 'join':
         // 名前は Worker が署名した参加証のものを使う。
         return this.dispatch({ type: 'playerJoined', pid: e.pid, name: cert.body.name, at });

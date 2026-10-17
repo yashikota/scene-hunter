@@ -20,7 +20,16 @@ export const PhaseSchema = v.picklist([
 ]);
 export type Phase = v.InferOutput<typeof PhaseSchema>;
 
-export const LobbyPlayerSchema = v.object({ pid, name: v.string(), label: v.string() });
+/**
+ * away：GM がしばらくこの人のメッセージを受け取っていない（通信が切れたらしい）。
+ * 一覧には薄く出すが、人数、全員提出の判定、未提出の一覧には入れない。無ければ false。
+ */
+export const LobbyPlayerSchema = v.object({
+  pid,
+  name: v.string(),
+  label: v.string(),
+  away: v.optional(v.boolean()),
+});
 export type LobbyPlayer = v.InferOutput<typeof LobbyPlayerSchema>;
 
 export const RoundScoreSchema = v.object({
@@ -145,5 +154,11 @@ export const PlayerEventSchema = v.variant('type', [
   v.object({ ...player, type: v.literal('shutter'), round, hash: v.string() }),
   v.object({ ...player, type: v.literal('submit'), round, key: v.string() }),
   v.object({ ...player, type: v.literal('resync') }),
+  /** 生きている知らせ。GM はこれを含むメッセージが途切れた人を away にする。 */
+  v.object({ ...player, type: v.literal('ping') }),
+  /** タブを閉じた（かもしれない）。GM はすぐ away にし、次のメッセージで戻す。 */
+  v.object({ ...player, type: v.literal('away') }),
+  /** 部屋を出た。GM はこの pid を一覧から外し、以後のメッセージを無視する。 */
+  v.object({ ...player, type: v.literal('leave') }),
 ]);
 export type PlayerEvent = v.InferOutput<typeof PlayerEventSchema>;

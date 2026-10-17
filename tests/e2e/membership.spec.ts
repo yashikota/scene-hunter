@@ -33,11 +33,16 @@ test('再読み込みしても同じプレイヤーで戻り、部屋を出た�
     await expect(bob.page.getByRole('button', { name: '部屋を作る' })).toBeVisible();
     await expect(bob.page).toHaveURL(/\/$/);
 
-    // 番号で入り直すと、新しいプレイヤーとしてロビーに戻る。
-    // 出たことを GM に知らせるイベントは無いので、GM の一覧には前の分も残る（4 人になる）。
+    // 出たことは GM に届くので、GM の一覧からすぐ消える
+    await expectLobbyCount(gm, 2);
+    await expect(gm.page.locator('.sh-tile', { hasText: 'ボブ' })).toHaveCount(0);
+
+    // 番号で入り直すと、新しいプレイヤーとしてロビーに戻る（前の分は残らないので 3 人のまま、名前も重ならない）
     await joinByCode(bob, code);
-    await expectLobbyCount(gm, 4);
-    await expect(bob.page.getByText(/ボブ.*（あなた）/)).toBeVisible();
+    await expectLobbyCount(gm, 3);
+    await expect(gm.page.locator('.sh-tile', { hasText: 'ボブ' })).toHaveText(['ボブ']);
+    await expect(bob.page.getByText('ボブ（あなた）')).toBeVisible();
+    await expect(alice.page.getByText('3 人', { exact: true })).toBeVisible();
   } finally {
     await closeAll([gm, alice, bob]);
   }

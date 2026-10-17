@@ -221,6 +221,11 @@ body {
   background: var(--color-accent);
   font-weight: 800;
 }
+/* GM がしばらくメッセージを受け取っていない人。 */
+.sh-tile--away {
+  opacity: 0.45;
+  border-style: dashed;
+}
 
 .sh-sr-only {
   position: absolute;
