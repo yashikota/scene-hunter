@@ -283,3 +283,37 @@ describe('Disconnected', () => {
     expect(formatElapsed(-5)).toBe('0:00');
   });
 });
+
+describe('ResultsScreen の未提出', () => {
+  it('そのラウンドの対象者だけを未提出に出す（途中参加者は出さない）', async () => {
+    const { ResultsScreen } = await import('../../src/client/screens/ResultsScreen');
+    const { gmReduce, initialGmState } = await import('../../src/client/game/gmMachine');
+    let s = initialGmState({ room: '482913', gmPid: 'gm', locale: 'ja', rounds: 3, limitSec: 60 });
+    const step = (a: Parameters<typeof gmReduce>[1]) => (s = gmReduce(s, a).state);
+    step({ type: 'playerJoined', pid: 'a', name: 'そうた', at: 0 });
+    step({ type: 'playerJoined', pid: 'b', name: 'みお', at: 0 });
+    step({ type: 'start', gameId: 'g1' });
+    step({ type: 'gmPhotoUploaded', key: 'k' });
+    step({ type: 'hintsReady', hints: ['1', '2', '3', '4', '5'], at: 1000 });
+    step({ type: 'playerJoined', pid: 'late', name: 'おそい', at: 1500 }); // プレイヤーのターン中に入った
+    step({ type: 'tick', now: 1000 + 61_000 });
+    expect(s.phase).toBe('picking');
+    const players = ['a', 'b', 'late'].map((pid) => ({ pid, label: s.players[pid]!.name, total: 0, rank: null }));
+    const room = {
+      role: 'gm',
+      me: { pid: 'gm', label: 'gm' },
+      gmName: 'gm',
+      status: null,
+      gmDisconnectedSince: null,
+      view: {
+        phase: 'picking', round: 1, rounds: 3, gmPid: 'gm', players,
+        results: { gmPhotoUrl: 'u:gm', photos: [{ pid: 'a', url: 'u:a', valid: true }] },
+      },
+      gm: { state: s, dispatch: () => {} },
+      actions: {},
+    };
+    render(<ResultsScreen room={room as never} code="482913" />);
+    expect(screen.getByText('みお')).toBeTruthy();
+    expect(screen.queryByText('おそい')).toBeNull();
+  });
+});

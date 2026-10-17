@@ -15,15 +15,24 @@ export interface PhotoCheckDeps {
   sleep(ms: number): Promise<void>;
 }
 
+/** 一覧と写真の取得 1 回あたりの待ち時間。応答なしで止まったら失敗として扱う。 */
+export const PHOTO_TIMEOUT_MS = 10_000;
 const LIST_RETRY_MS = [1000, 2000, 4000];
 const FETCH_RETRIES = 2;
 const FETCH_RETRY_MS = 1000;
+
+function withTimeout<T>(p: Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('timeout')), PHOTO_TIMEOUT_MS);
+    p.then(resolve, reject).finally(() => clearTimeout(t));
+  });
+}
 
 /** 一覧を取れるまで（遠のく間隔で）やり直す。止められたら null。 */
 async function listUntilDone(s: GmState, d: PhotoCheckDeps): Promise<RoundPhoto[] | null> {
   for (let i = 0; ; i++) {
     try {
-      return await d.listPhotos({ gameId: s.gameId!, round: s.round });
+      return await withTimeout(d.listPhotos({ gameId: s.gameId!, round: s.round }));
     } catch (e) {
       console.warn('写真の一覧を取れなかった', e);
       await d.sleep(LIST_RETRY_MS[Math.min(i, LIST_RETRY_MS.length - 1)]!);
@@ -35,7 +44,7 @@ async function listUntilDone(s: GmState, d: PhotoCheckDeps): Promise<RoundPhoto[
 async function fetchWithRetry(url: string, d: PhotoCheckDeps): Promise<Uint8Array | null> {
   for (let i = 0; i <= FETCH_RETRIES; i++) {
     try {
-      return await d.fetchBytes(url);
+      return await withTimeout(d.fetchBytes(url));
     } catch (e) {
       console.warn('写真を取得できなかった', e);
       if (i < FETCH_RETRIES) await d.sleep(FETCH_RETRY_MS);

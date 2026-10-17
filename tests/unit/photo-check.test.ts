@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { gmReduce, initialGmState, type GmAction, type GmState } from '../../src/client/game/gmMachine';
-import { checkRoundPhotos, type PhotoCheckDeps } from '../../src/client/game/photoCheck';
+import { checkRoundPhotos, PHOTO_TIMEOUT_MS, type PhotoCheckDeps } from '../../src/client/game/photoCheck';
 import { sha256Hex } from '../../src/shared/crypto';
 
 const enc = (s: string) => new TextEncoder().encode(s);
@@ -85,6 +85,35 @@ describe('checkRoundPhotos', () => {
     const { d, dispatched } = deps({ stopped: () => true });
     await checkRoundPhotos(await pickingState(), d);
     expect(dispatched).toEqual([]);
+  });
+
+  it('写真の取得が応答なしで止まっても、時間切れのあとに無効として results を送る', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const { d, dispatched } = deps({ fetchBytes: () => new Promise(() => {}) });
+    const done = checkRoundPhotos(await pickingState(), d);
+    await vi.advanceTimersByTimeAsync(PHOTO_TIMEOUT_MS * 3 + 100);
+    await done;
+    const checks = dispatched.filter((a) => a.type === 'photoChecked');
+    expect(checks).toHaveLength(2);
+    expect(checks.every((a) => a.type === 'photoChecked' && !a.valid)).toBe(true);
+    expect(dispatched.at(-1)?.type).toBe('resultsReady');
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('一覧の取得が応答なしで止まっても、時間切れのあとにやり直す', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const listPhotos = vi.fn().mockImplementationOnce(() => new Promise(() => {})).mockResolvedValue(LIST);
+    const { d, dispatched } = deps({ listPhotos });
+    const done = checkRoundPhotos(await pickingState(), d);
+    await vi.advanceTimersByTimeAsync(PHOTO_TIMEOUT_MS + 100);
+    await done;
+    expect(listPhotos).toHaveBeenCalledTimes(2);
+    expect(dispatched.at(-1)?.type).toBe('resultsReady');
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('GM の機械に通すと photoChecked の無効が results に入り、選べなくなる', async () => {

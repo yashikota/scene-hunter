@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { m } from '../paraglide/messages';
 import { Card } from '../ui/Card';
 
-/** 写真の枠（4:3 の代わりに高さを決めた正方形に近い枠）。写真が無いときは代わりの文を出す。 */
+/** 高さを決めた写真の枠。幅いっぱいに写真を切り抜いて収め、dim で薄くする（無効な写真）。写真が無ければ空の枠。 */
 export function Thumb({ url, alt, height, dim = false }: { url?: string; alt: string; height: number; dim?: boolean }) {
   return (
     <div

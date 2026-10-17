@@ -65,6 +65,8 @@ const TRANSFER_LINGER_MS = 5000;
 
 const serverPub = (): string => import.meta.env.VITE_SERVER_PUBLIC_KEY ?? '';
 const nowMs = () => Date.now();
+/** 写真の取得が応答なしで止まったときにあきらめるまでの時間。 */
+const PHOTO_TIMEOUT_MS = 10_000;
 
 /** start に渡す GameId：16 文字の小文字の 16 進数。 */
 export function newGameId(): string {
@@ -240,7 +242,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     checkRoundPhotos(s, {
       listPhotos: (query) => api.listPhotos(code, meRef.current.roomToken, query),
       fetchBytes: async (url) => {
-        const res = await fetch(url);
+        const res = await fetch(url, { signal: AbortSignal.timeout(PHOTO_TIMEOUT_MS) });
         if (!res.ok) throw new Error(`photo ${res.status}`);
         return new Uint8Array(await res.arrayBuffer());
       },

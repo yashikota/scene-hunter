@@ -1,3 +1,4 @@
+import { eligiblePids } from '../game/gmMachine';
 import type { Room } from '../game/useRoom';
 import { Final } from './Final';
 import { ResultsPick, type ResultPhotoView } from './ResultsPick';
@@ -22,7 +23,14 @@ export function ResultsScreen({ room, code }: { room: Room; code: string }) {
           rounds={view.rounds}
           gmPhotoUrl={gmPhotoUrl}
           photos={photos}
-          missing={others.filter((p) => !photos?.some((x) => x.pid === p.pid)).map((p) => p.label)}
+          missing={
+            // そのラウンドの対象者（プレイヤーのターンの前に入った人）だけ
+            room.gm
+              ? eligiblePids(room.gm.state)
+                  .filter((pid) => !photos?.some((x) => x.pid === pid))
+                  .map(labelOf)
+              : []
+          }
           picks={room.gm?.state.picks ?? []}
           onToggle={actions.pickToggle}
           onConfirm={actions.confirmPicks}

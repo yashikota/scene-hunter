@@ -147,13 +147,13 @@ function uniqueLabel(players: Record<string, GmPlayer>, name: string): string {
 }
 
 /** プレイヤーのターンが始まる前に入った人だけが、そのラウンドに提出できる。 */
-function isEligible(p: GmPlayer, round: number): boolean {
+export function isEligible(p: GmPlayer, round: number): boolean {
   const { joinedAt } = p;
   if (joinedAt.round !== round) return joinedAt.round < round;
   return PHASE_ORDER.indexOf(joinedAt.phase) < PHASE_ORDER.indexOf('playerTurn');
 }
 
-const eligiblePids = (s: GmState): string[] =>
+export const eligiblePids = (s: GmState): string[] =>
   Object.entries(s.players)
     .filter(([, p]) => isEligible(p, s.round))
     .map(([pid]) => pid);
