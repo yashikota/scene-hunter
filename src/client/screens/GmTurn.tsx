@@ -40,6 +40,7 @@ export function GmTurn({ round, rounds, onPhoto }: GmTurnProps) {
     }
     try {
       await onPhoto(blob);
+      setBusy(false);
     } catch {
       // 送れなかったときは、撮ったあとで止めたカメラを起動し直して撮り直せるようにする。
       setError(m.send_failed());

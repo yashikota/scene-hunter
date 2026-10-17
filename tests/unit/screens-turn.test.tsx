@@ -25,6 +25,7 @@ import { PlayerTurnGm } from '../../src/client/screens/PlayerTurnGm';
 
 const T0 = new Date('2026-10-17T12:00:00Z').getTime();
 const stop = vi.fn();
+const revoke = vi.fn();
 /** setInterval を偽にしているので、waitFor の定期確認が動かない。非同期の処理を進めてから確かめる。 */
 const settle = () => act(() => vi.advanceTimersByTimeAsync(50));
 
@@ -36,7 +37,8 @@ beforeEach(() => {
   camera.startCamera.mockReset().mockResolvedValue({ stop });
   camera.captureFrame.mockReset().mockReturnValue({ canvas: {}, w: 640, h: 480 });
   encode.encodeJpeg.mockReset().mockResolvedValue(new Blob(['jpeg'], { type: 'image/jpeg' }));
-  vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} }));
+  revoke.mockReset();
+  vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: revoke }));
 });
 
 afterEach(() => {
@@ -117,6 +119,38 @@ describe('PlayerTurn', () => {
     expect(onShutter).toHaveBeenCalledTimes(2);
     expect(onShutter.mock.calls[1][0]).toBe(onShutter.mock.calls[0][0]);
     expect(camera.captureFrame).toHaveBeenCalledOnce();
+  });
+
+  it('シャッターを連打しても提出は 1 回だけ', async () => {
+    const onShutter = vi.fn(() => new Promise<void>(() => {}));
+    render(playerTurn({ onShutter }));
+    await waitFor(() => expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false));
+    const button = screen.getByRole('button', { name: m.shutter_button() });
+    fireEvent.click(button);
+    fireEvent.click(button);
+    await settle();
+    expect(onShutter).toHaveBeenCalledOnce();
+    expect(camera.captureFrame).toHaveBeenCalledOnce();
+  });
+
+  it('残り 0 秒ではシャッターを押せない', async () => {
+    render(playerTurn({ turnStartedLocalAt: T0 - 61_000 }));
+    await settle();
+    expect((screen.getByRole('button', { name: m.shutter_button() }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('端末の写真を選ぶ入力が無い', () => {
+    const { container } = render(playerTurn());
+    expect(container.querySelector('input[type="file"]')).toBeNull();
+  });
+
+  it('撮った写真の object URL をアンマウントで解放する', async () => {
+    const { unmount } = render(playerTurn());
+    await waitFor(() => expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole('button', { name: m.shutter_button() }));
+    await waitFor(() => expect(screen.getByRole('heading', { name: m.sent_title() })).toBeTruthy());
+    unmount();
+    expect(revoke).toHaveBeenCalledWith('blob:x');
   });
 
   it('カメラが拒否されたら CameraBlocked を出し、もう一度で起動し直す', async () => {
@@ -212,6 +246,15 @@ describe('GmTurn', () => {
     await settle();
     expect(onPhoto).toHaveBeenCalledOnce();
     expect(encode.loadImageFile).toHaveBeenCalledWith(file);
+  });
+
+  it('成功したら送信中のままにしない', async () => {
+    render(<GmTurn round={2} rounds={3} onPhoto={async () => {}} />);
+    const shoot = screen.getByRole('button', { name: m.shoot_here() }) as HTMLButtonElement;
+    await waitFor(() => expect(shoot.disabled).toBe(false));
+    fireEvent.click(shoot);
+    await settle();
+    expect(screen.getByRole('button', { name: m.shoot_here() })).toBeTruthy();
   });
 
   it('送れなかったらエラーを出してカメラを起動し直す', async () => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCamera } from '../photo/useCamera';
 import { m } from '../paraglide/messages';
 import { Button } from '../ui/Button';
@@ -46,6 +46,9 @@ export function PlayerTurn(props: PlayerTurnProps) {
   const now = useNow();
   const [sent, setSent] = useState<Sent | null>(null);
   const [capturing, setCapturing] = useState(false);
+  /** 連打で shutter が二重に走らないよう、state の反映を待たずに止める。 */
+  const inFlight = useRef(false);
+  const capturingRef = useRef(false);
   const blocked = cam.state === 'denied' || cam.state === 'unavailable';
   const remaining = remainingSec(turnStartedLocalAt, limitSec, now);
 
@@ -57,22 +60,29 @@ export function PlayerTurn(props: PlayerTurnProps) {
   }, [sent?.url]);
 
   const deliver = async (blob: Blob, url: string | undefined) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setSent({ blob, url, status: 'sending' });
     try {
       await onShutter(blob);
       setSent({ blob, url, status: 'sent' });
     } catch {
       setSent({ blob, url, status: 'failed' });
+    } finally {
+      inFlight.current = false;
     }
   };
 
   const shoot = async () => {
+    if (inFlight.current || capturingRef.current) return;
+    capturingRef.current = true;
     setCapturing(true);
     try {
       const blob = await cam.capture();
       await deliver(blob, objectUrl(blob));
     } catch {
       // 撮影に失敗したら、止めていないカメラのまま押し直せる。
+      capturingRef.current = false;
       setCapturing(false);
     }
   };

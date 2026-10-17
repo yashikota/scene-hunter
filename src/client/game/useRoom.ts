@@ -84,6 +84,8 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
   const [, rerender] = useReducer((n: number) => n + 1, 0);
   /** 閉じるときに待つ時間（解散の直後だけ）。 */
   const linger = useRef(0);
+  /** shutter イベントを送り終えた写真。送り直しでは shutter を再送せず、アップロードと submit だけやり直す。 */
+  const shuttered = useRef(new WeakSet<Blob>());
   const meRef = useRef(me);
   meRef.current = me;
 
@@ -262,8 +264,11 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
         } else if (player) {
           const { round, gameId } = player.view;
           if (!gameId) return;
-          const hash = await sha256Hex(new Uint8Array(await blob.arrayBuffer()));
-          player.send({ type: 'shutter', round, hash });
+          if (!shuttered.current.has(blob)) {
+            const hash = await sha256Hex(new Uint8Array(await blob.arrayBuffer()));
+            player.send({ type: 'shutter', round, hash });
+            shuttered.current.add(blob);
+          }
           const key = await uploadPhoto(uploader(me.roomToken), blob, { gameId, round });
           player.send({ type: 'submit', round, key });
         }

@@ -68,7 +68,7 @@
   "round_label": "第 {round} / {rounds} 回合",
   "gm_turn_badge": "GM 的回合",
   "gm_turn_title": "准备题目照片",
-  "sec_suffix": " 秒",
+  "sec_suffix": "秒",
   "gm_turn_caution": "拍摄时被看到就会暴露答案，请注意",
   "shoot_here": "现场拍摄",
   "pick_photo": "从已拍的照片中选择",
