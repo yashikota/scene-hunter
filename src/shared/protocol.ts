@@ -79,6 +79,7 @@ export const GmEventSchema = v.variant('type', [
     index: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(4)),
     text: v.string(),
   }),
+  v.object({ ...gm, type: v.literal('picking'), round }),
   v.object({ ...gm, type: v.literal('submitted'), pids: v.array(pid) }),
   v.object({
     ...gm,

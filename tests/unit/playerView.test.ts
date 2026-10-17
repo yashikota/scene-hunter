@@ -112,4 +112,37 @@ describe('playerView', () => {
     expect(v.players[0]).toMatchObject({ total: 50, rank: 1 });
     expect(applySnapshot(v, { ...s, turnElapsedMs: null }, 10000).turnStartedLocalAt).toBeNull();
   });
+
+  test('picking イベントと results で picking、ranking で reveal になる', () => {
+    let v = applyEvent(initialView(), ev(0, { type: 'player_turn', round: 1, limitSec: 60 }), 0);
+    v = applyEvent(v, ev(1, { type: 'picking', round: 1 }), 0);
+    expect(v.phase).toBe('picking');
+    v = applyEvent(v, ev(2, { type: 'results', round: 1, gmPhotoUrl: 'g', photos: [] }), 0);
+    expect(v.phase).toBe('picking');
+    expect(v.results).toEqual({ gmPhotoUrl: 'g', photos: [] });
+    v = applyEvent(v, ev(3, { type: 'ranking', round: 1, scores: [], totals: [] }), 0);
+    expect(v.phase).toBe('reveal');
+    expect(v.ranking?.round).toBe(1);
+  });
+
+  test('lobby で前のゲームの状態が消える', () => {
+    let v = applyEvent(initialView(), ev(0, { type: 'gm_turn', round: 2, gameId: 'g1' }), 0);
+    v = applyEvent(v, ev(1, { type: 'player_turn', round: 2, limitSec: 60 }), 100);
+    v = applyEvent(v, ev(2, { type: 'hint', round: 2, index: 0, text: 'h' }), 100);
+    v = applyEvent(v, ev(3, { type: 'submitted', pids: ['a'] }), 100);
+    v = applyEvent(v, ev(4, { type: 'final', totals: [{ pid: 'a', total: 1, rank: 1, delta: 0 }] }), 100);
+    v = applyEvent(v, lobby(5), 200);
+    expect(v).toMatchObject({
+      phase: 'lobby',
+      round: 0,
+      gameId: null,
+      hints: [],
+      submitted: [],
+      results: null,
+      ranking: null,
+      final: null,
+      turnStartedLocalAt: null,
+      lastSeq: 5,
+    });
+  });
 });

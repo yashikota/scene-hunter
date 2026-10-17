@@ -272,7 +272,10 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
         return sh && !own(s.submissions, pid) && action.now - sh.at <= SUBMIT_WINDOW_MS;
       });
       if (!pastLimit || waiting) return hints;
-      return { state: { ...hints.state, phase: 'picking' }, emit: hints.emit };
+      return {
+        state: { ...hints.state, phase: 'picking' },
+        emit: [...hints.emit, { type: 'picking', round: s.round }],
+      };
     }
 
     case 'shutter': {
@@ -294,7 +297,10 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       const allIn = eligiblePids(s).every((pid) => own(submissions, pid));
       return {
         state: { ...s, submissions, phase: allIn ? 'picking' : s.phase },
-        emit: [{ type: 'submitted', pids: Object.keys(submissions) }],
+        emit: [
+          { type: 'submitted', pids: Object.keys(submissions) },
+          ...(allIn ? [{ type: 'picking' as const, round: s.round }] : []),
+        ],
       };
     }
 

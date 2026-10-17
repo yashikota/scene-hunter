@@ -216,15 +216,19 @@ describe('shutter と submit', () => {
     expect(r.state.phase).toBe('playerTurn');
     r = run(r.state, ...shutterAndSubmit('b', 8000));
     expect(r.state.phase).toBe('picking');
-    expect(r.emit).toEqual([{ type: 'submitted', pids: ['a', 'b'] }]);
+    expect(r.emit).toEqual([
+      { type: 'submitted', pids: ['a', 'b'] },
+      { type: 'picking', round: 1 },
+    ]);
   });
 
   it('T を過ぎた tick で picking へ', () => {
     let s = run(inPlayerTurn(), ...shutterAndSubmit('a', 6000)).state;
     s = run(s, { type: 'tick', now: START + T }).state;
     expect(s.phase).toBe('playerTurn');
-    s = run(s, { type: 'tick', now: START + T + 1 }).state;
-    expect(s.phase).toBe('picking');
+    const r = run(s, { type: 'tick', now: START + T + 1 });
+    expect(r.state.phase).toBe('picking');
+    expect(r.emit).toContainEqual({ type: 'picking', round: 1 });
   });
 
   it('T を過ぎても shutter から 30 秒以内の提出待ちがあれば待つ', () => {

@@ -79,9 +79,11 @@ export function applyEvent(v: PlayerView, e: GmEvent, localNow: number): PlayerV
 function reduce(v: PlayerView, e: GmEvent, localNow: number): PlayerView {
   switch (e.type) {
     case 'lobby':
+      // 新しいゲームの始まり。前のゲームの状態は持ち越さない。
       return {
-        ...v,
+        ...initialView(),
         phase: 'lobby',
+        lastSeq: v.lastSeq,
         players: fromLobby(e.players),
         gmPid: e.gmPid,
         locale: e.locale,
@@ -118,18 +120,22 @@ function reduce(v: PlayerView, e: GmEvent, localNow: number): PlayerView {
       // 古いラウンドのヒントと、すでにある index は取り込まない。
       if (e.round !== v.round || e.index !== v.hints.length) return v;
       return { ...v, hints: [...v.hints, e.text] };
+    case 'picking':
+      return e.round === v.round ? { ...v, phase: 'picking' } : v;
     case 'submitted':
       return { ...v, submitted: [...new Set([...v.submitted, ...e.pids])] };
     case 'results':
       return {
         ...v,
-        phase: 'reveal',
+        phase: 'picking',
         round: e.round,
         results: { gmPhotoUrl: e.gmPhotoUrl, photos: e.photos },
       };
     case 'ranking':
       return {
         ...v,
+        phase: 'reveal',
+        round: e.round,
         ranking: { round: e.round, scores: e.scores, totals: e.totals },
         players: withTotals(v.players, e.totals),
       };
