@@ -34,6 +34,10 @@ jobs:
         run: pnpm typecheck
       - name: Unit tests
         run: pnpm test
+      # ビルドだけで起きる失敗（SH_E2E の止め、Paraglide のプラグインの取得、Void のビルド）も拾う。
+      # SH_E2E があるとビルドを止めるので、外して実行する。
+      - name: Build
+        run: env -u SH_E2E pnpm build
 
   # 本物のブラウザ（Chromium）で void dev のアプリを動かし、手元の moq-relay を通して遊ぶ（tests/e2e）。
   # Cloudflare 専用の依存は SH_E2E=1 で手元の代わりに差し替わるので、秘密情報は使わない。

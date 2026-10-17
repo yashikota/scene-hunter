@@ -42,7 +42,8 @@ export default defineConfig({
     },
     ratelimits: [
       rateLimit('RL_CREATE', '1001', 2), // IP
-      rateLimit('RL_JOIN', '1002', 10), // IP
+      // 会場の Wi-Fi では全員が 1 つの IP に見える。数十人が 1 分のうちに入れるよう広げる（GM の交代の入り直しも数える）。
+      rateLimit('RL_JOIN', '1002', 60), // IP
       rateLimit('RL_HINTS', '1003', 3), // 部屋
       rateLimit('RL_UPLOAD', '1004', 5), // 部屋とプレイヤー
     ],
