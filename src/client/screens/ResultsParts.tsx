@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { m } from '../paraglide/messages';
 import { Card } from '../ui/Card';
 
@@ -24,21 +23,14 @@ export function Thumb({ url, alt, height, dim = false }: { url?: string; alt: st
   );
 }
 
-/** お題の写真と一言。 */
-export function TopicCard({ url, note }: { url?: string; note?: ReactNode }) {
+/** お題の写真。幅いっぱいに大きく出し、左上に「お題」の印を重ねる（見比べやすいように）。 */
+export function TopicCard({ url }: { url?: string }) {
   return (
-    <Card raised style={{ display: 'grid', gridTemplateColumns: '150px minmax(0, 1fr)', gap: 12, alignItems: 'center', padding: 10 }}>
-      <Thumb url={url} alt={m.topic_photo()} height={150} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <span className="sh-display" style={{ fontSize: 16 }}>
-          {m.topic_label()}
-        </span>
-        {note && (
-          <span className="sh-sub" style={{ fontSize: 13, lineHeight: 1.6 }}>
-            {note}
-          </span>
-        )}
-      </div>
+    <Card raised style={{ position: 'relative', padding: 8 }}>
+      <Thumb url={url} alt={m.topic_photo()} height={180} />
+      <span className="sh-badge" style={{ position: 'absolute', top: 16, left: 16 }}>
+        {m.topic_label()}
+      </span>
     </Card>
   );
 }

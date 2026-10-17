@@ -22,7 +22,8 @@ export async function startCamera(
   }
   const stop = () => {
     for (const t of stream.getTracks()) t.stop();
-    video.srcObject = null;
+    // 先に止めた起動（StrictMode の二重実行など）が、あとから映した映像を外さないようにする
+    if (video.srcObject === stream) video.srcObject = null;
   };
   video.srcObject = stream;
   try {

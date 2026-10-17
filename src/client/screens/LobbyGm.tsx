@@ -143,7 +143,7 @@ export function LobbyGm({ code, gmName, players, rounds, limitSec, onStart, onTr
         </p>
       )}
 
-      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="sh-actions">
         {players.length === 0 && (
           <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: 'center' }}>
             {m.start_waiting()}

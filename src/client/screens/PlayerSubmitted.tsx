@@ -64,7 +64,16 @@ export function PlayerSubmitted({ round, rounds, startedAt, limitSec, photoUrl, 
           <span>{m.everyone_submitted()}</span>
           <span>{m.people_ratio({ done: submitted, total })}</span>
         </div>
-        <progress value={submitted} max={Math.max(total, 1)} style={{ width: '100%' }} />
+        <span
+          className="sh-bar"
+          role="progressbar"
+          aria-label={m.everyone_submitted()}
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={submitted}
+        >
+          <span className="sh-bar-fill" style={{ transform: `scaleX(${total > 0 ? submitted / total : 0})` }} />
+        </span>
       </Card>
     </Screen>
   );

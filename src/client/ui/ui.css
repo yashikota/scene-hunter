@@ -183,7 +183,7 @@ body {
   border: var(--border);
   border-radius: 999px;
   padding: 6px 12px;
-  min-height: 36px;
+  min-height: 48px;
 }
 
 .sh-error {
@@ -460,4 +460,20 @@ body {
 .sh-input::placeholder {
   color: var(--color-sub);
   opacity: 0.8;
+}
+
+/* 画面の主の操作。一覧が長くて画面が伸びても、親指の届く下端に残す。 */
+.sh-actions {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0 16px;
+  margin-bottom: -16px;
+  background: linear-gradient(to bottom, transparent, var(--color-bg) 12px);
+}
+.sh-timer {
+  white-space: nowrap;
 }

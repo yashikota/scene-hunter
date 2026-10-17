@@ -134,7 +134,7 @@ export function ResultsPick({ round, rounds, gmPhotoUrl, photos, missing, picks,
           ))}
         </ul>
       )}
-      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="sh-actions">
         <Button variant="primary" disabled={photos === null || left > 0} onClick={onConfirm}>
           {left > 0 ? m.pick_need_more({ count: left }) : m.pick_confirm()}
         </Button>

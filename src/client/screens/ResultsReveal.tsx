@@ -126,7 +126,7 @@ export function ResultsReveal({ code, round, rounds, scores, totals, players, ph
         </ol>
       </Card>
 
-      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div className="sh-actions">
         {isGm ? (
           <Button variant="primary" onClick={onNext}>
             {last ? m.see_final_button() : m.next_round_button()}

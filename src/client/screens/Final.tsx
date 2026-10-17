@@ -91,7 +91,7 @@ export function Final({ code, rounds, totals, players, mePid, isGm, onBackToLobb
         </ol>
       )}
 
-      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="sh-actions">
         {isGm ? (
           <Button variant="primary" onClick={onBackToLobby}>
             {m.back_to_lobby()}

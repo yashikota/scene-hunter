@@ -196,6 +196,7 @@ describe('PlayerSubmitted', () => {
     );
     expect(screen.getByRole('heading', { name: '提出しました' })).toBeTruthy();
     expect(screen.getByText('4 / 5 人')).toBeTruthy();
+    expect(screen.getByRole('progressbar', { name: m.everyone_submitted() }).getAttribute('aria-valuenow')).toBe('4');
     expect(screen.getByText('残り 21 秒')).toBeTruthy();
     expect(container.textContent).not.toMatch(/39|撮影秒数/);
   });

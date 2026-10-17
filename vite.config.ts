@@ -6,12 +6,14 @@ import { voidPlugin } from 'void';
 
 // voidPlugin は独自に dev サーバーを張るため、vitest の中では読み込まない。
 const underTest = Boolean(process.env.VITEST);
+// SH_CLIENT_ONLY=1 vp dev：API や Cloudflare の binding を使わず、画面だけを出す（/__screens の確認用）。
+const clientOnly = Boolean(process.env.SH_CLIENT_ONLY);
 
 export default defineConfig({
   plugins: underTest
     ? [react()]
     : [
-        voidPlugin(),
+        ...(clientOnly ? [] : [voidPlugin()]),
         tanstackRouter({
           target: 'react',
           routesDirectory: './src/client/routes',

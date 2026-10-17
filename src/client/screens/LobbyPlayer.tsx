@@ -68,9 +68,11 @@ export function LobbyPlayer({ code, me, gmName, players, rounds, limitSec, onLea
         ))}
       </ul>
 
-      <Button variant="quiet" onClick={onLeave} style={{ marginTop: 'auto' }}>
-        {m.leave_button()}
-      </Button>
+      <div className="sh-actions">
+        <Button variant="quiet" onClick={onLeave}>
+          {m.leave_button()}
+        </Button>
+      </div>
     </Screen>
   );
 }

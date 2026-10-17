@@ -14,8 +14,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <RouterProvider router={router} />
-  </StrictMode>,
-);
+const root = createRoot(document.getElementById('root')!);
+if (import.meta.env.DEV && location.pathname === '/__screens') {
+  // 開発用の画面の一覧。本番のビルドではこの分岐ごと消える。
+  void import('./dev/ScreenGallery').then(({ ScreenGallery }) =>
+    root.render(
+      <StrictMode>
+        <ScreenGallery />
+      </StrictMode>,
+    ),
+  );
+} else {
+  root.render(
+    <StrictMode>
+      <RouterProvider router={router} />
+    </StrictMode>,
+  );
+}
