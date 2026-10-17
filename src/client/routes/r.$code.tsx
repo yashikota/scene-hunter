@@ -7,6 +7,7 @@ import { Connecting } from '../screens/Connecting';
 import { LobbyGm } from '../screens/LobbyGm';
 import { LobbyPlayer } from '../screens/LobbyPlayer';
 import { Top } from '../screens/Top';
+import { TurnScreen } from '../screens/TurnScreen';
 import { Unsupported } from '../screens/Unsupported';
 import { Button } from '../ui/Button';
 import { isSupportedBrowser, useBrowserLocale } from '../ui/locale';
@@ -83,8 +84,13 @@ function RoomScreen({ code }: { code: string }) {
       );
     case 'dissolved':
       return <Placeholder room={room} code={code} title={m.dissolved_title()} />;
+    case 'gmTurn':
+    case 'hinting':
+    case 'hintError':
+    case 'playerTurn':
+      return <TurnScreen room={room} code={code} />;
     default:
-      // GM のターン以降の画面は Task 16、17 で差し替える。
+      // 中間結果以降の画面は Task 17 で差し替える。
       return <Placeholder room={room} code={code} title={m.in_progress()} />;
   }
 }
