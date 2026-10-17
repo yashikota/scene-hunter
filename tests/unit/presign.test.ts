@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { MAX_PHOTO_BYTES, createPresigner, photoKey } from '../../src/server/presign';
+import { MAX_PHOTO_BYTES, createPresigner, parsePhotoKey, photoKey } from '../../src/server/presign';
 
 const p = createPresigner({ accountId: 'acc', bucket: 'bkt', accessKeyId: 'AK', secretAccessKey: 'SK' });
 
@@ -21,5 +21,22 @@ describe('presigner', () => {
       'rooms/123456/g1/2/p-r.jpg',
     );
     expect(MAX_PHOTO_BYTES).toBe(1_048_576);
+  });
+  it('photoKey → parsePhotoKey が往復する（pid に - や _、UUID、gameId に - や _）', () => {
+    for (const pid of ['11111111-1111-4111-8111-111111111111', 'a-b_c-', '-x']) {
+      const p = { code: '123456', gameId: 'g-1_x', round: 10, pid, rand: '0f1e2d3c4b5a6978' };
+      expect(parsePhotoKey(photoKey(p))).toEqual(p);
+    }
+  });
+  it('形式に合わないキーは null', () => {
+    for (const k of [
+      'rooms/123456/g/1/p-ABCDEF0123456789.jpg',
+      'rooms/123456/g/1/p-0123456789abcdef.png',
+      'rooms/123456/g/1/a/b-0123456789abcdef.jpg',
+      'rooms/12345/g/1/p-0123456789abcdef.jpg',
+      'rooms/123456/g/1/-0123456789abcdef.jpg',
+    ]) {
+      expect(parsePhotoKey(k)).toBeNull();
+    }
   });
 });

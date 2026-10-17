@@ -28,8 +28,8 @@ function setup() {
         listed.push(o.prefix ?? '');
         return {
           objects: [
-            { key: `${o.prefix}${PL}-abcDEF1234567890.jpg` },
-            { key: `${o.prefix}${GM}-zzzzzzzzzzzzzzzz.jpg` },
+            { key: `${o.prefix}${PL}-abcdef0123456789.jpg` },
+            { key: `${o.prefix}${GM}-fedcba9876543210.jpg` },
           ],
           truncated: false,
         };
@@ -39,7 +39,7 @@ function setup() {
     store,
     hmacSecret: SECRET,
     now: () => NOW_MS,
-    rand: () => 'RANDRANDRANDRAND',
+    rand: () => '0123456789abcdef',
   };
   const tok = (role: 'gm' | 'player', pid: string, room = CODE) =>
     issueRoomToken(SECRET, { room, role, pid, exp: NOW_MS / 1000 + 1000 });
@@ -56,7 +56,7 @@ describe('requestUpload', () => {
     const { d, tok, seed } = setup();
     await seed();
     const r = await requestUpload(d, await tok('player', PL), CODE, { gameId: 'g1', round: 2, size: 1000 });
-    expect(r.key).toBe(`rooms/${CODE}/g1/2/${PL}-RANDRANDRANDRAND.jpg`);
+    expect(r.key).toBe(`rooms/${CODE}/g1/2/${PL}-0123456789abcdef.jpg`);
     expect(new URL(r.url).pathname).toBe(`/b/${r.key}`);
   });
   it('size の範囲外は RangeError', async () => {

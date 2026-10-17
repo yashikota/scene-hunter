@@ -61,3 +61,14 @@ export function photoKey(p: {
 }): string {
   return `rooms/${p.code}/${p.gameId}/${p.round}/${p.pid}-${p.rand}.jpg`;
 }
+
+const KEY_PATTERN = /^rooms\/(\d{6})\/([A-Za-z0-9_-]{1,32})\/(\d{1,2})\/([^/]+)-([0-9a-f]{16})\.jpg$/;
+
+/** photoKey の逆。rand は 16 桁の小文字 16 進数（'-' を含まない）なので、最後の '-' で pid と分けられる。 */
+export function parsePhotoKey(
+  key: string,
+): { code: string; gameId: string; round: number; pid: string; rand: string } | null {
+  const m = KEY_PATTERN.exec(key);
+  if (!m) return null;
+  return { code: m[1], gameId: m[2], round: Number(m[3]), pid: m[4], rand: m[5] };
+}

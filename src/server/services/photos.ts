@@ -1,4 +1,4 @@
-import { MAX_PHOTO_BYTES, photoKey } from '../presign';
+import { MAX_PHOTO_BYTES, parsePhotoKey, photoKey } from '../presign';
 import type { Presigner } from '../presign';
 import { authorize, checkCode } from './rooms';
 import type { RoomDeps } from './rooms';
@@ -9,7 +9,7 @@ export interface PhotoDeps {
   store: RoomDeps['store'];
   hmacSecret: string;
   now: () => number;
-  /** 16 文字の base64url 乱数。 */
+  /** 16 桁の小文字 16 進数の乱数（'-' を含まないこと。parsePhotoKey が前提にする）。 */
   rand: () => string;
 }
 
@@ -64,13 +64,9 @@ export async function listRoundPhotos(
     cursor = page.truncated ? page.cursor : undefined;
   } while (cursor);
 
-  const out: { pid: string; key: string; url: string }[] = [];
-  for (const key of keys) {
-    // `{pid}-{rand}.jpg`。pid は UUID で '-' を含むので、最後の '-' で分ける。
-    const name = key.slice(prefix.length);
-    const dash = name.lastIndexOf('-');
-    if (dash <= 0 || name.includes('/')) continue;
-    out.push({ pid: name.slice(0, dash), key, url: await d.presigner.get(key) });
-  }
-  return out;
+  const found = keys.flatMap((key) => {
+    const k = parsePhotoKey(key);
+    return k ? [{ pid: k.pid, key }] : [];
+  });
+  return Promise.all(found.map(async (f) => ({ ...f, url: await d.presigner.get(f.key) })));
 }

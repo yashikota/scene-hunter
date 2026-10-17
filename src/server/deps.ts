@@ -45,10 +45,10 @@ export function photoDeps(c: Context): PhotoDeps {
     store: createRoomStore(bindings.KV),
     hmacSecret: secret('HMAC_SECRET', env.HMAC_SECRET),
     now: () => Date.now(),
-    rand: () => {
-      const b = crypto.getRandomValues(new Uint8Array(12));
-      return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_');
-    },
+    rand: () =>
+      [...crypto.getRandomValues(new Uint8Array(8))]
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join(''),
   };
 }
 
