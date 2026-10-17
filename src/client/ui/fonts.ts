@@ -1,11 +1,12 @@
 import type { Locale } from '../../shared/locales';
 
-type FontSet = { display: string; body: string; css2: string };
+type FontSet = { display: string; displayWeight: number; body: string; css2: string };
 
 const MOCHIY = 'Mochiy Pop One';
 const MPLUS = 'M PLUS Rounded 1c';
 const latin: FontSet = {
   display: MOCHIY,
+  displayWeight: 400,
   body: MPLUS,
   css2: 'family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@400;700',
 };
@@ -19,10 +20,10 @@ export const LOCALE_FONTS: Record<Locale, FontSet> = {
   de: latin,
   'pt-BR': latin,
   id: latin,
-  vi: { display: MPLUS, body: MPLUS, css2: 'family=M+PLUS+Rounded+1c:wght@400;700;800' },
-  ko: { display: 'Jua', body: 'Gowun Dodum', css2: 'family=Jua&family=Gowun+Dodum' },
-  'zh-Hans': { display: 'ZCOOL KuaiLe', body: 'Noto Sans SC', css2: 'family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;700' },
-  'zh-Hant': { display: 'Chiron GoRound TC', body: 'Chiron GoRound TC', css2: 'family=Chiron+GoRound+TC:wght@400;700' },
+  vi: { display: MPLUS, displayWeight: 800, body: MPLUS, css2: 'family=M+PLUS+Rounded+1c:wght@400;700;800' },
+  ko: { display: 'Jua', displayWeight: 400, body: 'Gowun Dodum', css2: 'family=Jua&family=Gowun+Dodum' },
+  'zh-Hans': { display: 'ZCOOL KuaiLe', displayWeight: 400, body: 'Noto Sans SC', css2: 'family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;700' },
+  'zh-Hant': { display: 'Chiron GoRound TC', displayWeight: 700, body: 'Chiron GoRound TC', css2: 'family=Chiron+GoRound+TC:wght@400;700' },
 };
 
 const LINK_ID = 'locale-fonts';
@@ -39,5 +40,6 @@ export function applyLocaleFonts(locale: Locale): void {
   link.href = `https://fonts.googleapis.com/css2?${f.css2}&display=swap`;
   const root = document.documentElement.style;
   root.setProperty('--font-display', `'${f.display}', sans-serif`);
+  root.setProperty('--font-display-weight', String(f.displayWeight));
   root.setProperty('--font-body', `'${f.body}', sans-serif`);
 }

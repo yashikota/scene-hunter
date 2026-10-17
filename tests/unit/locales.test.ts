@@ -24,4 +24,10 @@ describe('locales', () => {
     expect(LOCALE_FONTS.ko.display).toBe('Jua');
     expect(LOCALE_FONTS['zh-Hans'].body).toBe('Noto Sans SC');
   });
+
+  it('vi and zh-Hant follow the spec font table', () => {
+    expect(LOCALE_FONTS.vi).toMatchObject({ display: 'M PLUS Rounded 1c', body: 'M PLUS Rounded 1c', displayWeight: 800 });
+    expect(LOCALE_FONTS['zh-Hant']).toMatchObject({ display: 'Chiron GoRound TC', body: 'Chiron GoRound TC', displayWeight: 700 });
+    expect(LOCALE_FONTS.ja.displayWeight).toBe(400);
+  });
 });
