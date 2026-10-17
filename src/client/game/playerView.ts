@@ -15,11 +15,14 @@ export interface ViewPlayer {
   rank: number | null;
   /** GM がしばらくこの人のメッセージを受け取っていない。人数や全員提出の数には入れない。 */
   away: boolean;
+  /** ゲームの途中で部屋を出た人。それまでの得点で順位には残る。 */
+  left: boolean;
 }
 
-/** away でない人だけ（人数や「2 / 3 人」の数に使う）。 */
-export const activePlayers = <P extends { away?: boolean }>(players: readonly P[]): P[] =>
-  players.filter((p) => !p.away);
+/** away でも出た人でもない人だけ（人数や「2 / 3 人」の数に使う）。 */
+export const activePlayers = <P extends { away?: boolean; left?: boolean }>(
+  players: readonly P[],
+): P[] => players.filter((p) => !p.away && !p.left);
 
 export interface PlayerView {
   phase: Phase | 'connecting' | 'disconnected' | 'dissolved';
@@ -79,6 +82,7 @@ function fromLobby(players: readonly LobbyPlayer[]): ViewPlayer[] {
     total: 0,
     rank: null,
     away: p.away ?? false,
+    left: p.left ?? false,
   }));
 }
 

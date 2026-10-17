@@ -23,7 +23,7 @@ export function TurnScreen({ room, code }: { room: Room; code: string }) {
   const common = { round: view.round, rounds: view.rounds };
   const others = view.players.filter((p) => p.pid !== view.gmPid);
   // 「2 / 3 人」の数：提出した人と、つながっている人（通信が切れたらしい人は待たない）。
-  const counted = others.filter((p) => !p.away || view.submitted.includes(p.pid));
+  const counted = others.filter((p) => (!p.away && !p.left) || view.submitted.includes(p.pid));
 
   switch (view.phase) {
     case 'gmTurn':

@@ -45,7 +45,10 @@ export interface GmState {
   round: number;
   gameId: string | null;
   players: Record<string, GmPlayer>;
-  /** 部屋を出た pid。以後この pid のメッセージはすべて無視する（保存が古ければ無い）。 */
+  /**
+   * 部屋を出た pid。以後この pid のメッセージはすべて無視する（保存が古ければ無い）。
+   * ロビーで出た人は players からも消す。ゲームの途中で出た人は、それまでの得点で順位に残すため players に残す。
+   */
   left?: string[];
   gmPhotoKey: string | null;
   /** player_turn を送った時刻（GM の時計）。撮影秒数 t の起点。 */
@@ -129,15 +132,16 @@ export function initialGmState(input: {
 const own = <T>(rec: Record<string, T>, key: string): T | undefined =>
   Object.hasOwn(rec, key) ? rec[key] : undefined;
 
+export const hasLeft = (s: GmState, pid: string): boolean => (s.left ?? []).includes(pid);
+
 const lobbyPlayers = (s: GmState): LobbyPlayer[] =>
   Object.entries(s.players).map(([pid, p]) => ({
     pid,
     name: p.name,
     label: p.label,
     ...(p.away ? { away: true } : {}),
+    ...(hasLeft(s, pid) ? { left: true } : {}),
   }));
-
-export const hasLeft = (s: GmState, pid: string): boolean => (s.left ?? []).includes(pid);
 
 const lobbyEvent = (s: GmState): GmEventBody => ({
   type: 'lobby',
@@ -170,7 +174,7 @@ export const eligiblePids = (s: GmState): string[] =>
 
 /** そのラウンドの対象者のうち、away でない人。全員提出の判定と未提出の一覧に使う。 */
 export const activeEligiblePids = (s: GmState): string[] =>
-  eligiblePids(s).filter((pid) => !own(s.players, pid)!.away);
+  eligiblePids(s).filter((pid) => !own(s.players, pid)!.away && !hasLeft(s, pid));
 
 /** 対象者のうち away でない人が 1 人以上いて、その全員が提出していれば true。 */
 const allSubmitted = (s: GmState, submissions: GmState['submissions']): boolean => {
@@ -252,31 +256,29 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
     }
 
     case 'playerLeft': {
-      if (!own(s.players, action.pid)) return none;
       const pid = action.pid;
-      const players = without(s.players, pid);
+      if (!own(s.players, pid) || hasLeft(s, pid)) return none;
+      const left = [...(s.left ?? []), pid];
+      if (s.phase === 'lobby') {
+        // ロビーではまだ得点が無いので、一覧から消す。
+        const next: GmState = { ...s, players: without(s.players, pid), left };
+        return { state: next, emit: [lobbyEvent(next)] };
+      }
+      // ゲームの途中で出た人は、それまでの得点のまま順位に残る（点数は補填しない）。
+      // 結果の画面（reveal / final）では何も変えない。
+      if (s.phase !== 'playerTurn' && s.phase !== 'picking')
+        return { state: { ...s, left }, emit: [] };
+      // まだ得点になっていない、このラウンドの写真は取り下げる。
       let next: GmState = {
         ...s,
-        players,
-        left: [...(s.left ?? []), pid],
+        left,
         shutters: without(s.shutters, pid),
         submissions: without(s.submissions, pid),
         photoValid: without(s.photoValid, pid),
         picks: s.picks.filter((p) => p !== pid),
       };
-      if (s.lastRanking) {
-        // 出た人は順位から外す（残った人の順位を詰める。前回からの上下はそのまま）。
-        const kept = s.lastRanking.totals.filter((t) => t.pid !== pid);
-        const totals = kept.map((t) => ({
-          ...t,
-          rank: kept.findIndex((x) => x.total === t.total) + 1,
-        }));
-        const scores = s.lastRanking.scores.filter((sc) => sc.pid !== pid);
-        next = { ...next, lastRanking: { ...s.lastRanking, scores, totals } };
-      }
-      if (s.phase === 'lobby') return { state: next, emit: [lobbyEvent(next)] };
       const emit: GmEventBody[] = [];
-      if (s.results) {
+      if (s.phase === 'picking' && s.results) {
         const results = resultsOf(next, s.results.gmPhotoUrl, s.results.photos);
         next = { ...next, results };
         emit.push({ type: 'results', round: s.round, ...results });
@@ -286,7 +288,7 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
 
     case 'presence': {
       const p = own(s.players, action.pid);
-      if (!p || !p.away === action.active) return none;
+      if (!p || hasLeft(s, action.pid) || !p.away === action.active) return none;
       const players = { ...s.players, [action.pid]: { ...p, away: !action.active } };
       const next: GmState = { ...s, players };
       if (s.phase === 'lobby') return { state: next, emit: [lobbyEvent(next)] };
@@ -360,7 +362,8 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       if (s.phase !== 'playerTurn' || s.turnStartedAt === null || action.round !== s.round)
         return none;
       const p = own(s.players, action.pid);
-      if (!p || !isEligible(p, s.round) || own(s.shutters, action.pid)) return none;
+      if (!p || !isEligible(p, s.round) || hasLeft(s, action.pid) || own(s.shutters, action.pid))
+        return none;
       if (action.at - s.turnStartedAt > limitMs) return none;
       const shutter = { at: action.at, hash: action.hash };
       return { state: { ...s, shutters: { ...s.shutters, [action.pid]: shutter } }, emit: [] };
@@ -457,11 +460,14 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
 
     case 'backToLobby': {
       if (s.phase === 'lobby') return none;
+      // 出た人と通信が切れている人は、ロビーの一覧には持ち越さない（切れていた人は戻れば join し直す）。
       const players: Record<string, GmPlayer> = Object.fromEntries(
-        Object.entries(s.players).map(([pid, p]) => [
-          pid,
-          { ...p, total: 0, streak: 0, joinedAt: { round: 0, phase: 'lobby' as const } },
-        ]),
+        Object.entries(s.players)
+          .filter(([pid, p]) => !p.away && !hasLeft(s, pid))
+          .map(([pid, p]) => [
+            pid,
+            { ...p, total: 0, streak: 0, joinedAt: { round: 0, phase: 'lobby' as const } },
+          ]),
       );
       const next: GmState = {
         ...s,

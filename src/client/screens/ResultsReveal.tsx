@@ -11,6 +11,8 @@ import { Thumb } from './ResultsParts';
 export interface RevealPlayer {
   pid: string;
   label: string;
+  /** 部屋を出た人。順位には残し、名前に「退出」を添える。 */
+  left?: boolean;
 }
 
 export interface ResultsRevealProps {
@@ -41,7 +43,10 @@ export function ResultsReveal({
   isGm,
   onNext,
 }: ResultsRevealProps) {
-  const label = (pid: string) => players.find((p) => p.pid === pid)?.label ?? '';
+  const label = (pid: string) => {
+    const p = players.find((x) => x.pid === pid);
+    return p ? (p.left ? `${p.label} · ${m.status_left()}` : p.label) : '';
+  };
   const named = (pid: string) => (pid === mePid ? m.you_tag({ name: label(pid) }) : label(pid));
   const picked = scores.filter((s) => s.rank !== null).sort((a, b) => a.rank! - b.rank!);
   const mine = scores.find((s) => s.pid === mePid);

@@ -29,6 +29,8 @@ export const LobbyPlayerSchema = v.object({
   name: v.string(),
   label: v.string(),
   away: v.optional(v.boolean()),
+  /** ゲームの途中で部屋を出た人。それまでの得点で順位に残る（以後は得点しない）。無ければ false。 */
+  left: v.optional(v.boolean()),
 });
 export type LobbyPlayer = v.InferOutput<typeof LobbyPlayerSchema>;
 

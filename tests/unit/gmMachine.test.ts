@@ -745,7 +745,12 @@ describe('部屋を出た人と、通信が切れた人', () => {
     expect(r.state.phase).toBe('playerTurn');
     r = run(r.state, ...shutterAndSubmit('a', 6000), ...shutterAndSubmit('b', 7000));
     expect(r.state.phase).toBe('picking');
-    expect(snapshotOf(r.state, START).players.map((p) => p.pid)).toEqual(['a', 'b']);
+    // 出た人は一覧に left: true で残る（それまでの得点で順位に残すため）
+    expect(snapshotOf(r.state, START).players.map((p) => [p.pid, p.left ?? false])).toEqual([
+      ['a', false],
+      ['b', false],
+      ['c', true],
+    ]);
   });
 
   it('away の人は全員提出の判定から外れ、戻ると判定に入る', () => {
@@ -805,15 +810,15 @@ describe('部屋を出た人と、通信が切れた人', () => {
     expect(s.lastRanking?.totals.find((t) => t.pid === 'b')?.total).toBe(before);
   });
 
-  it('結果の後に出た人は順位と写真から外れる', () => {
-    let s = inPicking();
-    s = run(s, {
+  it('picking で出た人の写真は取り下げ、results を送り直す。得点は 0 のまま順位に残る', () => {
+    let s = run(inPicking(), {
       type: 'resultsReady',
       gmPhotoUrl: 'g',
       photos: ['a', 'b', 'c'].map((pid) => ({ pid, url: pid })),
     }).state;
     s = run(s, { type: 'togglePick', pid: 'c' }).state;
     const r = run(s, { type: 'playerLeft', pid: 'c' });
+    expect(r.state.phase).toBe('picking');
     expect(r.state.picks).toEqual([]);
     expect(r.emit).toEqual([
       {
@@ -827,10 +832,91 @@ describe('部屋を出た人と、通信が切れた人', () => {
       },
     ]);
     s = run(r.state, { type: 'togglePick', pid: 'a' }, { type: 'confirmPicks' }).state;
-    expect(s.lastRanking?.totals.map((t) => t.pid).sort()).toEqual(['a', 'b']);
-    const s2 = run(s, { type: 'playerLeft', pid: 'a' }).state;
-    expect(s2.lastRanking?.totals).toEqual([expect.objectContaining({ pid: 'b', rank: 1 })]);
-    expect(s2.lastRanking?.scores.map((x) => x.pid)).toEqual(['b']);
+    expect(s.lastRanking?.totals.map((t) => t.pid).sort()).toEqual(['a', 'b', 'c']);
+    expect(s.lastRanking?.totals.find((t) => t.pid === 'c')?.total).toBe(0);
+  });
+
+  /** a, b, c が 1 ラウンド目で a > b > c の順に得点した reveal の状態。 */
+  const inReveal = (rounds = 3) =>
+    run(
+      run(
+        init(rounds),
+        ...['a', 'b', 'c'].map((p) => join(p)),
+        { type: 'start', gameId: 'game1' },
+        { type: 'gmPhotoUploaded', key: 'gm.jpg' },
+        { type: 'hintsReady', hints: HINTS, at: START },
+      ).state,
+      ...shutterAndSubmit('a', 6000),
+      ...shutterAndSubmit('b', 12000),
+      ...shutterAndSubmit('c', 30000),
+      { type: 'togglePick', pid: 'a' },
+      { type: 'togglePick', pid: 'b' },
+      { type: 'togglePick', pid: 'c' },
+      { type: 'confirmPicks' },
+    ).state;
+
+  it('reveal で出ても、何も emit せず、画面も順位も変えない', () => {
+    const s = inReveal();
+    expect(s.phase).toBe('reveal');
+    const r = run(s, { type: 'playerLeft', pid: 'a' });
+    expect(r.emit).toEqual([]);
+    expect(r.state.phase).toBe('reveal');
+    expect(r.state.lastRanking).toEqual(s.lastRanking);
+    expect(r.state.results).toEqual(s.results);
+    expect(snapshotOf(r.state, 0).ranking).toEqual(snapshotOf(s, 0).ranking);
+  });
+
+  it('final で 1 位の人が出ても、表彰台は変わらない', () => {
+    const s = run(inReveal(1), { type: 'nextRound' }).state;
+    expect(s.phase).toBe('final');
+    const winner = s.lastRanking!.totals[0];
+    expect(winner).toMatchObject({ pid: 'a', rank: 1 });
+    const r = run(s, { type: 'playerLeft', pid: 'a' });
+    expect(r.emit).toEqual([]);
+    expect(r.state.phase).toBe('final');
+    expect(snapshotOf(r.state, 0).final).toEqual(snapshotOf(s, 0).final);
+    expect(snapshotOf(r.state, 0).players.find((p) => p.pid === 'a')).toMatchObject({ left: true });
+  });
+
+  it('途中で出た人は得点がそのまま残り、以後は得点せず、全員提出の判定も待たない', () => {
+    let s = inReveal();
+    const before = s.players.a.total;
+    expect(before).toBeGreaterThan(0);
+    s = run(
+      s,
+      { type: 'playerLeft', pid: 'a' },
+      { type: 'nextRound' },
+      { type: 'gmPhotoUploaded', key: 'gm.jpg' },
+      { type: 'hintsReady', hints: HINTS, at: START },
+    ).state;
+    // 出た人の shutter は受け付けない
+    s = run(s, { type: 'shutter', round: 2, pid: 'a', hash: 'x', at: START + 1000 }).state;
+    expect(s.shutters.a).toBeUndefined();
+    s = run(s, ...shutterAndSubmit('b', 6000, 2), ...shutterAndSubmit('c', 7000, 2)).state;
+    expect(s.phase).toBe('picking'); // a を待たない
+    s = run(s, { type: 'togglePick', pid: 'c' }, { type: 'confirmPicks' }).state;
+    expect(s.players.a.total).toBe(before);
+    expect(s.lastRanking?.totals.find((t) => t.pid === 'a')?.total).toBe(before);
+  });
+
+  it('ロビーに戻すと、出た人と通信が切れている人は一覧から外れる', () => {
+    const s = run(
+      inReveal(1),
+      { type: 'playerLeft', pid: 'a' },
+      away('b'),
+      { type: 'nextRound' },
+      { type: 'backToLobby' },
+    );
+    expect(Object.keys(s.state.players)).toEqual(['c']);
+    expect(s.emit.at(-1)).toMatchObject({ type: 'lobby', players: [{ pid: 'c' }] });
+    // 出た人はもう戻れない。通信が切れていた人は join し直せば戻る
+    const r = run(s.state, join('a'), join('b'));
+    expect(Object.keys(r.state.players)).toEqual(['c', 'b']);
+  });
+
+  it('出た人の presence は無視する', () => {
+    const s = run(inReveal(), { type: 'playerLeft', pid: 'a' }).state;
+    expect(gmReduce(s, { type: 'presence', pid: 'a', active: false }).state).toBe(s);
   });
 
   it('leave / ping / away はプレイヤーのメッセージとして形が通る', () => {

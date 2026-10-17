@@ -37,7 +37,9 @@ export function Final({
   onLeave,
 }: FinalProps) {
   const name = (pid: string) => {
-    const label = players.find((p) => p.pid === pid)?.label ?? '';
+    const p = players.find((x) => x.pid === pid);
+    // 途中で出た人も、それまでの得点で順位に残る
+    const label = p ? (p.left ? `${p.label} · ${m.status_left()}` : p.label) : '';
     return pid === mePid ? m.you_tag({ name: label }) : label;
   };
   const rest = totals.slice(3);

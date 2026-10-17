@@ -11,15 +11,18 @@ export interface LobbyMember {
   label: string;
   /** 通信が切れたらしい人。薄く出し、人数には入れない。 */
   away?: boolean;
+  /** 部屋を出た人。薄く出し、人数には入れない。 */
+  left?: boolean;
 }
 
-/** 通信が切れたらしい人に添える「通信なし」。 */
-const AwayNote = () => (
-  <span className="sh-sub" style={{ fontSize: 12 }}>
-    {' '}
-    {m.status_away()}
-  </span>
-);
+/** 通信が切れたらしい人と出た人に添える「通信なし」「退出」。 */
+export const AwayNote = ({ p }: { p: { away?: boolean; left?: boolean } }) =>
+  p.left || p.away ? (
+    <span className="sh-sub" style={{ fontSize: 12 }}>
+      {' '}
+      {p.left ? m.status_left() : m.status_away()}
+    </span>
+  ) : null;
 
 /** 参加者の一覧（GM を先頭に、2 列のタイル）。人数は GM を含める。 */
 export function PlayerTiles({
@@ -49,9 +52,9 @@ export function PlayerTiles({
               {m.you_tag({ name: p.label })}
             </li>
           ) : (
-            <li key={p.pid} className={`sh-tile ${p.away ? 'sh-tile--away' : ''}`}>
+            <li key={p.pid} className={`sh-tile ${p.away || p.left ? 'sh-tile--away' : ''}`}>
               {p.label}
-              {p.away && <AwayNote />}
+              <AwayNote p={p} />
             </li>
           ),
         )}
