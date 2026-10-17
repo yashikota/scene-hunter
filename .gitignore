@@ -7,3 +7,4 @@ dist/
 .void-wrangler.jsonc
 test-results/
 playwright-report/
+.wrangler/
