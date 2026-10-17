@@ -125,6 +125,10 @@ test('第三者が自分の鍵で署名した GM のイベントには、プレ�
     }
     await expect(gm.page.getByRole('button', { name: 'ゲームを始める' })).toBeEnabled();
 
+    // GM が途中で作り直されて（再読み込みや dev の HMR で）epoch が進むと、第三者の gm/{epoch} は GM 本人と
+    // ぶつかり、下の対照が意味をなさなくなる。そうなっていないことを先に確かめる。
+    expect((await readGm(gm.page, code)).epoch, 'GM の epoch が途中で変わった').toBe(real.epoch);
+
     // 対照：同じ道で、本物の GM の鍵で署名したものなら従う
     await forge(forger.page, { body: dissolved(100_002), privateKey: real.privateKey });
     for (const p of [alice, bob]) {

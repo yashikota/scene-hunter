@@ -8,6 +8,7 @@
     "i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/client/paraglide",
     "pretest": "pnpm i18n:compile",
     "test": "vp test run",
+    "pree2e": "pnpm i18n:compile",
     "e2e": "playwright test",
     "pretypecheck": "pnpm i18n:compile",
     "typecheck": "void prepare && tsc --noEmit",
