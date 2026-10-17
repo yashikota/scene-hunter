@@ -437,3 +437,27 @@ body {
   transform: scaleX(0.9);
   animation: sh-fill-90 30s cubic-bezier(0.15, 0.7, 0.3, 1) both;
 }
+
+.sh-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* 部屋の番号を大きく。 */
+.sh-code {
+  margin: 0;
+  font-size: 44px;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+}
+.sh-input--big {
+  font-size: 24px;
+  text-align: center;
+  padding: 14px 12px;
+  min-height: 60px;
+}
+.sh-input--big::placeholder,
+.sh-input::placeholder {
+  color: var(--color-sub);
+  opacity: 0.8;
+}

@@ -25,6 +25,9 @@ export type HintsResult =
 
 const JOIN_RETRY_MS = 3000;
 const JOIN_TIMEOUT_MS = 60_000;
+/** 部屋があるかの確かめは、IP ごとの上限（1 分 10 回）に収まる間隔で待ち直す。 */
+const CHECK_RETRY_MS = 6000;
+const CHECK_TIMEOUT_MS = 54_000;
 
 const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
 const statusOf = (e: unknown): number | undefined =>
@@ -63,6 +66,27 @@ export async function joinRoom(
       if (statusOf(e) !== 404 || waited >= JOIN_TIMEOUT_MS) throw e;
       opts.onWaiting?.();
       await sleep(JOIN_RETRY_MS);
+    }
+  }
+}
+
+/**
+ * 部屋があるか確かめる。できたばかりの部屋がまだ見えない間（404）は 6 秒おきに 54 秒まで待ち直し、
+ * その都度 onWaiting を呼ぶ。それでも無ければ 404 を投げる。
+ */
+export async function checkRoom(
+  code: string,
+  opts: { onWaiting?: () => void; sleep?: (ms: number) => Promise<void> } = {},
+): Promise<void> {
+  const sleep = opts.sleep ?? sleepMs;
+  for (let waited = 0; ; waited += CHECK_RETRY_MS) {
+    try {
+      await fetch('/api/rooms/:code', { params: { code }, retry: 0 });
+      return;
+    } catch (e) {
+      if (statusOf(e) !== 404 || waited >= CHECK_TIMEOUT_MS) throw e;
+      opts.onWaiting?.();
+      await sleep(CHECK_RETRY_MS);
     }
   }
 }

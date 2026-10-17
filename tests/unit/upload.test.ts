@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { claim, closeRoom, joinRoom, listPhotos, requestHints, transfer } from '../../src/client/api';
+import { checkRoom, claim, closeRoom, joinRoom, listPhotos, requestHints, transfer } from '../../src/client/api';
 import { uploadPhoto } from '../../src/client/photo/upload';
 
 const json = (body: unknown, status = 200) =>
@@ -85,6 +85,32 @@ describe('joinRoom', () => {
     ).rejects.toMatchObject({ status: 429 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(onWaiting).not.toHaveBeenCalled();
+  });
+});
+
+describe('checkRoom', () => {
+  it('200 なら終わる', async () => {
+    const fetchMock = vi.fn(async (..._a: unknown[]) => json({ exists: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    await checkRoom('482913');
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(String(fetchMock.mock.calls[0]![0])).toContain('/api/rooms/482913');
+  });
+
+  it('404 の間は 6 秒おきに待ち直し、54 秒たっても無ければ 404 を投げる（1 分 10 回の上限に収める）', async () => {
+    const fetchMock = vi.fn(async () => json({ error: 'not_found' }, 404));
+    vi.stubGlobal('fetch', fetchMock);
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const onWaiting = vi.fn();
+    await expect(checkRoom('482913', { sleep, onWaiting })).rejects.toMatchObject({ status: 404 });
+    expect(sleep).toHaveBeenCalledWith(6000);
+    expect(fetchMock).toHaveBeenCalledTimes(10);
+    expect(onWaiting).toHaveBeenCalledTimes(9);
+  });
+
+  it('404 以外はすぐ投げる', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json({ error: 'rate_limited' }, 429)));
+    await expect(checkRoom('482913')).rejects.toMatchObject({ status: 429 });
   });
 });
 

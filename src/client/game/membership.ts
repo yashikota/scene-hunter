@@ -1,7 +1,7 @@
 import type { Cert, TransferCert } from '../../shared/cert';
 import { exportPrivateKey, exportPublicKey, generateKeyPair } from '../../shared/crypto';
 import { isLocale, type Locale } from '../../shared/locales';
-import { claim, createRoom, joinRoom, type Joined } from '../api';
+import { checkRoom, claim, createRoom, joinRoom, type Joined } from '../api';
 
 // 部屋の一員としての資格（参加証、秘密鍵、部屋トークン）を sessionStorage の `sh:me:{code}` に置く。
 // 再読み込みしても同じ pid のまま戻れるように、プレイヤーが送るイベントの seq もここに置く
@@ -113,6 +113,40 @@ const toMe = (j: Joined, keys: { pubkey: string; privateKey: string }): Me => ({
   limitSec: j.limitSec,
   seq: 0,
 });
+
+/** このタブで、あると確かめた部屋の番号。名前の入力はこの部屋にだけ出す。 */
+const foundRooms = new Set<string>();
+
+/** 部屋があるか確かめ、あれば覚えておく。無ければ（待ち直しても 404 なら）投げる。 */
+export async function findRoom(
+  code: string,
+  opts: { onWaiting?: () => void } = {},
+  api: Pick<typeof import('../api'), 'checkRoom'> = { checkRoom },
+): Promise<void> {
+  await api.checkRoom(code, opts);
+  foundRooms.add(code);
+}
+
+export const isRoomFound = (code: string): boolean => foundRooms.has(code);
+
+const NAME_KEY = 'sh:name';
+
+/** 前に使った名前（入力の初期値にするだけの便利機能）。読めなければ空。 */
+export function loadLastName(): string {
+  try {
+    return localStorage.getItem(NAME_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+export function saveLastName(name: string): void {
+  try {
+    localStorage.setItem(NAME_KEY, name);
+  } catch {
+    // 覚えられなくても、次に入れ直せばよい。
+  }
+}
 
 /** 部屋を作って GM として保存し、部屋の番号を返す。 */
 export async function createAndSave(

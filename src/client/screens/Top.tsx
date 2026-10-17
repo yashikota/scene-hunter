@@ -1,40 +1,31 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { isLocale, LOCALE_NAMES, LOCALES, type Locale } from '../../shared/locales';
-import { createAndSave, joinAndSave } from '../game/membership';
+import { createAndSave, findRoom } from '../game/membership';
 import { m } from '../paraglide/messages';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { isSupportedBrowser, useBrowserLocale } from '../ui/locale';
 import { Screen } from '../ui/Screen';
 import { Connecting } from './Connecting';
+import { CODE_RE, errorMessage } from './entryErrors';
+import { NameStep } from './NameStep';
 import { Unsupported } from './Unsupported';
 
 export interface TopDeps {
   /** 部屋を作って資格を保存し、部屋の番号を返す。 */
   create(name: string, locale: Locale): Promise<string>;
-  /** 部屋に入って資格を保存する。部屋がまだ見えない間は onWaiting を呼ぶ。 */
-  join(code: string, name: string, opts: { onWaiting?: () => void }): Promise<unknown>;
+  /** 部屋があるか確かめる。部屋がまだ見えない間は onWaiting を呼ぶ。無ければ reject（404）。 */
+  find(code: string, opts: { onWaiting?: () => void }): Promise<void>;
 }
 
-const defaultDeps: TopDeps = { create: createAndSave, join: joinAndSave };
+const defaultDeps: TopDeps = { create: createAndSave, find: findRoom };
 
 export interface TopProps {
-  /** 共有されたリンク（/r/{code} か /?code=）から来たときの番号。 */
+  /** 共有されたリンク（/r/{code} か /?code=）から来たときの番号。開いたらすぐに部屋を確かめる。 */
   initialCode?: string;
-  /** 部屋の資格を保存できた。 */
+  /** 部屋を作った（資格を保存した）、または入る部屋があると確かめた。次は /r/{code}。 */
   onEntered(code: string): void;
   deps?: TopDeps;
-}
-
-const CODE_RE = /^\d{6}$/;
-const NAME_MAX = 12;
-
-/** API の失敗を、画面に出す文言にする。 */
-function errorMessage(e: unknown): string {
-  const status = e instanceof Error ? (e as { status?: number }).status : undefined;
-  if (status === 404) return m.error_not_found();
-  if (status === 429) return m.error_rate_limited();
-  return m.error_failed();
 }
 
 export function Top(props: TopProps) {
@@ -43,6 +34,7 @@ export function Top(props: TopProps) {
   return <TopForm {...props} locale={locale} onLocale={setLocale} />;
 }
 
+/** トップ：部屋の番号を入れて入るか、部屋を作る。名前は部屋を選んだ後に聞く。 */
 function TopForm({
   initialCode = '',
   onEntered,
@@ -51,63 +43,57 @@ function TopForm({
   onLocale,
 }: TopProps & { locale: Locale; onLocale(l: Locale): void }) {
   const ids = useId();
-  const nameRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    // 番号が入った状態で開いたときは、名前だけ入れればよいので名前に合わせる
-    if (CODE_RE.test(initialCode)) nameRef.current?.focus();
-  }, [initialCode]);
   const [code, setCode] = useState(initialCode);
-  const [name, setName] = useState('');
-  const [status, setStatus] = useState<'idle' | 'joining' | 'creating' | 'preparing'>('idle');
+  const [status, setStatus] = useState<'idle' | 'checking' | 'preparing' | 'naming'>('idle');
   const [error, setError] = useState<string | null>(null);
-  const busy = status !== 'idle';
+  /** いまの確かめの番号。やめたり番号を変えたりした後に届いた結果は捨てる。 */
+  const attempt = useRef(0);
 
-  const validName = (): string | null => {
-    const n = name.trim();
-    const len = [...n].length;
-    if (len < 1 || len > NAME_MAX) {
-      setError(m.error_name());
-      return null;
+  const find = async (c: string) => {
+    const mine = ++attempt.current;
+    setError(null);
+    setStatus('checking');
+    try {
+      await deps.find(c, { onWaiting: () => attempt.current === mine && setStatus('preparing') });
+      if (attempt.current === mine) onEntered(c);
+    } catch (err) {
+      if (attempt.current !== mine) return;
+      setStatus('idle');
+      setError(errorMessage(err));
     }
-    return n;
   };
 
-  const join = async (e: FormEvent) => {
+  useEffect(() => {
+    // 番号の入ったリンクから来たときは、そのまま部屋を確かめて名前の入力へ進む
+    if (CODE_RE.test(initialCode)) void find(initialCode);
+  }, [initialCode]);
+
+  const join = (e: FormEvent) => {
     e.preventDefault();
-    if (busy) return;
+    if (status !== 'idle') return;
     if (!CODE_RE.test(code)) return setError(m.error_code());
-    const n = validName();
-    if (!n) return;
-    setError(null);
-    setStatus('joining');
-    try {
-      await deps.join(code, n, { onWaiting: () => setStatus('preparing') });
-      onEntered(code);
-    } catch (err) {
-      setStatus('idle');
-      setError(errorMessage(err));
-    }
+    void find(code);
   };
 
-  const create = async () => {
-    if (busy) return;
-    const n = validName();
-    if (!n) return;
-    setError(null);
-    setStatus('creating');
-    try {
-      onEntered(await deps.create(n, locale));
-    } catch (err) {
-      setStatus('idle');
-      setError(errorMessage(err));
-    }
+  const cancel = () => {
+    attempt.current++;
+    setStatus('idle');
   };
 
-  if (status === 'preparing') return <Connecting preparing />;
+  if (status === 'preparing') return <Connecting preparing onLeave={cancel} leaveLabel={m.cancel()} />;
+  if (status === 'naming') {
+    return (
+      <NameStep
+        onSubmit={async (name) => onEntered(await deps.create(name, locale))}
+        onBack={() => setStatus('idle')}
+      />
+    );
+  }
 
+  const checking = status === 'checking';
   return (
     <Screen variant="top">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -18 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="9" />
@@ -128,7 +114,7 @@ function TopForm({
         </label>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, paddingTop: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
         <div
           className="sh-icon-tile"
           style={{ width: 96, height: 96, background: 'var(--color-accent)', borderRadius: 24 }}
@@ -144,44 +130,31 @@ function TopForm({
       </div>
 
       <form onSubmit={join} noValidate>
-        <Card raised style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div className="sh-field">
-            <label htmlFor={`${ids}-code`} className="sh-sr-only">
-              {m.code_label()}
-            </label>
-            <input
-              id={`${ids}-code`}
-              className="sh-input sh-input--code"
-              inputMode="numeric"
-              autoComplete="off"
-              maxLength={6}
-              placeholder={m.code_label()}
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            />
-          </div>
-          <div className="sh-field">
-            <label htmlFor={`${ids}-name`} className="sh-sr-only">
-              {m.name_label()}
-            </label>
-            <input
-              id={`${ids}-name`}
-              ref={nameRef}
-              className="sh-input"
-              autoComplete="nickname"
-              maxLength={NAME_MAX}
-              placeholder={m.name_label()}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
+        <Card raised className="sh-stack" style={{ padding: 20 }}>
+          <label htmlFor={`${ids}-code`} className="sh-sr-only">
+            {m.code_label()}
+          </label>
+          <input
+            id={`${ids}-code`}
+            className="sh-input sh-input--code"
+            inputMode="numeric"
+            enterKeyHint="go"
+            autoComplete="off"
+            maxLength={6}
+            placeholder={m.code_label()}
+            value={code}
+            onChange={(e) => {
+              setCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+              setError(null);
+            }}
+          />
           {error && (
             <p role="alert" className="sh-error">
               {error}
             </p>
           )}
-          <Button type="submit" variant="primary" disabled={busy}>
-            {status === 'joining' ? m.joining() : m.join_button()}
+          <Button type="submit" variant="primary" disabled={checking}>
+            {checking ? m.joining() : m.join_button()}
           </Button>
         </Card>
       </form>
@@ -192,10 +165,9 @@ function TopForm({
         <div style={{ flexGrow: 1, height: 2, background: 'currentColor', opacity: 0.25 }} />
       </div>
 
-      <Button onClick={create} disabled={busy}>
-        {status === 'creating' ? m.creating() : m.create_button()}
+      <Button onClick={() => setStatus('naming')} disabled={checking}>
+        {m.create_button()}
       </Button>
-
     </Screen>
   );
 }

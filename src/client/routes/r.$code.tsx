@@ -1,14 +1,14 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { loadMe } from '../game/membership';
+import { isRoomFound, joinAndSave, loadMe } from '../game/membership';
 import { useRoom } from '../game/useRoom';
 import { Connecting } from '../screens/Connecting';
 import { Disconnected } from '../screens/Disconnected';
 import { Dissolved } from '../screens/Dissolved';
 import { LobbyGm } from '../screens/LobbyGm';
 import { LobbyPlayer } from '../screens/LobbyPlayer';
+import { NameStep } from '../screens/NameStep';
 import { ResultsScreen } from '../screens/ResultsScreen';
-import { Top } from '../screens/Top';
 import { TurnScreen } from '../screens/TurnScreen';
 import { Unsupported } from '../screens/Unsupported';
 import { isSupportedBrowser, useBrowserLocale } from '../ui/locale';
@@ -27,12 +27,19 @@ function RoomEntry({ code }: { code: string }) {
   const navigate = useNavigate();
   const [entered, setEntered] = useState(() => loadMe(code) !== null);
   if (!isSupportedBrowser()) return <UnsupportedRoute />;
-  // まだこの部屋に入っていない（共有されたリンクから来た）ときは、番号を入れたトップを出す。
   if (!entered) {
+    // まだこの部屋に入っていない。あると確かめた部屋なら名前を聞き、そうでなければ（共有された
+    // /r/{code} のリンクから来たときなど）番号を入れたトップに回して、そこで確かめてもらう。
+    if (!isRoomFound(code)) return <Navigate to="/" search={{ code }} replace />;
     return (
-      <Top
-        initialCode={code}
-        onEntered={(c) => (c === code ? setEntered(true) : void navigate({ to: '/r/$code', params: { code: c } }))}
+      // 言語はトップで決めたまま（ここへはトップから来る）
+      <NameStep
+        code={code}
+        onSubmit={async (name, { onWaiting }) => {
+          await joinAndSave(code, name, { onWaiting });
+          setEntered(true);
+        }}
+        onBack={() => void navigate({ to: '/' })}
       />
     );
   }

@@ -164,6 +164,12 @@ export async function createRoom(
   throw new Error('could not allocate a room code');
 }
 
+/** 部屋があるか。名前を入れてもらう前の確かめに使い、部屋のほかの情報は返さない。 */
+export async function roomExists(store: Pick<RoomDeps['store'], 'get'>, code: string): Promise<boolean> {
+  if (!ROOM_CODE.test(code)) return false;
+  return (await store.get(code)) !== null;
+}
+
 export async function joinRoom(
   d: RoomDeps,
   code: string,

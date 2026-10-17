@@ -10,6 +10,7 @@ import {
   closeRoom,
   createRoom,
   joinRoom,
+  roomExists,
   transferGm,
 } from '../../src/server/services/rooms';
 import type { RoomDeps } from '../../src/server/services/rooms';
@@ -153,6 +154,16 @@ describe('createRoom', () => {
     const { d, kvMap } = setup();
     await createRoom(d, { ...input, pubkey });
     expect(JSON.parse(kvMap.get('room:111111')!).gmPid).toBe('pid-1');
+  });
+});
+
+describe('roomExists', () => {
+  it('作った部屋は true、無い番号や形の違う番号は false', async () => {
+    const { d } = setup();
+    await createRoom(d, { ...input, pubkey });
+    expect(await roomExists(d.store, '111111')).toBe(true);
+    expect(await roomExists(d.store, '000000')).toBe(false);
+    expect(await roomExists(d.store, 'abc')).toBe(false);
   });
 });
 

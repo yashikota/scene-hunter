@@ -1,15 +1,16 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { m } from '../../src/client/paraglide/messages';
 import { setLocale } from '../../src/client/paraglide/runtime';
 import { Connecting } from '../../src/client/screens/Connecting';
 import { LobbyGm } from '../../src/client/screens/LobbyGm';
 import { LobbyPlayer } from '../../src/client/screens/LobbyPlayer';
-import { createMemoryHistory, createRouter } from '@tanstack/react-router';
+import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
 import { routeTree } from '../../src/client/routeTree.gen';
-import { parseSearch } from '../../src/client/searchParams';
+import { parseSearch, stringifySearch } from '../../src/client/searchParams';
 import { parseCodeParam } from '../../src/client/routes/index';
+import { NameStep } from '../../src/client/screens/NameStep';
 import { Top } from '../../src/client/screens/Top';
 import { LOCALE_NAMES, LOCALES } from '../../src/shared/locales';
 
@@ -68,38 +69,69 @@ describe('Top', () => {
       expect(screen.getByRole('button', { name: '방에 들어가기' })).toBeTruthy();
     });
 
-    it('選んだ言語で部屋を作る', async () => {
+    it('トップには名前の入力が無い', () => {
+      render(<Top onEntered={() => {}} />);
+      expect(screen.queryByLabelText(m.name_label())).toBeNull();
+      expect(screen.getByLabelText(m.code_label())).toBeTruthy();
+    });
+
+    it('部屋を作るを押すと名前を聞き、選んだ言語で部屋を作る', async () => {
       const create = vi.fn(async () => '482913');
       const onEntered = vi.fn();
-      render(<Top onEntered={onEntered} deps={{ create, join: vi.fn() }} />);
+      render(<Top onEntered={onEntered} deps={{ create, find: vi.fn() }} />);
       fireEvent.change(screen.getByRole('combobox'), { target: { value: 'fr' } });
-      fireEvent.change(screen.getByLabelText(m.name_label()), { target: { value: ' はるか ' } });
+      fireEvent.click(screen.getByRole('button', { name: m.create_button() }));
+      const name = screen.getByLabelText(m.name_label());
+      expect(document.activeElement).toBe(name);
+      fireEvent.change(name, { target: { value: ' はるか ' } });
       fireEvent.click(screen.getByRole('button', { name: m.create_button() }));
       await vi.waitFor(() => expect(onEntered).toHaveBeenCalledWith('482913'));
       expect(create).toHaveBeenCalledWith('はるか', 'fr');
     });
 
-    it('部屋がまだ見えない間（onWaiting）は「部屋を準備しています」を出す', async () => {
-      const join = vi.fn((_code: string, _name: string, opts: { onWaiting?: () => void }) => {
+    it('入るを押すと部屋があるか確かめ、あれば次へ進む（名前は聞かない）', async () => {
+      const find = vi.fn(async () => {});
+      const onEntered = vi.fn();
+      render(<Top onEntered={onEntered} deps={{ create: vi.fn(), find }} />);
+      fireEvent.change(screen.getByLabelText(m.code_label()), { target: { value: '482913' } });
+      fireEvent.click(screen.getByRole('button', { name: m.join_button() }));
+      await vi.waitFor(() => expect(onEntered).toHaveBeenCalledWith('482913'));
+      expect(find).toHaveBeenCalledWith('482913', expect.anything());
+    });
+
+    it('部屋が無ければ番号を残したまま「見つかりません」を出す', async () => {
+      const find = vi.fn(async () => {
+        throw Object.assign(new Error('not found'), { status: 404 });
+      });
+      const onEntered = vi.fn();
+      render(<Top onEntered={onEntered} deps={{ create: vi.fn(), find }} />);
+      fireEvent.change(screen.getByLabelText(m.code_label()), { target: { value: '482913' } });
+      fireEvent.click(screen.getByRole('button', { name: m.join_button() }));
+      expect((await screen.findByRole('alert')).textContent).toBe(m.error_not_found());
+      expect((screen.getByLabelText(m.code_label()) as HTMLInputElement).value).toBe('482913');
+      expect(onEntered).not.toHaveBeenCalled();
+    });
+
+    it('部屋がまだ見えない間（onWaiting）は「部屋を準備しています」を出し、やめられる', async () => {
+      const find = vi.fn((_code: string, opts: { onWaiting?: () => void }) => {
         opts.onWaiting?.();
         return new Promise<never>(() => {});
       });
-      render(<Top onEntered={() => {}} deps={{ create: vi.fn(), join }} />);
+      render(<Top onEntered={() => {}} deps={{ create: vi.fn(), find }} />);
       fireEvent.change(screen.getByLabelText(m.code_label()), { target: { value: '482913' } });
-      fireEvent.change(screen.getByLabelText(m.name_label()), { target: { value: 'はるか' } });
       fireEvent.click(screen.getByRole('button', { name: m.join_button() }));
       expect(await screen.findByText('部屋を準備しています')).toBeTruthy();
-      expect(join).toHaveBeenCalledWith('482913', 'はるか', expect.anything());
+      fireEvent.click(screen.getByRole('button', { name: m.cancel() }));
+      expect(screen.getByLabelText(m.code_label())).toBeTruthy();
     });
 
-    it('6 桁でない番号では入ろうとしない', () => {
-      const join = vi.fn();
-      render(<Top onEntered={() => {}} deps={{ create: vi.fn(), join }} />);
+    it('6 桁でない番号では確かめない', () => {
+      const find = vi.fn();
+      render(<Top onEntered={() => {}} deps={{ create: vi.fn(), find }} />);
       fireEvent.change(screen.getByLabelText(m.code_label()), { target: { value: '4829' } });
-      fireEvent.change(screen.getByLabelText(m.name_label()), { target: { value: 'はるか' } });
       fireEvent.click(screen.getByRole('button', { name: m.join_button() }));
       expect(screen.getByRole('alert').textContent).toBe(m.error_code());
-      expect(join).not.toHaveBeenCalled();
+      expect(find).not.toHaveBeenCalled();
     });
   });
 });
@@ -107,16 +139,19 @@ describe('Top', () => {
 describe('?code= で開く', () => {
   beforeEach(() => vi.stubGlobal('WebTransport', class {}));
 
-  it('Top は initialCode を番号の入力に入れ、名前に合わせる', () => {
-    render(<Top initialCode="123456" onEntered={() => {}} />);
+  it('Top は initialCode を入れ、すぐに部屋を確かめて次へ進む', async () => {
+    const find = vi.fn(async () => {});
+    const onEntered = vi.fn();
+    render(<Top initialCode="123456" onEntered={onEntered} deps={{ create: vi.fn(), find }} />);
     expect((screen.getByLabelText(m.code_label()) as HTMLInputElement).value).toBe('123456');
-    expect(document.activeElement).toBe(screen.getByLabelText(m.name_label()));
+    await vi.waitFor(() => expect(onEntered).toHaveBeenCalledWith('123456'));
   });
 
-  it('番号が無いときは空のままで、名前に合わせない', () => {
-    render(<Top onEntered={() => {}} />);
+  it('番号が無いときは空のままで、確かめない', () => {
+    const find = vi.fn();
+    render(<Top onEntered={() => {}} deps={{ create: vi.fn(), find }} />);
     expect((screen.getByLabelText(m.code_label()) as HTMLInputElement).value).toBe('');
-    expect(document.activeElement).not.toBe(screen.getByLabelText(m.name_label()));
+    expect(find).not.toHaveBeenCalled();
   });
 
   it('6 桁の数字以外の code は無視する', () => {
@@ -124,6 +159,47 @@ describe('?code= で開く', () => {
     expect(parseCodeParam('000123')).toBe('000123');
     for (const bad of ['12345', '1234567', 'abcdef', '12345a', '', ' 123456', undefined, null, ['123456'], {}, 100000]) {
       expect(parseCodeParam(bad)).toBeUndefined();
+    }
+  });
+});
+
+describe('/r/{code} を直接開く（まだ入っていない部屋）', () => {
+  beforeEach(() => vi.stubGlobal('WebTransport', class {}));
+
+  const open = (path: string) => {
+    const router = createRouter({ routeTree, parseSearch, stringifySearch, history: createMemoryHistory({ initialEntries: [path] }) });
+    render(<RouterProvider router={router} />);
+    return router;
+  };
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+
+  it('トップで部屋を確かめ、あれば名前の入力に戻ってくる', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json({ exists: true })));
+    const router = open('/r/246810');
+    expect(await screen.findByLabelText(m.name_label())).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/r/246810');
+    expect(screen.getByText('246 810')).toBeTruthy();
+  });
+
+  it('code は JSON にせず生の文字列で書き出す', () => {
+    expect(stringifySearch({ code: '012345' })).toBe('?code=012345');
+    expect(stringifySearch({})).toBe('');
+  });
+
+  it('部屋が無ければ、番号を入れたトップで「見つかりません」を出す', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json({ error: 'not_found' }, 404)));
+    // 54 秒の待ち直しを早送りする
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
+    try {
+      const router = open('/r/135791');
+      for (let i = 0; i < 12; i++) await act(() => vi.advanceTimersByTimeAsync(6000));
+      expect(router.state.location.pathname).toBe('/');
+      expect(screen.getByRole('alert').textContent).toBe(m.error_not_found());
+      expect((screen.getByLabelText(m.code_label()) as HTMLInputElement).value).toBe('135791');
+      expect(screen.queryByLabelText(m.name_label())).toBeNull();
+    } finally {
+      vi.useRealTimers();
     }
   });
 });
@@ -147,6 +223,57 @@ describe('ルーターの検索文字列から code を読む', () => {
   });
   it('桁が違う、数字でない code は無視する', async () => {
     for (const c of ['12345', '1234567', 'abcdef', '+12345', '-12345']) expect(await codeFor(`?code=${c}`)).toBeUndefined();
+  });
+});
+
+describe('NameStep', () => {
+  afterEach(() => localStorage.clear());
+
+  it('前に使った名前を入れておき、決めた名前を覚える', async () => {
+    localStorage.setItem('sh:name', 'はるか');
+    const onSubmit = vi.fn(async () => {});
+    render(<NameStep code="482913" onSubmit={onSubmit} onBack={() => {}} />);
+    const input = screen.getByLabelText(m.name_label()) as HTMLInputElement;
+    expect(input.value).toBe('はるか');
+    expect(document.activeElement).toBe(input);
+    expect(screen.getByText('482 913')).toBeTruthy();
+    fireEvent.change(input, { target: { value: ' そうた ' } });
+    fireEvent.click(screen.getByRole('button', { name: m.join_button() }));
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledWith('そうた', expect.anything()));
+    expect(localStorage.getItem('sh:name')).toBe('そうた');
+  });
+
+  it('localStorage が使えなくても空の入力で出す', () => {
+    const get = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    render(<NameStep onSubmit={vi.fn()} onBack={() => {}} />);
+    expect((screen.getByLabelText(m.name_label()) as HTMLInputElement).value).toBe('');
+    get.mockRestore();
+  });
+
+  it('名前が空なら送らず、失敗は文言で出す', async () => {
+    const onSubmit = vi.fn(async () => {
+      throw Object.assign(new Error('x'), { status: 404 });
+    });
+    render(<NameStep code="482913" onSubmit={onSubmit} onBack={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: m.join_button() }));
+    expect(screen.getByRole('alert').textContent).toBe(m.error_name());
+    expect(onSubmit).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText(m.name_label()), { target: { value: 'はるか' } });
+    fireEvent.click(screen.getByRole('button', { name: m.join_button() }));
+    expect((await screen.findByRole('alert')).textContent).toBe(m.error_not_found());
+  });
+
+  it('部屋がまだ見えない間は準備中の画面にする', async () => {
+    const onSubmit = vi.fn((_n: string, o: { onWaiting(): void }) => {
+      o.onWaiting();
+      return new Promise<void>(() => {});
+    });
+    render(<NameStep code="482913" onSubmit={onSubmit} onBack={() => {}} />);
+    fireEvent.change(screen.getByLabelText(m.name_label()), { target: { value: 'はるか' } });
+    fireEvent.click(screen.getByRole('button', { name: m.join_button() }));
+    expect(await screen.findByRole('heading', { name: m.preparing_title() })).toBeTruthy();
   });
 });
 
