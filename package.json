@@ -10,6 +10,7 @@
     "test": "vp test run",
     "pree2e": "pnpm i18n:compile",
     "e2e": "playwright test",
+    "e2e:prod": "playwright test -c playwright.prod.config.ts",
     "pretypecheck": "pnpm i18n:compile",
     "typecheck": "void prepare && tsc --noEmit",
     "lint": "vp lint",
