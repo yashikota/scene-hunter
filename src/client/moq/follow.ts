@@ -12,8 +12,9 @@ import { keepSubscribed, type MoqSession } from './session';
 // - 購読が終わったら（`Track not found` など）500ms → 2s のバックオフでやり直す。
 // - 新しい epoch には、verifier.open を通り、送り主が isGm を満たし、body.epoch がそのパスの epoch と
 //   一致するフレームを受けたときだけ乗り換える。盗んだ GM のフレームを別の epoch に流し直しても従わない。
-// - event と snapshot はそれぞれ最後に受け付けた seq を覚え、seq が増えていないものは捨てる
-//   （再購読で開いたグループが最初から届き直すため）。epoch をまたいでも続ける。
+// - 署名者（GM の pid）ごとに event と snapshot の最後の seq を覚え、seq が増えていないものは捨てる
+//   （再購読で開いたグループが最初から届き直すため）。同じ GM なら epoch をまたいでも続ける。
+// - announce で見つけた epoch の最初のフレームが検証に落ちたら、その枠を空けて次の announce を待つ。
 
 export interface GmFollowHandlers {
   event(e: GmEvent): void;
@@ -46,8 +47,10 @@ export function followGm(
 ): () => void {
   let current = -1;
   let stopped = false;
-  let lastEventSeq = -1;
-  let lastSnapshotSeq = -1;
+  /** 署名者（GM の pid）ごとに、最後に受け付けた event と snapshot の seq。GM を交代すると seq は 0 から数え直すため。 */
+  const lastSeq = new Map<string, { event: number; snapshot: number }>();
+  /** announce で見つけたが、最初のフレームが検証に落ちた epoch。announce し直されても見に行かない。 */
+  const rejected = new Set<number>();
   /** 乗り換え済みの epoch の state と events。 */
   let adopted: Watch | undefined;
   /** current + 1（current < 0 の間は epoch 1〜5 を順に探る）。 */
@@ -149,15 +152,17 @@ export function followGm(
   };
 
   const deliver = (body: { pid: string; type?: unknown }) => {
+    let last = lastSeq.get(body.pid);
+    if (!last) lastSeq.set(body.pid, (last = { event: -1, snapshot: -1 }));
     if (body.type === 'snapshot') {
       const r = v.safeParse(GmSnapshotSchema, body);
-      if (!r.success || r.output.seq <= lastSnapshotSeq) return;
-      lastSnapshotSeq = r.output.seq;
+      if (!r.success || r.output.seq <= last.snapshot) return;
+      last.snapshot = r.output.seq;
       on.snapshot(r.output);
     } else {
       const r = v.safeParse(GmEventSchema, body);
-      if (!r.success || r.output.seq <= lastEventSeq) return;
-      lastEventSeq = r.output.seq;
+      if (!r.success || r.output.seq <= last.event) return;
+      last.event = r.output.seq;
       on.event(r.output);
     }
   };
@@ -169,9 +174,16 @@ export function followGm(
     const epoch = Number(rest);
     if (!Number.isSafeInteger(epoch) || epoch < FIRST_EPOCH || epoch <= current) return;
     if (current >= 0 && epoch === current + 1) return; // next が announce なしで見ている
-    if (announced && announced.epoch >= epoch) return;
+    if (rejected.has(epoch) || (announced && announced.epoch >= epoch)) return;
     stop(announced);
-    announced = watchEpoch(epoch, false);
+    const w = watchEpoch(epoch, false);
+    // 検証に落ちたら枠を空け、次に来る announce を受け付けられるようにする（偽の gm/999999 で埋まらないように）
+    w.reject = () => {
+      rejected.add(epoch);
+      stop(w);
+      if (announced === w) announced = undefined;
+    };
+    announced = w;
   });
 
   next = initialProbe();

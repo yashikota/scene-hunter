@@ -214,6 +214,51 @@ describe('followGm', () => {
     t.session.close();
   });
 
+  it('accepts the new GM after a transfer even though its seq starts over', async () => {
+    const t = await setup();
+    const a = await t.mk('gm', 'gm');
+    const b = await t.mk('bob', 'gm');
+    let gmPid = 'gm';
+    const stop = followGm(t.session, t.verifier, (pid) => pid === gmPid, t.on);
+
+    const e1 = gmBroadcast(t.relay, 1);
+    e1.snapshot(await a.frame(snapshotBody(1, 50)));
+    e1.event(await a.frame({ epoch: 1, seq: 50, type: 'hinting' }));
+    await vi.waitFor(() => expect(t.seen.events).toHaveLength(1));
+
+    // 交代：以後は bob が GM。bob は seq を 0 から数え、epoch 2 で publish する
+    gmPid = 'bob';
+    const e2 = gmBroadcast(t.relay, 2);
+    e2.snapshot(await b.frame({ ...snapshotBody(2, 1), gmPid: 'bob' }));
+    e2.event(await b.frame({ epoch: 2, seq: 1, type: 'hint_error' }));
+    await vi.waitFor(() => expect(t.seen.epochs).toEqual([1, 2]), { timeout: 3000 });
+    await vi.waitFor(() => expect(t.seen.events.map((e) => [e.pid, e.seq])).toEqual([['gm', 50], ['bob', 1]]));
+    expect(t.seen.snapshots.map((s) => [s.pid, s.seq])).toEqual([['gm', 50], ['bob', 1]]);
+    stop();
+    t.session.close();
+  });
+
+  it('frees the announced watch when its first frame fails verification', async () => {
+    const t = await setup();
+    const gm = await t.mk('gm', 'gm');
+    const mallory = await t.mk('mallory', 'player');
+    const stop = followGm(t.session, t.verifier, isGm, t.on);
+    const e1 = gmBroadcast(t.relay, 1);
+    e1.snapshot(await gm.frame(snapshotBody(1, 0)));
+    await vi.waitFor(() => expect(t.seen.epochs).toEqual([1]));
+
+    // 偽の gm/999999 が announce の枠を取る
+    const fake = gmBroadcast(t.relay, 999999);
+    fake.snapshot(await mallory.frame(snapshotBody(999999, 0)));
+    await sleep(50);
+    // その後に本物の GM が gm/5 で publish すれば、乗り換えられる
+    const e5 = gmBroadcast(t.relay, 5);
+    e5.snapshot(await gm.frame(snapshotBody(5, 1)));
+    await vi.waitFor(() => expect(t.seen.epochs).toEqual([1, 5]));
+    stop();
+    t.session.close();
+  });
+
   it('ignores announced paths whose epoch is empty or not a number', async () => {
     const t = await setup();
     const stop = followGm(t.session, t.verifier, isGm, t.on);

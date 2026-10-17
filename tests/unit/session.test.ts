@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { GmInbox } from '../../src/client/moq/gmInbox';
 import { MoqSession } from '../../src/client/moq/session';
+import type { PlayerEvent } from '../../src/shared/protocol';
 import { FakeRelay, flush } from './fakeMoq';
+import { enc, makeIdentities } from './moqKeys';
 
 const bytes = (s: string) => new TextEncoder().encode(s);
 const text = (b: Uint8Array) => new TextDecoder().decode(b);
@@ -158,7 +160,7 @@ describe('MoqSession の後始末と異常系', () => {
 describe('GmInbox', () => {
   it('opens a separate session for every 20 players', async () => {
     const relay = new FakeRelay();
-    const inbox = new GmInbox('https://relay/x', relay.connector);
+    const inbox = new GmInbox('https://relay/x', relay.connector, (await makeIdentities()).verifier());
     for (let i = 0; i < 21; i++) inbox.add(`p${i}`, () => {});
     await flush();
     await flush();
@@ -168,24 +170,51 @@ describe('GmInbox', () => {
     inbox.close();
   });
 
-  it('drops player frames whose seq did not increase', async () => {
+  it('delivers only verified player events whose seq increased', async () => {
+    const ids = await makeIdentities();
+    const alice = await ids.mk('alice', 'player');
     const relay = new FakeRelay();
-    const alice = relay.connect().publish('p/alice', 'events').appendGroup();
-    const inbox = new GmInbox('https://relay/x', relay.connector);
-    const got: number[] = [];
-    inbox.add('alice', (b) => got.push(JSON.parse(text(b)).body.seq));
+    const track = relay.connect().publish('p/alice', 'events').appendGroup();
+    const inbox = new GmInbox('https://relay/x', relay.connector, ids.verifier());
+    const got: PlayerEvent[] = [];
+    inbox.add('alice', (e) => got.push(e));
     await flush();
     await flush();
-    for (const seq of [1, 1, 2, 0, 3]) alice.writeFrame(bytes(JSON.stringify({ body: { pid: 'alice', seq }, sig: 'x' })));
-    expect(got).toEqual([1, 2, 3]);
+    for (const seq of [1, 1, 2, 0, 3]) track.writeFrame(await alice.frame({ seq, type: 'resync' }));
+    track.writeFrame(await alice.frame({ seq: 4, type: 'no_such_event' })); // スキーマに合わない
+    await vi.waitFor(() => expect(got.map((e) => e.seq)).toEqual([1, 2, 3]));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(got.map((e) => e.seq)).toEqual([1, 2, 3]);
+    inbox.close();
+  });
+
+  it('a forged frame with a high seq does not block the real player', async () => {
+    const ids = await makeIdentities();
+    const alice = await ids.mk('alice', 'player');
+    const mallory = await ids.mk('mallory', 'player');
+    const relay = new FakeRelay();
+    const track = relay.connect().publish('p/alice', 'events').appendGroup();
+    const inbox = new GmInbox('https://relay/x', relay.connector, ids.verifier());
+    const got: PlayerEvent[] = [];
+    inbox.add('alice', (e) => got.push(e));
+    await flush();
+    await flush();
+    // 署名の無いフレーム、mallory が自分の鍵で alice を名乗るフレーム、mallory 本人のフレーム
+    track.writeFrame(enc({ body: { pid: 'alice', seq: 1_000_000, type: 'resync' }, sig: 'x' }));
+    const forged = JSON.parse(new TextDecoder().decode(await mallory.frame({ seq: 999_999, type: 'resync' })));
+    track.writeFrame(enc({ ...forged, body: { ...forged.body, pid: 'alice' } }));
+    track.writeFrame(await mallory.frame({ seq: 999_998, type: 'resync' }));
+    track.writeFrame(await alice.frame({ seq: 1, type: 'join', name: 'alice' }));
+    await vi.waitFor(() => expect(got).toEqual([{ pid: 'alice', seq: 1, type: 'join', name: 'alice' }]));
     inbox.close();
   });
 
   it('backs off resubscribing to a player who has not published yet up to 10 seconds', async () => {
+    const verifier = (await makeIdentities()).verifier();
     vi.useFakeTimers();
     try {
       const relay = new FakeRelay();
-      const inbox = new GmInbox('https://relay/x', relay.connector);
+      const inbox = new GmInbox('https://relay/x', relay.connector, verifier);
       inbox.add('ghost', () => {});
       const count = () => relay.connections[0]?.subscribes.length ?? 0;
       await vi.advanceTimersByTimeAsync(0);
@@ -203,18 +232,24 @@ describe('GmInbox', () => {
     }
   });
 
-  it('delivers player frames and stops after remove', async () => {
+  it('stops delivering after remove', async () => {
+    const ids = await makeIdentities();
+    const alice = await ids.mk('alice', 'player');
     const relay = new FakeRelay();
-    const alice = relay.connect().publish('p/alice', 'events').appendGroup();
-    const inbox = new GmInbox('https://relay/x', relay.connector);
-    const got: string[] = [];
-    inbox.add('alice', (b) => got.push(text(b)));
+    const track = relay.connect().publish('p/alice', 'events').appendGroup();
+    const inbox = new GmInbox('https://relay/x', relay.connector, ids.verifier());
+    const got: number[] = [];
+    inbox.add('alice', (e) => got.push(e.seq));
     await flush();
     await flush();
-    alice.writeFrame(bytes('join'));
-    inbox.remove('alice');
-    alice.writeFrame(bytes('late'));
-    expect(got).toEqual(['join']);
+    track.writeFrame(await alice.frame({ seq: 1, type: 'resync' }));
+    await vi.waitFor(() => expect(got).toEqual([1]));
+    const late = await alice.frame({ seq: 2, type: 'resync' });
+    track.writeFrame(late);
+    inbox.remove('alice'); // 検証中のフレームも渡さない
+    track.writeFrame(await alice.frame({ seq: 3, type: 'resync' }));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(got).toEqual([1]);
     inbox.close();
   });
 });
