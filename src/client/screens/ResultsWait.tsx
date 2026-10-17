@@ -16,10 +16,21 @@ export interface ResultsWaitProps {
 }
 
 /** 中間結果（プレイヤー）：写真を見ながら GM が選ぶのを待つ。撮影秒数は出さない。 */
-export function ResultsWait({ code, round, rounds, gmName, gmPhotoUrl, photos, mePid }: ResultsWaitProps) {
+export function ResultsWait({
+  code,
+  round,
+  rounds,
+  gmName,
+  gmPhotoUrl,
+  photos,
+  mePid,
+}: ResultsWaitProps) {
   return (
     <Screen>
-      <TopBar left={m.round_label({ round, rounds })} right={<span>{m.room_badge({ code: formatCode(code) })}</span>} />
+      <TopBar
+        left={m.round_label({ round, rounds })}
+        right={<span>{m.room_badge({ code: formatCode(code) })}</span>}
+      />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <h1 className="sh-display" style={{ fontSize: 22 }}>
           {m.results_wait_title()}
@@ -34,7 +45,14 @@ export function ResultsWait({ code, round, rounds, gmName, gmPhotoUrl, photos, m
         <>
           <TopicCard url={gmPhotoUrl} />
           <ul
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, margin: 0, padding: 0, listStyle: 'none' }}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+              gap: 10,
+              margin: 0,
+              padding: 0,
+              listStyle: 'none',
+            }}
           >
             {photos.map((p) => (
               <li
@@ -49,7 +67,14 @@ export function ResultsWait({ code, round, rounds, gmName, gmPhotoUrl, photos, m
                 }}
               >
                 <Thumb url={p.url} alt={p.label} height={100} dim={!p.valid} />
-                <span style={{ padding: 6, fontSize: 13, fontWeight: p.pid === mePid ? 800 : 500, overflowWrap: 'anywhere' }}>
+                <span
+                  style={{
+                    padding: 6,
+                    fontSize: 13,
+                    fontWeight: p.pid === mePid ? 800 : 500,
+                    overflowWrap: 'anywhere',
+                  }}
+                >
                   {p.pid === mePid ? m.you_tag({ name: p.label }) : p.label}
                   {!p.valid && <span className="sh-sub"> {m.photo_invalid()}</span>}
                 </span>

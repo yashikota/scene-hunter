@@ -234,7 +234,10 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
   }, [roomLocale, appliedLocale]);
 
   // GM：picking に入ったら（results がまだ無ければ）写真を確かめて results を送る。
-  const checkKey = gmState?.phase === 'picking' && gmState.results === null ? `${gmState.gameId}:${gmState.round}` : null;
+  const checkKey =
+    gmState?.phase === 'picking' && gmState.results === null
+      ? `${gmState.gameId}:${gmState.round}`
+      : null;
   useEffect(() => {
     if (!gm || checkKey === null) return;
     let stopped = false;
@@ -287,7 +290,10 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
         if (gm) {
           const s = gm.state;
           if (s.phase !== 'gmTurn' || !s.gameId) return;
-          const key = await uploadPhoto(uploader(me.roomToken), blob, { gameId: s.gameId, round: s.round });
+          const key = await uploadPhoto(uploader(me.roomToken), blob, {
+            gameId: s.gameId,
+            round: s.round,
+          });
           gm.dispatch({ type: 'gmPhotoUploaded', key });
           await askHints(key);
         } else if (player) {

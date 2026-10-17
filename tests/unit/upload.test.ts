@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { checkRoom, claim, closeRoom, joinRoom, listPhotos, requestHints, transfer } from '../../src/client/api';
+import {
+  checkRoom,
+  claim,
+  closeRoom,
+  joinRoom,
+  listPhotos,
+  requestHints,
+  transfer,
+} from '../../src/client/api';
 import { uploadPhoto } from '../../src/client/photo/upload';
 
 const json = (body: unknown, status = 200) =>
@@ -70,9 +78,9 @@ describe('joinRoom', () => {
     const fetchMock = vi.fn().mockImplementation(async () => json({ error: 'not_found' }, 404));
     vi.stubGlobal('fetch', fetchMock);
     const sleep = vi.fn().mockResolvedValue(undefined);
-    await expect(
-      joinRoom('ABCD', { name: 'a', pubkey: 'k' }, { sleep }),
-    ).rejects.toMatchObject({ status: 404 });
+    await expect(joinRoom('ABCD', { name: 'a', pubkey: 'k' }, { sleep })).rejects.toMatchObject({
+      status: 404,
+    });
     expect(sleep).toHaveBeenCalledTimes(20);
   });
 
@@ -80,9 +88,9 @@ describe('joinRoom', () => {
     const fetchMock = vi.fn().mockImplementation(async () => json({ error: 'rate_limited' }, 429));
     vi.stubGlobal('fetch', fetchMock);
     const onWaiting = vi.fn();
-    await expect(
-      joinRoom('ABCD', { name: 'a', pubkey: 'k' }, { onWaiting }),
-    ).rejects.toMatchObject({ status: 429 });
+    await expect(joinRoom('ABCD', { name: 'a', pubkey: 'k' }, { onWaiting })).rejects.toMatchObject(
+      { status: 429 },
+    );
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(onWaiting).not.toHaveBeenCalled();
   });
@@ -131,7 +139,10 @@ describe('checkRoom', () => {
   });
 
   it('404 以外はすぐ投げる', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => json({ error: 'rate_limited' }, 429)));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => json({ error: 'rate_limited' }, 429)),
+    );
     await expect(checkRoom('482913')).rejects.toMatchObject({ status: 429 });
   });
 });
@@ -140,7 +151,13 @@ describe('listPhotos', () => {
   it('SPA の index.html（GET の 404 の差し替え）は失敗として投げる', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response('<!doctype html><html></html>', { status: 200, headers: { 'content-type': 'text/html' } })),
+      vi.fn(
+        async () =>
+          new Response('<!doctype html><html></html>', {
+            status: 200,
+            headers: { 'content-type': 'text/html' },
+          }),
+      ),
     );
     await expect(listPhotos('482913', 'tok', { gameId: 'g', round: 1 })).rejects.toThrow();
   });
@@ -185,7 +202,9 @@ describe('requestHints', () => {
 
 describe('そのほかの呼び出し', () => {
   it('listPhotos は query を送り photos を返す', async () => {
-    const f = vi.fn(async (..._a: unknown[]) => json({ photos: [{ pid: 'p', key: 'k', url: 'u' }] }));
+    const f = vi.fn(async (..._a: unknown[]) =>
+      json({ photos: [{ pid: 'p', key: 'k', url: 'u' }] }),
+    );
     vi.stubGlobal('fetch', f);
     expect(await listPhotos('ABCD', 'tok', { gameId: 'g', round: 3 })).toEqual([
       { pid: 'p', key: 'k', url: 'u' },

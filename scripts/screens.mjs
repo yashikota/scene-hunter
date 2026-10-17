@@ -15,7 +15,9 @@ const VIEWPORTS = [
 
 const browser = await chromium.launch({
   // Playwright が期待する版が入っていないことがあるので、入っている Chrome for Testing を使う
-  executablePath: process.env.CHROME_PATH ?? join(homedir(), '.cache/ms-playwright/chromium-1234/chrome-linux64/chrome'),
+  executablePath:
+    process.env.CHROME_PATH ??
+    join(homedir(), '.cache/ms-playwright/chromium-1234/chrome-linux64/chrome'),
   args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
 });
 const page = await browser.newPage();
@@ -23,7 +25,9 @@ await page.goto(base);
 await page.waitForSelector('main li a');
 const ids = only
   ? only.split(',')
-  : await page.$$eval('main li a', (as) => as.map((a) => new URL(a.href).searchParams.get('screen')));
+  : await page.$$eval('main li a', (as) =>
+      as.map((a) => new URL(a.href).searchParams.get('screen')),
+    );
 
 for (const lang of langs.split(',')) {
   for (const vp of VIEWPORTS) {

@@ -3,7 +3,8 @@ import type { MoqSession } from '../moq/session';
 
 // MoQ のフレームは封筒の UTF-8 JSON（follow.ts と gmInbox.ts が読む形）。
 const encoder = new TextEncoder();
-export const encodeFrame = (env: Envelope<unknown>): Uint8Array => encoder.encode(JSON.stringify(env));
+export const encodeFrame = (env: Envelope<unknown>): Uint8Array =>
+  encoder.encode(JSON.stringify(env));
 
 const RETRY_MS = 1000;
 

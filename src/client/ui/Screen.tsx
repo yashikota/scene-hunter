@@ -6,5 +6,10 @@ export function Screen({
   className,
   ...rest
 }: HTMLAttributes<HTMLElement> & { variant?: 'top' | 'room' }) {
-  return <main className={`sh-screen ${variant === 'top' ? 'sh-screen--top' : ''} ${className ?? ''}`} {...rest} />;
+  return (
+    <main
+      className={`sh-screen ${variant === 'top' ? 'sh-screen--top' : ''} ${className ?? ''}`}
+      {...rest}
+    />
+  );
 }

@@ -1,12 +1,6 @@
 import type { TransferCert } from '../../shared/cert';
 import type { Locale } from '../../shared/locales';
-import type {
-  GmEventBody,
-  GmSnapshot,
-  LobbyPlayer,
-  Phase,
-  Total,
-} from '../../shared/protocol';
+import type { GmEventBody, GmSnapshot, LobbyPlayer, Phase, Total } from '../../shared/protocol';
 import { scoreRound, type RoundScore } from '../../shared/scoring';
 
 export type { Phase } from '../../shared/protocol';
@@ -233,7 +227,10 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
 
     case 'gmPhotoUploaded':
       if (s.phase !== 'gmTurn') return none;
-      return { state: { ...s, phase: 'hinting', gmPhotoKey: action.key }, emit: [{ type: 'hinting' }] };
+      return {
+        state: { ...s, phase: 'hinting', gmPhotoKey: action.key },
+        emit: [{ type: 'hinting' }],
+      };
 
     case 'hintsFailed':
       if (s.phase !== 'hinting') return none;
@@ -279,7 +276,8 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
     }
 
     case 'shutter': {
-      if (s.phase !== 'playerTurn' || s.turnStartedAt === null || action.round !== s.round) return none;
+      if (s.phase !== 'playerTurn' || s.turnStartedAt === null || action.round !== s.round)
+        return none;
       const p = own(s.players, action.pid);
       if (!p || !isEligible(p, s.round) || own(s.shutters, action.pid)) return none;
       if (action.at - s.turnStartedAt > limitMs) return none;
@@ -312,7 +310,10 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       if (!s.results) return { state: next, emit: [] };
       // results を送った後に判定が出たら、valid を直した results を送り直す。
       const results = resultsOf(next, s.results.gmPhotoUrl, s.results.photos);
-      return { state: { ...next, results }, emit: [{ type: 'results', round: s.round, ...results }] };
+      return {
+        state: { ...next, results },
+        emit: [{ type: 'results', round: s.round, ...results }],
+      };
     }
 
     case 'resultsReady': {
@@ -335,7 +336,9 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       const participants = eligiblePids(s);
       const startedAt = s.turnStartedAt;
       // `obj[pid] = …` だと pid が __proto__ のときにプロトタイプを書き換えるので、fromEntries で作る。
-      const prevStreak = Object.fromEntries(participants.map((pid) => [pid, own(s.players, pid)!.streak]));
+      const prevStreak = Object.fromEntries(
+        participants.map((pid) => [pid, own(s.players, pid)!.streak]),
+      );
       const tMs = Object.fromEntries(
         participants
           .filter((pid) => hasValidSubmission(s, pid))
@@ -345,7 +348,10 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       let players = s.players;
       for (const sc of scores) {
         const p = own(players, sc.pid)!;
-        players = { ...players, [sc.pid]: { ...p, total: p.total + sc.points + sc.bonus, streak: sc.streak } };
+        players = {
+          ...players,
+          [sc.pid]: { ...p, total: p.total + sc.points + sc.bonus, streak: sc.streak },
+        };
       }
       const totals = rankTotals(players, s.lastRanking?.totals);
       const lastRanking = { round: s.round, scores, totals };
@@ -413,7 +419,8 @@ export function snapshotOf(
     gmPid: s.gmPid,
     gameId: s.gameId,
     hints: s.hints.slice(0, s.hintsSent),
-    turnElapsedMs: s.phase === 'playerTurn' && s.turnStartedAt !== null ? now - s.turnStartedAt : null,
+    turnElapsedMs:
+      s.phase === 'playerTurn' && s.turnStartedAt !== null ? now - s.turnStartedAt : null,
     submitted: Object.keys(s.submissions),
     results: s.results,
     ranking: s.lastRanking,

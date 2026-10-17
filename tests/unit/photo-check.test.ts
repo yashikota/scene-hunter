@@ -1,6 +1,15 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
-import { gmReduce, initialGmState, type GmAction, type GmState } from '../../src/client/game/gmMachine';
-import { checkRoundPhotos, PHOTO_TIMEOUT_MS, type PhotoCheckDeps } from '../../src/client/game/photoCheck';
+import {
+  gmReduce,
+  initialGmState,
+  type GmAction,
+  type GmState,
+} from '../../src/client/game/gmMachine';
+import {
+  checkRoundPhotos,
+  PHOTO_TIMEOUT_MS,
+  type PhotoCheckDeps,
+} from '../../src/client/game/photoCheck';
 import { sha256Hex } from '../../src/shared/crypto';
 
 const enc = (s: string) => new TextEncoder().encode(s);
@@ -75,7 +84,11 @@ describe('checkRoundPhotos', () => {
     });
     await checkRoundPhotos(await pickingState(), d);
     expect(listPhotos).toHaveBeenCalledTimes(2);
-    expect(dispatched.filter((a) => a.type === 'photoChecked').every((a) => a.type === 'photoChecked' && !a.valid)).toBe(true);
+    expect(
+      dispatched
+        .filter((a) => a.type === 'photoChecked')
+        .every((a) => a.type === 'photoChecked' && !a.valid),
+    ).toBe(true);
     expect(dispatched.at(-1)?.type).toBe('resultsReady');
     expect(sleeps[0]).toBe(1000);
     vi.restoreAllMocks();
@@ -105,7 +118,10 @@ describe('checkRoundPhotos', () => {
   it('一覧の取得が応答なしで止まっても、時間切れのあとにやり直す', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    const listPhotos = vi.fn().mockImplementationOnce(() => new Promise(() => {})).mockResolvedValue(LIST);
+    const listPhotos = vi
+      .fn()
+      .mockImplementationOnce(() => new Promise(() => {}))
+      .mockResolvedValue(LIST);
     const { d, dispatched } = deps({ listPhotos });
     const done = checkRoundPhotos(await pickingState(), d);
     await vi.advanceTimersByTimeAsync(PHOTO_TIMEOUT_MS + 100);

@@ -47,7 +47,13 @@ export function GmTurnPlayer({ code, round, rounds, gmName, me }: GmTurnPlayerPr
         </p>
       </div>
       <Card
-        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'var(--color-accent)' }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '10px 14px',
+          background: 'var(--color-accent)',
+        }}
       >
         <span className="sh-display" style={{ fontSize: 20 }}>
           {me.rank ?? '–'}
@@ -55,7 +61,9 @@ export function GmTurnPlayer({ code, round, rounds, gmName, me }: GmTurnPlayerPr
         <span style={{ flexGrow: 1, fontWeight: 800, overflowWrap: 'anywhere' }}>
           {m.you_tag({ name: me.label })}
         </span>
-        <span style={{ fontWeight: 800 }}>{m.points_value({ count: me.total.toLocaleString() })}</span>
+        <span style={{ fontWeight: 800 }}>
+          {m.points_value({ count: me.total.toLocaleString() })}
+        </span>
       </Card>
     </Screen>
   );

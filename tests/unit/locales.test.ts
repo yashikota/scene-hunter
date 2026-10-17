@@ -8,10 +8,21 @@ const load = (l: string): Record<string, string> =>
 
 describe('locales', () => {
   it.each([
-    [['ja-JP'], 'ja'], [['en-US'], 'en'], [['zh-CN'], 'zh-Hans'], [['zh-SG'], 'zh-Hans'],
-    [['zh-TW'], 'zh-Hant'], [['zh-HK'], 'zh-Hant'], [['zh'], 'zh-Hans'], [['pt-PT'], 'pt-BR'],
-    [['ko-KR'], 'ko'], [['th-TH', 'fr-CA'], 'fr'], [['ar'], 'en'], [[], 'en'],
-    [['zh-Hant-TW'], 'zh-Hant'], [['zh-MO'], 'zh-Hant'], [['pt-BR'], 'pt-BR'],
+    [['ja-JP'], 'ja'],
+    [['en-US'], 'en'],
+    [['zh-CN'], 'zh-Hans'],
+    [['zh-SG'], 'zh-Hans'],
+    [['zh-TW'], 'zh-Hant'],
+    [['zh-HK'], 'zh-Hant'],
+    [['zh'], 'zh-Hans'],
+    [['pt-PT'], 'pt-BR'],
+    [['ko-KR'], 'ko'],
+    [['th-TH', 'fr-CA'], 'fr'],
+    [['ar'], 'en'],
+    [[], 'en'],
+    [['zh-Hant-TW'], 'zh-Hant'],
+    [['zh-MO'], 'zh-Hant'],
+    [['pt-BR'], 'pt-BR'],
   ])('matchLocale(%j) = %s', (prefs, want) => expect(matchLocale(prefs)).toBe(want));
 
   it('every locale file has exactly the keys of ja.json', () => {
@@ -26,8 +37,16 @@ describe('locales', () => {
   });
 
   it('vi and zh-Hant follow the spec font table', () => {
-    expect(LOCALE_FONTS.vi).toMatchObject({ display: 'M PLUS Rounded 1c', body: 'M PLUS Rounded 1c', displayWeight: 800 });
-    expect(LOCALE_FONTS['zh-Hant']).toMatchObject({ display: 'Chiron GoRound TC', body: 'Chiron GoRound TC', displayWeight: 700 });
+    expect(LOCALE_FONTS.vi).toMatchObject({
+      display: 'M PLUS Rounded 1c',
+      body: 'M PLUS Rounded 1c',
+      displayWeight: 800,
+    });
+    expect(LOCALE_FONTS['zh-Hant']).toMatchObject({
+      display: 'Chiron GoRound TC',
+      body: 'Chiron GoRound TC',
+      displayWeight: 700,
+    });
     expect(LOCALE_FONTS.ja.displayWeight).toBe(400);
   });
 });

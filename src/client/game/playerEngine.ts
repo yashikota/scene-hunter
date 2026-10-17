@@ -173,7 +173,13 @@ export class PlayerEngine {
   }
 
   #gmGone(): void {
-    if (this.#closed || this.#goneTimer || this.gmDisconnectedSince !== null || this.view.phase === 'dissolved') return;
+    if (
+      this.#closed ||
+      this.#goneTimer ||
+      this.gmDisconnectedSince !== null ||
+      this.view.phase === 'dissolved'
+    )
+      return;
     const mark = () => {
       this.#goneTimer = undefined;
       this.gmDisconnectedSince = this.#deps.now();
@@ -203,7 +209,9 @@ export class PlayerEngine {
   #onEvent(e: GmEvent): void {
     this.gmPid ??= e.pid;
     if (e.type === 'transfer') {
-      this.#onTransfer(e).catch((err: unknown) => console.error('GM の交代を処理できなかった', err));
+      this.#onTransfer(e).catch((err: unknown) =>
+        console.error('GM の交代を処理できなかった', err),
+      );
       return;
     }
     if (hasGap(this.view, e)) this.#resync();

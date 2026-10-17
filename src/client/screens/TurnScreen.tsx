@@ -41,14 +41,20 @@ export function TurnScreen({ room, code }: { room: Room; code: string }) {
           {...common}
           code={code}
           gmName={gmName}
-          me={view.players.find((p) => p.pid === me.pid) ?? { label: me.label, total: 0, rank: null }}
+          me={
+            view.players.find((p) => p.pid === me.pid) ?? { label: me.label, total: 0, rank: null }
+          }
         />
       );
     case 'hinting':
       return <HintWait {...common} code={code} gm={isGm} />;
     case 'hintError':
       return isGm ? (
-        <HintError {...common} onRetry={actions.retryHints} onDissolve={() => void actions.dissolve()} />
+        <HintError
+          {...common}
+          onRetry={actions.retryHints}
+          onDissolve={() => void actions.dissolve()}
+        />
       ) : (
         <HintWait {...common} code={code} />
       );

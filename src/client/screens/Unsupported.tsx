@@ -31,7 +31,17 @@ export function Unsupported() {
           className="sh-icon-tile"
           style={{ width: 88, height: 88, background: 'var(--color-surface)', borderRadius: 22 }}
         >
-          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg
+            width="46"
+            height="46"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <rect x="3" y="4" width="18" height="13" rx="2" />
             <path d="M8 21h8M12 17v4M9 8l6 6M15 8l-6 6" />
           </svg>
@@ -41,12 +51,26 @@ export function Unsupported() {
         </h1>
       </div>
 
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <ul
+        style={{
+          listStyle: 'none',
+          margin: 0,
+          padding: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+        }}
+      >
         {[m.unsupported_android(), m.unsupported_desktop()].map((t) => (
           <li
             key={t}
             className="sh-card"
-            style={{ borderRadius: 'var(--radius-button)', padding: '12px 14px', fontSize: 15, fontWeight: 800 }}
+            style={{
+              borderRadius: 'var(--radius-button)',
+              padding: '12px 14px',
+              fontSize: 15,
+              fontWeight: 800,
+            }}
           >
             {t}
           </li>
@@ -66,7 +90,11 @@ export function Unsupported() {
             onFocus={(e) => e.currentTarget.select()}
             style={{ flexGrow: 1, fontSize: 15 }}
           />
-          <Button variant="primary" onClick={copy} style={{ fontSize: 15, padding: '0 16px', minHeight: 48 }}>
+          <Button
+            variant="primary"
+            onClick={copy}
+            style={{ fontSize: 15, padding: '0 16px', minHeight: 48 }}
+          >
             {copied ? m.copied() : m.copy()}
           </Button>
         </div>

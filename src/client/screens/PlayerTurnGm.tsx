@@ -24,12 +24,25 @@ export interface PlayerTurnGmProps {
 
 /** プレイヤーのターン中の GM の画面：お題の写真、出ているヒント、提出状況。 */
 export function PlayerTurnGm(props: PlayerTurnGmProps) {
-  const { round, rounds, limitSec, turnStartedLocalAt, hints, shown, photoUrl, players, submitted } = props;
+  const {
+    round,
+    rounds,
+    limitSec,
+    turnStartedLocalAt,
+    hints,
+    shown,
+    photoUrl,
+    players,
+    submitted,
+  } = props;
   const now = useNow();
   const done = players.filter((p) => submitted.includes(p.pid)).length;
   return (
     <Screen>
-      <TopBar left={m.round_label({ round, rounds })} right={<span className="sh-badge">{m.you_are_gm()}</span>} />
+      <TopBar
+        left={m.round_label({ round, rounds })}
+        right={<span className="sh-badge">{m.you_are_gm()}</span>}
+      />
       <Card raised style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12 }}>
         <div
           style={{
@@ -45,7 +58,11 @@ export function PlayerTurnGm(props: PlayerTurnGmProps) {
           }}
         >
           {photoUrl ? (
-            <img src={photoUrl} alt={m.topic_photo()} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img
+              src={photoUrl}
+              alt={m.topic_photo()}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
           ) : (
             <span className="sh-sub" style={{ fontSize: 13, padding: 12 }}>
               {m.topic_photo_missing()}
@@ -83,7 +100,9 @@ export function PlayerTurnGm(props: PlayerTurnGmProps) {
             return (
               <li key={p.pid} className={`sh-tile ${ok ? 'sh-tile--me' : ''}`}>
                 <span>{p.label}</span>{' '}
-                <span style={{ fontSize: 12 }}>{ok ? m.status_submitted() : m.status_shooting()}</span>
+                <span style={{ fontSize: 12 }}>
+                  {ok ? m.status_submitted() : m.status_shooting()}
+                </span>
               </li>
             );
           })}

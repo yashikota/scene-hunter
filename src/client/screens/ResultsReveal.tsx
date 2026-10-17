@@ -29,7 +29,18 @@ export interface ResultsRevealProps {
 }
 
 /** 中間結果の得点と順位。撮影秒数は GM が選び終えたここで初めて出す。 */
-export function ResultsReveal({ code, round, rounds, scores, totals, players, photoUrls, mePid, isGm, onNext }: ResultsRevealProps) {
+export function ResultsReveal({
+  code,
+  round,
+  rounds,
+  scores,
+  totals,
+  players,
+  photoUrls,
+  mePid,
+  isGm,
+  onNext,
+}: ResultsRevealProps) {
   const label = (pid: string) => players.find((p) => p.pid === pid)?.label ?? '';
   const named = (pid: string) => (pid === mePid ? m.you_tag({ name: label(pid) }) : label(pid));
   const picked = scores.filter((s) => s.rank !== null).sort((a, b) => a.rank! - b.rank!);
@@ -37,7 +48,10 @@ export function ResultsReveal({ code, round, rounds, scores, totals, players, ph
   const last = round >= rounds;
   return (
     <Screen>
-      <TopBar left={m.round_label({ round, rounds })} right={<span>{m.room_badge({ code: formatCode(code) })}</span>} />
+      <TopBar
+        left={m.round_label({ round, rounds })}
+        right={<span>{m.room_badge({ code: formatCode(code) })}</span>}
+      />
       <h1 className="sh-display" style={{ fontSize: 22 }}>
         {m.round_result_title({ round })}
       </h1>
@@ -47,7 +61,16 @@ export function ResultsReveal({ code, round, rounds, scores, totals, players, ph
           {m.no_picks()}
         </p>
       ) : (
-        <ol style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: 0, padding: 0, listStyle: 'none' }}>
+        <ol
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            margin: 0,
+            padding: 0,
+            listStyle: 'none',
+          }}
+        >
           {picked.map((s) => (
             <li
               key={s.pid}
@@ -86,13 +109,25 @@ export function ResultsReveal({ code, round, rounds, scores, totals, players, ph
                   {named(s.pid)}
                   {s.bonus > 0 && (
                     <span
-                      style={{ marginLeft: 6, fontSize: 11, background: 'var(--color-ink)', color: 'var(--color-gold)', borderRadius: 999, padding: '1px 7px', verticalAlign: 2, whiteSpace: 'nowrap' }}
+                      style={{
+                        marginLeft: 6,
+                        fontSize: 11,
+                        background: 'var(--color-ink)',
+                        color: 'var(--color-gold)',
+                        borderRadius: 999,
+                        padding: '1px 7px',
+                        verticalAlign: 2,
+                        whiteSpace: 'nowrap',
+                      }}
                     >
                       {m.streak_badge({ streak: s.streak, bonus: formatNumber(s.bonus) })}
                     </span>
                   )}
                 </span>
-                <span className="sh-sub" style={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>
+                <span
+                  className="sh-sub"
+                  style={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}
+                >
                   {m.score_detail({
                     sec: Math.round((s.tMs ?? 0) / 1000),
                     multiplier: formatMultiplier(s.multiplier ?? 0),
@@ -113,10 +148,23 @@ export function ResultsReveal({ code, round, rounds, scores, totals, players, ph
       <Card style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
         <h2 style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 800 }}>{m.total_heading()}</h2>
         <ol
-          style={{ display: 'grid', gridTemplateColumns: '24px minmax(0, 1fr) auto 44px', gap: 8, alignItems: 'center', margin: 0, padding: 0, listStyle: 'none', fontSize: 15, fontVariantNumeric: 'tabular-nums' }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '24px minmax(0, 1fr) auto 44px',
+            gap: 8,
+            alignItems: 'center',
+            margin: 0,
+            padding: 0,
+            listStyle: 'none',
+            fontSize: 15,
+            fontVariantNumeric: 'tabular-nums',
+          }}
         >
           {totals.map((t) => (
-            <li key={t.pid} style={{ display: 'contents', fontWeight: t.pid === mePid ? 800 : 500 }}>
+            <li
+              key={t.pid}
+              style={{ display: 'contents', fontWeight: t.pid === mePid ? 800 : 500 }}
+            >
               <span style={{ fontWeight: 800 }}>{t.rank}</span>
               <span style={{ overflowWrap: 'anywhere' }}>{named(t.pid)}</span>
               <span>{formatNumber(t.total)}</span>
@@ -132,7 +180,11 @@ export function ResultsReveal({ code, round, rounds, scores, totals, players, ph
             {last ? m.see_final_button() : m.next_round_button()}
           </Button>
         ) : (
-          <p className="sh-sub" role="status" style={{ margin: 0, fontSize: 14, textAlign: 'center' }}>
+          <p
+            className="sh-sub"
+            role="status"
+            style={{ margin: 0, fontSize: 14, textAlign: 'center' }}
+          >
             {m.wait_next_gm()}
           </p>
         )}
@@ -143,11 +195,21 @@ export function ResultsReveal({ code, round, rounds, scores, totals, players, ph
 
 function Delta({ delta }: { delta: number }) {
   const text = delta > 0 ? `↑${delta}` : delta < 0 ? `↓${-delta}` : '−';
-  const label = delta > 0 ? m.rank_up({ count: delta }) : delta < 0 ? m.rank_down({ count: -delta }) : m.rank_same();
+  const label =
+    delta > 0
+      ? m.rank_up({ count: delta })
+      : delta < 0
+        ? m.rank_down({ count: -delta })
+        : m.rank_same();
   return (
     <span
       aria-label={label}
-      style={{ fontSize: 12, fontWeight: 800, textAlign: 'right', color: delta > 0 ? 'var(--color-timer)' : 'var(--color-sub)' }}
+      style={{
+        fontSize: 12,
+        fontWeight: 800,
+        textAlign: 'right',
+        color: delta > 0 ? 'var(--color-timer)' : 'var(--color-sub)',
+      }}
     >
       {text}
     </span>

@@ -38,7 +38,9 @@ function importKey(secret: string, usage: 'sign' | 'verify'): Promise<CryptoKey>
 /** base64url(payload) + "." + base64url(HMAC-SHA256(secret, base64url(payload))) */
 export async function issueRoomToken(secret: string, p: RoomTokenPayload): Promise<string> {
   const body = toBase64Url(encoder.encode(JSON.stringify(p)));
-  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', await importKey(secret, 'sign'), encoder.encode(body)));
+  const sig = new Uint8Array(
+    await crypto.subtle.sign('HMAC', await importKey(secret, 'sign'), encoder.encode(body)),
+  );
   return `${body}.${toBase64Url(sig)}`;
 }
 

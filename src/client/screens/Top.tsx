@@ -19,7 +19,11 @@ export interface TopDeps {
   isFound?(code: string): boolean;
 }
 
-const defaultDeps: TopDeps = { create: createAndSave, find: (c) => findRoom(c), isFound: isRoomFound };
+const defaultDeps: TopDeps = {
+  create: createAndSave,
+  find: (c) => findRoom(c),
+  isFound: isRoomFound,
+};
 
 export interface TopProps {
   /**
@@ -72,7 +76,12 @@ function TopForm({
   useEffect(() => {
     // 番号の入ったリンクから来たときは、そのまま部屋を確かめて名前の入力へ進む。
     // 確かめ済み（名前の入力から「戻る」で来た）なら進まない。進むと戻れなくなる
-    if (!CODE_RE.test(initialCode) || (deps.isFound ?? isRoomFound)(initialCode) || autoChecked.current === initialCode) return;
+    if (
+      !CODE_RE.test(initialCode) ||
+      (deps.isFound ?? isRoomFound)(initialCode) ||
+      autoChecked.current === initialCode
+    )
+      return;
     autoChecked.current = initialCode;
     void find(initialCode);
   }, [initialCode]);
@@ -97,8 +106,20 @@ function TopForm({
   return (
     <Screen variant="top">
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <label
+          style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800 }}
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <circle cx="12" cy="12" r="9" />
             <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
           </svg>
@@ -122,7 +143,17 @@ function TopForm({
           className="sh-icon-tile"
           style={{ width: 96, height: 96, background: 'var(--color-accent)', borderRadius: 24 }}
         >
-          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg
+            width="52"
+            height="52"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
             <circle cx="12" cy="13" r="3.5" />
           </svg>
@@ -168,7 +199,10 @@ function TopForm({
         </Card>
       </form>
 
-      <div className="sh-sub" style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13 }}>
+      <div
+        className="sh-sub"
+        style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13 }}
+      >
         <div style={{ flexGrow: 1, height: 2, background: 'currentColor', opacity: 0.25 }} />
         <span>{m.or()}</span>
         <div style={{ flexGrow: 1, height: 2, background: 'currentColor', opacity: 0.25 }} />

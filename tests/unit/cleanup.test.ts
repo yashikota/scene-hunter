@@ -9,7 +9,10 @@ function iso(msAgo: number): string {
   return new Date(NOW - msAgo).toISOString();
 }
 
-function fakeRelay(relays: { uid: string; name: string; created: string }[], failUids: string[] = []) {
+function fakeRelay(
+  relays: { uid: string; name: string; created: string }[],
+  failUids: string[] = [],
+) {
   const deleted: string[] = [];
   const api: RelayApi = {
     create: async () => {

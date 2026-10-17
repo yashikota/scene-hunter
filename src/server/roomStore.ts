@@ -26,7 +26,9 @@ export function createRoomStore(kv: Pick<KVNamespace, 'get' | 'put' | 'delete'>)
   async function put(rec: RoomRecord): Promise<boolean> {
     await kv.put(key(rec.code), JSON.stringify(rec), { expirationTtl: ROOM_TTL_SEC });
     const back = await get(rec.code);
-    return back?.relayUid === rec.relayUid && back.gmPid === rec.gmPid && back.gmSince === rec.gmSince;
+    return (
+      back?.relayUid === rec.relayUid && back.gmPid === rec.gmPid && back.gmSince === rec.gmSince
+    );
   }
 
   async function del(code: string): Promise<void> {

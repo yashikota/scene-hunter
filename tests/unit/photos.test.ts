@@ -22,7 +22,12 @@ function setup() {
   const store = createRoomStore(kv);
   const listed: string[] = [];
   const d: PhotoDeps = {
-    presigner: createPresigner({ accountId: 'a', bucket: 'b', accessKeyId: 'k', secretAccessKey: 's' }),
+    presigner: createPresigner({
+      accountId: 'a',
+      bucket: 'b',
+      accessKeyId: 'k',
+      secretAccessKey: 's',
+    }),
     storage: {
       list: async (o: { prefix?: string }) => {
         listed.push(o.prefix ?? '');
@@ -45,8 +50,15 @@ function setup() {
     issueRoomToken(SECRET, { room, role, pid, exp: NOW_MS / 1000 + 1000 });
   const seed = () =>
     store.put({
-      code: CODE, relayUid: 'u', moqToken: 't', locale: 'ja', rounds: 3, limitSec: 60,
-      createdAt: NOW_MS, gmPid: GM, gmSince: 0,
+      code: CODE,
+      relayUid: 'u',
+      moqToken: 't',
+      locale: 'ja',
+      rounds: 3,
+      limitSec: 60,
+      createdAt: NOW_MS,
+      gmPid: GM,
+      gmSince: 0,
     });
   return { d, tok, seed, listed };
 }
@@ -55,7 +67,11 @@ describe('requestUpload', () => {
   it('プレイヤーに自分の pid のキーと URL を返す', async () => {
     const { d, tok, seed } = setup();
     await seed();
-    const r = await requestUpload(d, await tok('player', PL), CODE, { gameId: 'g1', round: 2, size: 1000 });
+    const r = await requestUpload(d, await tok('player', PL), CODE, {
+      gameId: 'g1',
+      round: 2,
+      size: 1000,
+    });
     expect(r.key).toBe(`rooms/${CODE}/g1/2/${PL}-0123456789abcdef.jpg`);
     expect(new URL(r.url).pathname).toBe(`/b/${r.key}`);
   });
@@ -64,28 +80,40 @@ describe('requestUpload', () => {
     await seed();
     const t = await tok('player', PL);
     for (const size of [0, -1, 1.5, MAX_PHOTO_BYTES + 1]) {
-      await expect(requestUpload(d, t, CODE, { gameId: 'g', round: 1, size })).rejects.toBeInstanceOf(RangeError);
+      await expect(
+        requestUpload(d, t, CODE, { gameId: 'g', round: 1, size }),
+      ).rejects.toBeInstanceOf(RangeError);
     }
-    await expect(requestUpload(d, t, CODE, { gameId: 'g', round: 1, size: MAX_PHOTO_BYTES })).resolves.toBeTruthy();
+    await expect(
+      requestUpload(d, t, CODE, { gameId: 'g', round: 1, size: MAX_PHOTO_BYTES }),
+    ).resolves.toBeTruthy();
   });
   it('gameId と round の不正は RangeError', async () => {
     const { d, tok, seed } = setup();
     await seed();
     const t = await tok('player', PL);
     for (const gameId of ['', 'a/b', '../x', 'a'.repeat(33)]) {
-      await expect(requestUpload(d, t, CODE, { gameId, round: 1, size: 1 })).rejects.toBeInstanceOf(RangeError);
+      await expect(requestUpload(d, t, CODE, { gameId, round: 1, size: 1 })).rejects.toBeInstanceOf(
+        RangeError,
+      );
     }
     for (const round of [0, 11, 1.5, NaN]) {
-      await expect(requestUpload(d, t, CODE, { gameId: 'g', round, size: 1 })).rejects.toBeInstanceOf(RangeError);
+      await expect(
+        requestUpload(d, t, CODE, { gameId: 'g', round, size: 1 }),
+      ).rejects.toBeInstanceOf(RangeError);
     }
   });
   it('他の部屋のトークン、不正なトークン、存在しない部屋は拒否', async () => {
     const { d, tok, seed } = setup();
     await seed();
     const i = { gameId: 'g', round: 1, size: 1 };
-    await expect(requestUpload(d, await tok('player', PL, '999999'), CODE, i)).rejects.toBeInstanceOf(AuthError);
+    await expect(
+      requestUpload(d, await tok('player', PL, '999999'), CODE, i),
+    ).rejects.toBeInstanceOf(AuthError);
     await expect(requestUpload(d, 'bad', CODE, i)).rejects.toBeInstanceOf(AuthError);
-    await expect(requestUpload(d, await tok('player', PL, '999999'), '999999', i)).rejects.toBeInstanceOf(NotFoundError);
+    await expect(
+      requestUpload(d, await tok('player', PL, '999999'), '999999', i),
+    ).rejects.toBeInstanceOf(NotFoundError);
   });
   it('古い GM のトークンは拒否', async () => {
     const { d, tok, seed } = setup();
@@ -109,7 +137,11 @@ describe('listRoundPhotos', () => {
     const { d, tok, seed } = setup();
     await seed();
     const i = { gameId: 'g1', round: 1 };
-    await expect(listRoundPhotos(d, await tok('player', PL), CODE, i)).rejects.toBeInstanceOf(AuthError);
-    await expect(listRoundPhotos(d, await tok('gm', PL), CODE, i)).rejects.toBeInstanceOf(AuthError);
+    await expect(listRoundPhotos(d, await tok('player', PL), CODE, i)).rejects.toBeInstanceOf(
+      AuthError,
+    );
+    await expect(listRoundPhotos(d, await tok('gm', PL), CODE, i)).rejects.toBeInstanceOf(
+      AuthError,
+    );
   });
 });

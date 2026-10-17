@@ -78,7 +78,10 @@ export class MoqSession {
   #closed = false;
   readonly #subs = new Set<Sub>();
   readonly #pubs: Pub[] = [];
-  readonly #announceListeners = new Map<(path: string, active: boolean) => void, (() => void) | undefined>();
+  readonly #announceListeners = new Map<
+    (path: string, active: boolean) => void,
+    (() => void) | undefined
+  >();
   readonly #announcedPaths = new Set<string>();
 
   constructor(
@@ -140,7 +143,10 @@ export class MoqSession {
   }
 
   announced(onPath: (path: string, active: boolean) => void): () => void {
-    this.#announceListeners.set(onPath, this.#conn && !this.#opening ? this.#conn.announced(onPath) : undefined);
+    this.#announceListeners.set(
+      onPath,
+      this.#conn && !this.#opening ? this.#conn.announced(onPath) : undefined,
+    );
     return () => {
       this.#announceListeners.get(onPath)?.();
       this.#announceListeners.delete(onPath);
@@ -212,11 +218,14 @@ export class MoqSession {
     this.#opening = undefined;
     this.#requests = 1; // 接続と同時に出る announce の購読（SUBSCRIBE_NAMESPACE）
     this.#announcedPaths.clear();
-    for (const fn of this.#announceListeners.keys()) this.#announceListeners.set(fn, conn.announced(fn));
+    for (const fn of this.#announceListeners.keys())
+      this.#announceListeners.set(fn, conn.announced(fn));
     for (const pub of this.#pubs) this.#attachPub(pub);
     for (const sub of this.#subs) this.#attachSub(sub);
     if (this.#requests >= this.budget) {
-      console.warn(`MoQ: 張り直した直後のリクエストが ${this.#requests} 件で、予算 ${this.budget} を超えている`);
+      console.warn(
+        `MoQ: 張り直した直後のリクエストが ${this.#requests} 件で、予算 ${this.budget} を超えている`,
+      );
     }
   }
 
@@ -253,18 +262,23 @@ export class MoqSession {
   #attachSub(sub: Sub): void {
     this.#requests++;
     let live = true;
-    const cancel = this.#conn!.subscribe(sub.path, sub.track, { announced: !sub.opts.blind }, {
-      frame: (bytes) => {
-        if (live) sub.onFrame(bytes);
+    const cancel = this.#conn!.subscribe(
+      sub.path,
+      sub.track,
+      { announced: !sub.opts.blind },
+      {
+        frame: (bytes) => {
+          if (live) sub.onFrame(bytes);
+        },
+        end: (error) => {
+          if (!live) return;
+          live = false;
+          this.#subs.delete(sub);
+          sub.detach = undefined;
+          sub.opts.onEnd?.(error);
+        },
       },
-      end: (error) => {
-        if (!live) return;
-        live = false;
-        this.#subs.delete(sub);
-        sub.detach = undefined;
-        sub.opts.onEnd?.(error);
-      },
-    });
+    );
     if (!live) return; // subscribe の中で終わった
     sub.detach = () => {
       live = false;
@@ -371,9 +385,17 @@ class MoqNetConnection implements MoqConnection {
     };
   }
 
-  subscribe(path: string, track: string, opts: { announced: boolean }, sink: TrackSink): () => void {
+  subscribe(
+    path: string,
+    track: string,
+    opts: { announced: boolean },
+    sink: TrackSink,
+  ): () => void {
     let cancelled = false;
-    const req = this.remote.request(Moq.Path.from(path), opts.announced ? { announced: true } : undefined);
+    const req = this.remote.request(
+      Moq.Path.from(path),
+      opts.announced ? { announced: true } : undefined,
+    );
     let sub: Moq.Track.Subscriber | undefined;
     void (async () => {
       try {

@@ -160,7 +160,11 @@ describe('MoqSession の後始末と異常系', () => {
 describe('GmInbox', () => {
   it('opens a separate session for every 20 players', async () => {
     const relay = new FakeRelay();
-    const inbox = new GmInbox('https://relay/x', relay.connector, (await makeIdentities()).verifier());
+    const inbox = new GmInbox(
+      'https://relay/x',
+      relay.connector,
+      (await makeIdentities()).verifier(),
+    );
     for (let i = 0; i < 21; i++) inbox.add(`p${i}`, () => {});
     await flush();
     await flush();
@@ -201,11 +205,15 @@ describe('GmInbox', () => {
     await flush();
     // 署名の無いフレーム、mallory が自分の鍵で alice を名乗るフレーム、mallory 本人のフレーム
     track.writeFrame(enc({ body: { pid: 'alice', seq: 1_000_000, type: 'resync' }, sig: 'x' }));
-    const forged = JSON.parse(new TextDecoder().decode(await mallory.frame({ seq: 999_999, type: 'resync' })));
+    const forged = JSON.parse(
+      new TextDecoder().decode(await mallory.frame({ seq: 999_999, type: 'resync' })),
+    );
     track.writeFrame(enc({ ...forged, body: { ...forged.body, pid: 'alice' } }));
     track.writeFrame(await mallory.frame({ seq: 999_998, type: 'resync' }));
     track.writeFrame(await alice.frame({ seq: 1, type: 'join', name: 'alice' }));
-    await vi.waitFor(() => expect(got).toEqual([{ pid: 'alice', seq: 1, type: 'join', name: 'alice' }]));
+    await vi.waitFor(() =>
+      expect(got).toEqual([{ pid: 'alice', seq: 1, type: 'join', name: 'alice' }]),
+    );
     inbox.close();
   });
 

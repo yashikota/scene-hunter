@@ -21,7 +21,8 @@ export function loadGm(room: string): GmState | null {
     const s: unknown = JSON.parse(raw);
     if (typeof s !== 'object' || s === null) return null;
     const o = s as Partial<GmState>;
-    if (typeof o.phase !== 'string' || typeof o.players !== 'object' || o.players === null) return null;
+    if (typeof o.phase !== 'string' || typeof o.players !== 'object' || o.players === null)
+      return null;
     return s as GmState;
   } catch {
     return null;

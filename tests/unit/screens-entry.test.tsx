@@ -62,7 +62,9 @@ describe('Top', () => {
       setLanguages(['ko-KR', 'en']);
       render(<Top onEntered={() => {}} />);
       const select = screen.getByRole('combobox') as unknown as HTMLSelectElement;
-      expect([...select.options].map((o) => o.textContent)).toEqual(LOCALES.map((l) => LOCALE_NAMES[l]));
+      expect([...select.options].map((o) => o.textContent)).toEqual(
+        LOCALES.map((l) => LOCALE_NAMES[l]),
+      );
       expect([...select.options].map((o) => o.value)).toEqual([...LOCALES]);
       expect(select.value).toBe('ko');
       // 画面の文言もその言語になる
@@ -158,7 +160,19 @@ describe('?code= で開く', () => {
   it('6 桁の数字以外の code は無視する', () => {
     expect(parseCodeParam('123456')).toBe('123456');
     expect(parseCodeParam('000123')).toBe('000123');
-    for (const bad of ['12345', '1234567', 'abcdef', '12345a', '', ' 123456', undefined, null, ['123456'], {}, 100000]) {
+    for (const bad of [
+      '12345',
+      '1234567',
+      'abcdef',
+      '12345a',
+      '',
+      ' 123456',
+      undefined,
+      null,
+      ['123456'],
+      {},
+      100000,
+    ]) {
       expect(parseCodeParam(bad)).toBeUndefined();
     }
   });
@@ -168,7 +182,12 @@ describe('/r/{code} を直接開く（まだ入っていない部屋）', () => 
   beforeEach(() => vi.stubGlobal('WebTransport', class {}));
 
   const open = (path: string) => {
-    const router = createRouter({ routeTree, parseSearch, stringifySearch, history: createMemoryHistory({ initialEntries: [path] }) });
+    const router = createRouter({
+      routeTree,
+      parseSearch,
+      stringifySearch,
+      history: createMemoryHistory({ initialEntries: [path] }),
+    });
     render(<RouterProvider router={router} />);
     return router;
   };
@@ -176,7 +195,10 @@ describe('/r/{code} を直接開く（まだ入っていない部屋）', () => 
     new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
   it('トップで部屋を確かめ、あれば名前の入力に戻ってくる', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => json({ exists: true })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => json({ exists: true })),
+    );
     const router = open('/r/246810');
     expect(await screen.findByLabelText(m.name_label())).toBeTruthy();
     expect(router.state.location.pathname).toBe('/r/246810');
@@ -191,7 +213,9 @@ describe('/r/{code} を直接開く（まだ入っていない部屋）', () => 
     expect(router.state.location.pathname).toBe('/r/112233');
     await act(async () => router.history.back());
     await vi.waitFor(() => expect(router.state.location.pathname).toBe('/'));
-    expect((await screen.findByLabelText(m.code_label()) as HTMLInputElement).value).toBe('112233');
+    expect(((await screen.findByLabelText(m.code_label())) as HTMLInputElement).value).toBe(
+      '112233',
+    );
     await act(() => new Promise((r) => setTimeout(r, 50)));
     expect(router.state.location.pathname).toBe('/');
     expect(screen.queryByLabelText(m.name_label())).toBeNull();
@@ -205,7 +229,9 @@ describe('/r/{code} を直接開く（まだ入っていない部屋）', () => 
     await screen.findByLabelText(m.name_label());
     fireEvent.click(screen.getByRole('button', { name: m.cancel() }));
     await vi.waitFor(() => expect(router.state.location.pathname).toBe('/'));
-    expect((await screen.findByLabelText(m.code_label()) as HTMLInputElement).value).toBe('445566');
+    expect(((await screen.findByLabelText(m.code_label())) as HTMLInputElement).value).toBe(
+      '445566',
+    );
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
@@ -243,17 +269,21 @@ describe('ルーターの検索文字列から code を読む', () => {
       history: createMemoryHistory({ initialEntries: [`/${search}`] }),
     });
     await router.load();
-    return (router.state.matches.find((x) => x.routeId === '/')?.search as { code?: string } | undefined)?.code;
+    return (
+      router.state.matches.find((x) => x.routeId === '/')?.search as { code?: string } | undefined
+    )?.code;
   };
 
   it('?code=123456 は入る', async () => expect(await codeFor('?code=123456')).toBe('123456'));
-  it('?code=000123 は文字列のまま', async () => expect(await codeFor('?code=000123')).toBe('000123'));
+  it('?code=000123 は文字列のまま', async () =>
+    expect(await codeFor('?code=000123')).toBe('000123'));
   it('?code=1e5 と ?code=12e4 は無視する', async () => {
     expect(await codeFor('?code=1e5')).toBeUndefined();
     expect(await codeFor('?code=12e4')).toBeUndefined();
   });
   it('桁が違う、数字でない code は無視する', async () => {
-    for (const c of ['12345', '1234567', 'abcdef', '+12345', '-12345']) expect(await codeFor(`?code=${c}`)).toBeUndefined();
+    for (const c of ['12345', '1234567', 'abcdef', '+12345', '-12345'])
+      expect(await codeFor(`?code=${c}`)).toBeUndefined();
   });
 });
 
@@ -346,7 +376,9 @@ describe('LobbyGm', () => {
 
   it('参加者がいなければ開始できない', () => {
     render(lobbyGm({ players: [] }));
-    expect((screen.getByRole('button', { name: m.start_button() }) as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      (screen.getByRole('button', { name: m.start_button() }) as HTMLButtonElement).disabled,
+    ).toBe(true);
   });
 
   it('GM の交代は参加者を選んで渡す', async () => {
@@ -378,7 +410,9 @@ describe('LobbyGm のリンクのコピー', () => {
     stubClipboard(undefined);
     render(lobbyGm());
     fireEvent.click(screen.getByRole('button', { name: m.copy_link() }));
-    expect(((await screen.findByRole('textbox')) as HTMLInputElement).value).toBe(`${location.origin}/?code=482913`);
+    expect(((await screen.findByRole('textbox')) as HTMLInputElement).value).toBe(
+      `${location.origin}/?code=482913`,
+    );
   });
 
   it('?code= の URL を clipboard に書く', async () => {

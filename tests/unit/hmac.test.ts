@@ -66,7 +66,9 @@ describe('room token (HMAC)', () => {
       ['sign'],
     );
     const body = base64urlEncode('not json');
-    const sigBytes = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body)));
+    const sigBytes = new Uint8Array(
+      await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body)),
+    );
     const sig = base64urlEncode(String.fromCharCode(...sigBytes));
     expect(await verifyRoomToken(SECRET, `${body}.${sig}`, NOW)).toBeNull();
   });

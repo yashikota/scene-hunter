@@ -59,7 +59,9 @@ describe('cert', () => {
     const pub = await exportPublicKey(server.publicKey);
     const cert = await issueCert(server.privateKey, body({ room: '123456', exp: 2000 }));
     expect(await verifyCert(pub, cert, '123456', 1000)).toBe(true);
-    expect(await verifyCert(pub, { ...cert, body: { ...cert.body, role: 'gm' } }, '123456', 1000)).toBe(false);
+    expect(
+      await verifyCert(pub, { ...cert, body: { ...cert.body, role: 'gm' } }, '123456', 1000),
+    ).toBe(false);
     expect(await verifyCert(pub, cert, '654321', 1000)).toBe(false);
     expect(await verifyCert(pub, cert, '123456', 2001)).toBe(false);
     expect(await verifyCert(pub, cert, '123456', 2000)).toBe(false);
@@ -77,14 +79,24 @@ describe('cert', () => {
     const cert = await issueCert(a.privateKey, body());
     expect(await verifyCert(await exportPublicKey(b.publicKey), cert, '123456', 1000)).toBe(false);
     expect(await verifyCert('bad', cert, '123456', 1000)).toBe(false);
-    expect(await verifyCert(await exportPublicKey(a.publicKey), null as never, '123456', 1000)).toBe(false);
+    expect(
+      await verifyCert(await exportPublicKey(a.publicKey), null as never, '123456', 1000),
+    ).toBe(false);
   });
   it('transfer cert verifies with same rules', async () => {
     const server = await generateKeyPair();
     const pub = await exportPublicKey(server.publicKey);
-    const t = await issueTransfer(server.privateKey, { room: '123456', from: 'p1', to: 'p2', iat: 0, exp: 2000 });
+    const t = await issueTransfer(server.privateKey, {
+      room: '123456',
+      from: 'p1',
+      to: 'p2',
+      iat: 0,
+      exp: 2000,
+    });
     expect(await verifyTransfer(pub, t, '123456', 1000)).toBe(true);
-    expect(await verifyTransfer(pub, { ...t, body: { ...t.body, to: 'p3' } }, '123456', 1000)).toBe(false);
+    expect(await verifyTransfer(pub, { ...t, body: { ...t.body, to: 'p3' } }, '123456', 1000)).toBe(
+      false,
+    );
     expect(await verifyTransfer(pub, t, '000000', 1000)).toBe(false);
     expect(await verifyTransfer(pub, t, '123456', 2001)).toBe(false);
   });
@@ -92,11 +104,20 @@ describe('cert', () => {
     const server = await generateKeyPair();
     const pub = await exportPublicKey(server.publicKey);
     const cert = await issueCert(server.privateKey, body());
-    const t = await issueTransfer(server.privateKey, { room: '123456', from: 'p1', to: 'p2', iat: 0, exp: 2000 });
+    const t = await issueTransfer(server.privateKey, {
+      room: '123456',
+      from: 'p1',
+      to: 'p2',
+      iat: 0,
+      exp: 2000,
+    });
     expect(await verifyTransfer(pub, cert as never, '123456', 1000)).toBe(false);
     expect(await verifyCert(pub, t as never, '123456', 1000)).toBe(false);
     // 形が合っていても typ が違えば署名が通らない
-    const asTransfer = { body: { room: '123456', from: 'p1', to: 'p2', iat: 0, exp: 2000 }, sig: cert.sig };
+    const asTransfer = {
+      body: { room: '123456', from: 'p1', to: 'p2', iat: 0, exp: 2000 },
+      sig: cert.sig,
+    };
     expect(await verifyTransfer(pub, asTransfer, '123456', 1000)).toBe(false);
   });
   it('rejects malformed bodies', async () => {
@@ -110,11 +131,22 @@ describe('cert', () => {
       body({ exp: Infinity }),
     ];
     for (const b of bads) {
-      const c = await issueCert(server.privateKey, b as CertBody).catch(() => ({ body: b as CertBody, sig: 'AAAA' }));
+      const c = await issueCert(server.privateKey, b as CertBody).catch(() => ({
+        body: b as CertBody,
+        sig: 'AAAA',
+      }));
       expect(await verifyCert(pub, c, '123456', 1000)).toBe(false);
     }
-    const t = await issueTransfer(server.privateKey, { room: '123456', from: 'p1', to: 2 as never, iat: 0, exp: 2000 });
-    expect(await verifyTransfer(pub, { ...t, body: { ...t.body, to: 'p2', exp: NaN } }, '123456', 1000)).toBe(false);
+    const t = await issueTransfer(server.privateKey, {
+      room: '123456',
+      from: 'p1',
+      to: 2 as never,
+      iat: 0,
+      exp: 2000,
+    });
+    expect(
+      await verifyTransfer(pub, { ...t, body: { ...t.body, to: 'p2', exp: NaN } }, '123456', 1000),
+    ).toBe(false);
     expect(await verifyTransfer(pub, t, '123456', 1000)).toBe(false);
   });
 });
@@ -124,7 +156,16 @@ describe('canonicalJson unsupported types', () => {
     const kp = await generateKeyPair();
     const pub = await exportPublicKey(kp.publicKey);
     const good = await sign(kp.privateKey, { a: 1 });
-    for (const v of [undefined, () => 1, Symbol('x'), 1n, new Date(0), [undefined], NaN, { a: new Date(0) }]) {
+    for (const v of [
+      undefined,
+      () => 1,
+      Symbol('x'),
+      1n,
+      new Date(0),
+      [undefined],
+      NaN,
+      { a: new Date(0) },
+    ]) {
       await expect(sign(kp.privateKey, v)).rejects.toThrow();
       expect(await verify(pub, v, good)).toBe(false);
     }

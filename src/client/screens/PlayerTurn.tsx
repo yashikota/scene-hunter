@@ -106,7 +106,10 @@ export function PlayerTurn(props: PlayerTurnProps) {
   if (sent) {
     return (
       <Screen>
-        <TopBar left={m.round_label({ round, rounds })} right={<span>{m.time_left({ count: remaining })}</span>} />
+        <TopBar
+          left={m.round_label({ round, rounds })}
+          right={<span>{m.time_left({ count: remaining })}</span>}
+        />
         <CameraFrame>{sent.url && <img src={sent.url} alt={m.your_photo()} />}</CameraFrame>
         {sent.status === 'failed' ? (
           <>
@@ -118,7 +121,11 @@ export function PlayerTurn(props: PlayerTurnProps) {
             </Button>
           </>
         ) : (
-          <p role="status" className="sh-sub" style={{ margin: 0, textAlign: 'center', fontWeight: 800 }}>
+          <p
+            role="status"
+            className="sh-sub"
+            style={{ margin: 0, textAlign: 'center', fontWeight: 800 }}
+          >
             {m.sending_photo()}
           </p>
         )}
@@ -140,9 +147,16 @@ export function PlayerTurn(props: PlayerTurnProps) {
               <small> {m.sec_suffix()}</small>
             </span>
           </div>
-          <HintList hints={hints} shown={hints.length} turnStartedLocalAt={turnStartedLocalAt} now={now} />
+          <HintList
+            hints={hints}
+            shown={hints.length}
+            turnStartedLocalAt={turnStartedLocalAt}
+            now={now}
+          />
           <CameraFrame videoRef={cam.videoRef}>
-            {cam.state === 'starting' && <span style={{ fontSize: 14 }}>{m.camera_starting()}</span>}
+            {cam.state === 'starting' && (
+              <span style={{ fontSize: 14 }}>{m.camera_starting()}</span>
+            )}
           </CameraFrame>
           <Button
             variant="primary"
@@ -156,7 +170,9 @@ export function PlayerTurn(props: PlayerTurnProps) {
           </p>
         </Screen>
       </div>
-      {blocked && <CameraBlocked reason={cam.state as 'denied' | 'unavailable'} onRetry={cam.retry} />}
+      {blocked && (
+        <CameraBlocked reason={cam.state as 'denied' | 'unavailable'} onRetry={cam.retry} />
+      )}
     </>
   );
 }

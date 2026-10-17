@@ -17,5 +17,10 @@ export const Route = createFileRoute('/')({
 function TopRoute() {
   const navigate = useNavigate();
   const { code } = Route.useSearch();
-  return <Top initialCode={code} onEntered={(c) => void navigate({ to: '/r/$code', params: { code: c } })} />;
+  return (
+    <Top
+      initialCode={code}
+      onEntered={(c) => void navigate({ to: '/r/$code', params: { code: c } })}
+    />
+  );
 }

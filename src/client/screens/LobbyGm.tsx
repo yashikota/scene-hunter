@@ -62,7 +62,16 @@ export interface LobbyGmProps {
 /** 共有するリンク。開くと番号が入ったトップになる。 */
 export const shareLink = (code: string) => `${location.origin}/?code=${code}`;
 
-export function LobbyGm({ code, gmName, players, rounds, limitSec, onStart, onTransfer, onDissolve }: LobbyGmProps) {
+export function LobbyGm({
+  code,
+  gmName,
+  players,
+  rounds,
+  limitSec,
+  onStart,
+  onTransfer,
+  onDissolve,
+}: LobbyGmProps) {
   const [choosing, setChoosing] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -108,7 +117,10 @@ export function LobbyGm({ code, gmName, players, rounds, limitSec, onStart, onTr
     <Screen>
       <TopBar left={m.app_name()} right={<span className="sh-badge">{m.you_are_gm()}</span>} />
 
-      <Card raised style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+      <Card
+        raised
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+      >
         <span className="sh-sub" style={{ fontSize: 13, fontWeight: 800 }}>
           {m.code_label()}
         </span>
@@ -133,7 +145,10 @@ export function LobbyGm({ code, gmName, players, rounds, limitSec, onStart, onTr
 
       <PlayerTiles gmName={gmName} players={players} />
 
-      <p className="sh-sub" style={{ margin: 0, fontSize: 14, fontWeight: 800, textAlign: 'center' }}>
+      <p
+        className="sh-sub"
+        style={{ margin: 0, fontSize: 14, fontWeight: 800, textAlign: 'center' }}
+      >
         {m.rounds_chip({ count: rounds })} · {m.seconds({ count: limitSec })}
       </p>
 
@@ -214,10 +229,24 @@ function TransferSheet({
         <h2 id="transfer-title" className="sh-display" style={{ fontSize: 17 }}>
           {m.transfer_title()}
         </h2>
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <ul
+          style={{
+            listStyle: 'none',
+            margin: 0,
+            padding: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
           {players.map((p) => (
             <li key={p.pid}>
-              <Button variant="quiet" disabled={busy} onClick={() => onPick(p.pid)} style={{ width: '100%' }}>
+              <Button
+                variant="quiet"
+                disabled={busy}
+                onClick={() => onPick(p.pid)}
+                style={{ width: '100%' }}
+              >
                 {p.label}
               </Button>
             </li>

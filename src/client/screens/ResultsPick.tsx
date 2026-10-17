@@ -32,12 +32,24 @@ export const picksNeeded = (photos: readonly ResultPhotoView[]): number =>
   Math.min(MAX_PICKS, photos.filter((p) => p.valid).length);
 
 /** 中間結果（GM）：お題に近い順に上位 3 枚を選ぶ。 */
-export function ResultsPick({ round, rounds, gmPhotoUrl, photos, missing, picks, onToggle, onConfirm }: ResultsPickProps) {
+export function ResultsPick({
+  round,
+  rounds,
+  gmPhotoUrl,
+  photos,
+  missing,
+  picks,
+  onToggle,
+  onConfirm,
+}: ResultsPickProps) {
   const need = photos ? picksNeeded(photos) : MAX_PICKS;
   const left = need - picks.length;
   return (
     <Screen>
-      <TopBar left={m.round_label({ round, rounds })} right={<span className="sh-badge">{m.you_are_gm()}</span>} />
+      <TopBar
+        left={m.round_label({ round, rounds })}
+        right={<span className="sh-badge">{m.you_are_gm()}</span>}
+      />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <h1 className="sh-display" style={{ fontSize: 22 }}>
           {m.results_pick_title()}
@@ -51,7 +63,14 @@ export function ResultsPick({ round, rounds, gmPhotoUrl, photos, missing, picks,
         <Collecting text={m.results_checking()} />
       ) : (
         <ul
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, margin: 0, padding: 0, listStyle: 'none' }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+            gap: 10,
+            margin: 0,
+            padding: 0,
+            listStyle: 'none',
+          }}
         >
           {photos.map((p) => {
             const order = picks.indexOf(p.pid);
@@ -70,7 +89,9 @@ export function ResultsPick({ round, rounds, gmPhotoUrl, photos, missing, picks,
                     background: 'var(--color-surface)',
                     border: picked ? '3px solid var(--color-ink)' : 'var(--border)',
                     borderRadius: 12,
-                    boxShadow: picked ? `3px 3px 0 ${order === 0 ? 'var(--color-accent)' : 'var(--color-timer)'}` : 'none',
+                    boxShadow: picked
+                      ? `3px 3px 0 ${order === 0 ? 'var(--color-accent)' : 'var(--color-timer)'}`
+                      : 'none',
                     display: 'flex',
                     flexDirection: 'column',
                     overflow: 'hidden',
@@ -80,7 +101,14 @@ export function ResultsPick({ round, rounds, gmPhotoUrl, photos, missing, picks,
                   }}
                 >
                   <Thumb url={p.url} alt={p.label} height={100} dim={!p.valid} />
-                  <span style={{ padding: 6, fontSize: 13, fontWeight: picked ? 800 : 500, overflowWrap: 'anywhere' }}>
+                  <span
+                    style={{
+                      padding: 6,
+                      fontSize: 13,
+                      fontWeight: picked ? 800 : 500,
+                      overflowWrap: 'anywhere',
+                    }}
+                  >
                     {p.label}
                     {!p.valid && <span className="sh-sub"> {m.photo_invalid()}</span>}
                   </span>

@@ -13,8 +13,18 @@ import { ResultsWait } from '../../src/client/screens/ResultsWait';
 beforeEach(() => setLocale('ja', { reload: false }));
 afterEach(cleanup);
 
-const photo = (pid: string, label: string, valid = true): ResultPhotoView => ({ pid, label, url: `u:${pid}`, valid });
-const PHOTOS = [photo('a', 'そうた'), photo('b', 'はるか'), photo('c', 'みお'), photo('d', 'けんた')];
+const photo = (pid: string, label: string, valid = true): ResultPhotoView => ({
+  pid,
+  label,
+  url: `u:${pid}`,
+  valid,
+});
+const PHOTOS = [
+  photo('a', 'そうた'),
+  photo('b', 'はるか'),
+  photo('c', 'みお'),
+  photo('d', 'けんた'),
+];
 
 function pick(over: Partial<Parameters<typeof ResultsPick>[0]> = {}) {
   const onToggle = vi.fn();
@@ -39,7 +49,9 @@ describe('ResultsPick', () => {
   it('2 枚選んだ状態では、決定は「あと 1 枚」で押せない', () => {
     const { ui, onConfirm } = pick({ picks: ['b', 'a'] });
     render(ui);
-    const button = screen.getByRole('button', { name: m.pick_need_more({ count: 1 }) }) as HTMLButtonElement;
+    const button = screen.getByRole('button', {
+      name: m.pick_need_more({ count: 1 }),
+    }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     fireEvent.click(button);
     expect(onConfirm).not.toHaveBeenCalled();
@@ -48,8 +60,16 @@ describe('ResultsPick', () => {
   it('タップした順に 1、2 の印が付き、写真を押すと onToggle が呼ばれる', () => {
     const { ui, onToggle } = pick({ picks: ['b', 'a'] });
     render(ui);
-    expect(within(screen.getByRole('button', { name: /はるか/ })).getByLabelText(m.rank_label({ rank: 1 }))).toBeTruthy();
-    expect(within(screen.getByRole('button', { name: /そうた/ })).getByLabelText(m.rank_label({ rank: 2 }))).toBeTruthy();
+    expect(
+      within(screen.getByRole('button', { name: /はるか/ })).getByLabelText(
+        m.rank_label({ rank: 1 }),
+      ),
+    ).toBeTruthy();
+    expect(
+      within(screen.getByRole('button', { name: /そうた/ })).getByLabelText(
+        m.rank_label({ rank: 2 }),
+      ),
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /みお/ }));
     expect(onToggle).toHaveBeenCalledWith('c');
   });
@@ -75,7 +95,10 @@ describe('ResultsPick', () => {
     const one = pick({ photos: two, missing: ['みお'], picks: ['a'] });
     const { rerender } = render(one.ui);
     expect(screen.getByText('みお')).toBeTruthy();
-    expect((screen.getByRole('button', { name: m.pick_need_more({ count: 1 }) }) as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      (screen.getByRole('button', { name: m.pick_need_more({ count: 1 }) }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
     const both = pick({ photos: two, missing: ['みお'], picks: ['a', 'b'] });
     rerender(both.ui);
     fireEvent.click(screen.getByRole('button', { name: m.pick_confirm() }));
@@ -106,7 +129,15 @@ describe('ResultsPick', () => {
 describe('ResultsWait', () => {
   it('写真と名前を出し、秒数は出さない', () => {
     render(
-      <ResultsWait code="482913" round={2} rounds={3} gmName="ゆうき" gmPhotoUrl="u:gm" photos={PHOTOS} mePid="b" />,
+      <ResultsWait
+        code="482913"
+        round={2}
+        rounds={3}
+        gmName="ゆうき"
+        gmPhotoUrl="u:gm"
+        photos={PHOTOS}
+        mePid="b"
+      />,
     );
     expect(screen.getByText(m.results_wait_body({ name: 'ゆうき' }))).toBeTruthy();
     expect(screen.getByText(m.you_tag({ name: 'はるか' }))).toBeTruthy();
@@ -116,7 +147,9 @@ describe('ResultsWait', () => {
   });
 
   it('GM からまだ届いていなければ集めている表示', () => {
-    render(<ResultsWait code="482913" round={2} rounds={3} gmName="ゆうき" photos={null} mePid="b" />);
+    render(
+      <ResultsWait code="482913" round={2} rounds={3} gmName="ゆうき" photos={null} mePid="b" />,
+    );
     expect(screen.getByText(m.results_collecting())).toBeTruthy();
   });
 });
@@ -206,7 +239,9 @@ describe('ResultsReveal', () => {
     setLocale(locale, { reload: false });
     render(
       reveal({
-        scores: [score({ pid: 'a', rank: 1, tMs: 12_000, multiplier: 0.9, points: 1150, streak: 1 })],
+        scores: [
+          score({ pid: 'a', rank: 1, tMs: 12_000, multiplier: 0.9, points: 1150, streak: 1 }),
+        ],
         totals: [{ pid: 'a', total: 1150, rank: 1, delta: 0 }],
       }),
     );
@@ -225,15 +260,30 @@ describe('Final', () => {
     { pid: 'd', total: 3120, rank: 4, delta: 0 },
     { pid: 'e', total: 2040, rank: 5, delta: 0 },
   ];
-  const players = ['a', 'b', 'c', 'd', 'e'].map((pid, i) => ({ pid, label: ['はるか', 'そうた', 'けんた', 'みお', 'あや'][i]! }));
+  const players = ['a', 'b', 'c', 'd', 'e'].map((pid, i) => ({
+    pid,
+    label: ['はるか', 'そうた', 'けんた', 'みお', 'あや'][i]!,
+  }));
   const final = (over: Partial<Parameters<typeof Final>[0]> = {}) => (
-    <Final code="482913" rounds={3} totals={totals} players={players} mePid="d" isGm={false} onBackToLobby={() => {}} onLeave={() => {}} {...over} />
+    <Final
+      code="482913"
+      rounds={3}
+      totals={totals}
+      players={players}
+      mePid="d"
+      isGm={false}
+      onBackToLobby={() => {}}
+      onLeave={() => {}}
+      {...over}
+    />
   );
 
   it('表彰台は 2・1・3 の順で、4 位以降は一覧に並ぶ', () => {
     render(final());
     const podium = screen.getAllByRole('list')[0]!;
-    const names = within(podium).getAllByRole('listitem').map((li) => li.textContent);
+    const names = within(podium)
+      .getAllByRole('listitem')
+      .map((li) => li.textContent);
     expect(names).toEqual(['そうた4,610' + '2', 'はるか5,120' + '1', 'けんた3,980' + '3']);
     expect(screen.getByText(m.you_tag({ name: 'みお' }))).toBeTruthy();
     expect(screen.getByText('2,040')).toBeTruthy();
@@ -265,7 +315,15 @@ describe('Disconnected', () => {
     const since = Date.now() - 72_000;
     const onLeave = vi.fn();
     render(
-      <Disconnected code="482913" round={3} rounds={3} gmName="ゆうき" since={since} me={{ rank: 1, total: 3345 }} onLeave={onLeave} />,
+      <Disconnected
+        code="482913"
+        round={3}
+        rounds={3}
+        gmName="ゆうき"
+        since={since}
+        me={{ rank: 1, total: 3345 }}
+        onLeave={onLeave}
+      />,
     );
     expect(screen.getByRole('alert').textContent).toContain('ゆうき');
     expect(screen.getByRole('timer').textContent).toContain('1:12');
@@ -297,7 +355,12 @@ describe('ResultsScreen の未提出', () => {
     step({ type: 'playerJoined', pid: 'late', name: 'おそい', at: 1500 }); // プレイヤーのターン中に入った
     step({ type: 'tick', now: 1000 + 61_000 });
     expect(s.phase).toBe('picking');
-    const players = ['a', 'b', 'late'].map((pid) => ({ pid, label: s.players[pid]!.name, total: 0, rank: null }));
+    const players = ['a', 'b', 'late'].map((pid) => ({
+      pid,
+      label: s.players[pid]!.name,
+      total: 0,
+      rank: null,
+    }));
     const room = {
       role: 'gm',
       me: { pid: 'gm', label: 'gm' },
@@ -305,7 +368,11 @@ describe('ResultsScreen の未提出', () => {
       status: null,
       gmDisconnectedSince: null,
       view: {
-        phase: 'picking', round: 1, rounds: 3, gmPid: 'gm', players,
+        phase: 'picking',
+        round: 1,
+        rounds: 3,
+        gmPid: 'gm',
+        players,
         results: { gmPhotoUrl: 'u:gm', photos: [{ pid: 'a', url: 'u:a', valid: true }] },
       },
       gm: { state: s, dispatch: () => {} },

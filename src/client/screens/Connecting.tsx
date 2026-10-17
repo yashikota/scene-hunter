@@ -36,7 +36,10 @@ export function Connecting({
       <div role={failed ? 'alert' : 'status'} className="sh-center">
         {k === 'preparing' ? (
           <span className="sh-bar sh-bar--wide" aria-hidden="true">
-            <span className="sh-bar-fill sh-fill-over" style={{ animationDuration: `${PREPARING_FILL_SEC}s` }} />
+            <span
+              className="sh-bar-fill sh-fill-over"
+              style={{ animationDuration: `${PREPARING_FILL_SEC}s` }}
+            />
           </span>
         ) : (
           <div
@@ -59,7 +62,9 @@ export function Connecting({
         <h1 className="sh-display" style={{ fontSize: 24, lineHeight: 1.4 }}>
           {TITLE[k]()}
         </h1>
-        {failed && <p style={{ margin: 0, fontSize: 15, lineHeight: 1.7 }}>{m.claim_failed_body()}</p>}
+        {failed && (
+          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.7 }}>{m.claim_failed_body()}</p>
+        )}
       </div>
       {onLeave && (
         <Button variant="quiet" onClick={onLeave}>

@@ -52,7 +52,10 @@ export async function issueCert(serverPriv: CryptoKey, body: CertBody): Promise<
   return { body, sig: await sign(serverPriv, { typ: 'cert', body }) };
 }
 
-export async function issueTransfer(serverPriv: CryptoKey, body: TransferBody): Promise<TransferCert> {
+export async function issueTransfer(
+  serverPriv: CryptoKey,
+  body: TransferBody,
+): Promise<TransferCert> {
   return { body, sig: await sign(serverPriv, { typ: 'transfer', body }) };
 }
 
@@ -79,7 +82,12 @@ export async function verifyCert(serverPub: string, cert: Cert, room: string, no
   return verifySigned('cert', serverPub, cert.body, cert.sig, room, nowSec);
 }
 
-export async function verifyTransfer(serverPub: string, t: TransferCert, room: string, nowSec: number) {
+export async function verifyTransfer(
+  serverPub: string,
+  t: TransferCert,
+  room: string,
+  nowSec: number,
+) {
   if (!isTransferBody(t?.body)) return false;
   return verifySigned('transfer', serverPub, t.body, t.sig, room, nowSec);
 }

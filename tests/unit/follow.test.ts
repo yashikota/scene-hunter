@@ -100,11 +100,15 @@ describe('followGm', () => {
     await vi.waitFor(() => expect(t.seen.epochs).toEqual([1, 2]), { timeout: 3000 });
     await vi.waitFor(() => expect(t.seen.snapshots.map((s) => s.seq)).toEqual([0, 2]));
     // epoch 2 の購読は announce を待たない
-    const probes = t.relay.connections.flatMap((c) => c.subscribes).filter((x) => x.path === 'gm/2');
+    const probes = t.relay.connections
+      .flatMap((c) => c.subscribes)
+      .filter((x) => x.path === 'gm/2');
     expect(probes.every((x) => !x.announced)).toBe(true);
 
     e2.event(await gm.frame({ epoch: 2, seq: 3, type: 'hint_error' }));
-    await vi.waitFor(() => expect(t.seen.events.map((e) => e.type)).toEqual(['hinting', 'hint_error']));
+    await vi.waitFor(() =>
+      expect(t.seen.events.map((e) => e.type)).toEqual(['hinting', 'hint_error']),
+    );
     stop();
     t.session.close();
   });
@@ -124,7 +128,9 @@ describe('followGm', () => {
     fake2.snapshot(await mallory.frame(snapshotBody(2, 9)));
     const fake3 = gmBroadcast(t.relay, 3);
     fake3.snapshot(await mallory.frame(snapshotBody(3, 9)));
-    fake3.event(await mallory.frame({ epoch: 3, seq: 10, type: 'player_turn', round: 1, limitSec: 60 }));
+    fake3.event(
+      await mallory.frame({ epoch: 3, seq: 10, type: 'player_turn', round: 1, limitSec: 60 }),
+    );
     // 最初の Track not found から 500ms 後のやり直しまで待つ
     await sleep(1200);
     expect(t.seen.epochs).toEqual([1]);
@@ -161,7 +167,9 @@ describe('followGm', () => {
     const replay3 = gmBroadcast(t.relay, 3);
     replay3.snapshot(snap);
     await sleep(1200);
-    expect(t.relay.connections.flatMap((c) => c.subscribes).some((x) => x.path === 'gm/2')).toBe(true);
+    expect(t.relay.connections.flatMap((c) => c.subscribes).some((x) => x.path === 'gm/2')).toBe(
+      true,
+    );
     expect(t.seen.epochs).toEqual([1]);
     expect(t.seen.events).toHaveLength(1);
     expect(t.seen.snapshots).toHaveLength(1);
@@ -185,9 +193,7 @@ describe('followGm', () => {
       t.session.subscribe('dummy', 'track', () => {}, { blind: true });
       await flush();
     }
-    await vi.waitFor(() =>
-      expect(t.relay.connections[1].live.size).toBeGreaterThanOrEqual(2),
-    );
+    await vi.waitFor(() => expect(t.relay.connections[1].live.size).toBeGreaterThanOrEqual(2));
     e1.event(await gm.frame({ epoch: 1, seq: 3, type: 'hinting' }));
     await vi.waitFor(() => expect(t.seen.events.map((e) => e.seq)).toEqual([1, 2, 3]));
     await sleep(50);
@@ -208,7 +214,8 @@ describe('followGm', () => {
     // 何も書かない broadcast を 10 個 announce させる（購読は生きたまま残る）
     for (let n = 2; n <= 11; n++) gmBroadcast(t.relay, n);
     await sleep(700); // gm/2 は乗り換え直後に Track not found になっているので、やり直しを待つ
-    const live = () => [...t.relay.connections.at(-1)!.live].map((x) => `${x.path}#${x.track}`).sort();
+    const live = () =>
+      [...t.relay.connections.at(-1)!.live].map((x) => `${x.path}#${x.track}`).sort();
     // 乗り換え済みの gm/1 の 2 本 + 乗り換え先を探す 2 本（current + 1 と announce の最大）
     expect(live()).toEqual(['gm/1#events', 'gm/1#state', 'gm/11#state', 'gm/2#state']);
     stop();
@@ -233,8 +240,16 @@ describe('followGm', () => {
     e2.snapshot(await b.frame({ ...snapshotBody(2, 1), gmPid: 'bob' }));
     e2.event(await b.frame({ epoch: 2, seq: 1, type: 'hint_error' }));
     await vi.waitFor(() => expect(t.seen.epochs).toEqual([1, 2]), { timeout: 3000 });
-    await vi.waitFor(() => expect(t.seen.events.map((e) => [e.pid, e.seq])).toEqual([['gm', 50], ['bob', 1]]));
-    expect(t.seen.snapshots.map((s) => [s.pid, s.seq])).toEqual([['gm', 50], ['bob', 1]]);
+    await vi.waitFor(() =>
+      expect(t.seen.events.map((e) => [e.pid, e.seq])).toEqual([
+        ['gm', 50],
+        ['bob', 1],
+      ]),
+    );
+    expect(t.seen.snapshots.map((s) => [s.pid, s.seq])).toEqual([
+      ['gm', 50],
+      ['bob', 1],
+    ]);
     stop();
     t.session.close();
   });
@@ -279,7 +294,9 @@ describe('followGm', () => {
     const stop = followGm(t.session, t.verifier, isGm, t.on);
     await vi.waitFor(() => expect(t.seen.epochs).toEqual([3]), { timeout: 5000 });
     await vi.waitFor(() => expect(t.seen.snapshots.map((s) => s.seq)).toEqual([7]));
-    const probed = t.relay.connections[0].subscribes.filter((x) => x.track === 'state').map((x) => x.path);
+    const probed = t.relay.connections[0].subscribes
+      .filter((x) => x.track === 'state')
+      .map((x) => x.path);
     expect(probed.slice(0, 3)).toEqual(['gm/1', 'gm/2', 'gm/3']);
     expect(t.relay.connections[0].subscribes.every((x) => !x.announced)).toBe(true);
     stop();
@@ -295,7 +312,9 @@ describe('followGm', () => {
     e1.snapshot(await gm.frame(snapshotBody(1, 0)));
     await vi.waitFor(() => expect(t.seen.epochs).toEqual([1]));
 
-    const good = JSON.parse(new TextDecoder().decode(await gm.frame({ epoch: 1, seq: 1, type: 'hinting' })));
+    const good = JSON.parse(
+      new TextDecoder().decode(await gm.frame({ epoch: 1, seq: 1, type: 'hinting' })),
+    );
     e1.event(enc({ ...good, body: { ...good.body, type: 'dissolved' } })); // 署名が合わない
     e1.event(new TextEncoder().encode('{not json'));
     e1.event(await gm.frame({ epoch: 1, seq: 2, type: 'no_such_event' })); // スキーマに合わない

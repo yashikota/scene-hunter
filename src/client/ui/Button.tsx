@@ -9,5 +9,7 @@ export function Button({
   type = 'button',
   ...rest
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
-  return <button type={type} className={`sh-btn sh-btn--${variant} ${className ?? ''}`} {...rest} />;
+  return (
+    <button type={type} className={`sh-btn sh-btn--${variant} ${className ?? ''}`} {...rest} />
+  );
 }

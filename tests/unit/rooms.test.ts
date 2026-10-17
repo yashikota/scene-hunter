@@ -86,7 +86,15 @@ function setup(opts: { codes?: string[]; putFalseTimes?: number } = {}) {
     newId: () => `pid-${++idN}`,
     randomCode: () => codes.shift() ?? '999999',
   };
-  return { d, clock, failRelayDelete: () => void (relayDeleteFails = true), kvMap, deleted, r2Deleted, r2Prefixes };
+  return {
+    d,
+    clock,
+    failRelayDelete: () => void (relayDeleteFails = true),
+    kvMap,
+    deleted,
+    r2Deleted,
+    r2Prefixes,
+  };
 }
 
 const input = { name: 'はるか', locale: 'ja' as const };
@@ -95,7 +103,13 @@ describe('createRoom', () => {
   it('既定値を保存し、GM の参加証と Relay のトークンで終わる URL を返す', async () => {
     const { d, kvMap } = setup();
     const j = await createRoom(d, { ...input, pubkey });
-    expect(j).toMatchObject({ code: '111111', rounds: 3, limitSec: 60, locale: 'ja', pid: 'pid-1' });
+    expect(j).toMatchObject({
+      code: '111111',
+      rounds: 3,
+      limitSec: 60,
+      locale: 'ja',
+      pid: 'pid-1',
+    });
     expect(j.cert.body).toMatchObject({ role: 'gm', room: '111111', pubkey, name: 'はるか' });
     expect(j.cert.body.exp - j.cert.body.iat).toBe(43200);
     expect(await verifyCert(serverPub, j.cert, '111111', NOW_SEC)).toBe(true);
@@ -120,7 +134,9 @@ describe('createRoom', () => {
     await expect(createRoom(d, { ...input, pubkey, rounds: 0 })).rejects.toThrow(RangeError);
     await expect(createRoom(d, { ...input, pubkey, limitSec: 20 })).rejects.toThrow(RangeError);
     await expect(createRoom(d, { ...input, pubkey, limitSec: 121 })).rejects.toThrow(RangeError);
-    await expect(createRoom(d, { ...input, pubkey, name: 'あ'.repeat(13) })).rejects.toThrow(RangeError);
+    await expect(createRoom(d, { ...input, pubkey, name: 'あ'.repeat(13) })).rejects.toThrow(
+      RangeError,
+    );
     await expect(createRoom(d, { ...input, pubkey, name: '   ' })).rejects.toThrow(RangeError);
     await expect(createRoom(d, { ...input, pubkey: 'bad' })).rejects.toThrow(RangeError);
   });
@@ -185,7 +201,12 @@ describe('joinRoom', () => {
     const other = await exportPublicKey((await generateKeyPair()).publicKey);
     const j = await joinRoom(d, '111111', { name: 'たろう', pubkey: other });
     if ('error' in j) throw new Error('unexpected');
-    expect(j.cert.body).toMatchObject({ role: 'player', pubkey: other, name: 'たろう', room: '111111' });
+    expect(j.cert.body).toMatchObject({
+      role: 'player',
+      pubkey: other,
+      name: 'たろう',
+      room: '111111',
+    });
     expect(j).toMatchObject({ locale: 'ja', rounds: 3, limitSec: 60 });
     expect(j.moqUrl.endsWith('/TOKEN1')).toBe(true);
     expect(j.pid).not.toBe('pid-1');
@@ -224,8 +245,12 @@ describe('GM 交代', () => {
 
     const third = await joinRoom(d, '111111', { name: 'q', pubkey: ppub });
     if ('error' in third) throw new Error('unexpected');
-    await expect(claimGm(d, third.roomToken, t, claimInput(ppub), '111111')).rejects.toThrow(AuthError);
-    await expect(claimGm(d, gm.roomToken, t, claimInput(ppub), '111111')).rejects.toThrow(AuthError);
+    await expect(claimGm(d, third.roomToken, t, claimInput(ppub), '111111')).rejects.toThrow(
+      AuthError,
+    );
+    await expect(claimGm(d, gm.roomToken, t, claimInput(ppub), '111111')).rejects.toThrow(
+      AuthError,
+    );
 
     const c = await claimGm(d, p.roomToken, t, claimInput(ppub), '111111');
     expect(c.cert.body).toMatchObject({
@@ -275,7 +300,9 @@ describe('GM 交代', () => {
     const tC = await transferGm(d, gm.roomToken, c.pid, '111111');
     await claimGm(d, c.roomToken, tC, claimInput(ppub), '111111');
     clock.ms += 5000;
-    await expect(claimGm(d, p.roomToken, tB, claimInput(ppub), '111111')).rejects.toThrow(AuthError);
+    await expect(claimGm(d, p.roomToken, tB, claimInput(ppub), '111111')).rejects.toThrow(
+      AuthError,
+    );
   });
 
   it('(b) A→B→A の後に B が最初の交代証で claim すると AuthError', async () => {
@@ -295,7 +322,9 @@ describe('GM 交代', () => {
     clock.ms += 5000;
     await claimGm(d, aTok, t2, claimInput(ppub), '111111');
     clock.ms += 5000;
-    await expect(claimGm(d, p.roomToken, t1, claimInput(ppub), '111111')).rejects.toThrow(AuthError);
+    await expect(claimGm(d, p.roomToken, t1, claimInput(ppub), '111111')).rejects.toThrow(
+      AuthError,
+    );
   });
 
   it('(c) 同じ交代証での 2 回目の claim は AuthError', async () => {
@@ -310,7 +339,9 @@ describe('GM 交代', () => {
     const { d, gm, p, ppub } = await lobby();
     const t = await transferGm(d, gm.roomToken, 'someone-else', '111111');
     const forged = { ...t, body: { ...t.body, to: p.pid } };
-    await expect(claimGm(d, p.roomToken, forged, claimInput(ppub), '111111')).rejects.toThrow(AuthError);
+    await expect(claimGm(d, p.roomToken, forged, claimInput(ppub), '111111')).rejects.toThrow(
+      AuthError,
+    );
   });
 
   it('自分への交代は RangeError', async () => {

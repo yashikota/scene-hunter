@@ -2,7 +2,12 @@
 // - 最初に publish した接続がパスを持つ（後から同じパスを publish しても無視される）
 // - 新しく購読した人には最新のグループのフレームだけが届く
 // - publish されていない Track を購読すると `Track not found` で終わる
-import type { MoqConnection, MoqConnector, MoqTrackWriter, TrackSink } from '../../src/client/moq/session';
+import type {
+  MoqConnection,
+  MoqConnector,
+  MoqTrackWriter,
+  TrackSink,
+} from '../../src/client/moq/session';
 
 interface FakeTrack {
   owner: FakeConnection;
@@ -73,7 +78,12 @@ export class FakeConnection implements MoqConnection {
     };
   }
 
-  subscribe(path: string, track: string, opts: { announced: boolean }, sink: TrackSink): () => void {
+  subscribe(
+    path: string,
+    track: string,
+    opts: { announced: boolean },
+    sink: TrackSink,
+  ): () => void {
     this.subscribes.push({ path, track, announced: opts.announced });
     let t: FakeTrack | undefined;
     let live = true;

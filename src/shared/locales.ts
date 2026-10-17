@@ -1,5 +1,15 @@
 export const LOCALES = [
-  'ja', 'en', 'zh-Hans', 'zh-Hant', 'ko', 'es', 'fr', 'de', 'pt-BR', 'id', 'vi',
+  'ja',
+  'en',
+  'zh-Hans',
+  'zh-Hant',
+  'ko',
+  'es',
+  'fr',
+  'de',
+  'pt-BR',
+  'id',
+  'vi',
 ] as const;
 export type Locale = (typeof LOCALES)[number];
 

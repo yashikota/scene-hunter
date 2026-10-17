@@ -2,7 +2,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { GmEngine } from '../../src/client/game/gmEngine';
 import { claimUntilDone, loadMe, rejoinUntilDone, type Me } from '../../src/client/game/membership';
-import { PlayerEngine, REJOIN_AFTER_MS, TRANSFER_GRACE_MS } from '../../src/client/game/playerEngine';
+import {
+  PlayerEngine,
+  REJOIN_AFTER_MS,
+  TRANSFER_GRACE_MS,
+} from '../../src/client/game/playerEngine';
 import { newGameId } from '../../src/client/game/useRoom';
 import { issueCert, issueTransfer, type Cert } from '../../src/shared/cert';
 import { FakeRelay } from './fakeMoq';
@@ -267,7 +271,9 @@ describe('GM の交代（偽の Relay）', () => {
     const step = { kind: 'claim' as const, transfer, fromEpoch: 1 };
     const notFound = vi.fn().mockRejectedValue(Object.assign(new Error('gone'), { status: 404 }));
     const retry = { sleep: async () => {}, nowSec: () => 50 };
-    expect(await claimUntilDone(meOf(aliceId, 'player'), step, { claim: notFound, retry })).toBeNull();
+    expect(
+      await claimUntilDone(meOf(aliceId, 'player'), step, { claim: notFound, retry }),
+    ).toBeNull();
     expect(notFound).toHaveBeenCalledTimes(1);
 
     let t = 50;
@@ -288,20 +294,21 @@ describe('GM の交代（偽の Relay）', () => {
   it('入り直しは通信の失敗をやり直す', async () => {
     const keys = await makeIdentities();
     const gmId = await keys.mk('gm', 'gm');
-    const playerCert = await issueCert(keys.server.privateKey, { ...gmId.cert.body, pid: 'p2', role: 'player' });
-    const join = vi
-      .fn()
-      .mockRejectedValueOnce(new Error('offline'))
-      .mockResolvedValueOnce({
-        code: ROOM,
-        pid: 'p2',
-        roomToken: 'pt',
-        cert: playerCert,
-        moqUrl: 'https://relay/x',
-        locale: 'ja',
-        rounds: 3,
-        limitSec: 60,
-      });
+    const playerCert = await issueCert(keys.server.privateKey, {
+      ...gmId.cert.body,
+      pid: 'p2',
+      role: 'player',
+    });
+    const join = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({
+      code: ROOM,
+      pid: 'p2',
+      roomToken: 'pt',
+      cert: playerCert,
+      moqUrl: 'https://relay/x',
+      locale: 'ja',
+      rounds: 3,
+      limitSec: 60,
+    });
     const next = await rejoinUntilDone(
       { ...meOf(gmId, 'gm'), pending: { kind: 'rejoin', gmPid: 'alice' } },
       { join, retry: { sleep: async () => {}, nowSec: () => 0 } },
@@ -344,7 +351,9 @@ describe('一覧に載らないときの publish のやり直し', () => {
     /** 1 秒おきの確認が、あと n 回走るまで待つ。 */
     const ticks = async (n: number) => {
       const from = checks;
-      await vi.waitFor(() => expect(checks).toBeGreaterThanOrEqual(from + n), { timeout: 1500 * n });
+      await vi.waitFor(() => expect(checks).toBeGreaterThanOrEqual(from + n), {
+        timeout: 1500 * n,
+      });
     };
     await vi.waitFor(() => expect(p.view.phase).toBe('lobby'));
     expect(publishes()).toBe(1);

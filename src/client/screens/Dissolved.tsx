@@ -8,7 +8,11 @@ export function Dissolved({ code, onLeave }: { code: string; onLeave(): void }) 
   return (
     <Screen>
       <TopBar left={m.app_name()} right={<span>{m.room_badge({ code: formatCode(code) })}</span>} />
-      <h1 role="status" className="sh-display" style={{ fontSize: 24, textAlign: 'center', margin: 'auto 0', lineHeight: 1.4 }}>
+      <h1
+        role="status"
+        className="sh-display"
+        style={{ fontSize: 24, textAlign: 'center', margin: 'auto 0', lineHeight: 1.4 }}
+      >
         {m.dissolved_title()}
       </h1>
       <Button variant="primary" onClick={onLeave}>

@@ -96,6 +96,5 @@ describe('relay api', () => {
     expect(calls[0].url).toContain('/moq/relays?per_page=1000');
   });
 
-  it('moqUrl', () =>
-    expect(moqUrl('T')).toBe('https://draft-16.cloudflare.mediaoverquic.com/T'));
+  it('moqUrl', () => expect(moqUrl('T')).toBe('https://draft-16.cloudflare.mediaoverquic.com/T'));
 });

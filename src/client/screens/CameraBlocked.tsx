@@ -11,7 +11,13 @@ export function CameraBlocked({ reason, onRetry }: { reason: CameraError; onRetr
       <Card
         raised
         role="alert"
-        style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', gap: 12, textAlign: 'center' }}
+        style={{
+          margin: 'auto 0',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          textAlign: 'center',
+        }}
       >
         <h1 className="sh-display" style={{ fontSize: 22 }}>
           {m.camera_blocked_title()}

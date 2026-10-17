@@ -26,7 +26,16 @@ const PODIUM = [
 ] as const;
 
 /** 最終結果：上位 3 人の表彰台と、それ以降の順位。 */
-export function Final({ code, rounds, totals, players, mePid, isGm, onBackToLobby, onLeave }: FinalProps) {
+export function Final({
+  code,
+  rounds,
+  totals,
+  players,
+  mePid,
+  isGm,
+  onBackToLobby,
+  onLeave,
+}: FinalProps) {
   const name = (pid: string) => {
     const label = players.find((p) => p.pid === pid)?.label ?? '';
     return pid === mePid ? m.you_tag({ name: label }) : label;
@@ -34,22 +43,48 @@ export function Final({ code, rounds, totals, players, mePid, isGm, onBackToLobb
   const rest = totals.slice(3);
   return (
     <Screen>
-      <TopBar left={m.rounds_done({ rounds })} right={<span>{m.room_badge({ code: formatCode(code) })}</span>} />
+      <TopBar
+        left={m.rounds_done({ rounds })}
+        right={<span>{m.room_badge({ code: formatCode(code) })}</span>}
+      />
       <h1 className="sh-display" style={{ fontSize: 28, textAlign: 'center' }}>
         {m.final_title()}
       </h1>
 
       <ol
         aria-label={m.final_title()}
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, alignItems: 'end', margin: 0, padding: 0, listStyle: 'none' }}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gap: 8,
+          alignItems: 'end',
+          margin: 0,
+          padding: 0,
+          listStyle: 'none',
+        }}
       >
         {PODIUM.map(({ index, height, bg }) => {
           const t = totals[index];
           if (!t) return <li key={index} aria-hidden="true" />;
           return (
-            <li key={t.pid} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center', minWidth: 0 }}>
-              <span style={{ fontSize: 14, fontWeight: 800, overflowWrap: 'anywhere' }}>{name(t.pid)}</span>
-              <span className="sh-display" style={{ fontSize: 18, fontVariantNumeric: 'tabular-nums' }}>
+            <li
+              key={t.pid}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 4,
+                textAlign: 'center',
+                minWidth: 0,
+              }}
+            >
+              <span style={{ fontSize: 14, fontWeight: 800, overflowWrap: 'anywhere' }}>
+                {name(t.pid)}
+              </span>
+              <span
+                className="sh-display"
+                style={{ fontSize: 18, fontVariantNumeric: 'tabular-nums' }}
+              >
                 {formatNumber(t.total)}
               </span>
               <div
@@ -79,10 +114,24 @@ export function Final({ code, rounds, totals, players, mePid, isGm, onBackToLobb
       {rest.length > 0 && (
         <ol
           start={4}
-          style={{ display: 'grid', gridTemplateColumns: '28px minmax(0, 1fr) auto', gap: 8, margin: 0, padding: '12px 14px', listStyle: 'none', background: 'var(--color-surface)', border: 'var(--border)', borderRadius: 'var(--radius-lg)', fontVariantNumeric: 'tabular-nums' }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '28px minmax(0, 1fr) auto',
+            gap: 8,
+            margin: 0,
+            padding: '12px 14px',
+            listStyle: 'none',
+            background: 'var(--color-surface)',
+            border: 'var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            fontVariantNumeric: 'tabular-nums',
+          }}
         >
           {rest.map((t) => (
-            <li key={t.pid} style={{ display: 'contents', fontWeight: t.pid === mePid ? 800 : 500 }}>
+            <li
+              key={t.pid}
+              style={{ display: 'contents', fontWeight: t.pid === mePid ? 800 : 500 }}
+            >
               <span style={{ fontWeight: 800 }}>{t.rank}</span>
               <span style={{ overflowWrap: 'anywhere' }}>{name(t.pid)}</span>
               <span>{formatNumber(t.total)}</span>
@@ -98,7 +147,11 @@ export function Final({ code, rounds, totals, players, mePid, isGm, onBackToLobb
           </Button>
         ) : (
           <>
-            <p className="sh-sub" role="status" style={{ margin: 0, fontSize: 14, textAlign: 'center' }}>
+            <p
+              className="sh-sub"
+              role="status"
+              style={{ margin: 0, fontSize: 14, textAlign: 'center' }}
+            >
               {m.final_wait_note()}
             </p>
             <Button variant="quiet" onClick={onLeave}>

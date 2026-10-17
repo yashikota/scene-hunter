@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { MAX_PHOTO_BYTES, createPresigner, parsePhotoKey, photoKey } from '../../src/server/presign';
+import {
+  MAX_PHOTO_BYTES,
+  createPresigner,
+  parsePhotoKey,
+  photoKey,
+} from '../../src/server/presign';
 
-const p = createPresigner({ accountId: 'acc', bucket: 'bkt', accessKeyId: 'AK', secretAccessKey: 'SK' });
+const p = createPresigner({
+  accountId: 'acc',
+  bucket: 'bkt',
+  accessKeyId: 'AK',
+  secretAccessKey: 'SK',
+});
 
 describe('presigner', () => {
   it('PUT は content-length と content-type を署名し、300 秒で切れる', async () => {

@@ -21,7 +21,8 @@ export async function makeIdentities() {
       exp: 2000,
     });
     /** 参加証付きの封筒をバイト列にする（body.pid は自分）。 */
-    const frame = async (body: Record<string, unknown>) => enc(await seal({ pid, ...body }, kp.privateKey, cert));
+    const frame = async (body: Record<string, unknown>) =>
+      enc(await seal({ pid, ...body }, kp.privateKey, cert));
     return { kp, cert, frame };
   };
   const verifier = () => new EnvelopeVerifier(serverPub, ROOM, () => 1000);

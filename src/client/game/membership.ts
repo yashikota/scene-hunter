@@ -75,7 +75,8 @@ export function loadMe(code: string): Me | null {
       return null;
     }
     const pending = o.pending as Partial<PendingStep> | undefined;
-    if (pending !== undefined && pending?.kind !== 'claim' && pending?.kind !== 'rejoin') return null;
+    if (pending !== undefined && pending?.kind !== 'claim' && pending?.kind !== 'rejoin')
+      return null;
     return o as Me;
   } catch {
     return null;
@@ -167,7 +168,11 @@ export async function joinAndSave(
   api: Pick<typeof import('../api'), 'joinRoom'> = { joinRoom },
 ): Promise<Me> {
   const keys = await newKeys();
-  const joined = await api.joinRoom(code, { name, pubkey: keys.pubkey }, { onWaiting: opts.onWaiting });
+  const joined = await api.joinRoom(
+    code,
+    { name, pubkey: keys.pubkey },
+    { onWaiting: opts.onWaiting },
+  );
   const me = toMe(joined, keys);
   saveMe(me);
   return me;
@@ -207,7 +212,7 @@ export async function claimUntilDone(
 ): Promise<Me | null> {
   const doClaim = opts.claim ?? claim;
   const { sleep, nowSec } = opts.retry ?? defaultRetry;
-  for (let delay = MIN_RETRY_MS; !opts.stopped?.() && nowSec() < step.transfer.body.exp; ) {
+  for (let delay = MIN_RETRY_MS; !opts.stopped?.() && nowSec() < step.transfer.body.exp;) {
     try {
       const { roomToken, cert } = await doClaim(me.code, me.roomToken, {
         transfer: step.transfer,
@@ -234,7 +239,7 @@ export async function rejoinUntilDone(
   opts: { join?: typeof joinRoom; retry?: RetryDeps; stopped?: () => boolean } = {},
 ): Promise<Me | null> {
   const { sleep } = opts.retry ?? defaultRetry;
-  for (let delay = MIN_RETRY_MS; !opts.stopped?.(); ) {
+  for (let delay = MIN_RETRY_MS; !opts.stopped?.();) {
     try {
       return await joinAndSave(me.code, me.name, {}, { joinRoom: opts.join ?? joinRoom });
     } catch (e) {

@@ -115,7 +115,10 @@ describe('request bodies', () => {
 
   it('sends the Workers AI input', async () => {
     let got: any;
-    const d = { ai: { run: async (m: string, i: unknown) => ((got = { m, i }), ok) }, qwen: async () => ok };
+    const d = {
+      ai: { run: async (m: string, i: unknown) => ((got = { m, i }), ok) },
+      qwen: async () => ok,
+    };
     await generateHints(d, img, 'ko');
     expect(got.m).toBe(HINT_MODEL);
     // 思考を止める（推論トークンを出さない）。reasoning_effort は送らない
@@ -131,7 +134,11 @@ describe('request bodies', () => {
   it('sends the Qwen API body', async () => {
     let got: any;
     const d = {
-      ai: { run: async () => { throw Object.assign(new Error('x'), { status: 429 }); } },
+      ai: {
+        run: async () => {
+          throw Object.assign(new Error('x'), { status: 429 });
+        },
+      },
       qwen: async (b: unknown) => ((got = b), ok),
     };
     await generateHints(d, img, 'ko');

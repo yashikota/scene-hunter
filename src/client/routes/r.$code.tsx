@@ -63,7 +63,11 @@ function RoomScreen({ code }: { code: string }) {
       />
     );
   }
-  if (room.gmDisconnectedSince !== null && view.phase !== 'connecting' && view.phase !== 'dissolved') {
+  if (
+    room.gmDisconnectedSince !== null &&
+    view.phase !== 'connecting' &&
+    view.phase !== 'dissolved'
+  ) {
     const mine = view.players.find((p) => p.pid === room.me.pid);
     return (
       <Disconnected

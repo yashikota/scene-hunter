@@ -6,5 +6,7 @@ export function Card({
   className,
   ...rest
 }: HTMLAttributes<HTMLDivElement> & { raised?: boolean }) {
-  return <div className={`sh-card ${raised ? 'sh-card--raised' : ''} ${className ?? ''}`} {...rest} />;
+  return (
+    <div className={`sh-card ${raised ? 'sh-card--raised' : ''} ${className ?? ''}`} {...rest} />
+  );
 }

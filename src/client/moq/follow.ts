@@ -1,6 +1,11 @@
 import * as v from 'valibot';
 import type { Envelope, EnvelopeVerifier } from '../../shared/envelope';
-import { GmEventSchema, GmSnapshotSchema, type GmEvent, type GmSnapshot } from '../../shared/protocol';
+import {
+  GmEventSchema,
+  GmSnapshotSchema,
+  type GmEvent,
+  type GmSnapshot,
+} from '../../shared/protocol';
 import { EVENTS_TRACK, GM_PREFIX, gmPath, STATE_TRACK } from './paths';
 import { keepSubscribed, type MoqSession } from './session';
 
@@ -69,7 +74,9 @@ export function followGm(
 
   const watchEpoch = (epoch: number, blind: boolean): Watch => {
     const w = makeWatch(epoch);
-    w.stops.push(keepSubscribed(session, gmPath(epoch), STATE_TRACK, (b) => receive(w, epoch, b), { blind }));
+    w.stops.push(
+      keepSubscribed(session, gmPath(epoch), STATE_TRACK, (b) => receive(w, epoch, b), { blind }),
+    );
     return w;
   };
 
@@ -144,8 +151,12 @@ export function followGm(
     adopted = makeWatch(epoch);
     const w = adopted;
     w.stops.push(
-      keepSubscribed(session, gmPath(epoch), STATE_TRACK, (b) => receive(w, epoch, b), { blind: true }),
-      keepSubscribed(session, gmPath(epoch), EVENTS_TRACK, (b) => receive(w, epoch, b), { blind: true }),
+      keepSubscribed(session, gmPath(epoch), STATE_TRACK, (b) => receive(w, epoch, b), {
+        blind: true,
+      }),
+      keepSubscribed(session, gmPath(epoch), EVENTS_TRACK, (b) => receive(w, epoch, b), {
+        blind: true,
+      }),
     );
     on.epoch(epoch);
     next = watchEpoch(epoch + 1, true);

@@ -45,7 +45,16 @@ export function HintError({ round, rounds, onRetry, onDissolve }: HintErrorProps
           aria-hidden="true"
           style={{ width: 88, height: 88, background: 'var(--color-gold)', borderRadius: 22 }}
         >
-          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="44"
+            height="44"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M12 3l10 18H2z" />
             <path d="M12 10v5M12 18v.5" />
           </svg>

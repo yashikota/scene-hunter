@@ -165,7 +165,10 @@ export async function createRoom(
 }
 
 /** 部屋があるか。名前を入れてもらう前の確かめに使い、部屋のほかの情報は返さない。 */
-export async function roomExists(store: Pick<RoomDeps['store'], 'get'>, code: string): Promise<boolean> {
+export async function roomExists(
+  store: Pick<RoomDeps['store'], 'get'>,
+  code: string,
+): Promise<boolean> {
   if (!ROOM_CODE.test(code)) return false;
   return (await store.get(code)) !== null;
 }

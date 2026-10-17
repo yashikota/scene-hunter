@@ -6,4 +6,6 @@ export const formatNumber = (n: number): string => new Intl.NumberFormat(getLoca
 
 /** 速さの倍率：小数 2 桁（0.90）。 */
 export const formatMultiplier = (n: number): string =>
-  new Intl.NumberFormat(getLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+  new Intl.NumberFormat(getLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+    n,
+  );

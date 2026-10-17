@@ -23,13 +23,8 @@
   "players_heading": "Jugadores",
   "players_count": [
     {
-      "declarations": [
-        "input count",
-        "local countPlural = count: plural"
-      ],
-      "selectors": [
-        "countPlural"
-      ],
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
       "match": {
         "countPlural=one": "{count} jugador",
         "countPlural=*": "{count} jugadores"
@@ -50,13 +45,8 @@
   "waiting_for_gm": "Esperando a que el GM empiece",
   "rounds_chip": [
     {
-      "declarations": [
-        "input count",
-        "local countPlural = count: plural"
-      ],
-      "selectors": [
-        "countPlural"
-      ],
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
       "match": {
         "countPlural=one": "{count} ronda",
         "countPlural=*": "{count} rondas"

@@ -19,7 +19,12 @@ async function setup() {
     });
     return { kp, cert };
   };
-  return { server, serverPub, mk, verifier: () => new EnvelopeVerifier(serverPub, '123456', () => 1000) };
+  return {
+    server,
+    serverPub,
+    mk,
+    verifier: () => new EnvelopeVerifier(serverPub, '123456', () => 1000),
+  };
 }
 
 describe('envelope', () => {
@@ -46,7 +51,9 @@ describe('envelope', () => {
     const v = verifier();
     const bare = await seal({ pid: 'alice' }, alice.kp.privateKey);
     expect(await v.open(bare)).toBeNull();
-    expect(await v.open(await seal({ pid: 'alice' }, alice.kp.privateKey, alice.cert))).not.toBeNull();
+    expect(
+      await v.open(await seal({ pid: 'alice' }, alice.kp.privateKey, alice.cert)),
+    ).not.toBeNull();
     expect((await v.open(bare))?.cert).toEqual(alice.cert);
     expect(v.certOf('alice')).toEqual(alice.cert);
     expect(v.certOf('bob')).toBeUndefined();
@@ -55,12 +62,20 @@ describe('envelope', () => {
   it('rejects expired, foreign-room and foreign-server certs; bad cert does not replace good one', async () => {
     const { mk, verifier, server } = await setup();
     const expired = await mk('alice', 'player', 500);
-    expect(await verifier().open(await seal({ pid: 'alice' }, expired.kp.privateKey, expired.cert))).toBeNull();
+    expect(
+      await verifier().open(await seal({ pid: 'alice' }, expired.kp.privateKey, expired.cert)),
+    ).toBeNull();
 
     const kp = await generateKeyPair();
     const other = await generateKeyPair();
     const forged = await issueCert(other.privateKey, {
-      room: '123456', pid: 'alice', name: 'a', role: 'gm', pubkey: await exportPublicKey(kp.publicKey), iat: 0, exp: 2000,
+      room: '123456',
+      pid: 'alice',
+      name: 'a',
+      role: 'gm',
+      pubkey: await exportPublicKey(kp.publicKey),
+      iat: 0,
+      exp: 2000,
     });
     const alice = await mk('alice');
     const v = verifier();
@@ -69,13 +84,23 @@ describe('envelope', () => {
     expect(v.certOf('alice')).toEqual(alice.cert);
 
     const wrongRoom = await issueCert(server.privateKey, { ...alice.cert.body, room: '999999' });
-    expect(await verifier().open(await seal({ pid: 'alice' }, alice.kp.privateKey, wrongRoom))).toBeNull();
+    expect(
+      await verifier().open(await seal({ pid: 'alice' }, alice.kp.privateKey, wrongRoom)),
+    ).toBeNull();
   });
 
   it('never throws on malformed input', async () => {
     const { verifier } = await setup();
     const v = verifier();
-    for (const bad of [null, undefined, 1, 'x', {}, { body: null, sig: 1 }, { body: { pid: 'a' }, sig: 'zz', cert: 5 }]) {
+    for (const bad of [
+      null,
+      undefined,
+      1,
+      'x',
+      {},
+      { body: null, sig: 1 },
+      { body: { pid: 'a' }, sig: 'zz', cert: 5 },
+    ]) {
       expect(await v.open(bad as never)).toBeNull();
     }
   });

@@ -39,7 +39,10 @@ beforeEach(() => {
   camera.captureFrame.mockReset().mockReturnValue({ canvas: {}, w: 640, h: 480 });
   encode.encodeJpeg.mockReset().mockResolvedValue(new Blob(['jpeg'], { type: 'image/jpeg' }));
   revoke.mockReset();
-  vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: revoke }));
+  vi.stubGlobal(
+    'URL',
+    Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: revoke }),
+  );
 });
 
 afterEach(() => {
@@ -105,7 +108,9 @@ describe('PlayerTurn', () => {
   it('シャッターで JPEG にして出し、カメラを止めて提出済みの画面にする', async () => {
     const onShutter = vi.fn().mockResolvedValue(undefined);
     render(playerTurn({ onShutter }));
-    await waitFor(() => expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false));
+    await waitFor(() =>
+      expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false),
+    );
     fireEvent.click(screen.getByRole('button', { name: m.shutter_button() }));
     await waitFor(() => expect(screen.getByRole('heading', { name: m.sent_title() })).toBeTruthy());
     expect(onShutter).toHaveBeenCalledOnce();
@@ -124,7 +129,9 @@ describe('PlayerTurn', () => {
   it('送れなかったときは同じ写真を送り直せる（撮り直しではない）', async () => {
     const onShutter = vi.fn().mockRejectedValueOnce(new Error('x')).mockResolvedValue(undefined);
     render(playerTurn({ onShutter }));
-    await waitFor(() => expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false));
+    await waitFor(() =>
+      expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false),
+    );
     fireEvent.click(screen.getByRole('button', { name: m.shutter_button() }));
     fireEvent.click(await screen.findByRole('button', { name: m.resend_button() }));
     await waitFor(() => expect(screen.getByRole('heading', { name: m.sent_title() })).toBeTruthy());
@@ -136,7 +143,9 @@ describe('PlayerTurn', () => {
   it('シャッターを連打しても提出は 1 回だけ', async () => {
     const onShutter = vi.fn(() => new Promise<void>(() => {}));
     render(playerTurn({ onShutter }));
-    await waitFor(() => expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false));
+    await waitFor(() =>
+      expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false),
+    );
     const button = screen.getByRole('button', { name: m.shutter_button() });
     fireEvent.click(button);
     fireEvent.click(button);
@@ -148,7 +157,9 @@ describe('PlayerTurn', () => {
   it('残り 0 秒ではシャッターを押せない', async () => {
     render(playerTurn({ turnStartedLocalAt: T0 - 61_000 }));
     await settle();
-    expect((screen.getByRole('button', { name: m.shutter_button() }) as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      (screen.getByRole('button', { name: m.shutter_button() }) as HTMLButtonElement).disabled,
+    ).toBe(true);
   });
 
   it('端末の写真を選ぶ入力が無い', () => {
@@ -158,7 +169,9 @@ describe('PlayerTurn', () => {
 
   it('撮った写真の object URL をアンマウントで解放する', async () => {
     const { unmount } = render(playerTurn());
-    await waitFor(() => expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false));
+    await waitFor(() =>
+      expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(false),
+    );
     fireEvent.click(screen.getByRole('button', { name: m.shutter_button() }));
     await waitFor(() => expect(screen.getByRole('heading', { name: m.sent_title() })).toBeTruthy());
     unmount();
@@ -192,11 +205,22 @@ describe('CameraBlocked', () => {
 describe('PlayerSubmitted', () => {
   it('撮影秒数を表示しない', () => {
     const { container } = render(
-      <PlayerSubmitted round={2} rounds={3} startedAt={T0 - 39_000} limitSec={60} submitted={4} total={5} />,
+      <PlayerSubmitted
+        round={2}
+        rounds={3}
+        startedAt={T0 - 39_000}
+        limitSec={60}
+        submitted={4}
+        total={5}
+      />,
     );
     expect(screen.getByRole('heading', { name: '提出しました' })).toBeTruthy();
     expect(screen.getByText('4 / 5 人')).toBeTruthy();
-    expect(screen.getByRole('progressbar', { name: m.everyone_submitted() }).getAttribute('aria-valuenow')).toBe('4');
+    expect(
+      screen
+        .getByRole('progressbar', { name: m.everyone_submitted() })
+        .getAttribute('aria-valuenow'),
+    ).toBe('4');
     expect(screen.getByText('残り 21 秒')).toBeTruthy();
     expect(container.textContent).not.toMatch(/39|撮影秒数/);
   });
@@ -235,7 +259,9 @@ describe('GmTurn', () => {
       vi.advanceTimersByTime(250);
     });
     expect(screen.getByRole('timer').textContent).toContain('0');
-    expect((screen.getByRole('button', { name: m.pick_photo() }) as HTMLButtonElement).disabled).toBe(false);
+    expect(
+      (screen.getByRole('button', { name: m.pick_photo() }) as HTMLButtonElement).disabled,
+    ).toBe(false);
   });
 
   it('撮影した写真を出す', async () => {

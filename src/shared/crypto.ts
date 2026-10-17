@@ -75,7 +75,12 @@ export async function sign(priv: CryptoKey, value: unknown): Promise<string> {
 export async function verify(pubB64: string, value: unknown, sig: string): Promise<boolean> {
   try {
     const pub = await importPublicKey(pubB64);
-    return await subtle().verify(ED25519, pub, fromBase64Url(sig), encoder.encode(canonicalJson(value)));
+    return await subtle().verify(
+      ED25519,
+      pub,
+      fromBase64Url(sig),
+      encoder.encode(canonicalJson(value)),
+    );
   } catch {
     return false;
   }

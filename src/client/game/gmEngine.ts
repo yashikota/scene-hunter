@@ -32,7 +32,12 @@ const linkKey = (room: string) => `sh:gmlink:${room}`;
 function loadLink(room: string): Link {
   try {
     const o = JSON.parse(localStorage.getItem(linkKey(room)) ?? 'null') as Partial<Link> | null;
-    if (o && Number.isInteger(o.epoch) && Number.isInteger(o.eventSeq) && Number.isInteger(o.snapshotSeq)) {
+    if (
+      o &&
+      Number.isInteger(o.epoch) &&
+      Number.isInteger(o.eventSeq) &&
+      Number.isInteger(o.snapshotSeq)
+    ) {
       return o as Link;
     }
   } catch {

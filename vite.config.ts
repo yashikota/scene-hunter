@@ -27,6 +27,18 @@ export default defineConfig({
           strategy: ['globalVariable', 'baseLocale'],
         }),
       ],
+  fmt: {
+    singleQuote: true,
+    printWidth: 100,
+    // 生成物と検証用の使い捨てコードは整形しない
+    ignorePatterns: [
+      'src/client/paraglide/**',
+      'src/client/routeTree.gen.ts',
+      'poc/**',
+      'docs/**',
+      '.superpowers/**',
+    ],
+  },
   test: {
     include: ['tests/unit/**/*.test.{ts,tsx}'],
     // 画面のテスト（happy-dom）で Google Fonts の CSS を取りに行かない

@@ -23,13 +23,8 @@
   "players_heading": "Mitspieler",
   "players_count": [
     {
-      "declarations": [
-        "input count",
-        "local countPlural = count: plural"
-      ],
-      "selectors": [
-        "countPlural"
-      ],
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
       "match": {
         "countPlural=one": "{count} Person",
         "countPlural=*": "{count} Personen"
@@ -50,13 +45,8 @@
   "waiting_for_gm": "Warte auf den Start durch den GM",
   "rounds_chip": [
     {
-      "declarations": [
-        "input count",
-        "local countPlural = count: plural"
-      ],
-      "selectors": [
-        "countPlural"
-      ],
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
       "match": {
         "countPlural=one": "{count} Runde",
         "countPlural=*": "{count} Runden"

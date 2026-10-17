@@ -78,6 +78,7 @@ export async function checkRoundPhotos(s: GmState, d: PhotoCheckDeps): Promise<v
   );
   if (d.stopped()) return;
 
-  const gmPhoto = photos.find((p) => p.key === s.gmPhotoKey) ?? photos.find((p) => p.pid === s.gmPid);
+  const gmPhoto =
+    photos.find((p) => p.key === s.gmPhotoKey) ?? photos.find((p) => p.pid === s.gmPid);
   d.dispatch({ type: 'resultsReady', gmPhotoUrl: gmPhoto?.url ?? '', photos: submitted });
 }

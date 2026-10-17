@@ -17,8 +17,7 @@ describe('scoring', () => {
   it('rank1 at 6s = 950', () => expectPoints(['a'], { a: 6000 }, 'a', 950));
   it('rank1 at 45s = 625', () => expectPoints(['a'], { a: 45000 }, 'a', 625));
   it('rank2 at 12s = 630', () => expectPoints(['x', 'a'], { x: 1, a: 12000 }, 'a', 630));
-  it('rank3 at 30s = 300', () =>
-    expectPoints(['x', 'y', 'a'], { x: 1, y: 1, a: 30000 }, 'a', 300));
+  it('rank3 at 30s = 300', () => expectPoints(['x', 'y', 'a'], { x: 1, y: 1, a: 30000 }, 'a', 300));
 
   it('t is clamped to [0, T]', () => {
     expect(speedMultiplier(-5, T)).toBe(1);

@@ -17,19 +17,37 @@ export interface PlayerSubmittedProps {
 }
 
 /** 提出した後の待ち。撮影までの秒数は GM が選び終わるまで秘密なので、ここには出さない。 */
-export function PlayerSubmitted({ round, rounds, startedAt, limitSec, photoUrl, submitted, total }: PlayerSubmittedProps) {
+export function PlayerSubmitted({
+  round,
+  rounds,
+  startedAt,
+  limitSec,
+  photoUrl,
+  submitted,
+  total,
+}: PlayerSubmittedProps) {
   const now = useNow();
   return (
     <Screen>
       <TopBar
         left={m.round_label({ round, rounds })}
-        right={<span className="sh-badge">{m.time_left({ count: remainingSec(startedAt, limitSec, now) })}</span>}
+        right={
+          <span className="sh-badge">
+            {m.time_left({ count: remainingSec(startedAt, limitSec, now) })}
+          </span>
+        }
       />
       <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span
           className="sh-icon-tile"
           aria-hidden="true"
-          style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--color-accent)', fontSize: 24 }}
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 14,
+            background: 'var(--color-accent)',
+            fontSize: 24,
+          }}
         >
           ✓
         </span>
@@ -51,7 +69,11 @@ export function PlayerSubmitted({ round, rounds, startedAt, limitSec, photoUrl, 
           }}
         >
           {photoUrl ? (
-            <img src={photoUrl} alt={m.your_photo()} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img
+              src={photoUrl}
+              alt={m.your_photo()}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
           ) : (
             <span className="sh-sub" style={{ fontSize: 13 }}>
               {m.your_photo()}
@@ -72,7 +94,10 @@ export function PlayerSubmitted({ round, rounds, startedAt, limitSec, photoUrl, 
           aria-valuemax={total}
           aria-valuenow={submitted}
         >
-          <span className="sh-bar-fill" style={{ transform: `scaleX(${total > 0 ? submitted / total : 0})` }} />
+          <span
+            className="sh-bar-fill"
+            style={{ transform: `scaleX(${total > 0 ? submitted / total : 0})` }}
+          />
         </span>
       </Card>
     </Screen>

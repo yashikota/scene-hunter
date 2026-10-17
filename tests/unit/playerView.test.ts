@@ -2,7 +2,11 @@ import { describe, expect, test } from 'vite-plus/test';
 import type { GmEvent, GmSnapshot } from '../../src/shared/protocol';
 import { applyEvent, applySnapshot, hasGap, initialView } from '../../src/client/game/playerView';
 
-type Body = GmEvent extends infer E ? (E extends unknown ? Omit<E, 'pid' | 'seq' | 'epoch'> : never) : never;
+type Body = GmEvent extends infer E
+  ? E extends unknown
+    ? Omit<E, 'pid' | 'seq' | 'epoch'>
+    : never
+  : never;
 const ev = (seq: number, b: Body): GmEvent => ({ pid: 'gm', seq, epoch: 1, ...b }) as GmEvent;
 
 const lobby = (seq = 0, locale: 'ja' | 'en' = 'ja') =>
@@ -131,7 +135,11 @@ describe('playerView', () => {
     v = applyEvent(v, ev(1, { type: 'player_turn', round: 2, limitSec: 60 }), 100);
     v = applyEvent(v, ev(2, { type: 'hint', round: 2, index: 0, text: 'h' }), 100);
     v = applyEvent(v, ev(3, { type: 'submitted', pids: ['a'] }), 100);
-    v = applyEvent(v, ev(4, { type: 'final', totals: [{ pid: 'a', total: 1, rank: 1, delta: 0 }] }), 100);
+    v = applyEvent(
+      v,
+      ev(4, { type: 'final', totals: [{ pid: 'a', total: 1, rank: 1, delta: 0 }] }),
+      100,
+    );
     v = applyEvent(v, lobby(5), 200);
     expect(v).toMatchObject({
       phase: 'lobby',

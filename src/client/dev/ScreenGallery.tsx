@@ -37,11 +37,23 @@ const photo = (hue: number) =>
     `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><defs><linearGradient id="g" x2="1" y2="1"><stop offset="0" stop-color="hsl(${hue} 70% 70%)"/><stop offset="1" stop-color="hsl(${(hue + 60) % 360} 60% 40%)"/></linearGradient></defs><rect width="400" height="300" fill="url(#g)"/><circle cx="260" cy="120" r="50" fill="hsl(${(hue + 180) % 360} 70% 60%)"/></svg>`,
   )}`;
 
-const NAMES = ['はるか', 'そうた', 'みお', 'けんた', 'あや', 'Maximilianus', 'ながいなまえのプレイヤー', 'WWWWWWWWWWWW'];
+const NAMES = [
+  'はるか',
+  'そうた',
+  'みお',
+  'けんた',
+  'あや',
+  'Maximilianus',
+  'ながいなまえのプレイヤー',
+  'WWWWWWWWWWWW',
+];
 const members = (n: number) =>
   Array.from({ length: n }, (_, i) => ({
     pid: `p${i}`,
-    label: i < NAMES.length ? NAMES[i]! : `${NAMES[i % NAMES.length]} (${Math.floor(i / NAMES.length) + 1})`,
+    label:
+      i < NAMES.length
+        ? NAMES[i]!
+        : `${NAMES[i % NAMES.length]} (${Math.floor(i / NAMES.length) + 1})`,
   }));
 const FEW = members(4);
 const MANY = members(59); // GM と合わせて 60 人
@@ -73,7 +85,12 @@ const scores: RoundScore[] = [
   { pid: 'p3', rank: null, tMs: 20_000, multiplier: null, points: 0, bonus: 0, streak: 0 },
 ];
 const totals = (n: number): Total[] =>
-  members(n).map((p, i) => ({ pid: p.pid, total: Math.max(0, 2650 - i * 310), rank: i + 1, delta: [1, -1, 0, 2, -2][i % 5]! }));
+  members(n).map((p, i) => ({
+    pid: p.pid,
+    total: Math.max(0, 2650 - i * 310),
+    rank: i + 1,
+    delta: [1, -1, 0, 2, -2][i % 5]!,
+  }));
 
 type Entry = { id: string; render(locale: Locale): ReactNode };
 
@@ -92,42 +109,94 @@ export const ENTRIES: Entry[] = [
   {
     id: 'lobby-gm-empty',
     render: () => (
-      <LobbyGm code={CODE} gmName="ゆうき" players={[]} rounds={3} limitSec={60} onStart={noop} onTransfer={never} onDissolve={noop} />
+      <LobbyGm
+        code={CODE}
+        gmName="ゆうき"
+        players={[]}
+        rounds={3}
+        limitSec={60}
+        onStart={noop}
+        onTransfer={never}
+        onDissolve={noop}
+      />
     ),
   },
   {
     id: 'lobby-gm',
     render: () => (
-      <LobbyGm code={CODE} gmName="ゆうき" players={FEW} rounds={3} limitSec={60} onStart={noop} onTransfer={never} onDissolve={noop} />
+      <LobbyGm
+        code={CODE}
+        gmName="ゆうき"
+        players={FEW}
+        rounds={3}
+        limitSec={60}
+        onStart={noop}
+        onTransfer={never}
+        onDissolve={noop}
+      />
     ),
   },
   {
     id: 'lobby-gm-60',
     render: () => (
-      <LobbyGm code={CODE} gmName="ゆうき" players={MANY} rounds={3} limitSec={60} onStart={noop} onTransfer={never} onDissolve={noop} />
+      <LobbyGm
+        code={CODE}
+        gmName="ゆうき"
+        players={MANY}
+        rounds={3}
+        limitSec={60}
+        onStart={noop}
+        onTransfer={never}
+        onDissolve={noop}
+      />
     ),
   },
   {
     id: 'lobby-player',
     render: () => (
-      <LobbyPlayer code={CODE} me={FEW[1]!} gmName="ゆうき" players={FEW} rounds={3} limitSec={60} onLeave={noop} />
+      <LobbyPlayer
+        code={CODE}
+        me={FEW[1]!}
+        gmName="ゆうき"
+        players={FEW}
+        rounds={3}
+        limitSec={60}
+        onLeave={noop}
+      />
     ),
   },
   {
     id: 'lobby-player-long',
     render: () => (
-      <LobbyPlayer code={CODE} me={members(8)[6]!} gmName="Maximilianus" players={members(8)} rounds={3} limitSec={60} onLeave={noop} />
+      <LobbyPlayer
+        code={CODE}
+        me={members(8)[6]!}
+        gmName="Maximilianus"
+        players={members(8)}
+        rounds={3}
+        limitSec={60}
+        onLeave={noop}
+      />
     ),
   },
   { id: 'gm-turn', render: () => <GmTurn round={2} rounds={3} onPhoto={never} /> },
   {
     id: 'gm-turn-player',
     render: () => (
-      <GmTurnPlayer code={CODE} round={2} rounds={3} gmName="ながいなまえのプレイヤー" me={{ label: 'そうた', total: 1520, rank: 2 }} />
+      <GmTurnPlayer
+        code={CODE}
+        round={2}
+        rounds={3}
+        gmName="ながいなまえのプレイヤー"
+        me={{ label: 'そうた', total: 1520, rank: 2 }}
+      />
     ),
   },
   { id: 'hint-wait', render: () => <HintWait code={CODE} round={2} rounds={3} /> },
-  { id: 'hint-error', render: () => <HintError round={2} rounds={3} onRetry={never} onDissolve={noop} /> },
+  {
+    id: 'hint-error',
+    render: () => <HintError round={2} rounds={3} onRetry={never} onDissolve={noop} />,
+  },
   {
     id: 'player-turn',
     render: (l) => (
@@ -180,13 +249,30 @@ export const ENTRIES: Entry[] = [
   {
     id: 'player-submitted',
     render: () => (
-      <PlayerSubmitted round={2} rounds={3} startedAt={ago(39_000)} limitSec={60} photoUrl={photo(30)} submitted={2} total={4} />
+      <PlayerSubmitted
+        round={2}
+        rounds={3}
+        startedAt={ago(39_000)}
+        limitSec={60}
+        photoUrl={photo(30)}
+        submitted={2}
+        total={4}
+      />
     ),
   },
   {
     id: 'results-pick-checking',
     render: () => (
-      <ResultsPick round={2} rounds={3} gmPhotoUrl={photo(200)} photos={null} missing={[]} picks={[]} onToggle={noop} onConfirm={noop} />
+      <ResultsPick
+        round={2}
+        rounds={3}
+        gmPhotoUrl={photo(200)}
+        photos={null}
+        missing={[]}
+        picks={[]}
+        onToggle={noop}
+        onConfirm={noop}
+      />
     ),
   },
   {
@@ -207,12 +293,22 @@ export const ENTRIES: Entry[] = [
   {
     id: 'results-wait',
     render: () => (
-      <ResultsWait code={CODE} round={2} rounds={3} gmName="ゆうき" gmPhotoUrl={photo(200)} photos={photos(7)} mePid="p1" />
+      <ResultsWait
+        code={CODE}
+        round={2}
+        rounds={3}
+        gmName="ゆうき"
+        gmPhotoUrl={photo(200)}
+        photos={photos(7)}
+        mePid="p1"
+      />
     ),
   },
   {
     id: 'results-wait-collecting',
-    render: () => <ResultsWait code={CODE} round={2} rounds={3} gmName="ゆうき" photos={null} mePid="p1" />,
+    render: () => (
+      <ResultsWait code={CODE} round={2} rounds={3} gmName="ゆうき" photos={null} mePid="p1" />
+    ),
   },
   ...[true, false].map((isGm) => ({
     id: isGm ? 'results-reveal-gm' : 'results-reveal',
@@ -234,13 +330,30 @@ export const ENTRIES: Entry[] = [
   ...[true, false].map((isGm) => ({
     id: isGm ? 'final-gm' : 'final',
     render: () => (
-      <Final code={CODE} rounds={3} totals={totals(8)} players={members(8)} mePid="p6" isGm={isGm} onBackToLobby={noop} onLeave={noop} />
+      <Final
+        code={CODE}
+        rounds={3}
+        totals={totals(8)}
+        players={members(8)}
+        mePid="p6"
+        isGm={isGm}
+        onBackToLobby={noop}
+        onLeave={noop}
+      />
     ),
   })),
   {
     id: 'disconnected',
     render: () => (
-      <Disconnected code={CODE} round={2} rounds={3} gmName="ゆうき" since={ago(75_000)} me={{ rank: 2, total: 1520 }} onLeave={noop} />
+      <Disconnected
+        code={CODE}
+        round={2}
+        rounds={3}
+        gmName="ゆうき"
+        since={ago(75_000)}
+        me={{ rank: 2, total: 1520 }}
+        onLeave={noop}
+      />
     ),
   },
   { id: 'dissolved', render: () => <Dissolved code={CODE} onLeave={noop} /> },
@@ -264,13 +377,24 @@ export function ScreenGallery() {
   if (!ready) return null;
   if (entry) return <>{entry.render(locale)}</>;
   return (
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: 20, fontFamily: 'var(--font-body), sans-serif' }}>
+    <main
+      style={{
+        maxWidth: 720,
+        margin: '0 auto',
+        padding: 20,
+        fontFamily: 'var(--font-body), sans-serif',
+      }}
+    >
       <h1 className="sh-display" style={{ fontSize: 24 }}>
         Screens
       </h1>
       <p>
         {LOCALES.map((l) => (
-          <a key={l} href={`?lang=${l}`} style={{ marginRight: 10, fontWeight: l === locale ? 800 : 400 }}>
+          <a
+            key={l}
+            href={`?lang=${l}`}
+            style={{ marginRight: 10, fontWeight: l === locale ? 800 : 400 }}
+          >
             {LOCALE_NAMES[l]}
           </a>
         ))}

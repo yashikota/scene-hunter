@@ -80,11 +80,15 @@ const notFound = () => Object.assign(new Error('room not found'), { status: 404 
  * 部屋があるか確かめる。{ exists: false } なら 3 秒おきに 2 回まで確かめ直し、それでも無ければ
  * status 404 の Error を投げる。JSON の { exists: true } 以外（SPA の HTML など）は、あるとみなさず失敗にする。
  */
-export async function checkRoom(code: string, opts: { sleep?: (ms: number) => Promise<void> } = {}): Promise<void> {
+export async function checkRoom(
+  code: string,
+  opts: { sleep?: (ms: number) => Promise<void> } = {},
+): Promise<void> {
   const sleep = opts.sleep ?? sleepMs;
   for (let retry = 0; ; retry++) {
     const res = (await fetch('/api/rooms/:code', { params: { code }, retry: 0 })) as unknown;
-    const exists = typeof res === 'object' && res !== null ? (res as { exists?: unknown }).exists : undefined;
+    const exists =
+      typeof res === 'object' && res !== null ? (res as { exists?: unknown }).exists : undefined;
     if (exists === true) return;
     if (exists !== false) throw new Error('unexpected response from room check');
     if (retry >= CHECK_RETRIES) throw notFound();

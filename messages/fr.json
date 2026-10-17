@@ -23,13 +23,8 @@
   "players_heading": "Joueurs",
   "players_count": [
     {
-      "declarations": [
-        "input count",
-        "local countPlural = count: plural"
-      ],
-      "selectors": [
-        "countPlural"
-      ],
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
       "match": {
         "countPlural=one": "{count} joueur",
         "countPlural=*": "{count} joueurs"
@@ -50,13 +45,8 @@
   "waiting_for_gm": "En attente du MJ",
   "rounds_chip": [
     {
-      "declarations": [
-        "input count",
-        "local countPlural = count: plural"
-      ],
-      "selectors": [
-        "countPlural"
-      ],
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
       "match": {
         "countPlural=one": "{count} manche",
         "countPlural=*": "{count} manches"
