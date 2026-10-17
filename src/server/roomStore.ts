@@ -10,6 +10,8 @@ export interface RoomRecord {
   createdAt: number;
   /** 現在の GM のプレイヤー ID。交代で書き換わる。 */
   gmPid: string;
+  /** 現在の GM になった時刻（UNIX 秒）。これより前に発行された交代証は使えない。 */
+  gmSince: number;
 }
 
 const ROOM_TTL_SEC = 43200;
@@ -24,7 +26,7 @@ export function createRoomStore(kv: Pick<KVNamespace, 'get' | 'put' | 'delete'>)
   async function put(rec: RoomRecord): Promise<boolean> {
     await kv.put(key(rec.code), JSON.stringify(rec), { expirationTtl: ROOM_TTL_SEC });
     const back = await get(rec.code);
-    return back?.relayUid === rec.relayUid && back.gmPid === rec.gmPid;
+    return back?.relayUid === rec.relayUid && back.gmPid === rec.gmPid && back.gmSince === rec.gmSince;
   }
 
   async function del(code: string): Promise<void> {

@@ -32,6 +32,7 @@ function setup(opts: { codes?: string[]; putFalseTimes?: number } = {}) {
   const deleted: string[] = [];
   const r2Deleted: string[][] = [];
   const r2Prefixes: (string | undefined)[] = [];
+  const clock = { ms: NOW_MS };
   let relayN = 0;
   let putFalse = opts.putFalseTimes ?? 0;
   const codes = [...(opts.codes ?? ['111111', '222222', '333333'])];
@@ -80,11 +81,11 @@ function setup(opts: { codes?: string[]; putFalseTimes?: number } = {}) {
     } as never,
     hmacSecret: 'secret',
     serverKey,
-    now: () => NOW_MS,
+    now: () => clock.ms,
     newId: () => `pid-${++idN}`,
     randomCode: () => codes.shift() ?? '999999',
   };
-  return { d, failRelayDelete: () => void (relayDeleteFails = true), kvMap, deleted, r2Deleted, r2Prefixes };
+  return { d, clock, failRelayDelete: () => void (relayDeleteFails = true), kvMap, deleted, r2Deleted, r2Prefixes };
 }
 
 const input = { name: 'はるか', locale: 'ja' as const };
@@ -253,6 +254,45 @@ describe('GM 交代', () => {
     await createRoom(d, { ...input, pubkey }); // 222222
     const t = await transferGm(d, gm.roomToken, p.pid, '111111');
     await expect(claimGm(d, p.roomToken, t, claimInput(ppub), '222222')).rejects.toThrow(AuthError);
+  });
+
+  it('(a) C が先に claim した後の B の claim は AuthError', async () => {
+    const { d, gm, p, ppub, clock } = await lobby();
+    const c = await joinRoom(d, '111111', { name: 'c', pubkey: ppub });
+    if ('error' in c) throw new Error('unexpected');
+    const tB = await transferGm(d, gm.roomToken, p.pid, '111111');
+    const tC = await transferGm(d, gm.roomToken, c.pid, '111111');
+    await claimGm(d, c.roomToken, tC, claimInput(ppub), '111111');
+    clock.ms += 5000;
+    await expect(claimGm(d, p.roomToken, tB, claimInput(ppub), '111111')).rejects.toThrow(AuthError);
+  });
+
+  it('(b) A→B→A の後に B が最初の交代証で claim すると AuthError', async () => {
+    const { d, gm, p, ppub, clock } = await lobby();
+    const t1 = await transferGm(d, gm.roomToken, p.pid, '111111');
+    const b = await claimGm(d, p.roomToken, t1, claimInput(ppub), '111111');
+    clock.ms += 5000;
+    const t2 = await transferGm(d, b.roomToken, gm.pid, '111111');
+    // A は player のトークンを持たないので、新しく入って pid を得た A' に戻す代わりに、
+    // 元の A の pid 宛ての交代証を使えるよう player トークンを発行する。
+    const aTok = await issueRoomToken('secret', {
+      room: '111111',
+      role: 'player',
+      pid: gm.pid,
+      exp: NOW_SEC + 40000,
+    });
+    clock.ms += 5000;
+    await claimGm(d, aTok, t2, claimInput(ppub), '111111');
+    clock.ms += 5000;
+    await expect(claimGm(d, p.roomToken, t1, claimInput(ppub), '111111')).rejects.toThrow(AuthError);
+  });
+
+  it('(c) 同じ交代証での 2 回目の claim は AuthError', async () => {
+    const { d, gm, p, ppub, clock } = await lobby();
+    const t = await transferGm(d, gm.roomToken, p.pid, '111111');
+    await claimGm(d, p.roomToken, t, claimInput(ppub), '111111');
+    clock.ms += 5000;
+    await expect(claimGm(d, p.roomToken, t, claimInput(ppub), '111111')).rejects.toThrow(AuthError);
   });
 
   it('改ざんした交代証は AuthError', async () => {

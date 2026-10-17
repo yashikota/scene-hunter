@@ -10,6 +10,7 @@ const rec = (o: Partial<RoomRecord> = {}): RoomRecord => ({
   limitSec: 60,
   createdAt: 1,
   gmPid: 'gm1',
+  gmSince: 1,
   ...o,
 });
 

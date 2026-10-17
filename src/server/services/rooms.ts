@@ -136,6 +136,7 @@ export async function createRoom(
         limitSec,
         createdAt: d.now(),
         gmPid: pid,
+        gmSince: Math.floor(d.now() / 1000),
       });
     } finally {
       if (!stored) await discardRelay(d, relay.uid);
@@ -232,9 +233,13 @@ export async function claimGm(
     throw new AuthError('invalid transfer');
   }
   if (transfer.body.to !== p.pid) throw new AuthError('transfer is for another player');
+  // 古い交代証や使用済みの交代証で GM を奪えないよう、いまの GM 発行で、現 GM の就任後のものに限る。
+  if (transfer.body.from !== rec.gmPid || transfer.body.iat < rec.gmSince) {
+    throw new AuthError('stale transfer');
+  }
   const name = checkName(input.name);
   await checkPubkey(input.pubkey);
-  if (!(await d.store.put({ ...rec, gmPid: p.pid }))) {
+  if (!(await d.store.put({ ...rec, gmPid: p.pid, gmSince: nowSec + 1 }))) {
     throw new Error('could not record the new GM');
   }
   return issueMember(d, { room: p.room, pid: p.pid, name, role: 'gm', pubkey: input.pubkey });
