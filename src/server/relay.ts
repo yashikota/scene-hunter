@@ -28,7 +28,12 @@ export function createRelayApi(opts: {
   const doFetch = opts.fetch ?? fetch;
   const base = `${API_BASE}/accounts/${opts.accountId}/moq/relays`;
 
-  async function call(method: string, url: string, body?: unknown): Promise<Response> {
+  async function call(
+    method: string,
+    url: string,
+    body?: unknown,
+    okStatuses: number[] = [],
+  ): Promise<Response> {
     const res = await doFetch(url, {
       method,
       headers: {
@@ -37,7 +42,7 @@ export function createRelayApi(opts: {
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-    if (!res.ok) {
+    if (!res.ok && !okStatuses.includes(res.status)) {
       throw new Error(`Cloudflare MoQ API ${method} failed: HTTP ${res.status}`);
     }
     return res;
@@ -56,7 +61,8 @@ export function createRelayApi(opts: {
       return { uid: json.result.uid, token: publisher.secret };
     },
     async delete(uid) {
-      await call('DELETE', `${base}/${encodeURIComponent(uid)}`);
+      // 404 は既に消えている。再試行で詰まらないよう成功扱いにする。
+      await call('DELETE', `${base}/${encodeURIComponent(uid)}`, undefined, [404]);
     },
     async list() {
       const res = await call('GET', `${base}?per_page=1000`);

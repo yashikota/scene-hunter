@@ -7,7 +7,7 @@ export const POST = defineHandler.withValidator({
   body: v.object({ to: v.string() }),
 })(async (c, { body }) => {
   try {
-    return await transferGm(await roomDeps(c), bearer(c), body.to, c.req.param('code'));
+    return await transferGm(await roomDeps(c), bearer(c), body.to, c.req.param('code') ?? '');
   } catch (e) {
     return errorResponse(c, e);
   }

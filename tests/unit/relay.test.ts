@@ -77,6 +77,17 @@ describe('relay api', () => {
     expect(calls[0].init.method).toBe('DELETE');
   });
 
+  it('delete は 404 を成功扱いにし、500 は失敗にする', async () => {
+    const nf = fakeFetch(404, { success: false });
+    await expect(
+      createRelayApi({ accountId: 'acc', apiToken: 'tok', fetch: nf.f }).delete('gone'),
+    ).resolves.toBeUndefined();
+    const err = fakeFetch(500, { success: false });
+    await expect(
+      createRelayApi({ accountId: 'acc', apiToken: 'tok', fetch: err.f }).delete('u'),
+    ).rejects.toThrow(/500/);
+  });
+
   it('list returns result', async () => {
     const rows = [{ uid: 'u', name: 'n', created: 'c', modified: 'm' }];
     const { f, calls } = fakeFetch(200, { success: true, result: rows });

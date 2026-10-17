@@ -6,7 +6,7 @@ import { issueRoomToken, verifyRoomToken } from '../hmac';
 import type { RoomTokenPayload } from '../hmac';
 import { moqUrl } from '../relay';
 import type { RelayApi } from '../relay';
-import type { createRoomStore } from '../roomStore';
+import type { createRoomStore, RoomRecord } from '../roomStore';
 
 export interface RoomDeps {
   relay: RelayApi;
@@ -79,17 +79,37 @@ async function issueMember(
   return { roomToken, cert };
 }
 
+const ROOM_CODE = /^\d{6}$/;
+
+function checkCode(code: string): void {
+  if (!ROOM_CODE.test(code)) throw new NotFoundError('room not found');
+}
+
+/** トークンを検証し、部屋の記録を返す。GM の操作では、いまの GM 本人であることも確かめる。 */
 async function authorize(
   d: RoomDeps,
   token: string,
   role: Role,
-  code?: string,
-): Promise<RoomTokenPayload> {
+  code: string,
+): Promise<{ payload: RoomTokenPayload; rec: RoomRecord }> {
+  checkCode(code);
   const payload = await verifyRoomToken(d.hmacSecret, token, Math.floor(d.now() / 1000));
   if (!payload) throw new AuthError('invalid token');
   if (payload.role !== role) throw new AuthError(`${role} token required`);
-  if (code !== undefined && payload.room !== code) throw new AuthError('token is for another room');
-  return payload;
+  if (payload.room !== code) throw new AuthError('token is for another room');
+  const rec = await d.store.get(code);
+  if (!rec) throw new NotFoundError('room not found');
+  if (role === 'gm' && payload.pid !== rec.gmPid) throw new AuthError('no longer the GM');
+  return { payload, rec };
+}
+
+/** 作り直しの後始末。失敗しても元の例外を隠さない（cron が後で拾う）。 */
+async function discardRelay(d: RoomDeps, uid: string): Promise<void> {
+  try {
+    await d.relay.delete(uid);
+  } catch (e) {
+    console.error('failed to delete relay', uid, e);
+  }
 }
 
 export async function createRoom(
@@ -104,6 +124,7 @@ export async function createRoom(
   for (let attempt = 0; attempt < MAX_CREATE_ATTEMPTS; attempt++) {
     const code = d.randomCode();
     const relay = await d.relay.create(`sh-${code}`);
+    const pid = d.newId();
     let stored = false;
     try {
       stored = await d.store.put({
@@ -114,13 +135,13 @@ export async function createRoom(
         rounds,
         limitSec,
         createdAt: d.now(),
+        gmPid: pid,
       });
     } finally {
-      if (!stored) await d.relay.delete(relay.uid);
+      if (!stored) await discardRelay(d, relay.uid);
     }
     if (!stored) continue;
 
-    const pid = d.newId();
     const { roomToken, cert } = await issueMember(d, {
       room: code,
       pid,
@@ -147,6 +168,7 @@ export async function joinRoom(
   code: string,
   input: { name: string; pubkey: string },
 ): Promise<Joined | { error: 'not_found' }> {
+  if (!ROOM_CODE.test(code)) return { error: 'not_found' };
   const name = checkName(input.name);
   await checkPubkey(input.pubkey);
   const rec = await d.store.get(code);
@@ -176,10 +198,9 @@ export async function transferGm(
   d: RoomDeps,
   token: string,
   toPid: string,
-  code?: string,
+  code: string,
 ): Promise<TransferCert> {
-  const p = await authorize(d, token, 'gm', code);
-  if (!(await d.store.get(p.room))) throw new NotFoundError('room not found');
+  const { payload: p } = await authorize(d, token, 'gm', code);
   if (toPid === p.pid) throw new RangeError('cannot transfer to self');
   const iat = Math.floor(d.now() / 1000);
   return issueTransfer(d.serverKey, {
@@ -202,25 +223,25 @@ export async function claimGm(
   d: RoomDeps,
   token: string,
   transfer: TransferCert,
-  pubkey: string,
-  code?: string,
+  input: { name: string; pubkey: string },
+  code: string,
 ): Promise<{ roomToken: string; cert: Cert }> {
-  const p = await authorize(d, token, 'player', code);
-  if (!(await d.store.get(p.room))) throw new NotFoundError('room not found');
+  const { payload: p, rec } = await authorize(d, token, 'player', code);
   const nowSec = Math.floor(d.now() / 1000);
   if (!(await verifyTransfer(await serverPublicKey(d.serverKey), transfer, p.room, nowSec))) {
     throw new AuthError('invalid transfer');
   }
   if (transfer.body.to !== p.pid) throw new AuthError('transfer is for another player');
-  await checkPubkey(pubkey);
-  // 参加証の name はサーバーが持っていないので空にする。表示名は join イベントの名前を使う。
-  return issueMember(d, { room: p.room, pid: p.pid, name: '', role: 'gm', pubkey });
+  const name = checkName(input.name);
+  await checkPubkey(input.pubkey);
+  if (!(await d.store.put({ ...rec, gmPid: p.pid }))) {
+    throw new Error('could not record the new GM');
+  }
+  return issueMember(d, { room: p.room, pid: p.pid, name, role: 'gm', pubkey: input.pubkey });
 }
 
-export async function closeRoom(d: RoomDeps, token: string, code?: string): Promise<void> {
-  const p = await authorize(d, token, 'gm', code);
-  const rec = await d.store.get(p.room);
-  if (!rec) throw new NotFoundError('room not found');
+export async function closeRoom(d: RoomDeps, token: string, code: string): Promise<void> {
+  const { payload: p, rec } = await authorize(d, token, 'gm', code);
 
   await d.relay.delete(rec.relayUid);
   const prefix = `rooms/${p.room}/`;

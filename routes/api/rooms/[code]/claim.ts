@@ -15,10 +15,16 @@ const transferSchema = v.object({
 });
 
 export const POST = defineHandler.withValidator({
-  body: v.object({ transfer: transferSchema, pubkey: v.string() }),
+  body: v.object({ transfer: transferSchema, name: v.string(), pubkey: v.string() }),
 })(async (c, { body }) => {
   try {
-    return await claimGm(await roomDeps(c), bearer(c), body.transfer, body.pubkey, c.req.param('code'));
+    return await claimGm(
+      await roomDeps(c),
+      bearer(c),
+      body.transfer,
+      { name: body.name, pubkey: body.pubkey },
+      c.req.param('code') ?? '',
+    );
   } catch (e) {
     return errorResponse(c, e);
   }
