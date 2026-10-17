@@ -6,6 +6,9 @@ import { setLocale } from '../../src/client/paraglide/runtime';
 import { Connecting } from '../../src/client/screens/Connecting';
 import { LobbyGm } from '../../src/client/screens/LobbyGm';
 import { LobbyPlayer } from '../../src/client/screens/LobbyPlayer';
+import { createMemoryHistory, createRouter } from '@tanstack/react-router';
+import { routeTree } from '../../src/client/routeTree.gen';
+import { parseSearch } from '../../src/client/searchParams';
 import { parseCodeParam } from '../../src/client/routes/index';
 import { Top } from '../../src/client/screens/Top';
 import { LOCALE_NAMES, LOCALES } from '../../src/shared/locales';
@@ -119,9 +122,31 @@ describe('?code= で開く', () => {
   it('6 桁の数字以外の code は無視する', () => {
     expect(parseCodeParam('123456')).toBe('123456');
     expect(parseCodeParam('000123')).toBe('000123');
-    for (const bad of ['12345', '1234567', 'abcdef', '12345a', '', ' 123456', undefined, null, ['123456'], {}]) {
+    for (const bad of ['12345', '1234567', 'abcdef', '12345a', '', ' 123456', undefined, null, ['123456'], {}, 100000]) {
       expect(parseCodeParam(bad)).toBeUndefined();
     }
+  });
+});
+
+describe('ルーターの検索文字列から code を読む', () => {
+  const codeFor = async (search: string) => {
+    const router = createRouter({
+      routeTree,
+      parseSearch,
+      history: createMemoryHistory({ initialEntries: [`/${search}`] }),
+    });
+    await router.load();
+    return (router.state.matches.find((x) => x.routeId === '/')?.search as { code?: string }).code;
+  };
+
+  it('?code=123456 は入る', async () => expect(await codeFor('?code=123456')).toBe('123456'));
+  it('?code=000123 は文字列のまま', async () => expect(await codeFor('?code=000123')).toBe('000123'));
+  it('?code=1e5 と ?code=12e4 は無視する', async () => {
+    expect(await codeFor('?code=1e5')).toBeUndefined();
+    expect(await codeFor('?code=12e4')).toBeUndefined();
+  });
+  it('桁が違う、数字でない code は無視する', async () => {
+    for (const c of ['12345', '1234567', 'abcdef', '+12345', '-12345']) expect(await codeFor(`?code=${c}`)).toBeUndefined();
   });
 });
 
@@ -177,10 +202,22 @@ describe('LobbyGm', () => {
   });
 });
 
+const stubClipboard = (clipboard: unknown) =>
+  Object.defineProperty(window.navigator, 'clipboard', { value: clipboard, configurable: true });
+
 describe('LobbyGm のリンクのコピー', () => {
+  afterEach(() => stubClipboard(undefined));
+
+  it('clipboard が無くても、リンクを入れた入力を出す', async () => {
+    stubClipboard(undefined);
+    render(lobbyGm());
+    fireEvent.click(screen.getByRole('button', { name: m.copy_link() }));
+    expect(((await screen.findByRole('textbox')) as HTMLInputElement).value).toBe(`${location.origin}/?code=482913`);
+  });
+
   it('?code= の URL を clipboard に書く', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal('navigator', { ...window.navigator, clipboard: { writeText } });
+    stubClipboard({ writeText });
     render(lobbyGm());
     fireEvent.click(screen.getByRole('button', { name: m.copy_link() }));
     expect(writeText).toHaveBeenCalledWith(`${location.origin}/?code=482913`);
@@ -189,7 +226,7 @@ describe('LobbyGm のリンクのコピー', () => {
 
   it('書けなかったら、リンクを入れた読み取り専用の入力を出す', async () => {
     const writeText = vi.fn().mockRejectedValue(new Error('denied'));
-    vi.stubGlobal('navigator', { ...window.navigator, clipboard: { writeText } });
+    stubClipboard({ writeText });
     render(lobbyGm());
     fireEvent.click(screen.getByRole('button', { name: m.copy_link() }));
     const input = (await screen.findByRole('textbox')) as HTMLInputElement;

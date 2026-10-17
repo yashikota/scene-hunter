@@ -72,17 +72,20 @@ export function LobbyGm({ code, gmName, players, rounds, limitSec, onStart, onTr
 
   const copyLink = () => {
     setCopied(false);
-    navigator.clipboard.writeText(shareLink(code)).then(
-      () => {
+    const showManual = () => {
+      // 許可されない、安全でないページで clipboard が無いなどでコピーできない。リンクを選んだ状態で見せて、手でコピーしてもらう
+      setManual(true);
+      setTimeout(() => linkRef.current?.select(), 0);
+    };
+    try {
+      if (!navigator.clipboard) return showManual();
+      navigator.clipboard.writeText(shareLink(code)).then(() => {
         setManual(false);
         setCopied(true);
-      },
-      () => {
-        // 許可されないなどでコピーできない。リンクを選んだ状態で見せて、手でコピーしてもらう
-        setManual(true);
-        setTimeout(() => linkRef.current?.select(), 0);
-      },
-    );
+      }, showManual);
+    } catch {
+      showManual();
+    }
   };
 
   const transfer = async (pid: string) => {

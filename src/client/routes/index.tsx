@@ -3,14 +3,13 @@ import { Top } from '../screens/Top';
 
 /** ?code= は 6 桁の数字のときだけ使う。それ以外は無いものとして扱う。 */
 export function parseCodeParam(value: unknown): string | undefined {
-  const s = typeof value === 'number' ? String(value).padStart(6, '0') : value;
-  return typeof s === 'string' && /^\d{6}$/.test(s) ? s : undefined;
+  return typeof value === 'string' && /^\d{6}$/.test(value) ? value : undefined;
 }
 
 export const Route = createFileRoute('/')({
   validateSearch: (search: Record<string, unknown>): { code?: string } => {
-    const code = parseCodeParam(search.code);
-    return code ? { code } : {};
+    // code を必ず返す（親の検索文字列の生の値が残らないように、無効なら undefined で上書きする）
+    return { code: parseCodeParam(search.code) };
   },
   component: TopRoute,
 });
