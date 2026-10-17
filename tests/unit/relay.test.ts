@@ -48,6 +48,27 @@ describe('relay api', () => {
     await expect(api.delete('u')).rejects.toThrow(Error);
   });
 
+  it('create throws when no publish token is present', async () => {
+    const noPub = structuredClone(created);
+    noPub.result.issuers[0].cloudflare_tokens.shift();
+    const { f } = fakeFetch(201, noPub);
+    const api = createRelayApi({ accountId: 'acc', apiToken: 'tok', fetch: f });
+    await expect(api.create('x')).rejects.toThrow(/publish token/);
+  });
+
+  it('list throws on 4xx with the status in the message', async () => {
+    const { f } = fakeFetch(401, { success: false });
+    const api = createRelayApi({ accountId: 'acc', apiToken: 'tok', fetch: f });
+    await expect(api.list()).rejects.toThrow(/401/);
+  });
+
+  it('delete encodes the uid', async () => {
+    const { f, calls } = fakeFetch(200, { success: true });
+    const api = createRelayApi({ accountId: 'acc', apiToken: 'tok', fetch: f });
+    await api.delete('a/b?c');
+    expect(calls[0].url.endsWith('/moq/relays/a%2Fb%3Fc')).toBe(true);
+  });
+
   it('delete calls DELETE on the uid', async () => {
     const { f, calls } = fakeFetch(200, { success: true });
     const api = createRelayApi({ accountId: 'acc', apiToken: 'tok', fetch: f });

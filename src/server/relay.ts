@@ -56,7 +56,7 @@ export function createRelayApi(opts: {
       return { uid: json.result.uid, token: publisher.secret };
     },
     async delete(uid) {
-      await call('DELETE', `${base}/${uid}`);
+      await call('DELETE', `${base}/${encodeURIComponent(uid)}`);
     },
     async list() {
       const res = await call('GET', `${base}?per_page=1000`);

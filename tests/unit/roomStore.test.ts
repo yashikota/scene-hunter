@@ -61,4 +61,15 @@ describe('randomRoomCode', () => {
     expect(randomRoomCode(() => 0)).toBe('000000');
     expect(randomRoomCode(() => 0.9999999)).toBe('999999');
   });
+
+  it('default CSPRNG path yields 6 digits', () => {
+    for (let i = 0; i < 200; i++) expect(randomRoomCode()).toMatch(/^\d{6}$/);
+  });
+
+  it('store methods work when destructured', async () => {
+    const { kv } = fakeKv();
+    const { put, get } = createRoomStore(kv);
+    expect(await put(rec())).toBe(true);
+    expect(await get('012345')).toEqual(rec());
+  });
 });
