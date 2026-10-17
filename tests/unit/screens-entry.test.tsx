@@ -362,6 +362,9 @@ describe('LobbyGm', () => {
     expect(screen.getByText('4 人')).toBeTruthy(); // GM を含める
     // 設定の枠ではなく、1 行の固定表示
     expect(screen.getByText('3 ラウンド · 60 秒')).toBeTruthy();
+    // 参加者がいれば、ゲーム中に画面を閉じないよう 1 行だけ伝える
+    expect(screen.getByText('画面を閉じないでね')).toBeTruthy();
+    expect(screen.queryByText(m.start_waiting())).toBeNull();
     // ボタンは開始、交代、解散だけで、ラウンド数と制限時間を変える入力も無い
     expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual([
       m.copy_link(),
@@ -376,6 +379,7 @@ describe('LobbyGm', () => {
 
   it('参加者がいなければ開始できない', () => {
     render(lobbyGm({ players: [] }));
+    expect(screen.getByText(m.start_waiting())).toBeTruthy();
     expect(
       (screen.getByRole('button', { name: m.start_button() }) as HTMLButtonElement).disabled,
     ).toBe(true);

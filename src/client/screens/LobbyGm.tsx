@@ -176,11 +176,10 @@ export function LobbyGm({
       )}
 
       <div className="sh-actions">
-        {active.length === 0 && (
-          <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: 'center' }}>
-            {m.start_waiting()}
-          </p>
-        )}
+        <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: 'center' }}>
+          {/* 参加者がそろったら、ゲーム中に GM の画面を閉じないよう先に伝える */}
+          {active.length === 0 ? m.start_waiting() : m.keep_screen_on()}
+        </p>
         <Button variant="primary" onClick={onStart} disabled={active.length === 0 || transferring}>
           {m.start_button()}
         </Button>

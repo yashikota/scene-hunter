@@ -325,6 +325,7 @@ describe('PlayerTurnGm', () => {
       />,
     );
     expect(screen.getByText('1 / 2 人')).toBeTruthy();
+    expect(screen.getByText('画面を閉じないでね')).toBeTruthy();
     expect(screen.getByText('提出済み')).toBeTruthy();
     expect(screen.getByText('撮影中')).toBeTruthy();
     expect(screen.getByText('d')).toBeTruthy();

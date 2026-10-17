@@ -78,6 +78,9 @@ export function PlayerTurnGm(props: PlayerTurnGmProps) {
             <small> {m.sec_suffix()}</small>
           </span>
         </div>
+        <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: 'center' }}>
+          {m.keep_screen_on()}
+        </p>
       </Card>
 
       <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

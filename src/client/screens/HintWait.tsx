@@ -39,6 +39,11 @@ export function HintWait({
         <h1 className="sh-display" style={{ fontSize: 24, lineHeight: 1.4 }}>
           {m.hint_wait_title()}
         </h1>
+        {gm && (
+          <p className="sh-sub" style={{ margin: 0, fontSize: 13 }}>
+            {m.keep_screen_on()}
+          </p>
+        )}
       </div>
     </Screen>
   );

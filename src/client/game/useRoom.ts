@@ -6,6 +6,7 @@ import * as api from '../api';
 import { createMoqNetConnector, type MoqConnector } from '../moq/session';
 import { uploadPhoto } from '../photo/upload';
 import { switchLocale } from '../ui/locale';
+import { useWakeLock } from '../ui/useWakeLock';
 import type { GmAction, GmState } from './gmMachine';
 import { forgetGm, GmEngine } from './gmEngine';
 import { hintsToResume, requestHintsAction } from './hintRequest';
@@ -225,6 +226,9 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     // gm.view() は gm.state から作るので、gmState が変わったら作り直す
     [gm, gmState, playerView],
   );
+
+  // GM：ゲームの間は画面を消さない（GM の端末が止まると、撮影の時刻とヒントが狂う）。
+  useWakeLock(gmState !== undefined && gmState.phase !== 'lobby' && !gmState.dissolved);
 
   // 部屋の言語を lobby で受け取ったら、画面をその言語にする。
   const roomLocale = view.phase === 'connecting' ? me.locale : view.locale;
