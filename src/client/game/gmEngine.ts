@@ -29,6 +29,17 @@ const RESYNC_MIN_MS = 1000;
 export const PRESENCE_TIMEOUT_MS = 20_000;
 /** away の判定を見直す間隔。 */
 const PRESENCE_CHECK_MS = 1000;
+/**
+ * 前の判定からこれより長く空いたら、GM のタブが止まっていた（画面のロックなど）とみなす。
+ * その間はプレイヤーのメッセージも処理できていないので、全員の最後の時刻を今にし直す。
+ */
+export const PRESENCE_SUSPEND_GAP_MS = 5000;
+/**
+ * away のメッセージは、その人の away を前に切り替えてからこの間隔の間は受け付けない
+ * （away と ping を交互に送って、GM にスナップショットやロビーのイベントを書かせ続けることができないように）。
+ * 戻す方はすぐに受け付ける（再読み込みの直後の join などで待たせない）。切り替えは 1 人につき 2 秒に 1 往復まで。
+ */
+export const PRESENCE_FLIP_MIN_MS = 2000;
 const PLAYER_PREFIX = 'p/';
 
 /** gm/{epoch} の epoch と、イベントとスナップショットそれぞれの最後の seq。GM の状態と一緒に保存する。 */
@@ -101,6 +112,10 @@ export class GmEngine {
   #lastResyncAt = -Infinity;
   /** プレイヤーごとの、最後に検証済みのメッセージを受けた時刻（GM の時計）。保存はしない。 */
   readonly #lastSeen = new Map<string, number>();
+  /** プレイヤーごとの、最後に away を切り替えた時刻。 */
+  readonly #lastFlip = new Map<string, number>();
+  #lastCheckAt?: number;
+  #unlisten?: () => void;
   #stopped = false;
   #closed = false;
 
@@ -158,6 +173,14 @@ export class GmEngine {
       setInterval(() => this.#writeSnapshot(), SNAPSHOT_EVERY_MS),
       setInterval(() => this.#checkPresence(), PRESENCE_CHECK_MS),
     );
+    // タブが見えるようになったら、止まっていた間の分で誰かを away にしないよう数え直す。
+    if (typeof document !== 'undefined') {
+      const onVisible = () => {
+        if (document.visibilityState === 'visible') this.#reseed();
+      };
+      document.addEventListener('visibilitychange', onVisible);
+      this.#unlisten = () => document.removeEventListener('visibilitychange', onVisible);
+    }
   }
 
   dispatch(action: GmAction): void {
@@ -203,6 +226,7 @@ export class GmEngine {
     if (this.#stopped) return;
     this.#stopped = true;
     for (const t of this.#timers.splice(0)) clearInterval(t);
+    this.#unlisten?.();
     this.#listeners.clear();
     const shut = () => {
       this.#closed = true;
@@ -220,13 +244,33 @@ export class GmEngine {
   /** しばらくメッセージの届かない人を away にする。 */
   #checkPresence(): void {
     const now = this.#deps.now();
+    const gap = this.#lastCheckAt === undefined ? 0 : now - this.#lastCheckAt;
+    this.#lastCheckAt = now;
+    // GM のタブが止まっていた。届いていないのは GM の側の事情なので、誰も away にしない。
+    if (gap > PRESENCE_SUSPEND_GAP_MS) return this.#reseed();
     for (const [pid, p] of Object.entries(this.state.players)) {
-      if (p.away) continue;
+      if (p.away || hasLeft(this.state, pid)) continue;
       const seen = this.#lastSeen.get(pid);
       if (seen === undefined) this.#lastSeen.set(pid, now);
       else if (now - seen > PRESENCE_TIMEOUT_MS)
         this.dispatch({ type: 'presence', pid, active: false });
     }
+  }
+
+  /** 全員の最後のメッセージの時刻を今にする。 */
+  #reseed(): void {
+    const now = this.#deps.now();
+    this.#lastCheckAt = now;
+    for (const pid of Object.keys(this.state.players)) this.#lastSeen.set(pid, now);
+  }
+
+  /** プレイヤーのメッセージによる away の切り替え。away にするのは前の切り替えから PRESENCE_FLIP_MIN_MS 後から。 */
+  #flip(pid: string, active: boolean, at: number): void {
+    const p = Object.hasOwn(this.state.players, pid) ? this.state.players[pid] : undefined;
+    if (!p || !p.away === active) return;
+    if (!active && at - (this.#lastFlip.get(pid) ?? -Infinity) < PRESENCE_FLIP_MIN_MS) return;
+    this.#lastFlip.set(pid, at);
+    this.dispatch({ type: 'presence', pid, active });
   }
 
   #onPlayer(e: PlayerEvent): void {
@@ -243,9 +287,9 @@ export class GmEngine {
       this.#inbox?.remove(e.pid);
       return;
     }
-    if (e.type === 'away') return this.dispatch({ type: 'presence', pid: e.pid, active: false });
+    if (e.type === 'away') return this.#flip(e.pid, false, at);
     // away だった人は、何か届いた時点で戻す（提出などの処理より先に。away でなければ何も起きない）。
-    this.dispatch({ type: 'presence', pid: e.pid, active: true });
+    this.#flip(e.pid, true, at);
     switch (e.type) {
       case 'ping':
         return;

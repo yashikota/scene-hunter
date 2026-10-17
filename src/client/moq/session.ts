@@ -39,6 +39,12 @@ export interface FrameWriter {
   write(bytes: Uint8Array): void;
   /** 1 グループ 1 フレームで書く。開いていたグループは閉じる。 */
   snapshot(bytes: Uint8Array): void;
+  /**
+   * 開いているグループを閉じる。次の write は新しいグループに書く。
+   * 新しく購読した人には最新のグループしか届かないので、グループが際限なく伸びないよう区切るのに使う
+   * （グループはリクエストではないので、リクエストの予算は使わない）。
+   */
+  rotate(): void;
 }
 
 export interface SubscribeOptions {
@@ -108,7 +114,7 @@ export class MoqSession {
   }
 
   publish(path: string, track: string): FrameWriter {
-    if (this.#closed) return { write: () => {}, snapshot: () => {} };
+    if (this.#closed) return { write: () => {}, snapshot: () => {}, rotate: () => {} };
     const pub: Pub = { path, track, pending: [] };
     this.#pubs.push(pub);
     if (this.#ready()) this.#attachPub(pub);
@@ -121,6 +127,10 @@ export class MoqSession {
       snapshot: (bytes) => {
         pub.lastSnapshot = bytes;
         if (pub.writer) writeSnapshot(pub, bytes);
+      },
+      rotate: () => {
+        pub.group?.close();
+        pub.group = undefined;
       },
     };
   }

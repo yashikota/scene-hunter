@@ -1,15 +1,17 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
-import { GmEngine, PRESENCE_TIMEOUT_MS } from '../../src/client/game/gmEngine';
+import { GmEngine, PRESENCE_FLIP_MIN_MS } from '../../src/client/game/gmEngine';
 import { claimUntilDone, loadMe, rejoinUntilDone, type Me } from '../../src/client/game/membership';
 import {
   PlayerEngine,
+  GROUP_MAX_FRAMES,
   REJOIN_AFTER_MS,
+  SEQ_BLOCK,
   TRANSFER_GRACE_MS,
 } from '../../src/client/game/playerEngine';
 import { newGameId } from '../../src/client/game/useRoom';
 import { issueCert, issueTransfer, type Cert } from '../../src/shared/cert';
-import { FakeRelay } from './fakeMoq';
+import { FakeRelay, flush } from './fakeMoq';
 import { makeIdentities, ROOM } from './moqKeys';
 import { encodeFrame } from '../../src/client/game/wire';
 import { seal } from '../../src/shared/envelope';
@@ -122,7 +124,7 @@ describe('GM とプレイヤー（偽の Relay）', () => {
     await vi.waitFor(() => expect(p.view.phase).toBe('lobby'));
     await vi.waitFor(() => expect(p.view.players.map((x) => x.pid)).toEqual(['alice']));
     expect(p.gmName()).toBe('gm');
-    expect(saved).toEqual([1]); // join で seq 0 を使った
+    expect(saved).toEqual([SEQ_BLOCK]); // join で seq 0 を使い、SEQ_BLOCK 個先まで確保した
     p.close();
     gm.close();
   });
@@ -147,14 +149,16 @@ describe('GM とプレイヤー（偽の Relay）', () => {
   });
 
   it('GM のイベントはスナップショットの lastEventSeq と揃い、取りこぼしが無ければ resync を送らない', async () => {
-    const { startGm, startPlayer } = await setup();
+    const { relay, startGm, startPlayer } = await setup();
     const gm = startGm();
-    const { p, saved } = startPlayer();
+    const { p } = startPlayer();
     await vi.waitFor(() => expect(p.view.players).toHaveLength(1));
     gm.dispatch({ type: 'start', gameId: 'g1' });
     await vi.waitFor(() => expect(p.view.phase).toBe('gmTurn'));
     expect(p.view.lastSeq).toBe(read(`sh:gmlink:${ROOM}`).eventSeq);
-    expect(saved).toEqual([1]); // join だけ
+    // 送ったのは join だけ（resync は無い）
+    const sent = relay.tracks.get('p/alice#events')!.groups.flat();
+    expect(sent).toHaveLength(1);
     p.close();
     gm.close();
   });
@@ -579,7 +583,7 @@ describe('部屋を出る、通信が切れる（偽の Relay）', () => {
     gm.close();
   });
 
-  it('20 秒メッセージが無い人は away、何か届けば戻る。タブを閉じる（pagehide）とすぐ away', async () => {
+  it('タブを閉じる（pagehide）とすぐ away になり、次のメッセージで戻る', async () => {
     const keys = await makeIdentities();
     const relay = new FakeRelay();
     const gmId = await keys.mk('gm', 'gm');
@@ -603,20 +607,272 @@ describe('部屋を出る、通信が切れる（偽の Relay）', () => {
     });
     p.start();
     await vi.waitFor(() => expect(p.view.players).toHaveLength(1));
-    clock += PRESENCE_TIMEOUT_MS - 1000;
-    await new Promise((r) => setTimeout(r, 1200));
-    expect(gm.state.players.alice.away).toBeFalsy();
-    clock += 2000;
-    await vi.waitFor(() => expect(gm.state.players.alice.away).toBe(true), { timeout: 2000 });
+    window.dispatchEvent(new Event('pagehide'));
+    await vi.waitFor(() => expect(gm.state.players.alice.away).toBe(true));
     await vi.waitFor(() => expect(p.view.players[0].away).toBe(true));
-
     p.send({ type: 'ping' });
     await vi.waitFor(() => expect(gm.state.players.alice.away).toBe(false));
     await vi.waitFor(() => expect(p.view.players[0].away).toBe(false));
-
-    window.dispatchEvent(new Event('pagehide'));
-    await vi.waitFor(() => expect(gm.state.players.alice.away).toBe(true));
     p.close();
     gm.close();
-  }, 10_000);
+  });
+});
+
+describe('away の判定（偽の時計）', () => {
+  /** GM と、手で書く alice の Track。setInterval と Date だけを偽にする（暗号と偽の Relay は本物の非同期で動く）。 */
+  async function presenceSetup() {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    const keys = await makeIdentities();
+    const relay = new FakeRelay();
+    const gmId = await keys.mk('gm', 'gm');
+    const aliceId = await keys.mk('alice', 'player');
+    const gm = new GmEngine(meOf(gmId, 'gm'), {
+      connector: relay.connector,
+      verifier: keys.verifier(),
+      privateKey: gmId.kp.privateKey,
+      now: () => Date.now(),
+    });
+    gm.start();
+    await vi.waitFor(() => expect(relay.connections.some((c) => c.listeners.size > 0)).toBe(true));
+    const out = relay.connect();
+    const track = out.publish('p/alice', 'events').appendGroup();
+    let seq = 0;
+    const send = async (type: string, extra: Record<string, unknown> = {}) =>
+      track.writeFrame(
+        encodeFrame(
+          await seal(
+            { pid: 'alice', seq: seq++, type, ...extra },
+            aliceId.kp.privateKey,
+            aliceId.cert,
+          ),
+        ),
+      );
+    await send('join', { name: 'alice' });
+    await vi.waitFor(() => expect(gm.state.players.alice).toBeDefined());
+    /** 1 秒ずつ n 回、時計とタイマーを進める。 */
+    const step = async (n: number) => {
+      for (let i = 0; i < n; i++) {
+        vi.advanceTimersByTime(1000);
+        await flush();
+      }
+    };
+    const away = () => gm.state.players.alice?.away === true;
+    const done = () => {
+      out.close();
+      gm.close();
+    };
+    return { gm, send, step, away, done };
+  }
+
+  it('20 秒メッセージが無い人は away、何か届けば戻る', async () => {
+    const { send, step, away, done } = await presenceSetup();
+    await step(20);
+    expect(away()).toBe(false);
+    await step(2);
+    expect(away()).toBe(true);
+    await send('ping');
+    await vi.waitFor(() => expect(away()).toBe(false));
+    // ping が続いていれば away にならない
+    for (let i = 0; i < 6; i++) {
+      await step(5);
+      await send('ping');
+    }
+    await vi.waitFor(() => expect(away()).toBe(false));
+    done();
+  });
+
+  it('本人が署名した本物のフレームでも、seq が増えていなければ（流し直し）捨てる', async () => {
+    const { gm, send, step, away, done } = await presenceSetup();
+    const seen: boolean[] = [];
+    const off = gm.subscribe(() => seen.push(away()));
+    await send('ping'); // seq 1
+    await send('away', { seq: 1 }); // 同じ seq の流し直し
+    await send('away', { seq: 0 }); // 古い seq
+    await step(1);
+    // 届いた順に処理するので、後に送った本物の leave が効いた時点で、流し直しは処理済み
+    await send('leave');
+    await vi.waitFor(() => expect(gm.state.left).toEqual(['alice']));
+    expect(seen).not.toContain(true);
+    off();
+    done();
+  });
+
+  it('GM のタブが止まっていた（判定の間隔が 5 秒より空いた）ときは、誰も away にせず数え直す', async () => {
+    const { step, away, done } = await presenceSetup();
+    await step(10);
+    // 30 秒止まっていた（その間タイマーは動かない）
+    vi.setSystemTime(Date.now() + 30_000);
+    await step(1);
+    expect(away()).toBe(false);
+    // 数え直した時刻から 20 秒で away になる
+    await step(19);
+    expect(away()).toBe(false);
+    await step(2);
+    expect(away()).toBe(true);
+    done();
+  });
+
+  it('タブが見えるようになったら数え直す', async () => {
+    const { step, away, done } = await presenceSetup();
+    await step(15);
+    document.dispatchEvent(new Event('visibilitychange'));
+    await step(15);
+    expect(away()).toBe(false);
+    await step(7);
+    expect(away()).toBe(true);
+    done();
+  });
+
+  it('away と ping を繰り返しても、切り替えは 1 人につき 2 秒に 1 往復まで', async () => {
+    const { gm, send, step, away, done } = await presenceSetup();
+    const flips: boolean[] = [];
+    const off = gm.subscribe(() => flips.push(away()));
+    await send('away');
+    await send('ping'); // 戻すのはすぐ
+    await send('away'); // 前の切り替えから 2 秒たっていないので受け付けない
+    await send('ping');
+    await send('away');
+    await vi.waitFor(() => expect(flips).toEqual([true, false]));
+    await new Promise((r) => setTimeout(r, 100)); // 残りの away と ping が処理されるのを待つ
+    expect(flips).toEqual([true, false]);
+    await step(PRESENCE_FLIP_MIN_MS / 1000);
+    await send('away'); // 2 秒たったので受け付ける
+    await vi.waitFor(() => expect(away()).toBe(true));
+    await send('ping');
+    await vi.waitFor(() => expect(away()).toBe(false));
+    expect(flips).toEqual([true, false, true, false]);
+    off();
+    done();
+  });
+});
+
+describe('プレイヤーの Track のグループと seq（偽の Relay）', () => {
+  async function playerSetup(seq = 0) {
+    const keys = await makeIdentities();
+    const relay = new FakeRelay();
+    const gmId = await keys.mk('gm', 'gm');
+    const aliceId = await keys.mk('alice', 'player');
+    const gm = new GmEngine(meOf(gmId, 'gm'), {
+      connector: relay.connector,
+      verifier: keys.verifier(),
+      privateKey: gmId.kp.privateKey,
+      now: () => Date.now(),
+    });
+    gm.start();
+    let clock = Date.now();
+    const saved: number[] = [];
+    const mk = (from: number) =>
+      new PlayerEngine(meOf(aliceId, 'player', from), {
+        connector: relay.connector,
+        verifier: keys.verifier(),
+        privateKey: aliceId.kp.privateKey,
+        serverPub: keys.serverPub,
+        now: () => clock,
+        saveSeq: (n) => saved.push(n),
+        onTransferToMe: () => {},
+      });
+    const p = mk(seq);
+    p.start();
+    await vi.waitFor(() => expect(gm.state.players.alice).toBeDefined());
+    const groups = () => relay.tracks.get('p/alice#events')?.groups ?? [];
+    const decode = (b: Uint8Array) =>
+      JSON.parse(new TextDecoder().decode(b)).body as { type: string; seq: number };
+    return {
+      gm,
+      p,
+      mk,
+      relay,
+      saved,
+      groups,
+      decode,
+      tick: (ms: number) => (clock += ms),
+    };
+  }
+
+  it(`${GROUP_MAX_FRAMES} フレームごとに新しいグループを join から始め、GM は区切りをまたいでも受け続ける`, async () => {
+    const { gm, p, relay, groups, decode } = await playerSetup();
+    for (let i = 0; i < 30; i++) p.send({ type: 'ping' });
+    p.send({ type: 'away' });
+    await p.flush();
+    const gs = groups();
+    expect(gs.length).toBeGreaterThanOrEqual(3);
+    for (const g of gs) expect(g.length).toBeLessThanOrEqual(GROUP_MAX_FRAMES);
+    for (const g of gs.slice(1)) expect(decode(g[0]).type).toBe('join');
+    // seq は区切りをまたいで 1 ずつ増え続ける
+    const seqs = gs.flat().map((b) => decode(b).seq);
+    expect(seqs).toEqual(seqs.map((_, i) => i));
+    // 最後の away が届いた（区切りの後も、送り手ごとの seq で捨てられていない）
+    await vi.waitFor(() => expect(gm.state.players.alice.away).toBe(true));
+
+    // 後から購読した人には最新のグループだけが届き、それは join から始まる
+    const late: string[] = [];
+    const conn = relay.connect();
+    conn.subscribe(
+      'p/alice',
+      'events',
+      { announced: false },
+      {
+        frame: (b) => late.push(decode(b).type),
+        end: () => {},
+      },
+    );
+    await flush();
+    expect(late[0]).toBe('join');
+    expect(late.length).toBeLessThanOrEqual(GROUP_MAX_FRAMES);
+    conn.close();
+    p.close();
+    gm.close();
+  });
+
+  it('60 秒たったら、フレームが少なくても新しいグループにする', async () => {
+    const { gm, p, groups, decode, tick } = await playerSetup();
+    p.send({ type: 'ping' });
+    tick(59_000);
+    p.send({ type: 'ping' });
+    await p.flush();
+    expect(groups()).toHaveLength(1);
+    tick(1_000);
+    p.send({ type: 'ping' });
+    await p.flush();
+    expect(groups()).toHaveLength(2);
+    expect(groups()[1].map((b) => decode(b).type)).toEqual(['join', 'ping']);
+    p.close();
+    gm.close();
+  });
+
+  it(`seq は ${SEQ_BLOCK} 個ずつ確保して保存し、再読み込みしても使った seq を使い直さない`, async () => {
+    const { gm, p, mk, saved, groups, decode } = await playerSetup();
+    for (let i = 0; i < 40; i++) p.send({ type: 'ping' });
+    await p.flush();
+    // join（seq 0）と ping 40 回（ほかに区切りの join）。保存は確保のときだけ
+    const used = Math.max(
+      ...groups()
+        .flat()
+        .map((b) => decode(b).seq),
+    );
+    expect(saved).toEqual([SEQ_BLOCK, 2 * SEQ_BLOCK]);
+    expect(used).toBeLessThan(saved.at(-1)!);
+    p.close();
+
+    // 再読み込み：保存した値から数える。GM は捨てずに受け取る
+    const again = mk(saved.at(-1)!);
+    again.start();
+    again.send({ type: 'away' });
+    await vi.waitFor(() => expect(gm.state.players.alice.away).toBe(true));
+    again.close();
+    gm.close();
+  });
+
+  it('pagehide では使った分までを保存し直す', async () => {
+    const { p, saved, gm } = await playerSetup();
+    p.send({ type: 'ping' });
+    window.dispatchEvent(new Event('pagehide'));
+    // join, ping, away で 3 つ使った
+    expect(saved).toEqual([SEQ_BLOCK, 3]);
+    // その後に送るときは確保し直す
+    p.send({ type: 'ping' });
+    expect(saved).toEqual([SEQ_BLOCK, 3, 3 + SEQ_BLOCK]);
+    p.close();
+    gm.close();
+  });
 });

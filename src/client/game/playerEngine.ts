@@ -31,6 +31,18 @@ export const REJOIN_MAX_MS = 60_000;
 export const TRANSFER_GRACE_MS = 45_000;
 /** 生きている知らせ（ping）を送る間隔。GM は PRESENCE_TIMEOUT_MS（20 秒）届かなければ away にする。 */
 export const PING_EVERY_MS = 5000;
+/**
+ * p/{pid} の events は、このフレーム数かこの時間で新しいグループに切り替える。
+ * 新しく購読した GM（再読み込み、交代、張り直し）には最新のグループがまるごと届き、1 フレームずつ署名を確かめるので、
+ * 1 つのグループを伸ばし続けないようにする。新しいグループは join から始め、それだけで GM の一覧に載れるようにする。
+ */
+export const GROUP_MAX_FRAMES = 12;
+export const GROUP_MAX_MS = 60_000;
+/**
+ * seq は先にこの数だけ確保して保存する（ping のたびに保存しない）。再読み込みすると確保した分の先から数えるので、
+ * 使った seq を使い直すことは無い（GM は seq が増えていないメッセージを捨てる）。飛んだ分は害が無い。
+ */
+export const SEQ_BLOCK = 32;
 
 export interface PlayerEngineDeps {
   connector: MoqConnector;
@@ -61,6 +73,11 @@ export class PlayerEngine {
   readonly #deps: PlayerEngineDeps;
   readonly #listeners = new Set<() => void>();
   #seq: number;
+  /** 保存済みの seq の上限（これ未満なら保存せずに使える）。 */
+  #seqReserved: number;
+  /** いまのグループに書いたフレームの数と、グループを始めた時刻。 */
+  #groupFrames = 0;
+  #groupStartedAt = 0;
   #pubSession?: MoqSession;
   #writer?: FrameWriter;
   #followSession?: MoqSession;
@@ -82,6 +99,7 @@ export class PlayerEngine {
     this.#me = me;
     this.#deps = deps;
     this.#seq = me.seq;
+    this.#seqReserved = me.seq;
   }
 
   start(): void {
@@ -111,7 +129,13 @@ export class PlayerEngine {
     // タブを閉じる（かもしれない）ときは away を送る。再読み込みでも起きるので leave にはしない
     // （再読み込みした後の join で GM は away を解く）。届かなくても ping が途切れて away になる。
     if (typeof window !== 'undefined') {
-      const hide = () => this.send({ type: 'away' });
+      const hide = () => {
+        this.send({ type: 'away' });
+        // 閉じるかもしれないので、確保した分ではなく使った分だけを保存し直す（再読み込みでの飛びを小さくする）。
+        // bfcache から戻って続けるときは、次に送るときに確保し直す。
+        this.#seqReserved = this.#seq;
+        this.#deps.saveSeq(this.#seq);
+      };
       const show = (e: PageTransitionEvent) => {
         if (e.persisted) this.send({ type: 'ping' });
       };
@@ -126,16 +150,42 @@ export class PlayerEngine {
 
   send(body: PlayerEventBody): void {
     if (this.#stopped) return;
+    const now = this.#deps.now();
+    if (
+      this.#groupFrames >= GROUP_MAX_FRAMES ||
+      (this.#groupFrames > 0 && now - this.#groupStartedAt >= GROUP_MAX_MS)
+    ) {
+      // 書く順は送った順（1 本の鎖）なので、区切りも同じ鎖に入れる。
+      this.#groupFrames = 0;
+      this.#enqueue(() => this.#writer?.rotate());
+      if (body.type !== 'join') this.#write({ type: 'join', name: this.#me.name }, now);
+    }
+    this.#write(body, now);
+  }
+
+  #write(body: PlayerEventBody, now: number): void {
+    if (this.#groupFrames === 0) this.#groupStartedAt = now;
+    this.#groupFrames++;
     const seq = this.#seq++;
-    this.#deps.saveSeq(this.#seq);
+    if (this.#seq > this.#seqReserved) {
+      this.#seqReserved = this.#seq - 1 + SEQ_BLOCK;
+      this.#deps.saveSeq(this.#seqReserved);
+    }
     const env = { ...body, pid: this.#me.pid, seq };
     const { privateKey } = this.#deps;
     const cert = this.#me.cert;
     // 参加証は毎回付ける（GM がどのメッセージから受け始めても検証できるように）。
+    this.#enqueue(async () => {
+      const bytes = encodeFrame(await seal(env, privateKey, cert));
+      if (!this.#closed) this.#writer?.write(bytes);
+    });
+  }
+
+  #enqueue(job: () => void | Promise<void>): void {
     this.#queue = this.#queue
       .then(async () => {
         if (this.#closed) return;
-        this.#writer?.write(encodeFrame(await seal(env, privateKey, cert)));
+        await job();
       })
       .catch((err: unknown) => console.error('メッセージを送れなかった', err));
   }
@@ -188,6 +238,8 @@ export class PlayerEngine {
     const session = new MoqSession(this.#me.moqUrl, this.#deps.connector);
     this.#pubSession = session;
     this.#writer = session.publish(playerPath(this.#me.pid), EVENTS_TRACK);
+    // 新しい Track は最初のフレームで新しいグループを開く
+    this.#groupFrames = 0;
     keepStarting(session, () => this.#closed || this.#pubSession !== session);
     this.send({ type: 'join', name: this.#me.name });
   }
