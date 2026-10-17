@@ -85,43 +85,59 @@ async function playRound(gm: Person, players: Person[], round: number): Promise<
     .click();
 }
 
-test('ゲームの途中でタブを閉じた人は待たず、残りの全員が出せばターンは時間前に終わる', async ({
-  browser,
-}) => {
-  const gm = await newPerson(browser, 'ジーエム');
-  const alice = await newPerson(browser, 'アリス');
-  const bob = await newPerson(browser, 'ボブ');
-  const carol = await newPerson(browser, 'キャロル');
-  const players = [alice, bob];
-  try {
-    const code = await createRoom(gm);
-    for (const p of [alice, bob, carol]) await joinByCode(p, code);
-    await expectLobbyCount(gm, 4);
-    await gm.page.getByRole('button', { name: 'ゲームを始める' }).click();
+// 抜け方は 2 通り：タブを閉じる（pagehide で away が届く）と、黙って途切れる（ping が止まり、GM が 20 秒で away にする）。
+const drops: { name: string; drop(p: Person): Promise<void> }[] = [
+  { name: 'タブを閉じた', drop: (p) => p.page.close({ runBeforeUnload: true }) },
+  {
+    name: '通信が黙って途切れた',
+    // 接続は残したまま、ページのタイマー（ping など）をすべて止める
+    drop: (p) =>
+      p.page.evaluate(() => {
+        const last = setInterval(() => {}, 1e9) as unknown as number;
+        for (let id = 0; id <= last; id++) clearInterval(id);
+      }),
+  },
+];
 
-    const shoot = gm.page.getByRole('button', { name: 'この場で撮影する' });
-    await expect(shoot).toBeEnabled();
-    await shoot.click();
-    await expect(carol.page.getByText('e2e hint 1', { exact: false })).toBeVisible();
-    const turnStart = Date.now();
+for (const { name, drop } of drops) {
+  test(`ゲームの途中で${name}人は待たず、残りの全員が出せばターンは時間前に終わる`, async ({
+    browser,
+  }) => {
+    const gm = await newPerson(browser, 'ジーエム');
+    const alice = await newPerson(browser, 'アリス');
+    const bob = await newPerson(browser, 'ボブ');
+    const carol = await newPerson(browser, 'キャロル');
+    const players = [alice, bob];
+    try {
+      const code = await createRoom(gm);
+      for (const p of [alice, bob, carol]) await joinByCode(p, code);
+      await expectLobbyCount(gm, 4);
+      await gm.page.getByRole('button', { name: 'ゲームを始める' }).click();
 
-    // キャロルはプレイヤーのターンの途中でタブを閉じる
-    await carol.page.close({ runBeforeUnload: true });
+      const shoot = gm.page.getByRole('button', { name: 'この場で撮影する' });
+      await expect(shoot).toBeEnabled();
+      await shoot.click();
+      await expect(carol.page.getByText('e2e hint 1', { exact: false })).toBeVisible();
+      const turnStart = Date.now();
 
-    for (const p of players) {
-      const shutter = p.page.getByRole('button', { name: '撮影して提出' });
-      await expect(shutter).toBeEnabled();
-      await shutter.click();
-      await expect(shutter).toBeHidden();
+      // キャロルはプレイヤーのターンの途中で抜ける
+      await drop(carol);
+
+      for (const p of players) {
+        const shutter = p.page.getByRole('button', { name: '撮影して提出' });
+        await expect(shutter).toBeEnabled();
+        await shutter.click();
+        await expect(shutter).toBeHidden();
+      }
+      // GM の一覧ではキャロルが「通信なし」になり、残りの 2 人が出したので時間（60 秒）を待たずに選ぶ画面へ
+      await expect(gm.page.getByText('お題に近い順に 3 枚選ぶ')).toBeVisible({ timeout: 40_000 });
+      expect(Date.now() - turnStart).toBeLessThan(55_000);
+      await expect(gm.page.locator('button[aria-pressed]')).toHaveCount(players.length);
+      // 出さなかった人の枠にもキャロルは出ない
+      await expect(gm.page.getByText('キャロル')).toHaveCount(0);
+      for (const p of players) await expect(p.page.getByText('みんなの写真')).toBeVisible();
+    } finally {
+      await closeAll([gm, alice, bob, carol]);
     }
-    // GM の一覧ではキャロルが「通信なし」になり、残りの 2 人が出したので時間（60 秒）を待たずに選ぶ画面へ
-    await expect(gm.page.getByText('お題に近い順に 3 枚選ぶ')).toBeVisible({ timeout: 40_000 });
-    expect(Date.now() - turnStart).toBeLessThan(55_000);
-    await expect(gm.page.locator('button[aria-pressed]')).toHaveCount(players.length);
-    // 出さなかった人の枠にもキャロルは出ない
-    await expect(gm.page.getByText('キャロル')).toHaveCount(0);
-    for (const p of players) await expect(p.page.getByText('みんなの写真')).toBeVisible();
-  } finally {
-    await closeAll([gm, alice, bob, carol]);
-  }
-});
+  });
+}
