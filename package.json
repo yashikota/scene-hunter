@@ -2,7 +2,6 @@
   "name": "scene-hunter",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@12.10.1",
   "scripts": {
     "dev": "vp dev",
     "build": "vp build",
@@ -38,5 +37,6 @@
     "vite": "npm:@voidzero-dev/vite-plus-core@^1.3.0",
     "vite-plus": "^1.3.0",
     "void": "^1.1.11"
-  }
+  },
+  "packageManager": "pnpm@12.10.1"
 }
