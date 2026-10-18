@@ -139,25 +139,7 @@ function TopForm({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-        <div
-          className="sh-icon-tile"
-          style={{ width: 96, height: 96, background: "var(--color-accent)", borderRadius: 24 }}
-        >
-          <svg
-            width="52"
-            height="52"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
-            <circle cx="12" cy="13" r="3.5" />
-          </svg>
-        </div>
+        <img src="/icon-192.png" alt="" width={112} height={112} />
         <h1 className="sh-display sh-brand" style={{ fontSize: 34, letterSpacing: "0.02em" }}>
           {m.app_name()}
         </h1>
