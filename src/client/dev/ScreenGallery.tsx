@@ -291,6 +291,35 @@ export const ENTRIES: Entry[] = [
     ),
   },
   {
+    id: "results-pick-none",
+    render: () => (
+      <ResultsPick
+        round={2}
+        rounds={3}
+        gmPhotoUrl={photo(200)}
+        photos={[]}
+        missing={["そうた", "はるか"]}
+        picks={[]}
+        onToggle={noop}
+        onConfirm={noop}
+      />
+    ),
+  },
+  {
+    id: "results-wait-none",
+    render: () => (
+      <ResultsWait
+        code={CODE}
+        round={2}
+        rounds={3}
+        gmName="ゆうき"
+        gmPhotoUrl={photo(200)}
+        photos={[]}
+        mePid="p1"
+      />
+    ),
+  },
+  {
     id: "results-wait",
     render: () => (
       <ResultsWait

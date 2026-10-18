@@ -350,12 +350,43 @@ body {
   color: var(--color-timer);
   flex-shrink: 0;
 }
-.sh-hint-body {
-  flex-grow: 1;
-  min-width: 0;
+.sh-hint-area {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
+/* ヒントの公開の 1 本のバー。10 秒ごとの目盛りと、その下に秒数を置く。 */
+.sh-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sh-timeline .sh-bar {
+  position: relative;
+}
+.sh-bar-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--color-ink);
+}
+.sh-timeline-labels {
+  position: relative;
+  height: 14px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 14px;
+  color: var(--color-sub);
+}
+.sh-timeline-labels span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+}
+.sh-timeline-labels span:last-child {
+  transform: translateX(-100%);
 }
 .sh-hint-preview {
   font-weight: 500;
@@ -468,6 +499,12 @@ body {
 }
 
 /* 画面の主の操作。一覧が長くて画面が伸びても、親指の届く下端に残す。 */
+/* 撮った写真の確認：やり直し（狭く）と決定（広く）を横に並べる。 */
+.sh-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 10px;
+}
 .sh-actions {
   margin-top: auto;
   position: sticky;
@@ -523,4 +560,10 @@ body {
   box-shadow: var(--shadow);
   padding: 4px 14px;
   white-space: nowrap;
+}
+
+/* タイトルのロゴ。言語ごとの見出しのフォントに合わせず、どの言語でも同じ見た目にする。 */
+.sh-brand {
+  font-family: "Mochiy Pop One", var(--font-display), sans-serif;
+  font-weight: 400;
 }

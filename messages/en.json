@@ -88,8 +88,7 @@
   "hint_error_body": "The AI did not respond",
   "hint_retry": "Try again",
   "hint_dissolve": "Dissolve the game",
-  "shutter_button": "Take photo and submit",
-  "no_retake": "No retakes",
+  "shutter_button": "Take photo",
   "sent_title": "Submitted",
   "time_left": "{count} s left",
   "everyone_submitted": "Submissions",
@@ -100,7 +99,6 @@
   "camera_retry": "Try again",
   "photo_taking": "Players are shooting",
   "hints_heading": "Hints",
-  "hint_bar_label": "Hint {n}",
   "submissions_heading": "Submissions",
   "status_submitted": "Submitted",
   "status_shooting": "Shooting",
@@ -144,5 +142,12 @@
   "disconnected_you": "You so far",
   "rank_points": "Rank {rank} ・ {points} pts",
   "keep_screen_on": "Keep this screen open",
-  "reconnecting": "Reconnecting…"
+  "reconnecting": "Reconnecting…",
+  "submit_photo": "Submit this photo",
+  "use_topic_photo": "Use as the topic",
+  "retake": "Retake",
+  "repick": "Choose another",
+  "hint_timeline_label": "Until the next hint",
+  "no_submissions": "Nobody submitted a photo",
+  "to_results_button": "See results"
 }

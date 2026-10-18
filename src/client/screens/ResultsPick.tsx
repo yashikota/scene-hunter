@@ -44,20 +44,28 @@ export function ResultsPick({
 }: ResultsPickProps) {
   const need = photos ? picksNeeded(photos) : MAX_PICKS;
   const left = need - picks.length;
+  // 誰も出さなかったラウンドは選ぶものが無いので、選ぶ説明の代わりにエラーを出して結果へ進ませる。
+  const none = photos !== null && photos.length === 0;
   return (
     <Screen>
       <TopBar
         left={m.round_label({ round, rounds })}
         right={<span className="sh-badge">{m.you_are_gm()}</span>}
       />
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <h1 className="sh-display" style={{ fontSize: 22 }}>
-          {m.results_pick_title()}
-        </h1>
-        <p className="sh-sub" style={{ margin: 0, fontSize: 13 }}>
-          {m.results_pick_hint()}
+      {none ? (
+        <p role="alert" className="sh-error">
+          {m.no_submissions()}
         </p>
-      </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <h1 className="sh-display" style={{ fontSize: 22 }}>
+            {m.results_pick_title()}
+          </h1>
+          <p className="sh-sub" style={{ margin: 0, fontSize: 13 }}>
+            {m.results_pick_hint()}
+          </p>
+        </div>
+      )}
       <TopicCard url={gmPhotoUrl} />
       {photos === null ? (
         <Collecting text={m.results_checking()} />
@@ -164,7 +172,11 @@ export function ResultsPick({
       )}
       <div className="sh-actions">
         <Button variant="primary" disabled={photos === null || left > 0} onClick={onConfirm}>
-          {left > 0 ? m.pick_need_more({ count: left }) : m.pick_confirm()}
+          {left > 0
+            ? m.pick_need_more({ count: left })
+            : need === 0
+              ? m.to_results_button()
+              : m.pick_confirm()}
         </Button>
       </div>
     </Screen>

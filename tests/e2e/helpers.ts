@@ -62,3 +62,22 @@ export async function joinByLink(p: Person, code: string): Promise<void> {
 export async function expectLobbyCount(gm: Person, n: number): Promise<void> {
   await expect(gm.page.getByText(`${n} 人`, { exact: true })).toBeVisible();
 }
+
+/** GM：偽のカメラでお題を撮り、確かめてお題にする。 */
+export async function gmShoot(gm: Person): Promise<void> {
+  const shoot = gm.page.getByRole("button", { name: "この場で撮影する" });
+  await expect(shoot).toBeEnabled();
+  await shoot.click();
+  await gm.page.getByRole("button", { name: "この写真をお題にする" }).click();
+}
+
+/** プレイヤー：撮って、確かめて提出する。撮影の画面を離れるまで待つ。 */
+export async function playerSubmit(p: Person): Promise<void> {
+  const shutter = p.page.getByRole("button", { name: "撮影する", exact: true });
+  await expect(shutter).toBeEnabled();
+  await shutter.click();
+  const submit = p.page.getByRole("button", { name: "この写真で提出" });
+  await submit.click();
+  // 最後の 1 人は「提出しました」を飛ばして写真の一覧に進むので、確認の画面を離れたことだけを確かめる
+  await expect(submit).toBeHidden();
+}

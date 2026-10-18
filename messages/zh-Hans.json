@@ -70,8 +70,7 @@
   "hint_error_body": "AI 没有响应",
   "hint_retry": "再试一次",
   "hint_dissolve": "解散游戏",
-  "shutter_button": "拍摄并提交",
-  "no_retake": "不能重拍",
+  "shutter_button": "拍摄",
   "sent_title": "已提交",
   "time_left": "剩余 {count} 秒",
   "everyone_submitted": "大家的提交",
@@ -82,7 +81,6 @@
   "camera_retry": "再试一次",
   "photo_taking": "玩家正在拍摄",
   "hints_heading": "提示",
-  "hint_bar_label": "提示 {n}",
   "submissions_heading": "提交情况",
   "status_submitted": "已提交",
   "status_shooting": "拍摄中",
@@ -126,5 +124,12 @@
   "disconnected_you": "你目前的成绩",
   "rank_points": "第 {rank} 名 ・ {points} 分",
   "keep_screen_on": "请不要关闭屏幕",
-  "reconnecting": "正在重新连接…"
+  "reconnecting": "正在重新连接…",
+  "submit_photo": "提交这张照片",
+  "use_topic_photo": "用这张作题目",
+  "retake": "重拍",
+  "repick": "重新选择",
+  "hint_timeline_label": "距离下一条提示",
+  "no_submissions": "没有人提交照片",
+  "to_results_button": "查看结果"
 }

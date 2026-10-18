@@ -88,8 +88,7 @@
   "hint_error_body": "L’IA n’a pas répondu",
   "hint_retry": "Réessayer",
   "hint_dissolve": "Dissoudre la partie",
-  "shutter_button": "Photographier et envoyer",
-  "no_retake": "Pas de 2e essai",
+  "shutter_button": "Photographier",
   "sent_title": "Envoyée",
   "time_left": "{count} s restantes",
   "everyone_submitted": "Envois",
@@ -100,7 +99,6 @@
   "camera_retry": "Réessayer",
   "photo_taking": "Les joueurs photographient",
   "hints_heading": "Indices",
-  "hint_bar_label": "Indice {n}",
   "submissions_heading": "Envois",
   "status_submitted": "Envoyée",
   "status_shooting": "En cours de prise",
@@ -144,5 +142,12 @@
   "disconnected_you": "Vous jusqu’ici",
   "rank_points": "Rang {rank} ・ {points} pts",
   "keep_screen_on": "Garde cet écran ouvert",
-  "reconnecting": "Reconnexion…"
+  "reconnecting": "Reconnexion…",
+  "submit_photo": "Envoyer cette photo",
+  "use_topic_photo": "Utiliser comme sujet",
+  "retake": "Reprendre",
+  "repick": "Choisir une autre",
+  "hint_timeline_label": "Jusqu'au prochain indice",
+  "no_submissions": "Personne n'a envoyé de photo",
+  "to_results_button": "Voir le résultat"
 }

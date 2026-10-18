@@ -70,8 +70,7 @@
   "hint_error_body": "AI tidak merespons",
   "hint_retry": "Coba lagi",
   "hint_dissolve": "Bubarkan permainan",
-  "shutter_button": "Foto dan kirim",
-  "no_retake": "Tanpa ulang",
+  "shutter_button": "Ambil foto",
   "sent_title": "Terkirim",
   "time_left": "sisa {count} dtk",
   "everyone_submitted": "Kiriman",
@@ -82,7 +81,6 @@
   "camera_retry": "Coba lagi",
   "photo_taking": "Pemain sedang memotret",
   "hints_heading": "Petunjuk",
-  "hint_bar_label": "Petunjuk {n}",
   "submissions_heading": "Kiriman",
   "status_submitted": "Terkirim",
   "status_shooting": "Memotret",
@@ -126,5 +124,12 @@
   "disconnected_you": "Kamu sejauh ini",
   "rank_points": "Peringkat {rank} ・ {points} poin",
   "keep_screen_on": "Jangan tutup layar ini",
-  "reconnecting": "Menyambung ulang…"
+  "reconnecting": "Menyambung ulang…",
+  "submit_photo": "Kirim foto ini",
+  "use_topic_photo": "Jadikan topik",
+  "retake": "Foto ulang",
+  "repick": "Pilih lagi",
+  "hint_timeline_label": "Menuju petunjuk berikutnya",
+  "no_submissions": "Tidak ada yang mengirim foto",
+  "to_results_button": "Lihat hasil"
 }

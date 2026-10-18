@@ -105,15 +105,26 @@ describe("ResultsPick", () => {
     expect(both.onConfirm).toHaveBeenCalledTimes(1);
   });
 
-  it("有効な写真が 1 枚なら 1 枚で、0 枚なら選ばずに決定できる", () => {
+  it("有効な写真が 1 枚なら 1 枚で、有効な写真が無ければ選ばずに結果へ進める", () => {
     const one = pick({ photos: [photo("a", "そうた"), photo("b", "はるか", false)], picks: ["a"] });
     render(one.ui);
     fireEvent.click(screen.getByRole("button", { name: m.pick_confirm() }));
     expect(one.onConfirm).toHaveBeenCalledTimes(1);
     cleanup();
-    const none = pick({ photos: [], picks: [] });
+    const invalid = pick({ photos: [photo("b", "はるか", false)], picks: [] });
+    render(invalid.ui);
+    expect(screen.queryByRole("alert")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: m.to_results_button() }));
+    expect(invalid.onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("誰も提出しなかったら、選ぶ説明の代わりにエラーを出し、結果へ進める", () => {
+    const none = pick({ photos: [], picks: [], missing: ["そうた", "はるか"] });
     render(none.ui);
-    fireEvent.click(screen.getByRole("button", { name: m.pick_confirm() }));
+    expect(screen.getByRole("alert").textContent).toBe(m.no_submissions());
+    expect(screen.queryByRole("heading", { name: m.results_pick_title() })).toBeNull();
+    expect(screen.getByText("そうた")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: m.to_results_button() }));
     expect(none.onConfirm).toHaveBeenCalledTimes(1);
   });
 
@@ -144,6 +155,21 @@ describe("ResultsWait", () => {
     expect(screen.getAllByRole("img")).toHaveLength(PHOTOS.length + 1);
     expect(document.body.textContent).not.toMatch(/秒|×0\./);
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("誰も提出しなかったら、そのことをエラーで出す", () => {
+    render(
+      <ResultsWait
+        code="482913"
+        round={2}
+        rounds={3}
+        gmName="ゆうき"
+        gmPhotoUrl="u:gm"
+        photos={[]}
+        mePid="b"
+      />,
+    );
+    expect(screen.getByRole("alert").textContent).toBe(m.no_submissions());
   });
 
   it("GM からまだ届いていなければ集めている表示", () => {

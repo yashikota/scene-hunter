@@ -1,5 +1,5 @@
 import { m } from "../paraglide/messages";
-import { HINT_COUNT, hintProgress } from "./turnTime";
+import { HINT_COUNT, HINT_INTERVAL_SEC, HINT_TIMELINE_SEC, hintTimeline } from "./turnTime";
 
 export interface HintListProps {
   /** 文言が分かっているヒント（プレイヤーは公開済みのものだけ、GM は 5 つとも）。 */
@@ -11,44 +11,56 @@ export interface HintListProps {
   now: number;
 }
 
+/** 目盛りの秒数（10、20、30、40）。ヒント 2〜5 がこの時刻に出る。 */
+const MARKS = Array.from({ length: HINT_COUNT - 1 }, (_, i) => (i + 1) * HINT_INTERVAL_SEC);
+const at = (sec: number) => `${(sec / HINT_TIMELINE_SEC) * 100}%`;
+
 /**
- * 5 つのヒントの一覧。まだ公開されていないヒントは、公開までの進みを横のバーで出す
- * （GM には文言も薄く添える）。
+ * 5 つのヒントの一覧。上に 1 本のバーを置き、10 秒ごとの目盛りで次のヒントが出る時刻を見せる
+ * （全部出たらバーは消す）。まだ公開されていないヒントは薄く出し、GM には文言も添える。
  */
 export function HintList({ hints, shown, turnStartedLocalAt, now }: HintListProps) {
+  const progress = hintTimeline(turnStartedLocalAt, now);
   return (
-    <ol className="sh-hints">
-      {Array.from({ length: HINT_COUNT }, (_, i) => {
-        const text = hints[i];
-        const locked = i >= shown;
-        if (!locked) {
+    <div className="sh-hint-area">
+      {shown < HINT_COUNT && (
+        <div className="sh-timeline">
+          <span
+            className="sh-bar"
+            role="progressbar"
+            aria-label={m.hint_timeline_label()}
+            aria-valuemin={0}
+            aria-valuemax={HINT_TIMELINE_SEC}
+            aria-valuenow={Math.floor(progress * HINT_TIMELINE_SEC)}
+          >
+            <span className="sh-bar-fill" style={{ transform: `scaleX(${progress})` }} />
+            {MARKS.slice(0, -1).map((sec) => (
+              <span key={sec} className="sh-bar-tick" style={{ left: at(sec) }} />
+            ))}
+          </span>
+          <span className="sh-timeline-labels" aria-hidden="true">
+            {MARKS.map((sec) => (
+              <span key={sec} style={{ left: at(sec) }}>
+                {sec}
+              </span>
+            ))}
+          </span>
+        </div>
+      )}
+      <ol className="sh-hints">
+        {Array.from({ length: HINT_COUNT }, (_, i) => {
+          const text = hints[i];
+          const locked = i >= shown;
           return (
-            <li key={i} className="sh-hint">
+            <li key={i} className={locked ? "sh-hint sh-hint--locked" : "sh-hint"}>
               <span className="sh-hint-no">{i + 1}</span>
-              <span>{text}</span>
+              {text !== undefined && (
+                <span className={locked ? "sh-hint-preview" : undefined}>{text}</span>
+              )}
             </li>
           );
-        }
-        const pct = Math.round(hintProgress(i, turnStartedLocalAt, now) * 100);
-        return (
-          <li key={i} className="sh-hint sh-hint--locked">
-            <span className="sh-hint-no">{i + 1}</span>
-            <span className="sh-hint-body">
-              {text !== undefined && <span className="sh-hint-preview">{text}</span>}
-              <span
-                className="sh-bar"
-                role="progressbar"
-                aria-label={m.hint_bar_label({ n: i + 1 })}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={pct}
-              >
-                <span className="sh-bar-fill" style={{ transform: `scaleX(${pct / 100})` }} />
-              </span>
-            </span>
-          </li>
-        );
-      })}
-    </ol>
+        })}
+      </ol>
+    </div>
   );
 }

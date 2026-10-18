@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { objectUrl } from "../photo/objectUrl";
 import { useCamera } from "../photo/useCamera";
 import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
@@ -27,19 +28,17 @@ export interface PlayerTurnProps {
   onShutter(blob: Blob): Promise<void>;
 }
 
-type Sent = { blob: Blob; url: string | undefined; status: "sending" | "failed" | "sent" };
-
-function objectUrl(blob: Blob): string | undefined {
-  try {
-    return URL.createObjectURL(blob);
-  } catch {
-    return undefined;
-  }
-}
+/** draft：撮って確認している写真（まだ何も送っていない）。 */
+type Sent = {
+  blob: Blob;
+  url: string | undefined;
+  status: "draft" | "sending" | "failed" | "sent";
+};
 
 /**
- * プレイヤーのターン：ヒントを見ながらその場で撮って提出する（端末の写真は選べず、撮り直しもできない）。
- * 撮ったあとに送れなかったときは、同じ写真をもう一度送るだけにする。
+ * プレイヤーのターン：ヒントを見ながらその場で撮り、確かめてから提出する（端末の写真は選べない）。
+ * 提出するまでは撮り直せる。撮影の秒数は提出を押した時刻で数える（shutter をそこで送る）。
+ * 提出したあとに送れなかったときは、同じ写真をもう一度送るだけにする。
  */
 export function PlayerTurn(props: PlayerTurnProps) {
   const { code, round, rounds, limitSec, turnStartedLocalAt, hints, onShutter } = props;
@@ -80,12 +79,18 @@ export function PlayerTurn(props: PlayerTurnProps) {
     setCapturing(true);
     try {
       const blob = await cam.capture();
-      await deliver(blob, objectUrl(blob));
+      setSent({ blob, url: objectUrl(blob), status: "draft" });
     } catch {
       // 撮影に失敗したら、止めていないカメラのまま押し直せる。
+    } finally {
       capturingRef.current = false;
       setCapturing(false);
     }
+  };
+
+  const retake = () => {
+    setSent(null);
+    cam.retry();
   };
 
   const mine = sent?.status === "sent" || props.submitted;
@@ -103,7 +108,7 @@ export function PlayerTurn(props: PlayerTurnProps) {
     );
   }
 
-  if (sent) {
+  if (sent && sent.status !== "draft") {
     return (
       <Screen>
         <TopBar
@@ -154,20 +159,32 @@ export function PlayerTurn(props: PlayerTurnProps) {
             now={now}
           />
           <CameraFrame videoRef={cam.videoRef}>
-            {cam.state === "starting" && (
-              <span style={{ fontSize: 14 }}>{m.camera_starting()}</span>
-            )}
+            {sent
+              ? sent.url && <img src={sent.url} alt={m.your_photo()} />
+              : cam.state === "starting" && (
+                  <span style={{ fontSize: 14 }}>{m.camera_starting()}</span>
+                )}
           </CameraFrame>
-          <Button
-            variant="primary"
-            disabled={capturing || cam.state !== "ready" || remaining === 0}
-            onClick={() => void shoot()}
-          >
-            {m.shutter_button()}
-          </Button>
-          <p className="sh-sub" style={{ margin: 0, fontSize: 12, textAlign: "center" }}>
-            {m.no_retake()}
-          </p>
+          {sent ? (
+            <div className="sh-row">
+              <Button onClick={retake}>{m.retake()}</Button>
+              <Button
+                variant="primary"
+                disabled={remaining === 0}
+                onClick={() => void deliver(sent.blob, sent.url)}
+              >
+                {m.submit_photo()}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="primary"
+              disabled={capturing || cam.state !== "ready" || remaining === 0}
+              onClick={() => void shoot()}
+            >
+              {m.shutter_button()}
+            </Button>
+          )}
         </Screen>
       </div>
       {blocked && (

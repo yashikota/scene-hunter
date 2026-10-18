@@ -3,9 +3,11 @@ import {
   closeAll,
   createRoom,
   expectLobbyCount,
+  gmShoot,
   joinByCode,
   joinByLink,
   newPerson,
+  playerSubmit,
   type Person,
 } from "./helpers";
 
@@ -50,18 +52,12 @@ async function playRound(gm: Person, players: Person[], round: number): Promise<
   const label = `ROUND ${round} / ${ROUNDS}`;
   // GM：偽のカメラでお題を撮る
   await expect(gm.page.getByText(label)).toBeVisible();
-  const shoot = gm.page.getByRole("button", { name: "この場で撮影する" });
-  await expect(shoot).toBeEnabled();
-  await shoot.click();
+  await gmShoot(gm);
 
-  // プレイヤー：ヒント（e2e の決まった文）が出て、撮影して提出する
+  // プレイヤー：ヒント（e2e の決まった文）が出て、撮って確かめて提出する
   for (const p of players) {
     await expect(p.page.getByText("e2e hint 1", { exact: false })).toBeVisible();
-    const shutter = p.page.getByRole("button", { name: "撮影して提出" });
-    await expect(shutter).toBeEnabled();
-    await shutter.click();
-    // 最後の 1 人は「提出しました」を飛ばして写真の一覧に進むので、撮影の画面を離れたことだけを確かめる
-    await expect(shutter).toBeHidden();
+    await playerSubmit(p);
   }
   // 全員が出したので、プレイヤーは GM が選ぶのを待つ
   for (const p of players) await expect(p.page.getByText("みんなの写真")).toBeVisible();
@@ -114,21 +110,14 @@ for (const { name, drop } of drops) {
       await expectLobbyCount(gm, 4);
       await gm.page.getByRole("button", { name: "ゲームを始める" }).click();
 
-      const shoot = gm.page.getByRole("button", { name: "この場で撮影する" });
-      await expect(shoot).toBeEnabled();
-      await shoot.click();
+      await gmShoot(gm);
       await expect(carol.page.getByText("e2e hint 1", { exact: false })).toBeVisible();
       const turnStart = Date.now();
 
       // キャロルはプレイヤーのターンの途中で抜ける
       await drop(carol);
 
-      for (const p of players) {
-        const shutter = p.page.getByRole("button", { name: "撮影して提出" });
-        await expect(shutter).toBeEnabled();
-        await shutter.click();
-        await expect(shutter).toBeHidden();
-      }
+      for (const p of players) await playerSubmit(p);
       // GM の一覧ではキャロルが「通信なし」になり、残りの 2 人が出したので時間（60 秒）を待たずに選ぶ画面へ
       await expect(gm.page.getByText("お題に近い順に 3 枚選ぶ")).toBeVisible({ timeout: 40_000 });
       expect(Date.now() - turnStart).toBeLessThan(55_000);
@@ -141,3 +130,27 @@ for (const { name, drop } of drops) {
     }
   });
 }
+
+test("誰も出さないまま時間切れになっても、エラーを出して結果へ進める", async ({ browser }) => {
+  const gm = await newPerson(browser, "ジーエム");
+  const alice = await newPerson(browser, "アリス");
+  try {
+    const code = await createRoom(gm);
+    await joinByCode(alice, code);
+    await expectLobbyCount(gm, 2);
+    await gm.page.getByRole("button", { name: "ゲームを始める" }).click();
+    await gmShoot(gm);
+    await expect(alice.page.getByText("e2e hint 1", { exact: false })).toBeVisible();
+
+    // 制限時間（60 秒）が過ぎると、GM とプレイヤーに「誰も提出しませんでした」が出る
+    for (const p of [gm, alice]) {
+      await expect(p.page.getByRole("alert")).toHaveText("誰も提出しませんでした", {
+        timeout: 90_000,
+      });
+    }
+    await gm.page.getByRole("button", { name: "結果へ" }).click();
+    for (const p of [gm, alice]) await expect(p.page.getByText("ラウンド 1 の結果")).toBeVisible();
+  } finally {
+    await closeAll([gm, alice]);
+  }
+});

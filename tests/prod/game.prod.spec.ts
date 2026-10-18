@@ -3,9 +3,11 @@ import {
   closeAll,
   createRoom,
   expectLobbyCount,
+  gmShoot,
   joinByCode,
   joinByLink,
   newPerson,
+  playerSubmit,
   type Person,
 } from "../e2e/helpers";
 
@@ -59,20 +61,15 @@ async function waitFirstHint(gm: Page, player: Page): Promise<string> {
 
 async function playRound(gm: Person, players: Person[], round: number): Promise<void> {
   await expect(gm.page.getByText(`ROUND ${round} / ${ROUNDS}`)).toBeVisible();
-  const shoot = gm.page.getByRole("button", { name: "この場で撮影する" });
-  await expect(shoot).toBeEnabled();
   const shotAt = Date.now();
-  await shoot.click();
+  await gmShoot(gm);
 
   const first = await waitFirstHint(gm.page, players[0].page);
   console.log(`round ${round}: first hint after ${Date.now() - shotAt} ms: ${first}`);
 
   for (const p of players) {
     await expect(p.page.locator(".sh-hint:not(.sh-hint--locked)").first()).toBeVisible();
-    const shutter = p.page.getByRole("button", { name: "撮影して提出" });
-    await expect(shutter).toBeEnabled();
-    await shutter.click();
-    await expect(shutter).toBeHidden();
+    await playerSubmit(p);
   }
   for (const p of players) await expect(p.page.getByText("みんなの写真")).toBeVisible();
 

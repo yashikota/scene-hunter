@@ -13,11 +13,10 @@ export function remainingSec(startedAt: number | null, limitSec: number, now: nu
   return Math.max(0, Math.ceil(limitSec - elapsedSec(startedAt, now)));
 }
 
-/**
- * ヒント index（0 始まり）の公開までの進み（0〜1）。公開の直前の 10 秒で 0 から 1 まで伸びる
- * （次に出るヒントのバーだけが動き、その先のヒントは 0 のまま待つ）。
- */
-export function hintProgress(index: number, startedAt: number | null, now: number): number {
-  const p = (elapsedSec(startedAt, now) - (index - 1) * HINT_INTERVAL_SEC) / HINT_INTERVAL_SEC;
-  return Math.min(1, Math.max(0, p));
+/** 最後のヒントが出るまでの秒数（ヒント 1 は起点で出るので、残りの 4 つ × 10 秒）。 */
+export const HINT_TIMELINE_SEC = (HINT_COUNT - 1) * HINT_INTERVAL_SEC;
+
+/** 起点から最後のヒントの公開までの進み（0〜1）。1 本のバーで、10 秒ごとの目盛りに次のヒントが出る。 */
+export function hintTimeline(startedAt: number | null, now: number): number {
+  return Math.min(1, elapsedSec(startedAt, now) / HINT_TIMELINE_SEC);
 }

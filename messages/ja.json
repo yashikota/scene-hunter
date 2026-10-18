@@ -70,8 +70,7 @@
   "hint_error_body": "AI から応答がありませんでした",
   "hint_retry": "もう一度試す",
   "hint_dissolve": "ゲームを解散する",
-  "shutter_button": "撮影して提出",
-  "no_retake": "撮り直しなし",
+  "shutter_button": "撮影する",
   "sent_title": "提出しました",
   "time_left": "残り {count} 秒",
   "everyone_submitted": "みんなの提出",
@@ -82,7 +81,6 @@
   "camera_retry": "もう一度",
   "photo_taking": "プレイヤーが撮影中",
   "hints_heading": "ヒント",
-  "hint_bar_label": "ヒント {n}",
   "submissions_heading": "提出状況",
   "status_submitted": "提出済み",
   "status_shooting": "撮影中",
@@ -126,5 +124,12 @@
   "disconnected_you": "ここまでのあなた",
   "rank_points": "{rank} 位 ・ {points} 点",
   "keep_screen_on": "画面を閉じないでね",
-  "reconnecting": "つなぎ直しています…"
+  "reconnecting": "つなぎ直しています…",
+  "submit_photo": "この写真で提出",
+  "use_topic_photo": "この写真をお題にする",
+  "retake": "撮り直す",
+  "repick": "選び直す",
+  "hint_timeline_label": "次のヒントまで",
+  "no_submissions": "誰も提出しませんでした",
+  "to_results_button": "結果へ"
 }

@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { encodeJpeg, fitWithin, loadImageFile } from "../photo/encode";
+import { objectUrl } from "../photo/objectUrl";
 import { useCamera } from "../photo/useCamera";
 import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
@@ -17,7 +18,13 @@ export interface GmTurnProps {
   onPhoto(blob: Blob): Promise<void>;
 }
 
-/** GM のターン：お題の写真をその場で撮るか、撮影済みの写真から選ぶ。60 秒のカウントダウンは目安で、強制はしない。 */
+/** 撮って（選んで）確認している写真。source でやり直しの方法（撮り直すか選び直すか）を決める。 */
+type Draft = { blob: Blob; url: string | undefined; source: "camera" | "file" };
+
+/**
+ * GM のターン：お題の写真をその場で撮るか、撮影済みの写真から選び、確かめてから決める。
+ * 60 秒のカウントダウンは目安で、強制はしない。
+ */
 export function GmTurn({ round, rounds, onPhoto }: GmTurnProps) {
   const cam = useCamera();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -25,41 +32,66 @@ export function GmTurn({ round, rounds, onPhoto }: GmTurnProps) {
   const now = useNow();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Draft | null>(null);
   const blocked = cam.state === "denied" || cam.state === "unavailable";
 
-  const send = async (make: () => Promise<Blob>, failure: string) => {
+  useEffect(() => {
+    const url = draft?.url;
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [draft?.url]);
+
+  const prepare = async (make: () => Promise<Blob>, source: Draft["source"], failure: string) => {
     setBusy(true);
     setError(null);
-    let blob: Blob;
     try {
-      blob = await make();
+      const blob = await make();
+      setDraft({ blob, url: objectUrl(blob), source });
     } catch {
       setError(failure);
-      setBusy(false);
-      return;
-    }
-    try {
-      await onPhoto(blob);
-      setBusy(false);
-    } catch {
-      // 送れなかったときは、撮ったあとで止めたカメラを起動し直して撮り直せるようにする。
-      setError(m.send_failed());
-      cam.retry();
+    } finally {
       setBusy(false);
     }
   };
 
+  const send = async (blob: Blob) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await onPhoto(blob);
+    } catch {
+      // 送れなかったときは、同じ写真のまま決め直すか、やり直せる。
+      setError(m.send_failed());
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const redo = () => {
+    const source = draft?.source;
+    setDraft(null);
+    setError(null);
+    // 撮影ではカメラを止めているので起動し直す。選んだ写真なら、もう一度選ぶ画面を開く。
+    if (source === "camera") cam.retry();
+    else fileRef.current?.click();
+  };
+
   const onFile = (file: File | undefined) => {
     if (!file) return;
-    void send(async () => {
-      const bitmap = await loadImageFile(file);
-      const { w, h } = fitWithin(bitmap.width, bitmap.height);
-      try {
-        return await encodeJpeg(bitmap, w, h);
-      } finally {
-        bitmap.close();
-      }
-    }, m.photo_unreadable());
+    void prepare(
+      async () => {
+        const bitmap = await loadImageFile(file);
+        const { w, h } = fitWithin(bitmap.width, bitmap.height);
+        try {
+          return await encodeJpeg(bitmap, w, h);
+        } finally {
+          bitmap.close();
+        }
+      },
+      "file",
+      m.photo_unreadable(),
+    );
   };
 
   return (
@@ -80,9 +112,11 @@ export function GmTurn({ round, rounds, onPhoto }: GmTurnProps) {
             </span>
           </div>
           <CameraFrame videoRef={cam.videoRef}>
-            {cam.state === "starting" && (
-              <span style={{ fontSize: 14 }}>{m.camera_starting()}</span>
-            )}
+            {draft
+              ? draft.url && <img src={draft.url} alt={m.topic_photo()} />
+              : cam.state === "starting" && (
+                  <span style={{ fontSize: 14 }}>{m.camera_starting()}</span>
+                )}
           </CameraFrame>
           <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: "center" }}>
             {m.gm_turn_caution()}
@@ -93,16 +127,29 @@ export function GmTurn({ round, rounds, onPhoto }: GmTurnProps) {
             </p>
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <Button
-              variant="primary"
-              disabled={busy || cam.state !== "ready"}
-              onClick={() => void send(cam.capture, m.send_failed())}
-            >
-              {busy ? m.sending_photo() : m.shoot_here()}
-            </Button>
-            <Button disabled={busy} onClick={() => fileRef.current?.click()}>
-              {m.pick_photo()}
-            </Button>
+            {draft ? (
+              <div className="sh-row">
+                <Button disabled={busy} onClick={redo}>
+                  {draft.source === "camera" ? m.retake() : m.repick()}
+                </Button>
+                <Button variant="primary" disabled={busy} onClick={() => void send(draft.blob)}>
+                  {busy ? m.sending_photo() : m.use_topic_photo()}
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Button
+                  variant="primary"
+                  disabled={busy || cam.state !== "ready"}
+                  onClick={() => void prepare(cam.capture, "camera", m.camera_blocked_title())}
+                >
+                  {m.shoot_here()}
+                </Button>
+                <Button disabled={busy} onClick={() => fileRef.current?.click()}>
+                  {m.pick_photo()}
+                </Button>
+              </>
+            )}
             <input
               ref={fileRef}
               type="file"

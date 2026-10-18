@@ -70,8 +70,7 @@
   "hint_error_body": "AI가 응답하지 않았어요",
   "hint_retry": "다시 시도",
   "hint_dissolve": "게임 해산",
-  "shutter_button": "촬영하고 제출",
-  "no_retake": "다시 찍기 없음",
+  "shutter_button": "촬영하기",
   "sent_title": "제출했어요",
   "time_left": "{count}초 남음",
   "everyone_submitted": "모두의 제출",
@@ -82,7 +81,6 @@
   "camera_retry": "다시 시도",
   "photo_taking": "플레이어가 촬영 중",
   "hints_heading": "힌트",
-  "hint_bar_label": "힌트 {n}",
   "submissions_heading": "제출 현황",
   "status_submitted": "제출함",
   "status_shooting": "촬영 중",
@@ -126,5 +124,12 @@
   "disconnected_you": "지금까지의 나",
   "rank_points": "{rank}위 ・ {points}점",
   "keep_screen_on": "화면을 끄지 마세요",
-  "reconnecting": "다시 연결하는 중…"
+  "reconnecting": "다시 연결하는 중…",
+  "submit_photo": "이 사진으로 제출",
+  "use_topic_photo": "이 사진으로 출제",
+  "retake": "다시 찍기",
+  "repick": "다시 고르기",
+  "hint_timeline_label": "다음 힌트까지",
+  "no_submissions": "아무도 제출하지 않았어요",
+  "to_results_button": "결과 보기"
 }

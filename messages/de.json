@@ -88,8 +88,7 @@
   "hint_error_body": "Die KI hat nicht geantwortet",
   "hint_retry": "Erneut versuchen",
   "hint_dissolve": "Spiel auflösen",
-  "shutter_button": "Foto aufnehmen und abgeben",
-  "no_retake": "Kein zweiter Versuch",
+  "shutter_button": "Foto aufnehmen",
   "sent_title": "Abgegeben",
   "time_left": "noch {count} s",
   "everyone_submitted": "Abgaben",
@@ -100,7 +99,6 @@
   "camera_retry": "Erneut versuchen",
   "photo_taking": "Spieler fotografieren",
   "hints_heading": "Hinweise",
-  "hint_bar_label": "Hinweis {n}",
   "submissions_heading": "Abgaben",
   "status_submitted": "Abgegeben",
   "status_shooting": "Fotografiert",
@@ -144,5 +142,12 @@
   "disconnected_you": "Du bisher",
   "rank_points": "Platz {rank} ・ {points} Pkt.",
   "keep_screen_on": "Bildschirm offen lassen",
-  "reconnecting": "Verbinde neu…"
+  "reconnecting": "Verbinde neu…",
+  "submit_photo": "Dieses Foto abgeben",
+  "use_topic_photo": "Als Motiv nehmen",
+  "retake": "Neu aufnehmen",
+  "repick": "Anderes wählen",
+  "hint_timeline_label": "Bis zum nächsten Hinweis",
+  "no_submissions": "Niemand hat ein Foto abgegeben",
+  "to_results_button": "Zum Ergebnis"
 }

@@ -88,8 +88,7 @@
   "hint_error_body": "A IA não respondeu",
   "hint_retry": "Tentar de novo",
   "hint_dissolve": "Dissolver o jogo",
-  "shutter_button": "Fotografar e enviar",
-  "no_retake": "Sem repetir",
+  "shutter_button": "Fotografar",
   "sent_title": "Enviada",
   "time_left": "restam {count} s",
   "everyone_submitted": "Envios",
@@ -100,7 +99,6 @@
   "camera_retry": "Tentar de novo",
   "photo_taking": "Jogadores fotografando",
   "hints_heading": "Dicas",
-  "hint_bar_label": "Dica {n}",
   "submissions_heading": "Envios",
   "status_submitted": "Enviada",
   "status_shooting": "Fotografando",
@@ -144,5 +142,12 @@
   "disconnected_you": "Você até agora",
   "rank_points": "{rank}º lugar ・ {points} pts",
   "keep_screen_on": "Não feche esta tela",
-  "reconnecting": "Reconectando…"
+  "reconnecting": "Reconectando…",
+  "submit_photo": "Enviar esta foto",
+  "use_topic_photo": "Usar como tema",
+  "retake": "Tirar de novo",
+  "repick": "Escolher outra",
+  "hint_timeline_label": "Até a próxima dica",
+  "no_submissions": "Ninguém enviou foto",
+  "to_results_button": "Ver resultado"
 }

@@ -158,7 +158,7 @@ function TopForm({
             <circle cx="12" cy="13" r="3.5" />
           </svg>
         </div>
-        <h1 className="sh-display" style={{ fontSize: 34, letterSpacing: "0.02em" }}>
+        <h1 className="sh-display sh-brand" style={{ fontSize: 34, letterSpacing: "0.02em" }}>
           {m.app_name()}
         </h1>
       </div>

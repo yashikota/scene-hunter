@@ -70,8 +70,7 @@
   "hint_error_body": "AI không phản hồi",
   "hint_retry": "Thử lại",
   "hint_dissolve": "Giải tán ván chơi",
-  "shutter_button": "Chụp và nộp",
-  "no_retake": "Không chụp lại",
+  "shutter_button": "Chụp",
   "sent_title": "Đã nộp",
   "time_left": "còn {count} giây",
   "everyone_submitted": "Bài nộp",
@@ -82,7 +81,6 @@
   "camera_retry": "Thử lại",
   "photo_taking": "Người chơi đang chụp",
   "hints_heading": "Gợi ý",
-  "hint_bar_label": "Gợi ý {n}",
   "submissions_heading": "Tình hình nộp",
   "status_submitted": "Đã nộp",
   "status_shooting": "Đang chụp",
@@ -126,5 +124,12 @@
   "disconnected_you": "Bạn tính đến lúc này",
   "rank_points": "Hạng {rank} ・ {points} điểm",
   "keep_screen_on": "Đừng tắt màn hình nhé",
-  "reconnecting": "Đang kết nối lại…"
+  "reconnecting": "Đang kết nối lại…",
+  "submit_photo": "Nộp ảnh này",
+  "use_topic_photo": "Dùng làm đề bài",
+  "retake": "Chụp lại",
+  "repick": "Chọn lại",
+  "hint_timeline_label": "Đến gợi ý tiếp theo",
+  "no_submissions": "Không ai nộp ảnh",
+  "to_results_button": "Xem kết quả"
 }

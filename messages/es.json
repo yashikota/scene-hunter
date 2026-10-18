@@ -88,8 +88,7 @@
   "hint_error_body": "La IA no respondió",
   "hint_retry": "Intentar de nuevo",
   "hint_dissolve": "Disolver la partida",
-  "shutter_button": "Fotografiar y entregar",
-  "no_retake": "Sin repetir",
+  "shutter_button": "Fotografiar",
   "sent_title": "Entregada",
   "time_left": "quedan {count} s",
   "everyone_submitted": "Entregas",
@@ -100,7 +99,6 @@
   "camera_retry": "Intentar de nuevo",
   "photo_taking": "Los jugadores están fotografiando",
   "hints_heading": "Pistas",
-  "hint_bar_label": "Pista {n}",
   "submissions_heading": "Entregas",
   "status_submitted": "Entregada",
   "status_shooting": "Fotografiando",
@@ -144,5 +142,12 @@
   "disconnected_you": "Tú hasta ahora",
   "rank_points": "Puesto {rank} ・ {points} pts",
   "keep_screen_on": "No cierres esta pantalla",
-  "reconnecting": "Reconectando…"
+  "reconnecting": "Reconectando…",
+  "submit_photo": "Entregar esta foto",
+  "use_topic_photo": "Usar como tema",
+  "retake": "Repetir",
+  "repick": "Elegir otra",
+  "hint_timeline_label": "Hasta la siguiente pista",
+  "no_submissions": "Nadie entregó una foto",
+  "to_results_button": "Ver resultados"
 }

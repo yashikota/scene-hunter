@@ -41,6 +41,13 @@ export function ResultsWait({
       </div>
       {photos === null ? (
         <Collecting text={m.results_collecting()} />
+      ) : photos.length === 0 ? (
+        <>
+          <TopicCard url={gmPhotoUrl} />
+          <p role="alert" className="sh-error">
+            {m.no_submissions()}
+          </p>
+        </>
       ) : (
         <>
           <TopicCard url={gmPhotoUrl} />
