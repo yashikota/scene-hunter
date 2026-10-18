@@ -2,6 +2,7 @@
   "name": "scene-hunter",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@12.10.1",
   "scripts": {
     "dev": "vp dev",
     "build": "vp build",
