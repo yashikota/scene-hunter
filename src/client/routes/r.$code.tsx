@@ -10,6 +10,8 @@ import { LobbyGm } from "../screens/LobbyGm";
 import { LobbyPlayer } from "../screens/LobbyPlayer";
 import { NameStep } from "../screens/NameStep";
 import { ResultsScreen } from "../screens/ResultsScreen";
+import { Top } from "../screens/Top";
+import { CODE_RE } from "../screens/entryErrors";
 import { TurnScreen } from "../screens/TurnScreen";
 import { Unsupported } from "../screens/Unsupported";
 import { isSupportedBrowser, useBrowserLocale } from "../ui/locale";
@@ -20,6 +22,8 @@ export const Route = createFileRoute("/r/$code")({
 
 function RoomRoute() {
   const { code } = Route.useParams();
+  // 部屋の番号は 6 桁の数字だけ。それ以外の URL はトップに回す
+  if (!CODE_RE.test(code)) return <Navigate to="/" replace />;
   // 番号が変わったら（このページから別の部屋を作ったときなど）状態を持ち越さない
   return <RoomEntry key={code} code={code} />;
 }
@@ -27,11 +31,24 @@ function RoomRoute() {
 function RoomEntry({ code }: { code: string }) {
   const navigate = useNavigate();
   const [entered, setEntered] = useState(() => loadMe(code) !== null);
+  // まだ入っていない部屋。あると確かめた部屋なら名前を聞き、そうでなければ（共有された /r/{code} の
+  // リンクから来たときなど）番号を入れたトップをこの URL のまま出して、そこで確かめてもらう。
+  const [naming, setNaming] = useState(() => isRoomFound(code));
   if (!isSupportedBrowser()) return <UnsupportedRoute />;
   if (!entered) {
-    // まだこの部屋に入っていない。あると確かめた部屋なら名前を聞き、そうでなければ（共有された
-    // /r/{code} のリンクから来たときなど）番号を入れたトップに回して、そこで確かめてもらう。
-    if (!isRoomFound(code)) return <Navigate to="/" search={{ code }} replace />;
+    if (!naming) {
+      return (
+        <Top
+          initialCode={code}
+          onEntered={(c) => {
+            // 番号を打ち直したり部屋を作ったりしたら、その部屋の URL へ移る
+            if (c !== code) return void navigate({ to: "/r/$code", params: { code: c } });
+            if (loadMe(c)) setEntered(true);
+            else setNaming(true);
+          }}
+        />
+      );
+    }
     return (
       // 言語はトップで決めたまま（ここへはトップから来る）
       <NameStep
@@ -40,8 +57,8 @@ function RoomEntry({ code }: { code: string }) {
           await joinAndSave(code, name, { onWaiting });
           setEntered(true);
         }}
-        // 番号は残したトップに戻る（確かめ済みなので、トップはそのまま留まる）
-        onBack={() => void navigate({ to: "/", search: { code }, replace: true })}
+        // 番号を入れたトップに戻る（確かめ済みなので、トップはそのまま留まる）
+        onBack={() => setNaming(false)}
       />
     );
   }

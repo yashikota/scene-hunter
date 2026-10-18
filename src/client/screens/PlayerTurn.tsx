@@ -5,7 +5,8 @@ import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
 import { CameraFrame } from "../ui/CameraFrame";
 import { Screen } from "../ui/Screen";
-import { formatCode, TopBar } from "../ui/TopBar";
+import { TopBar } from "../ui/TopBar";
+import { RoomBadge } from "../ui/RoomCode";
 import { useNow } from "../ui/useNow";
 import { CameraBlocked } from "./CameraBlocked";
 import { PlayerSubmitted } from "./PlayerSubmitted";
@@ -142,10 +143,7 @@ export function PlayerTurn(props: PlayerTurnProps) {
     <>
       <div hidden={blocked}>
         <Screen>
-          <TopBar
-            left={m.round_label({ round, rounds })}
-            right={<span>{m.room_badge({ code: formatCode(code) })}</span>}
-          />
+          <TopBar left={m.round_label({ round, rounds })} right={<RoomBadge code={code} />} />
           <div style={{ textAlign: "center" }}>
             <span className="sh-timer" role="timer" style={{ fontSize: 56 }}>
               {remaining}

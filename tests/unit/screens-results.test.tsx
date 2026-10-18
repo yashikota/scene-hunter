@@ -154,7 +154,10 @@ describe("ResultsWait", () => {
     expect(screen.getByText(m.you_tag({ name: "はるか" }))).toBeTruthy();
     expect(screen.getAllByRole("img")).toHaveLength(PHOTOS.length + 1);
     expect(document.body.textContent).not.toMatch(/秒|×0\./);
-    expect(screen.queryByRole("button")).toBeNull();
+    // 押せるのは上端の部屋の番号（コピー）だけ
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
+      m.room_badge({ code: "482 913" }),
+    ]);
   });
 
   it("誰も提出しなかったら、そのことをエラーで出す", () => {
@@ -239,7 +242,10 @@ describe("ResultsReveal", () => {
     expect(onNext).toHaveBeenCalled();
     unmount();
     render(reveal());
-    expect(screen.queryByRole("button")).toBeNull();
+    // 押せるのは上端の部屋の番号（コピー）だけ
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
+      m.room_badge({ code: "482 913" }),
+    ]);
     expect(screen.getByText(m.wait_next_gm())).toBeTruthy();
   });
 

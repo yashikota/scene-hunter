@@ -4,7 +4,11 @@ import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Screen } from "../ui/Screen";
-import { formatCode, TopBar } from "../ui/TopBar";
+import { copyText, useCopied } from "../ui/copy";
+import { RoomCode } from "../ui/RoomCode";
+import { Sheet } from "../ui/Sheet";
+import { TopBar } from "../ui/TopBar";
+import { RulesButton } from "./Rules";
 
 export interface LobbyMember {
   pid: string;
@@ -75,7 +79,7 @@ export interface LobbyGmProps {
 }
 
 /** 共有するリンク。開くと番号が入ったトップになる。 */
-export const shareLink = (code: string) => `${location.origin}/?code=${code}`;
+export const shareLink = (code: string) => `${location.origin}/r/${code}`;
 
 export function LobbyGm({
   code,
@@ -90,28 +94,22 @@ export function LobbyGm({
   const [choosing, setChoosing] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [copied, flashCopied] = useCopied();
   const [manual, setManual] = useState(false);
   // 通信が切れたらしい人には GM を渡さない。始めるのにも、つながっている人が 1 人は要る。
   const active = activePlayers(players);
   const linkRef = useRef<HTMLInputElement>(null);
 
-  const copyLink = () => {
-    setCopied(false);
-    const showManual = () => {
-      // 許可されない、安全でないページで clipboard が無いなどでコピーできない。リンクを選んだ状態で見せて、手でコピーしてもらう
-      setManual(true);
-      setTimeout(() => linkRef.current?.select(), 0);
-    };
-    try {
-      if (!navigator.clipboard) return showManual();
-      navigator.clipboard.writeText(shareLink(code)).then(() => {
-        setManual(false);
-        setCopied(true);
-      }, showManual);
-    } catch {
-      showManual();
+  const copyLink = async () => {
+    if (await copyText(shareLink(code))) {
+      setManual(false);
+      flashCopied();
+      return;
     }
+    // 許可されない、安全でないページで clipboard が無いなどでコピーできない。リンクを選んだ状態で見せて、手でコピーしてもらう
+    setManual(true);
+    setTimeout(() => linkRef.current?.select(), 0);
   };
 
   const transfer = async (pid: string) => {
@@ -126,13 +124,9 @@ export function LobbyGm({
     }
   };
 
-  const dissolve = () => {
-    if (window.confirm(m.dissolve_confirm())) onDissolve();
-  };
-
   return (
     <Screen>
-      <TopBar left={m.app_name()} right={<span className="sh-badge">{m.you_are_gm()}</span>} />
+      <TopBar right={<span className="sh-badge">{m.you_are_gm()}</span>} />
 
       <Card
         raised
@@ -141,10 +135,8 @@ export function LobbyGm({
         <span className="sh-sub" style={{ fontSize: 13, fontWeight: 800 }}>
           {m.code_label()}
         </span>
-        <span className="sh-display" style={{ fontSize: 42, letterSpacing: "0.12em" }}>
-          {formatCode(code)}
-        </span>
-        <Button variant="quiet" onClick={copyLink} style={{ marginTop: 8 }}>
+        <RoomCode code={code} />
+        <Button variant="quiet" onClick={() => void copyLink()} style={{ marginTop: 8 }}>
           {copied ? m.link_copied() : m.copy_link()}
         </Button>
         {manual && (
@@ -168,6 +160,7 @@ export function LobbyGm({
       >
         {m.rounds_chip({ count: rounds })} · {m.seconds({ count: limitSec })}
       </p>
+      <RulesButton rounds={rounds} limitSec={limitSec} />
 
       {failed && (
         <p role="alert" className="sh-error">
@@ -192,12 +185,29 @@ export function LobbyGm({
           >
             {m.transfer_button()}
           </Button>
-          <Button variant="quiet" onClick={dissolve} disabled={transferring}>
+          <Button
+            variant="quiet"
+            onClick={() => setConfirming(true)}
+            disabled={transferring}
+            aria-haspopup="dialog"
+          >
             {m.dissolve_button()}
           </Button>
         </div>
       </div>
 
+      {confirming && (
+        <Sheet title={m.dissolve_confirm()} onCancel={() => setConfirming(false)}>
+          <div className="sh-row sh-row--even">
+            <Button variant="quiet" onClick={() => setConfirming(false)} autoFocus>
+              {m.cancel()}
+            </Button>
+            <Button variant="primary" onClick={onDissolve}>
+              {m.dissolve_button()}
+            </Button>
+          </div>
+        </Sheet>
+      )}
       {choosing && (
         <TransferSheet
           players={active}
@@ -223,55 +233,33 @@ function TransferSheet({
   onCancel(): void;
 }) {
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgb(26 26 26 / 0.35)",
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
-        padding: 16,
-      }}
-      onClick={(e) => e.target === e.currentTarget && !busy && onCancel()}
-    >
-      <Card
-        raised
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="transfer-title"
-        style={{ width: "100%", maxWidth: 448, display: "flex", flexDirection: "column", gap: 12 }}
+    <Sheet title={m.transfer_title()} busy={busy} onCancel={onCancel}>
+      <ul
+        style={{
+          listStyle: "none",
+          margin: 0,
+          padding: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+        }}
       >
-        <h2 id="transfer-title" className="sh-display" style={{ fontSize: 17 }}>
-          {m.transfer_title()}
-        </h2>
-        <ul
-          style={{
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
-        >
-          {players.map((p) => (
-            <li key={p.pid}>
-              <Button
-                variant="quiet"
-                disabled={busy}
-                onClick={() => onPick(p.pid)}
-                style={{ width: "100%" }}
-              >
-                {p.label}
-              </Button>
-            </li>
-          ))}
-        </ul>
-        <Button variant="quiet" disabled={busy} onClick={onCancel} autoFocus>
-          {m.cancel()}
-        </Button>
-      </Card>
-    </div>
+        {players.map((p) => (
+          <li key={p.pid}>
+            <Button
+              variant="quiet"
+              disabled={busy}
+              onClick={() => onPick(p.pid)}
+              style={{ width: "100%" }}
+            >
+              {p.label}
+            </Button>
+          </li>
+        ))}
+      </ul>
+      <Button variant="quiet" disabled={busy} onClick={onCancel} autoFocus>
+        {m.cancel()}
+      </Button>
+    </Sheet>
   );
 }

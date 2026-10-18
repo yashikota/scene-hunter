@@ -53,9 +53,6 @@
       }
     }
   ],
-  "howto_1": "The GM shoots a secret photo",
-  "howto_2": "Use the hints to find the same view",
-  "howto_3": "Closer and faster = more points",
   "leave_button": "Leave room",
   "unsupported_android": "Chrome on Android",
   "unsupported_desktop": "Chrome or Edge on a computer",
@@ -72,7 +69,6 @@
   "gm_turn_badge": "GM’s turn",
   "gm_turn_title": "Prepare the topic photo",
   "sec_suffix": "s",
-  "gm_turn_caution": "Shoot it secretly",
   "shoot_here": "Take a photo now",
   "pick_photo": "Choose an existing photo",
   "camera_starting": "Starting the camera…",
@@ -81,7 +77,6 @@
   "resend_button": "Send again",
   "photo_unreadable": "This photo could not be read. Please choose another one",
   "gm_preparing": "{name} is shooting\nthe secret photo",
-  "gm_turn_player_note": "Don't look at the GM!",
   "points_value": "{count} pts",
   "hint_wait_title": "Writing hints",
   "hint_error_title": "Could not make the hints",
@@ -149,5 +144,16 @@
   "repick": "Choose another",
   "hint_timeline_label": "Until the next hint",
   "no_submissions": "Nobody submitted a photo",
-  "to_results_button": "See results"
+  "to_results_button": "See results",
+  "copy_code": "Copy room number {code}",
+  "code_copied": "Copied",
+  "rules_button": "How to play",
+  "rules_1": "The GM takes a photo as the topic",
+  "rules_2": "AI hints appear every 10 seconds (up to 5)",
+  "rules_3": "Find the same scene, shoot it and submit within {sec} seconds. You can retake before submitting",
+  "rules_4": "The GM picks the 3 closest photos in order",
+  "rules_5": "1st 1000, 2nd 700, 3rd 400 points. The later you submit, the fewer you get, down to half at the buzzer",
+  "rules_6": "Get picked in a row for +100 each time (up to +500)",
+  "rules_7": "Highest total after {rounds} rounds wins. The GM scores no points",
+  "close": "Close"
 }

@@ -53,9 +53,6 @@
       }
     }
   ],
-  "howto_1": "Der GM macht das geheime Foto",
-  "howto_2": "Finde mit den Hinweisen dieselbe Ansicht",
-  "howto_3": "Ähnlicher und schneller = mehr Punkte",
   "leave_button": "Raum verlassen",
   "unsupported_android": "Chrome auf Android",
   "unsupported_desktop": "Chrome oder Edge am Computer",
@@ -72,7 +69,6 @@
   "gm_turn_badge": "Zug des GM",
   "gm_turn_title": "Themenfoto vorbereiten",
   "sec_suffix": "s",
-  "gm_turn_caution": "Heimlich fotografieren",
   "shoot_here": "Jetzt fotografieren",
   "pick_photo": "Vorhandenes Foto wählen",
   "camera_starting": "Kamera wird gestartet…",
@@ -81,7 +77,6 @@
   "resend_button": "Erneut senden",
   "photo_unreadable": "Dieses Foto konnte nicht gelesen werden. Bitte wähle ein anderes",
   "gm_preparing": "{name} macht\ndas geheime Foto",
-  "gm_turn_player_note": "Nicht zum GM schauen!",
   "points_value": "{count} Pkt.",
   "hint_wait_title": "Hinweise werden erstellt",
   "hint_error_title": "Hinweise konnten nicht erstellt werden",
@@ -149,5 +144,16 @@
   "repick": "Anderes wählen",
   "hint_timeline_label": "Bis zum nächsten Hinweis",
   "no_submissions": "Niemand hat ein Foto abgegeben",
-  "to_results_button": "Zum Ergebnis"
+  "to_results_button": "Zum Ergebnis",
+  "copy_code": "Raumnummer {code} kopieren",
+  "code_copied": "Kopiert",
+  "rules_button": "Spielregeln",
+  "rules_1": "Der GM macht ein Foto als Aufgabe",
+  "rules_2": "Alle 10 Sekunden kommt ein KI-Hinweis dazu (bis zu 5)",
+  "rules_3": "Finde dieselbe Szene, fotografiere sie und reiche sie in {sec} Sekunden ein. Vor dem Einreichen kannst du neu aufnehmen",
+  "rules_4": "Der GM wählt die 3 ähnlichsten Fotos der Reihe nach",
+  "rules_5": "1. Platz 1000, 2. Platz 700, 3. Platz 400 Punkte. Je später du einreichst, desto weniger, am Ende nur die Hälfte",
+  "rules_6": "Wirst du mehrmals hintereinander gewählt, gibt es jedes Mal +100 (bis zu +500)",
+  "rules_7": "Die höchste Summe nach {rounds} Runden gewinnt. Der GM bekommt keine Punkte",
+  "close": "Schließen"
 }

@@ -2,8 +2,10 @@ import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Screen } from "../ui/Screen";
-import { formatCode, TopBar } from "../ui/TopBar";
+import { TopBar } from "../ui/TopBar";
+import { RoomBadge } from "../ui/RoomCode";
 import { PlayerTiles, type LobbyMember } from "./LobbyGm";
+import { RulesButton } from "./Rules";
 
 export interface LobbyPlayerProps {
   code: string;
@@ -14,26 +16,6 @@ export interface LobbyPlayerProps {
   limitSec: number;
   onLeave(): void;
 }
-
-/** 遊び方の 3 行（カメラ、電球、稲妻のアイコン）。 */
-const HOWTO = [
-  {
-    icon: (
-      <>
-        <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
-        <circle cx="12" cy="13" r="3.5" />
-      </>
-    ),
-    text: () => m.howto_1(),
-  },
-  {
-    icon: (
-      <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z" />
-    ),
-    text: () => m.howto_2(),
-  },
-  { icon: <path d="M13 2 4 14h7l-1 8 9-12h-7z" />, text: () => m.howto_3() },
-];
 
 export function LobbyPlayer({
   code,
@@ -46,7 +28,7 @@ export function LobbyPlayer({
 }: LobbyPlayerProps) {
   return (
     <Screen>
-      <TopBar left={m.app_name()} right={<span>{m.room_badge({ code: formatCode(code) })}</span>} />
+      <TopBar right={<RoomBadge code={code} />} />
 
       <Card
         raised
@@ -78,31 +60,13 @@ export function LobbyPlayer({
 
       <PlayerTiles gmName={gmName} players={players} meId={me.pid} />
 
-      <ul className="sh-howto">
-        {HOWTO.map(({ icon, text }, i) => (
-          <li key={i}>
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              {icon}
-            </svg>
-            {text()}
-          </li>
-        ))}
-      </ul>
-
       <div className="sh-actions">
-        <Button variant="quiet" onClick={onLeave}>
-          {m.leave_button()}
-        </Button>
+        <div className="sh-row sh-row--even">
+          <RulesButton rounds={rounds} limitSec={limitSec} />
+          <Button variant="quiet" onClick={onLeave}>
+            {m.leave_button()}
+          </Button>
+        </div>
       </div>
     </Screen>
   );

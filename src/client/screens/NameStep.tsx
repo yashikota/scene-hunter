@@ -3,7 +3,7 @@ import { loadLastName, saveLastName } from "../game/membership";
 import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
 import { Screen } from "../ui/Screen";
-import { formatCode } from "../ui/TopBar";
+import { RoomCode } from "../ui/RoomCode";
 import { Connecting } from "./Connecting";
 import { cleanName, errorMessage, NAME_MAX } from "./entryErrors";
 
@@ -52,9 +52,7 @@ export function NameStep({ code, onSubmit, onBack }: NameStepProps) {
     <Screen variant="top">
       <form onSubmit={submit} noValidate className="sh-stack">
         {code ? (
-          <p className="sh-display sh-code" style={{ textAlign: "center" }}>
-            {formatCode(code)}
-          </p>
+          <RoomCode code={code} />
         ) : (
           <p className="sh-display" style={{ fontSize: 28, textAlign: "center", margin: 0 }}>
             {m.create_button()}
@@ -66,7 +64,13 @@ export function NameStep({ code, onSubmit, onBack }: NameStepProps) {
         <input
           id={`${id}-name`}
           className="sh-input sh-input--big"
-          autoComplete="nickname"
+          // 名前の欄だけのフォームは、パスワードマネージャーにログインの欄と見なされやすい。保存も補完も止める
+          name="sh-player-name"
+          autoComplete="off"
+          data-1p-ignore=""
+          data-lpignore="true"
+          data-bwignore=""
+          data-form-type="other"
           enterKeyHint="go"
           autoFocus
           maxLength={NAME_MAX}

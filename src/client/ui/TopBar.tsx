@@ -1,10 +1,18 @@
 import type { ReactNode } from "react";
+import { m } from "../paraglide/messages";
 
-/** 画面の上端：左に画面の名前（「ロビー」など）、右に部屋の番号や印。 */
-export function TopBar({ left, right }: { left: ReactNode; right?: ReactNode }) {
+/** 画面の上端：左に画面の名前（「ROUND 2 / 3」など。無ければアプリのロゴ）、右に部屋の番号や印。 */
+export function TopBar({ left, right }: { left?: ReactNode; right?: ReactNode }) {
   return (
     <header className="sh-topbar">
-      <span>{left}</span>
+      {left === undefined ? (
+        <span className="sh-topbar-brand">
+          <img src="/camera.webp" alt="" width={22} height={22} />
+          <span className="sh-brand">{m.app_name()}</span>
+        </span>
+      ) : (
+        <span>{left}</span>
+      )}
       {right}
     </header>
   );

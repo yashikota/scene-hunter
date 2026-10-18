@@ -27,7 +27,7 @@ const defaultDeps: TopDeps = {
 
 export interface TopProps {
   /**
-   * 共有されたリンク（/r/{code} か /?code=）から来たときの番号。開いたらすぐに部屋を確かめる。
+   * 共有されたリンク（/r/{code}）から来たときの番号。開いたらすぐに部屋を確かめる。
    * ただし、確かめ済みの部屋（名前の入力から戻ってきたとき）なら確かめず、番号を入れておくだけにする。
    */
   initialCode?: string;

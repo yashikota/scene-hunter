@@ -52,9 +52,9 @@ export async function joinByCode(p: Person, code: string): Promise<void> {
   await enterName(p);
 }
 
-/** 共有リンク（/?code=）から入る。番号の確かめは自動で進む。 */
+/** 共有リンク（/r/{code}）から入る。番号の確かめは自動で進む。 */
 export async function joinByLink(p: Person, code: string): Promise<void> {
-  await p.page.goto(`/?code=${code}`);
+  await p.page.goto(`/r/${code}`);
   await enterName(p);
 }
 

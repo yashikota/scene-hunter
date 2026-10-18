@@ -11,6 +11,8 @@ body {
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-body), sans-serif;
+  /* line-height: normal はフォントの ascent と descent で決まり、言語（フォント）ごとに行の高さが変わる。数で固定する */
+  line-height: 1.5;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -24,7 +26,7 @@ body {
   gap: 16px;
 }
 .sh-screen--top {
-  padding-top: 40px;
+  padding-top: 12px;
   gap: 22px;
 }
 
@@ -32,6 +34,18 @@ body {
   margin: 0;
   font-family: var(--font-display), sans-serif;
   font-weight: var(--font-display-weight);
+  line-height: 1.25;
+}
+
+/*
+ * 1 行で置く文字（ボタン、バッジ、番号）は、行の上下をフォントの大文字の高さと基準線で切り落とす。
+ * 丸ゴシックは字の下側に余白が多く、行の中央に置くと下にずれて見えるため。
+ */
+.sh-btn,
+.sh-badge,
+.sh-chip,
+.sh-code {
+  text-box: trim-both cap alphabetic;
 }
 
 .sh-sub {
@@ -54,6 +68,9 @@ body {
 }
 
 .sh-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: normal;
@@ -61,16 +78,19 @@ body {
   background: var(--color-gold);
   border: var(--border);
   border-radius: 999px;
-  padding: 2px 10px;
+  padding: 0 10px;
 }
 
 .sh-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
   font-size: 13px;
   font-weight: 800;
   background: var(--color-bg);
   border: var(--border);
   border-radius: 999px;
-  padding: 3px 12px;
+  padding: 0 12px;
 }
 
 .sh-card {
@@ -102,6 +122,7 @@ body {
   box-shadow: 2px 2px 0 var(--color-ink);
   padding: 14px;
   min-height: 52px;
+  line-height: 1.25;
   cursor: pointer;
   flex-shrink: 0;
   transition:
@@ -148,6 +169,7 @@ body {
   border: var(--border);
   border-radius: var(--radius-sm);
   padding: 12px;
+  line-height: 1.25;
   width: 100%;
   min-width: 0;
 }
@@ -157,11 +179,14 @@ body {
   font-size: 26px;
   letter-spacing: 0.3em;
   text-align: center;
-  padding: 10px 12px;
+  /* 丸ゴシックの数字は下に寄って見えるので上を詰める。字間は右にも付くので、同じだけ左を下げて中央をそろえる */
+  padding: 8px 12px 12px;
+  text-indent: 0.3em;
   background: var(--color-bg);
 }
 .sh-input--code::placeholder {
   font-family: var(--font-body), sans-serif;
+  text-indent: 0;
   font-weight: 400;
   font-size: 17px;
   letter-spacing: normal;
@@ -183,6 +208,7 @@ body {
   border: var(--border);
   border-radius: 999px;
   padding: 6px 12px;
+  line-height: 1.25;
   min-height: 48px;
 }
 
@@ -482,9 +508,33 @@ body {
 /* 部屋の番号を大きく。 */
 .sh-code {
   margin: 0;
+  /* 字間は右にも付くので、同じだけ左に足して中央をそろえる */
+  min-height: 60px;
+  padding: 8px 0 8px 0.12em;
   font-size: 44px;
   letter-spacing: 0.12em;
   font-variant-numeric: tabular-nums;
+}
+/* 押すとコピーする番号。見た目は文字のまま、押せることは指のカーソルと押した瞬間の沈みで伝える。 */
+.sh-copy {
+  color: var(--color-ink);
+  border: var(--border);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sh-code.sh-copy {
+  background: none;
+  border-color: transparent;
+  border-radius: var(--radius-sm);
+  min-width: 0;
+  max-width: 100%;
+}
+.sh-copy:active {
+  transform: translateY(1px);
+}
+.sh-copy:focus-visible {
+  outline: 3px solid var(--color-timer);
+  outline-offset: 2px;
 }
 .sh-input--big {
   font-size: 24px;
@@ -566,4 +616,55 @@ body {
 .sh-brand {
   font-family: "Mochiy Pop One", var(--font-display), sans-serif;
   font-weight: 400;
+}
+
+/* 上端の左に置くアプリのロゴ。 */
+.sh-topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  letter-spacing: normal;
+  color: var(--color-ink);
+}
+.sh-topbar-brand img {
+  display: block;
+}
+
+/* 画面の下から出すシート（確かめや選択）。 */
+.sh-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgb(26 26 26 / 0.35);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+}
+.sh-sheet {
+  width: 100%;
+  max-width: 448px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sh-row--even {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* 遊び方のシートの番号付きの一覧。 */
+.sh-rules {
+  margin: 0;
+  padding-left: 1.4em;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+.sh-rules li::marker {
+  font-family: var(--font-display), sans-serif;
+  color: var(--color-timer);
 }

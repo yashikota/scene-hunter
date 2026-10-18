@@ -2,7 +2,8 @@ import { useState } from "react";
 import { m } from "../paraglide/messages";
 import { Card } from "../ui/Card";
 import { Screen } from "../ui/Screen";
-import { formatCode, TopBar } from "../ui/TopBar";
+import { TopBar } from "../ui/TopBar";
+import { RoomBadge } from "../ui/RoomCode";
 import { useNow } from "../ui/useNow";
 import { GM_TURN_SEC, remainingSec } from "./turnTime";
 
@@ -20,10 +21,7 @@ export function GmTurnPlayer({ code, round, rounds, gmName, me }: GmTurnPlayerPr
   const now = useNow();
   return (
     <Screen>
-      <TopBar
-        left={m.round_label({ round, rounds })}
-        right={<span>{m.room_badge({ code: formatCode(code) })}</span>}
-      />
+      <TopBar left={m.round_label({ round, rounds })} right={<RoomBadge code={code} />} />
       <div
         style={{
           flexGrow: 1,
@@ -42,9 +40,6 @@ export function GmTurnPlayer({ code, round, rounds, gmName, me }: GmTurnPlayerPr
         <h1 className="sh-display sh-pre" style={{ fontSize: 22, lineHeight: 1.5 }}>
           {m.gm_preparing({ name: gmName })}
         </h1>
-        <p className="sh-sub sh-pre" style={{ margin: 0, fontSize: 14, lineHeight: 1.7 }}>
-          {m.gm_turn_player_note()}
-        </p>
       </div>
       <Card
         style={{

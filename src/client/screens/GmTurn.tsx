@@ -118,9 +118,6 @@ export function GmTurn({ round, rounds, onPhoto }: GmTurnProps) {
                   <span style={{ fontSize: 14 }}>{m.camera_starting()}</span>
                 )}
           </CameraFrame>
-          <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: "center" }}>
-            {m.gm_turn_caution()}
-          </p>
           {error && (
             <p role="alert" className="sh-error">
               {error}

@@ -1,6 +1,7 @@
 import { m } from "../paraglide/messages";
 import { Screen } from "../ui/Screen";
-import { formatCode, TopBar } from "../ui/TopBar";
+import { TopBar } from "../ui/TopBar";
+import { RoomBadge } from "../ui/RoomCode";
 
 /** バーが 90 % 近くまで伸びるまでの秒数。AI の応答は数秒から 1 分以上までばらつくので、満タンにはしない。 */
 export const HINT_WAIT_EASE_SEC = 30;
@@ -21,13 +22,7 @@ export function HintWait({
     <Screen>
       <TopBar
         left={m.round_label({ round, rounds })}
-        right={
-          gm ? (
-            <span className="sh-badge">{m.you_are_gm()}</span>
-          ) : (
-            <span>{m.room_badge({ code: formatCode(code) })}</span>
-          )
-        }
+        right={gm ? <span className="sh-badge">{m.you_are_gm()}</span> : <RoomBadge code={code} />}
       />
       <div role="status" className="sh-center">
         <span className="sh-bar sh-bar--wide" aria-hidden="true">

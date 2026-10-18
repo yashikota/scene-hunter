@@ -8,8 +8,6 @@ import { LobbyGm } from "../../src/client/screens/LobbyGm";
 import { LobbyPlayer } from "../../src/client/screens/LobbyPlayer";
 import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 import { routeTree } from "../../src/client/routeTree.gen";
-import { parseSearch, stringifySearch } from "../../src/client/searchParams";
-import { parseCodeParam } from "../../src/client/routes/index";
 import { NameStep } from "../../src/client/screens/NameStep";
 import { Top } from "../../src/client/screens/Top";
 import { LOCALE_NAMES, LOCALES } from "../../src/shared/locales";
@@ -139,7 +137,7 @@ describe("Top", () => {
   });
 });
 
-describe("?code= で開く", () => {
+describe("Top に番号を渡して開く", () => {
   beforeEach(() => vi.stubGlobal("WebTransport", class {}));
 
   it("Top は initialCode を入れ、すぐに部屋を確かめて次へ進む", async () => {
@@ -156,26 +154,6 @@ describe("?code= で開く", () => {
     expect((screen.getByLabelText(m.code_label()) as HTMLInputElement).value).toBe("");
     expect(find).not.toHaveBeenCalled();
   });
-
-  it("6 桁の数字以外の code は無視する", () => {
-    expect(parseCodeParam("123456")).toBe("123456");
-    expect(parseCodeParam("000123")).toBe("000123");
-    for (const bad of [
-      "12345",
-      "1234567",
-      "abcdef",
-      "12345a",
-      "",
-      " 123456",
-      undefined,
-      null,
-      ["123456"],
-      {},
-      100000,
-    ]) {
-      expect(parseCodeParam(bad)).toBeUndefined();
-    }
-  });
 });
 
 describe("/r/{code} を直接開く（まだ入っていない部屋）", () => {
@@ -184,8 +162,6 @@ describe("/r/{code} を直接開く（まだ入っていない部屋）", () => 
   const open = (path: string) => {
     const router = createRouter({
       routeTree,
-      parseSearch,
-      stringifySearch,
       history: createMemoryHistory({ initialEntries: [path] }),
     });
     render(<RouterProvider router={router} />);
@@ -205,39 +181,40 @@ describe("/r/{code} を直接開く（まだ入っていない部屋）", () => 
     expect(screen.getByText("246 810")).toBeTruthy();
   });
 
-  it("共有リンク /?code= から名前の入力へ進み、戻るとトップに番号を入れたまま留まる（確かめ直さない）", async () => {
+  it("名前の入力でやめると、この URL のまま番号を入れたトップに戻る（確かめ直さない）", async () => {
     const fetchMock = vi.fn(async () => json({ exists: true }));
     vi.stubGlobal("fetch", fetchMock);
-    const router = open("/?code=112233");
-    expect(await screen.findByLabelText(m.name_label())).toBeTruthy();
-    expect(router.state.location.pathname).toBe("/r/112233");
-    await act(async () => router.history.back());
-    await vi.waitFor(() => expect(router.state.location.pathname).toBe("/"));
+    const router = open("/r/445566");
+    await screen.findByLabelText(m.name_label());
+    fireEvent.click(screen.getByRole("button", { name: m.cancel() }));
     expect(((await screen.findByLabelText(m.code_label())) as HTMLInputElement).value).toBe(
-      "112233",
+      "445566",
     );
     await act(() => new Promise((r) => setTimeout(r, 50)));
-    expect(router.state.location.pathname).toBe("/");
+    expect(router.state.location.pathname).toBe("/r/445566");
     expect(screen.queryByLabelText(m.name_label())).toBeNull();
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  it("名前の入力でやめると、番号を入れたトップに置き換わる（確かめ直さない）", async () => {
+  it("/?code= は使わない（番号は入れず、確かめもしない）", async () => {
     const fetchMock = vi.fn(async () => json({ exists: true }));
     vi.stubGlobal("fetch", fetchMock);
-    const router = open("/?code=445566");
-    await screen.findByLabelText(m.name_label());
-    fireEvent.click(screen.getByRole("button", { name: m.cancel() }));
-    await vi.waitFor(() => expect(router.state.location.pathname).toBe("/"));
-    expect(((await screen.findByLabelText(m.code_label())) as HTMLInputElement).value).toBe(
-      "445566",
-    );
-    expect(fetchMock).toHaveBeenCalledOnce();
+    const router = open("/?code=112233");
+    expect(((await screen.findByLabelText(m.code_label())) as HTMLInputElement).value).toBe("");
+    await act(() => new Promise((r) => setTimeout(r, 50)));
+    expect(router.state.location.pathname).toBe("/");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("code は JSON にせず生の文字列で書き出す", () => {
-    expect(stringifySearch({ code: "012345" })).toBe("?code=012345");
-    expect(stringifySearch({})).toBe("");
+  it("6 桁の数字でない /r/{code} はトップに回す", async () => {
+    const fetchMock = vi.fn(async () => json({ exists: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    for (const bad of ["12345", "1234567", "abcdef", "12e456"]) {
+      const router = open(`/r/${bad}`);
+      await vi.waitFor(() => expect(router.state.location.pathname).toBe("/"));
+      cleanup();
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("部屋が無ければ、数秒で番号を入れたトップに「見つかりません」を出す（準備中の画面は出さない）", async () => {
@@ -251,7 +228,7 @@ describe("/r/{code} を直接開く（まだ入っていない部屋）", () => 
       // 3 秒おきに 2 回だけ確かめ直す（約 6 秒）
       for (let i = 0; i < 3; i++) await act(() => vi.advanceTimersByTimeAsync(3000));
       expect(fetchMock).toHaveBeenCalledTimes(3);
-      expect(router.state.location.pathname).toBe("/");
+      expect(router.state.location.pathname).toBe("/r/135791");
       expect(screen.getByRole("alert").textContent).toBe(m.error_not_found());
       expect((screen.getByLabelText(m.code_label()) as HTMLInputElement).value).toBe("135791");
       expect(screen.queryByLabelText(m.name_label())).toBeNull();
@@ -261,34 +238,16 @@ describe("/r/{code} を直接開く（まだ入っていない部屋）", () => 
   });
 });
 
-describe("ルーターの検索文字列から code を読む", () => {
-  const codeFor = async (search: string) => {
-    const router = createRouter({
-      routeTree,
-      parseSearch,
-      history: createMemoryHistory({ initialEntries: [`/${search}`] }),
-    });
-    await router.load();
-    return (
-      router.state.matches.find((x) => x.routeId === "/")?.search as { code?: string } | undefined
-    )?.code;
-  };
-
-  it("?code=123456 は入る", async () => expect(await codeFor("?code=123456")).toBe("123456"));
-  it("?code=000123 は文字列のまま", async () =>
-    expect(await codeFor("?code=000123")).toBe("000123"));
-  it("?code=1e5 と ?code=12e4 は無視する", async () => {
-    expect(await codeFor("?code=1e5")).toBeUndefined();
-    expect(await codeFor("?code=12e4")).toBeUndefined();
-  });
-  it("桁が違う、数字でない code は無視する", async () => {
-    for (const c of ["12345", "1234567", "abcdef", "+12345", "-12345"])
-      expect(await codeFor(`?code=${c}`)).toBeUndefined();
-  });
-});
-
 describe("NameStep", () => {
   afterEach(() => localStorage.clear());
+
+  it("名前の欄はパスワードマネージャーに補完も保存もさせない", () => {
+    render(<NameStep code="482913" onSubmit={async () => {}} onBack={() => {}} />);
+    const input = screen.getByLabelText(m.name_label());
+    expect(input.getAttribute("autocomplete")).toBe("off");
+    expect(input.hasAttribute("data-1p-ignore")).toBe(true);
+    expect(input.getAttribute("data-lpignore")).toBe("true");
+  });
 
   it("前に使った名前を入れておき、決めた名前を覚える", async () => {
     localStorage.setItem("sh:name", "はるか");
@@ -365,9 +324,11 @@ describe("LobbyGm", () => {
     // 参加者がいれば、ゲーム中に画面を閉じないよう 1 行だけ伝える
     expect(screen.getByText("画面を閉じないでね")).toBeTruthy();
     expect(screen.queryByText(m.start_waiting())).toBeNull();
-    // ボタンは開始、交代、解散だけで、ラウンド数と制限時間を変える入力も無い
+    // ボタンは番号とリンクのコピー、遊び方、開始、交代、解散だけで、ラウンド数と制限時間を変える入力も無い
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
+      "482 913",
       m.copy_link(),
+      m.rules_button(),
       m.start_button(),
       m.transfer_button(),
       m.dissolve_button(),
@@ -407,6 +368,93 @@ describe("LobbyGm", () => {
 const stubClipboard = (clipboard: unknown) =>
   Object.defineProperty(window.navigator, "clipboard", { value: clipboard, configurable: true });
 
+describe("部屋の番号のコピー", () => {
+  afterEach(() => {
+    stubClipboard(undefined);
+    vi.useRealTimers();
+  });
+
+  it("番号を押すと 6 桁の数字を書き、「コピーしました」を 2 秒だけ出す", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    stubClipboard({ writeText });
+    render(lobbyGm());
+    const code = screen.getByRole("button", { name: m.copy_code({ code: "482 913" }) });
+    await act(async () => fireEvent.click(code));
+    expect(writeText).toHaveBeenCalledWith("482913");
+    expect(code.textContent).toBe(m.code_copied());
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(code.textContent).toBe("482 913");
+  });
+
+  it("上端の「部屋 482 913」も押すとコピーする", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    stubClipboard({ writeText });
+    render(
+      <LobbyPlayer
+        code="482913"
+        me={players[0]}
+        gmName="ゆうき"
+        players={players}
+        rounds={3}
+        limitSec={60}
+        onLeave={() => {}}
+      />,
+    );
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: m.copy_code({ code: "482 913" }) })),
+    );
+    expect(writeText).toHaveBeenCalledWith("482913");
+  });
+
+  it("リンクの「コピーしました」も 2 秒で元に戻る", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    stubClipboard({ writeText: vi.fn().mockResolvedValue(undefined) });
+    render(lobbyGm());
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: m.copy_link() })));
+    expect(screen.getByRole("button", { name: m.link_copied() })).toBeTruthy();
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(screen.getByRole("button", { name: m.copy_link() })).toBeTruthy();
+  });
+});
+
+describe("LobbyGm の解散", () => {
+  it("ブラウザの confirm ではなく画面のシートで確かめ、やめれば何もしない", () => {
+    const confirm = vi.fn(() => true);
+    vi.stubGlobal("confirm", confirm);
+    const onDissolve = vi.fn();
+    render(lobbyGm({ onDissolve }));
+    fireEvent.click(screen.getByRole("button", { name: m.dissolve_button() }));
+    const sheet = screen.getByRole("dialog", { name: m.dissolve_confirm() });
+    fireEvent.click(within(sheet).getByRole("button", { name: m.cancel() }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(onDissolve).not.toHaveBeenCalled();
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it("シートの「解散する」で解散する", () => {
+    const onDissolve = vi.fn();
+    render(lobbyGm({ onDissolve }));
+    fireEvent.click(screen.getByRole("button", { name: m.dissolve_button() }));
+    const sheet = screen.getByRole("dialog", { name: m.dissolve_confirm() });
+    fireEvent.click(within(sheet).getByRole("button", { name: m.dissolve_button() }));
+    expect(onDissolve).toHaveBeenCalledOnce();
+  });
+});
+
+describe("遊び方", () => {
+  it("ロビーの「遊び方」で、ラウンド数と制限時間を入れたルールを出す", () => {
+    render(lobbyGm({ rounds: 5, limitSec: 90 }));
+    fireEvent.click(screen.getByRole("button", { name: m.rules_button() }));
+    const sheet = screen.getByRole("dialog", { name: m.rules_button() });
+    expect(within(sheet).getAllByRole("listitem")).toHaveLength(7);
+    expect(within(sheet).getByText(m.rules_3({ sec: 90 }))).toBeTruthy();
+    expect(within(sheet).getByText(m.rules_7({ rounds: 5 }))).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole("button", { name: m.close() }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
 describe("LobbyGm のリンクのコピー", () => {
   afterEach(() => stubClipboard(undefined));
 
@@ -415,16 +463,16 @@ describe("LobbyGm のリンクのコピー", () => {
     render(lobbyGm());
     fireEvent.click(screen.getByRole("button", { name: m.copy_link() }));
     expect(((await screen.findByRole("textbox")) as HTMLInputElement).value).toBe(
-      `${location.origin}/?code=482913`,
+      `${location.origin}/r/482913`,
     );
   });
 
-  it("?code= の URL を clipboard に書く", async () => {
+  it("/r/{code} の URL を clipboard に書く", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     stubClipboard({ writeText });
     render(lobbyGm());
     fireEvent.click(screen.getByRole("button", { name: m.copy_link() }));
-    expect(writeText).toHaveBeenCalledWith(`${location.origin}/?code=482913`);
+    expect(writeText).toHaveBeenCalledWith(`${location.origin}/r/482913`);
     expect(await screen.findByRole("button", { name: m.link_copied() })).toBeTruthy();
   });
 
@@ -435,7 +483,7 @@ describe("LobbyGm のリンクのコピー", () => {
     fireEvent.click(screen.getByRole("button", { name: m.copy_link() }));
     const input = (await screen.findByRole("textbox")) as HTMLInputElement;
     expect(input.readOnly).toBe(true);
-    expect(input.value).toBe(`${location.origin}/?code=482913`);
+    expect(input.value).toBe(`${location.origin}/r/482913`);
   });
 });
 

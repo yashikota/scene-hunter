@@ -5,7 +5,8 @@ import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { formatMultiplier, formatNumber } from "../ui/format";
 import { Screen } from "../ui/Screen";
-import { formatCode, TopBar } from "../ui/TopBar";
+import { TopBar } from "../ui/TopBar";
+import { RoomBadge } from "../ui/RoomCode";
 import { Thumb } from "./ResultsParts";
 
 export interface RevealPlayer {
@@ -53,10 +54,7 @@ export function ResultsReveal({
   const last = round >= rounds;
   return (
     <Screen>
-      <TopBar
-        left={m.round_label({ round, rounds })}
-        right={<span>{m.room_badge({ code: formatCode(code) })}</span>}
-      />
+      <TopBar left={m.round_label({ round, rounds })} right={<RoomBadge code={code} />} />
       <h1 className="sh-display" style={{ fontSize: 22 }}>
         {m.round_result_title({ round })}
       </h1>

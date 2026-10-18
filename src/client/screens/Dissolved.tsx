@@ -1,13 +1,14 @@
 import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
 import { Screen } from "../ui/Screen";
-import { formatCode, TopBar } from "../ui/TopBar";
+import { TopBar } from "../ui/TopBar";
+import { RoomBadge } from "../ui/RoomCode";
 
 /** 部屋が閉じられた（GM が解散した）。 */
 export function Dissolved({ code, onLeave }: { code: string; onLeave(): void }) {
   return (
     <Screen>
-      <TopBar left={m.app_name()} right={<span>{m.room_badge({ code: formatCode(code) })}</span>} />
+      <TopBar right={<RoomBadge code={code} />} />
       <h1
         role="status"
         className="sh-display"

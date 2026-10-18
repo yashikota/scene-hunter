@@ -3,7 +3,8 @@ import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
 import { formatNumber } from "../ui/format";
 import { Screen } from "../ui/Screen";
-import { formatCode, TopBar } from "../ui/TopBar";
+import { TopBar } from "../ui/TopBar";
+import { RoomBadge } from "../ui/RoomCode";
 import type { RevealPlayer } from "./ResultsReveal";
 
 export interface FinalProps {
@@ -45,10 +46,7 @@ export function Final({
   const rest = totals.slice(3);
   return (
     <Screen>
-      <TopBar
-        left={m.rounds_done({ rounds })}
-        right={<span>{m.room_badge({ code: formatCode(code) })}</span>}
-      />
+      <TopBar left={m.rounds_done({ rounds })} right={<RoomBadge code={code} />} />
       <h1 className="sh-display" style={{ fontSize: 28, textAlign: "center" }}>
         {m.final_title()}
       </h1>

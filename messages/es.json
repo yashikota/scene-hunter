@@ -53,9 +53,6 @@
       }
     }
   ],
-  "howto_1": "El GM hace la foto secreta",
-  "howto_2": "Usa las pistas para encontrar la misma vista",
-  "howto_3": "Más parecida y rápida = más puntos",
   "leave_button": "Salir de la sala",
   "unsupported_android": "Chrome en Android",
   "unsupported_desktop": "Chrome o Edge en el ordenador",
@@ -72,7 +69,6 @@
   "gm_turn_badge": "Turno del GM",
   "gm_turn_title": "Prepara la foto del tema",
   "sec_suffix": "s",
-  "gm_turn_caution": "Hazla en secreto",
   "shoot_here": "Tomar la foto ahora",
   "pick_photo": "Elegir una foto existente",
   "camera_starting": "Iniciando la cámara…",
@@ -81,7 +77,6 @@
   "resend_button": "Enviar de nuevo",
   "photo_unreadable": "No se pudo leer esta foto. Elige otra",
   "gm_preparing": "{name} está haciendo\nla foto secreta",
-  "gm_turn_player_note": "¡No mires al GM!",
   "points_value": "{count} pts",
   "hint_wait_title": "Creando pistas",
   "hint_error_title": "No se pudieron crear las pistas",
@@ -149,5 +144,16 @@
   "repick": "Elegir otra",
   "hint_timeline_label": "Hasta la siguiente pista",
   "no_submissions": "Nadie entregó una foto",
-  "to_results_button": "Ver resultados"
+  "to_results_button": "Ver resultados",
+  "copy_code": "Copiar el número de sala {code}",
+  "code_copied": "Copiado",
+  "rules_button": "Cómo jugar",
+  "rules_1": "El GM toma una foto como tema",
+  "rules_2": "Las pistas de la IA aparecen cada 10 segundos (hasta 5)",
+  "rules_3": "Encuentra la misma escena, fotografíala y envíala en {sec} segundos. Puedes repetirla antes de enviar",
+  "rules_4": "El GM elige las 3 fotos más parecidas, en orden",
+  "rules_5": "1.º 1000, 2.º 700, 3.º 400 puntos. Cuanto más tarde envíes, menos puntos, hasta la mitad al final",
+  "rules_6": "Si te eligen seguido, +100 cada vez (hasta +500)",
+  "rules_7": "Gana el mayor total tras {rounds} rondas. El GM no suma puntos",
+  "close": "Cerrar"
 }

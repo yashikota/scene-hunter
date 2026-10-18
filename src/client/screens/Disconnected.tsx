@@ -3,7 +3,8 @@ import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { formatNumber } from "../ui/format";
 import { Screen } from "../ui/Screen";
-import { formatCode, TopBar } from "../ui/TopBar";
+import { TopBar } from "../ui/TopBar";
+import { RoomBadge } from "../ui/RoomCode";
 import { useNow } from "../ui/useNow";
 
 export interface DisconnectedProps {
@@ -38,8 +39,8 @@ export function Disconnected({
   return (
     <Screen>
       <TopBar
-        left={round > 0 ? m.round_label({ round, rounds }) : m.app_name()}
-        right={<span>{m.room_badge({ code: formatCode(code) })}</span>}
+        left={round > 0 ? m.round_label({ round, rounds }) : undefined}
+        right={<RoomBadge code={code} />}
       />
       <div
         role="alert"

@@ -1,6 +1,7 @@
 import { m } from "../paraglide/messages";
 import { Screen } from "../ui/Screen";
-import { formatCode, TopBar } from "../ui/TopBar";
+import { TopBar } from "../ui/TopBar";
+import { RoomBadge } from "../ui/RoomCode";
 import { Collecting, Thumb, TopicCard } from "./ResultsParts";
 import type { ResultPhotoView } from "./ResultsPick";
 
@@ -27,10 +28,7 @@ export function ResultsWait({
 }: ResultsWaitProps) {
   return (
     <Screen>
-      <TopBar
-        left={m.round_label({ round, rounds })}
-        right={<span>{m.room_badge({ code: formatCode(code) })}</span>}
-      />
+      <TopBar left={m.round_label({ round, rounds })} right={<RoomBadge code={code} />} />
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <h1 className="sh-display" style={{ fontSize: 22 }}>
           {m.results_wait_title()}

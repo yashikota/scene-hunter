@@ -53,9 +53,6 @@
       }
     }
   ],
-  "howto_1": "Le MJ prend la photo secrète",
-  "howto_2": "Trouve la même vue grâce aux indices",
-  "howto_3": "Plus proche et rapide = plus de points",
   "leave_button": "Quitter le salon",
   "unsupported_android": "Chrome sur Android",
   "unsupported_desktop": "Chrome ou Edge sur ordinateur",
@@ -72,7 +69,6 @@
   "gm_turn_badge": "Tour du MJ",
   "gm_turn_title": "Préparer la photo du thème",
   "sec_suffix": "s",
-  "gm_turn_caution": "Prends-la en douce",
   "shoot_here": "Prendre la photo maintenant",
   "pick_photo": "Choisir une photo existante",
   "camera_starting": "Démarrage de la caméra…",
@@ -81,7 +77,6 @@
   "resend_button": "Renvoyer",
   "photo_unreadable": "Cette photo n’a pas pu être lue. Choisissez-en une autre",
   "gm_preparing": "{name} prend\nla photo secrète",
-  "gm_turn_player_note": "Ne regarde pas le MJ !",
   "points_value": "{count} pts",
   "hint_wait_title": "Création des indices",
   "hint_error_title": "Impossible de créer les indices",
@@ -149,5 +144,16 @@
   "repick": "Choisir une autre",
   "hint_timeline_label": "Jusqu'au prochain indice",
   "no_submissions": "Personne n'a envoyé de photo",
-  "to_results_button": "Voir le résultat"
+  "to_results_button": "Voir le résultat",
+  "copy_code": "Copier le numéro de salle {code}",
+  "code_copied": "Copié",
+  "rules_button": "Règles du jeu",
+  "rules_1": "Le GM prend une photo comme sujet",
+  "rules_2": "Les indices de l’IA arrivent toutes les 10 secondes (5 au maximum)",
+  "rules_3": "Trouvez la même scène, photographiez-la et envoyez-la en {sec} secondes. Vous pouvez reprendre la photo avant l’envoi",
+  "rules_4": "Le GM choisit les 3 photos les plus proches, dans l’ordre",
+  "rules_5": "1er 1000, 2e 700, 3e 400 points. Plus vous envoyez tard, moins vous gagnez, jusqu’à la moitié à la fin",
+  "rules_6": "Choisi plusieurs fois de suite : +100 à chaque fois (jusqu’à +500)",
+  "rules_7": "Le meilleur total après {rounds} manches gagne. Le GM ne marque pas de points",
+  "close": "Fermer"
 }
