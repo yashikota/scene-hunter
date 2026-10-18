@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { m } from '../paraglide/messages';
-import { Button } from '../ui/Button';
-import { Screen } from '../ui/Screen';
+import { useState } from "react";
+import { m } from "../paraglide/messages";
+import { Button } from "../ui/Button";
+import { Screen } from "../ui/Screen";
 
 /** WebTransport が無いブラウザ（Safari、Firefox など）。対応ブラウザで開き直せるよう、このページのリンクを渡す。 */
 export function Unsupported() {
-  const link = typeof location === 'undefined' ? '' : location.href;
+  const link = typeof location === "undefined" ? "" : location.href;
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     try {
@@ -19,17 +19,17 @@ export function Unsupported() {
     <Screen variant="top" style={{ gap: 20 }}>
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
           gap: 16,
-          textAlign: 'center',
+          textAlign: "center",
           paddingTop: 60,
         }}
       >
         <div
           className="sh-icon-tile"
-          style={{ width: 88, height: 88, background: 'var(--color-surface)', borderRadius: 22 }}
+          style={{ width: 88, height: 88, background: "var(--color-surface)", borderRadius: 22 }}
         >
           <svg
             width="46"
@@ -53,11 +53,11 @@ export function Unsupported() {
 
       <ul
         style={{
-          listStyle: 'none',
+          listStyle: "none",
           margin: 0,
           padding: 0,
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
           gap: 8,
         }}
       >
@@ -66,8 +66,8 @@ export function Unsupported() {
             key={t}
             className="sh-card"
             style={{
-              borderRadius: 'var(--radius-button)',
-              padding: '12px 14px',
+              borderRadius: "var(--radius-button)",
+              padding: "12px 14px",
               fontSize: 15,
               fontWeight: 800,
             }}
@@ -77,11 +77,11 @@ export function Unsupported() {
         ))}
       </ul>
 
-      <div className="sh-field" style={{ marginTop: 'auto', gap: 8 }}>
+      <div className="sh-field" style={{ marginTop: "auto", gap: 8 }}>
         <label htmlFor="page-link" className="sh-label">
           {m.page_link()}
         </label>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: "flex", gap: 8 }}>
           <input
             id="page-link"
             className="sh-input"
@@ -93,7 +93,7 @@ export function Unsupported() {
           <Button
             variant="primary"
             onClick={copy}
-            style={{ fontSize: 15, padding: '0 16px', minHeight: 48 }}
+            style={{ fontSize: 15, padding: "0 16px", minHeight: 48 }}
           >
             {copied ? m.copied() : m.copy()}
           </Button>

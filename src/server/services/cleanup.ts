@@ -1,6 +1,6 @@
-import type { RelayApi } from '../relay';
+import type { RelayApi } from "../relay";
 
-const RELAY_PREFIX = 'sh-';
+const RELAY_PREFIX = "sh-";
 const DEFAULT_MAX_AGE_MS = 43_200_000;
 
 /**

@@ -1,4 +1,4 @@
-import { defineEnv, string } from 'void/env';
+import { defineEnv, string } from "void/env";
 
 // 秘密情報は `void secret put` で登録する（手順は docs/deploy.md）。
 // void deploy は必須の値がリモートに無ければアップロードを止める。
@@ -16,5 +16,5 @@ export default defineEnv({
   // e2e テスト（pnpm e2e）の void dev だけで '1' にする。本番では設定しない（src/server/e2e.ts）。
   SH_E2E: string().optional(),
   SH_E2E_RELAY_URL: string().optional(),
-  VITE_SERVER_PUBLIC_KEY: string().default('60Zo_80nnrlNyFbUl6XrDFko36Vaqj0KTmh0yduAG34'),
+  VITE_SERVER_PUBLIC_KEY: string().default("60Zo_80nnrlNyFbUl6XrDFko36Vaqj0KTmh0yduAG34"),
 });

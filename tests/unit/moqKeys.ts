@@ -1,15 +1,15 @@
 // MoQ のテスト用に、サーバー鍵と参加証付きの封筒を作る。
-import { issueCert, type CertBody } from '../../src/shared/cert';
-import { exportPublicKey, generateKeyPair } from '../../src/shared/crypto';
-import { EnvelopeVerifier, seal } from '../../src/shared/envelope';
+import { issueCert, type CertBody } from "../../src/shared/cert";
+import { exportPublicKey, generateKeyPair } from "../../src/shared/crypto";
+import { EnvelopeVerifier, seal } from "../../src/shared/envelope";
 
-export const ROOM = '123456';
+export const ROOM = "123456";
 export const enc = (v: unknown) => new TextEncoder().encode(JSON.stringify(v));
 
 export async function makeIdentities() {
   const server = await generateKeyPair();
   const serverPub = await exportPublicKey(server.publicKey);
-  const mk = async (pid: string, role: CertBody['role']) => {
+  const mk = async (pid: string, role: CertBody["role"]) => {
     const kp = await generateKeyPair();
     const cert = await issueCert(server.privateKey, {
       room: ROOM,

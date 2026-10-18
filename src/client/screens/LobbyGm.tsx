@@ -1,10 +1,10 @@
-import { useRef, useState } from 'react';
-import { activePlayers } from '../game/playerView';
-import { m } from '../paraglide/messages';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { Screen } from '../ui/Screen';
-import { formatCode, TopBar } from '../ui/TopBar';
+import { useRef, useState } from "react";
+import { activePlayers } from "../game/playerView";
+import { m } from "../paraglide/messages";
+import { Button } from "../ui/Button";
+import { Card } from "../ui/Card";
+import { Screen } from "../ui/Screen";
+import { formatCode, TopBar } from "../ui/TopBar";
 
 export interface LobbyMember {
   pid: string;
@@ -19,7 +19,7 @@ export interface LobbyMember {
 export const AwayNote = ({ p }: { p: { away?: boolean; left?: boolean } }) =>
   p.left || p.away ? (
     <span className="sh-sub" style={{ fontSize: 12 }}>
-      {' '}
+      {" "}
       {p.left ? m.status_left() : m.status_away()}
     </span>
   ) : null;
@@ -35,8 +35,8 @@ export function PlayerTiles({
   meId?: string;
 }) {
   return (
-    <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+    <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <h2 className="sh-display" style={{ fontSize: 17 }}>
           {m.players_heading()}
         </h2>
@@ -52,7 +52,7 @@ export function PlayerTiles({
               {m.you_tag({ name: p.label })}
             </li>
           ) : (
-            <li key={p.pid} className={`sh-tile ${p.away || p.left ? 'sh-tile--away' : ''}`}>
+            <li key={p.pid} className={`sh-tile ${p.away || p.left ? "sh-tile--away" : ""}`}>
               {p.label}
               <AwayNote p={p} />
             </li>
@@ -120,7 +120,7 @@ export function LobbyGm({
     try {
       await onTransfer(pid);
     } catch (e) {
-      console.error('GM を交代できなかった', e);
+      console.error("GM を交代できなかった", e);
       setFailed(true);
       setTransferring(false);
     }
@@ -136,12 +136,12 @@ export function LobbyGm({
 
       <Card
         raised
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
       >
         <span className="sh-sub" style={{ fontSize: 13, fontWeight: 800 }}>
           {m.code_label()}
         </span>
-        <span className="sh-display" style={{ fontSize: 42, letterSpacing: '0.12em' }}>
+        <span className="sh-display" style={{ fontSize: 42, letterSpacing: "0.12em" }}>
           {formatCode(code)}
         </span>
         <Button variant="quiet" onClick={copyLink} style={{ marginTop: 8 }}>
@@ -155,7 +155,7 @@ export function LobbyGm({
             aria-label={m.copy_link()}
             value={shareLink(code)}
             onFocus={(e) => e.currentTarget.select()}
-            style={{ fontSize: 13, textAlign: 'center' }}
+            style={{ fontSize: 13, textAlign: "center" }}
           />
         )}
       </Card>
@@ -164,7 +164,7 @@ export function LobbyGm({
 
       <p
         className="sh-sub"
-        style={{ margin: 0, fontSize: 14, fontWeight: 800, textAlign: 'center' }}
+        style={{ margin: 0, fontSize: 14, fontWeight: 800, textAlign: "center" }}
       >
         {m.rounds_chip({ count: rounds })} · {m.seconds({ count: limitSec })}
       </p>
@@ -176,14 +176,14 @@ export function LobbyGm({
       )}
 
       <div className="sh-actions">
-        <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: 'center' }}>
+        <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: "center" }}>
           {/* 参加者がそろったら、ゲーム中に GM の画面を閉じないよう先に伝える */}
           {active.length === 0 ? m.start_waiting() : m.keep_screen_on()}
         </p>
         <Button variant="primary" onClick={onStart} disabled={active.length === 0 || transferring}>
           {m.start_button()}
         </Button>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
           <Button
             variant="quiet"
             onClick={() => setChoosing(true)}
@@ -225,12 +225,12 @@ function TransferSheet({
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         inset: 0,
-        background: 'rgb(26 26 26 / 0.35)',
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
+        background: "rgb(26 26 26 / 0.35)",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
         padding: 16,
       }}
       onClick={(e) => e.target === e.currentTarget && !busy && onCancel()}
@@ -240,18 +240,18 @@ function TransferSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="transfer-title"
-        style={{ width: '100%', maxWidth: 448, display: 'flex', flexDirection: 'column', gap: 12 }}
+        style={{ width: "100%", maxWidth: 448, display: "flex", flexDirection: "column", gap: 12 }}
       >
         <h2 id="transfer-title" className="sh-display" style={{ fontSize: 17 }}>
           {m.transfer_title()}
         </h2>
         <ul
           style={{
-            listStyle: 'none',
+            listStyle: "none",
             margin: 0,
             padding: 0,
-            display: 'flex',
-            flexDirection: 'column',
+            display: "flex",
+            flexDirection: "column",
             gap: 8,
           }}
         >
@@ -261,7 +261,7 @@ function TransferSheet({
                 variant="quiet"
                 disabled={busy}
                 onClick={() => onPick(p.pid)}
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
               >
                 {p.label}
               </Button>

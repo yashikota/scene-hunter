@@ -1,9 +1,9 @@
-import { m } from '../paraglide/messages';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { Screen } from '../ui/Screen';
-import { formatCode, TopBar } from '../ui/TopBar';
-import { PlayerTiles, type LobbyMember } from './LobbyGm';
+import { m } from "../paraglide/messages";
+import { Button } from "../ui/Button";
+import { Card } from "../ui/Card";
+import { Screen } from "../ui/Screen";
+import { formatCode, TopBar } from "../ui/TopBar";
+import { PlayerTiles, type LobbyMember } from "./LobbyGm";
 
 export interface LobbyPlayerProps {
   code: string;
@@ -51,12 +51,12 @@ export function LobbyPlayer({
       <Card
         raised
         style={{
-          padding: '22px 18px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          padding: "22px 18px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
           gap: 10,
-          textAlign: 'center',
+          textAlign: "center",
         }}
       >
         <span className="sh-display sh-pre" style={{ fontSize: 22, lineHeight: 1.4 }}>
@@ -64,9 +64,9 @@ export function LobbyPlayer({
         </span>
         <div
           style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
             gap: 8,
             marginTop: 4,
           }}

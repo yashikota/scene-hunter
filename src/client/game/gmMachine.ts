@@ -1,9 +1,9 @@
-import type { TransferCert } from '../../shared/cert';
-import type { Locale } from '../../shared/locales';
-import type { GmEventBody, GmSnapshot, LobbyPlayer, Phase, Total } from '../../shared/protocol';
-import { scoreRound, type RoundScore } from '../../shared/scoring';
+import type { TransferCert } from "../../shared/cert";
+import type { Locale } from "../../shared/locales";
+import type { GmEventBody, GmSnapshot, LobbyPlayer, Phase, Total } from "../../shared/protocol";
+import { scoreRound, type RoundScore } from "../../shared/scoring";
 
-export type { Phase } from '../../shared/protocol';
+export type { Phase } from "../../shared/protocol";
 
 /** ヒントの数と、ヒントを 1 つずつ出す間隔。 */
 const HINT_COUNT = 5;
@@ -13,14 +13,14 @@ const SUBMIT_WINDOW_MS = 30_000;
 const MAX_PICKS = 3;
 
 const PHASE_ORDER: readonly Phase[] = [
-  'lobby',
-  'gmTurn',
-  'hinting',
-  'hintError',
-  'playerTurn',
-  'picking',
-  'reveal',
-  'final',
+  "lobby",
+  "gmTurn",
+  "hinting",
+  "hintError",
+  "playerTurn",
+  "picking",
+  "reveal",
+  "final",
 ];
 
 export interface GmPlayer {
@@ -68,27 +68,27 @@ export interface GmState {
 }
 
 export type GmAction =
-  | { type: 'playerJoined'; pid: string; name: string; at: number }
+  | { type: "playerJoined"; pid: string; name: string; at: number }
   /** プレイヤーが部屋を出た（署名つきの leave を受けた）。 */
-  | { type: 'playerLeft'; pid: string }
+  | { type: "playerLeft"; pid: string }
   /** メッセージが途切れた（active: false）か、また届いた（active: true）。 */
-  | { type: 'presence'; pid: string; active: boolean }
-  | { type: 'start'; gameId: string }
-  | { type: 'gmPhotoUploaded'; key: string }
-  | { type: 'hintsReady'; hints: string[]; at: number }
-  | { type: 'hintsFailed' }
-  | { type: 'retryHints' }
-  | { type: 'tick'; now: number }
-  | { type: 'shutter'; round: number; pid: string; hash: string; at: number }
-  | { type: 'submit'; round: number; pid: string; key: string; at: number }
-  | { type: 'photoChecked'; pid: string; valid: boolean }
-  | { type: 'resultsReady'; gmPhotoUrl: string; photos: { pid: string; url: string }[] }
-  | { type: 'togglePick'; pid: string }
-  | { type: 'confirmPicks' }
-  | { type: 'nextRound' }
-  | { type: 'backToLobby' }
-  | { type: 'transferred'; transfer: TransferCert }
-  | { type: 'dissolve' };
+  | { type: "presence"; pid: string; active: boolean }
+  | { type: "start"; gameId: string }
+  | { type: "gmPhotoUploaded"; key: string }
+  | { type: "hintsReady"; hints: string[]; at: number }
+  | { type: "hintsFailed" }
+  | { type: "retryHints" }
+  | { type: "tick"; now: number }
+  | { type: "shutter"; round: number; pid: string; hash: string; at: number }
+  | { type: "submit"; round: number; pid: string; key: string; at: number }
+  | { type: "photoChecked"; pid: string; valid: boolean }
+  | { type: "resultsReady"; gmPhotoUrl: string; photos: { pid: string; url: string }[] }
+  | { type: "togglePick"; pid: string }
+  | { type: "confirmPicks" }
+  | { type: "nextRound" }
+  | { type: "backToLobby" }
+  | { type: "transferred"; transfer: TransferCert }
+  | { type: "dissolve" };
 
 export interface GmStep {
   state: GmState;
@@ -116,7 +116,7 @@ export function initialGmState(input: {
 }): GmState {
   return {
     ...input,
-    phase: 'lobby',
+    phase: "lobby",
     round: 0,
     gameId: null,
     players: {},
@@ -144,7 +144,7 @@ const lobbyPlayers = (s: GmState): LobbyPlayer[] =>
   }));
 
 const lobbyEvent = (s: GmState): GmEventBody => ({
-  type: 'lobby',
+  type: "lobby",
   players: lobbyPlayers(s),
   gmPid: s.gmPid,
   locale: s.locale,
@@ -164,7 +164,7 @@ function uniqueLabel(players: Record<string, GmPlayer>, name: string): string {
 export function isEligible(p: GmPlayer, round: number): boolean {
   const { joinedAt } = p;
   if (joinedAt.round !== round) return joinedAt.round < round;
-  return PHASE_ORDER.indexOf(joinedAt.phase) < PHASE_ORDER.indexOf('playerTurn');
+  return PHASE_ORDER.indexOf(joinedAt.phase) < PHASE_ORDER.indexOf("playerTurn");
 }
 
 export const eligiblePids = (s: GmState): string[] =>
@@ -177,17 +177,17 @@ export const activeEligiblePids = (s: GmState): string[] =>
   eligiblePids(s).filter((pid) => !own(s.players, pid)!.away && !hasLeft(s, pid));
 
 /** 対象者のうち away でない人が 1 人以上いて、その全員が提出していれば true。 */
-const allSubmitted = (s: GmState, submissions: GmState['submissions']): boolean => {
+const allSubmitted = (s: GmState, submissions: GmState["submissions"]): boolean => {
   const active = activeEligiblePids(s);
   return active.length > 0 && active.every((pid) => own(submissions, pid));
 };
 
 /** playerTurn で、人が抜けた結果ほかの全員が提出済みになったら picking に進める。 */
 function endTurnIfAllIn(s: GmState, emit: GmEventBody[]): GmStep {
-  if (s.phase !== 'playerTurn' || !allSubmitted(s, s.submissions)) return { state: s, emit };
+  if (s.phase !== "playerTurn" || !allSubmitted(s, s.submissions)) return { state: s, emit };
   return {
-    state: { ...s, phase: 'picking' },
-    emit: [...emit, { type: 'picking', round: s.round }],
+    state: { ...s, phase: "picking" },
+    emit: [...emit, { type: "picking", round: s.round }],
   };
 }
 
@@ -244,7 +244,7 @@ function emitDueHints(s: GmState, now: number): GmStep {
   const emit: GmEventBody[] = [];
   let sent = s.hintsSent;
   while (sent < HINT_COUNT && elapsed >= sent * HINT_INTERVAL_MS) {
-    emit.push({ type: 'hint', round: s.round, index: sent, text: s.hints[sent] ?? '' });
+    emit.push({ type: "hint", round: s.round, index: sent, text: s.hints[sent] ?? "" });
     sent++;
   }
   return { state: sent === s.hintsSent ? s : { ...s, hintsSent: sent }, emit };
@@ -257,7 +257,7 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
   if (s.dissolved) return none;
 
   switch (action.type) {
-    case 'playerJoined': {
+    case "playerJoined": {
       if (action.pid === s.gmPid || own(s.players, action.pid) || hasLeft(s, action.pid))
         return none;
       const player: GmPlayer = {
@@ -269,21 +269,21 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       };
       const next = { ...s, players: { ...s.players, [action.pid]: player } };
       // ゲーム中の参加者の一覧は state Track のスナップショットで伝える。
-      return { state: next, emit: s.phase === 'lobby' ? [lobbyEvent(next)] : [] };
+      return { state: next, emit: s.phase === "lobby" ? [lobbyEvent(next)] : [] };
     }
 
-    case 'playerLeft': {
+    case "playerLeft": {
       const pid = action.pid;
       if (!own(s.players, pid) || hasLeft(s, pid)) return none;
       const left = [...(s.left ?? []), pid];
-      if (s.phase === 'lobby') {
+      if (s.phase === "lobby") {
         // ロビーではまだ得点が無いので、一覧から消す。
         const next: GmState = { ...s, players: without(s.players, pid), left };
         return { state: next, emit: [lobbyEvent(next)] };
       }
       // ゲームの途中で出た人は、それまでの得点のまま順位に残る（点数は補填しない）。
       // 結果の画面（reveal / final）では何も変えない。
-      if (s.phase !== 'playerTurn' && s.phase !== 'picking')
+      if (s.phase !== "playerTurn" && s.phase !== "picking")
         return { state: { ...s, left }, emit: [] };
       // まだ得点になっていない、このラウンドの写真は取り下げる。
       let next: GmState = {
@@ -295,59 +295,59 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
         picks: s.picks.filter((p) => p !== pid),
       };
       const emit: GmEventBody[] = [];
-      if (s.phase === 'picking' && s.results) {
+      if (s.phase === "picking" && s.results) {
         const results = resultsOf(next, s.results.gmPhotoUrl, s.results.photos);
         next = { ...next, results };
-        emit.push({ type: 'results', round: s.round, ...results });
+        emit.push({ type: "results", round: s.round, ...results });
       }
       return endTurnIfAllIn(next, emit);
     }
 
-    case 'presence': {
+    case "presence": {
       const p = own(s.players, action.pid);
       if (!p || hasLeft(s, action.pid) || !p.away === action.active) return none;
       const players = { ...s.players, [action.pid]: { ...p, away: !action.active } };
       const next: GmState = { ...s, players };
-      if (s.phase === 'lobby') return { state: next, emit: [lobbyEvent(next)] };
+      if (s.phase === "lobby") return { state: next, emit: [lobbyEvent(next)] };
       return action.active ? { state: next, emit: [] } : endTurnIfAllIn(next, []);
     }
 
-    case 'start': {
-      if (s.phase !== 'lobby') return none;
+    case "start": {
+      if (s.phase !== "lobby") return none;
       const next: GmState = {
         ...s,
         ...freshRound,
-        phase: 'gmTurn',
+        phase: "gmTurn",
         round: 1,
         gameId: action.gameId,
         lastRanking: null,
       };
-      return { state: next, emit: [{ type: 'gm_turn', round: 1, gameId: action.gameId }] };
+      return { state: next, emit: [{ type: "gm_turn", round: 1, gameId: action.gameId }] };
     }
 
-    case 'gmPhotoUploaded':
-      if (s.phase !== 'gmTurn') return none;
+    case "gmPhotoUploaded":
+      if (s.phase !== "gmTurn") return none;
       return {
-        state: { ...s, phase: 'hinting', gmPhotoKey: action.key },
-        emit: [{ type: 'hinting' }],
+        state: { ...s, phase: "hinting", gmPhotoKey: action.key },
+        emit: [{ type: "hinting" }],
       };
 
-    case 'hintsFailed':
-      if (s.phase !== 'hinting') return none;
-      return { state: { ...s, phase: 'hintError' }, emit: [{ type: 'hint_error' }] };
+    case "hintsFailed":
+      if (s.phase !== "hinting") return none;
+      return { state: { ...s, phase: "hintError" }, emit: [{ type: "hint_error" }] };
 
-    case 'retryHints':
-      if (s.phase !== 'hintError') return none;
-      return { state: { ...s, phase: 'hinting' }, emit: [{ type: 'hinting' }] };
+    case "retryHints":
+      if (s.phase !== "hintError") return none;
+      return { state: { ...s, phase: "hinting" }, emit: [{ type: "hinting" }] };
 
-    case 'hintsReady': {
-      if (s.phase !== 'hinting') return none;
+    case "hintsReady": {
+      if (s.phase !== "hinting") return none;
       if (action.hints.length !== HINT_COUNT) {
-        return { state: { ...s, phase: 'hintError' }, emit: [{ type: 'hint_error' }] };
+        return { state: { ...s, phase: "hintError" }, emit: [{ type: "hint_error" }] };
       }
       const next: GmState = {
         ...s,
-        phase: 'playerTurn',
+        phase: "playerTurn",
         hints: [...action.hints],
         hintsSent: 0,
         turnStartedAt: action.at,
@@ -355,12 +355,12 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       const hints = emitDueHints(next, action.at);
       return {
         state: hints.state,
-        emit: [{ type: 'player_turn', round: s.round, limitSec: s.limitSec }, ...hints.emit],
+        emit: [{ type: "player_turn", round: s.round, limitSec: s.limitSec }, ...hints.emit],
       };
     }
 
-    case 'tick': {
-      if (s.phase !== 'playerTurn' || s.turnStartedAt === null) return none;
+    case "tick": {
+      if (s.phase !== "playerTurn" || s.turnStartedAt === null) return none;
       const hints = emitDueHints(s, action.now);
       const pastLimit = action.now - s.turnStartedAt > limitMs;
       // T を過ぎても、shutter 済みで 30 秒以内の提出待ちがある人は待つ。
@@ -370,13 +370,13 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       });
       if (!pastLimit || waiting) return hints;
       return {
-        state: { ...hints.state, phase: 'picking' },
-        emit: [...hints.emit, { type: 'picking', round: s.round }],
+        state: { ...hints.state, phase: "picking" },
+        emit: [...hints.emit, { type: "picking", round: s.round }],
       };
     }
 
-    case 'shutter': {
-      if (s.phase !== 'playerTurn' || s.turnStartedAt === null || action.round !== s.round)
+    case "shutter": {
+      if (s.phase !== "playerTurn" || s.turnStartedAt === null || action.round !== s.round)
         return none;
       const p = own(s.players, action.pid);
       if (!p || !isEligible(p, s.round) || hasLeft(s, action.pid) || own(s.shutters, action.pid))
@@ -386,8 +386,8 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       return { state: { ...s, shutters: { ...s.shutters, [action.pid]: shutter } }, emit: [] };
     }
 
-    case 'submit': {
-      if (s.phase !== 'playerTurn' || action.round !== s.round) return none;
+    case "submit": {
+      if (s.phase !== "playerTurn" || action.round !== s.round) return none;
       const sh = own(s.shutters, action.pid);
       if (!sh || own(s.submissions, action.pid)) return none;
       if (action.at - sh.at > SUBMIT_WINDOW_MS) return none;
@@ -395,16 +395,16 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       const submissions = { ...s.submissions, [action.pid]: { key: action.key, at: action.at } };
       const allIn = allSubmitted(s, submissions);
       return {
-        state: { ...s, submissions, phase: allIn ? 'picking' : s.phase },
+        state: { ...s, submissions, phase: allIn ? "picking" : s.phase },
         emit: [
-          { type: 'submitted', pids: Object.keys(submissions) },
-          ...(allIn ? [{ type: 'picking' as const, round: s.round }] : []),
+          { type: "submitted", pids: Object.keys(submissions) },
+          ...(allIn ? [{ type: "picking" as const, round: s.round }] : []),
         ],
       };
     }
 
-    case 'photoChecked': {
-      if (s.phase !== 'picking') return none;
+    case "photoChecked": {
+      if (s.phase !== "picking") return none;
       const photoValid = { ...s.photoValid, [action.pid]: action.valid };
       const picks = action.valid ? s.picks : s.picks.filter((pid) => pid !== action.pid);
       const next: GmState = { ...s, photoValid, picks };
@@ -413,18 +413,18 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       const results = resultsOf(next, s.results.gmPhotoUrl, s.results.photos);
       return {
         state: { ...next, results },
-        emit: [{ type: 'results', round: s.round, ...results }],
+        emit: [{ type: "results", round: s.round, ...results }],
       };
     }
 
-    case 'resultsReady': {
-      if (s.phase !== 'picking') return none;
+    case "resultsReady": {
+      if (s.phase !== "picking") return none;
       const results = resultsOf(s, action.gmPhotoUrl, action.photos);
-      return { state: { ...s, results }, emit: [{ type: 'results', round: s.round, ...results }] };
+      return { state: { ...s, results }, emit: [{ type: "results", round: s.round, ...results }] };
     }
 
-    case 'togglePick': {
-      if (s.phase !== 'picking') return none;
+    case "togglePick": {
+      if (s.phase !== "picking") return none;
       if (s.picks.includes(action.pid)) {
         return { state: { ...s, picks: s.picks.filter((pid) => pid !== action.pid) }, emit: [] };
       }
@@ -432,8 +432,8 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       return { state: { ...s, picks: [...s.picks, action.pid] }, emit: [] };
     }
 
-    case 'confirmPicks': {
-      if (s.phase !== 'picking' || s.turnStartedAt === null) return none;
+    case "confirmPicks": {
+      if (s.phase !== "picking" || s.turnStartedAt === null) return none;
       const participants = eligiblePids(s);
       const startedAt = s.turnStartedAt;
       // `obj[pid] = …` だと pid が __proto__ のときにプロトタイプを書き換えるので、fromEntries で作る。
@@ -457,39 +457,39 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       const totals = rankTotals(players, s.lastRanking?.totals);
       const lastRanking = { round: s.round, scores, totals };
       return {
-        state: { ...s, players, phase: 'reveal', lastRanking },
-        emit: [{ type: 'ranking', ...lastRanking }],
+        state: { ...s, players, phase: "reveal", lastRanking },
+        emit: [{ type: "ranking", ...lastRanking }],
       };
     }
 
-    case 'nextRound': {
-      if (s.phase !== 'reveal') return none;
+    case "nextRound": {
+      if (s.phase !== "reveal") return none;
       if (s.round >= s.rounds) {
         const totals = s.lastRanking?.totals ?? rankTotals(s.players, undefined);
-        return { state: { ...s, phase: 'final' }, emit: [{ type: 'final', totals }] };
+        return { state: { ...s, phase: "final" }, emit: [{ type: "final", totals }] };
       }
       const round = s.round + 1;
       return {
-        state: { ...s, ...freshRound, phase: 'gmTurn', round },
-        emit: [{ type: 'gm_turn', round, gameId: s.gameId ?? '' }],
+        state: { ...s, ...freshRound, phase: "gmTurn", round },
+        emit: [{ type: "gm_turn", round, gameId: s.gameId ?? "" }],
       };
     }
 
-    case 'backToLobby': {
-      if (s.phase === 'lobby') return none;
+    case "backToLobby": {
+      if (s.phase === "lobby") return none;
       // 出た人と通信が切れている人は、ロビーの一覧には持ち越さない（切れていた人は戻れば join し直す）。
       const players: Record<string, GmPlayer> = Object.fromEntries(
         Object.entries(s.players)
           .filter(([pid, p]) => !p.away && !hasLeft(s, pid))
           .map(([pid, p]) => [
             pid,
-            { ...p, total: 0, streak: 0, joinedAt: { round: 0, phase: 'lobby' as const } },
+            { ...p, total: 0, streak: 0, joinedAt: { round: 0, phase: "lobby" as const } },
           ]),
       );
       const next: GmState = {
         ...s,
         ...freshRound,
-        phase: 'lobby',
+        phase: "lobby",
         round: 0,
         players,
         lastRanking: null,
@@ -497,12 +497,12 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       return { state: next, emit: [lobbyEvent(next)] };
     }
 
-    case 'transferred':
-      if (s.phase !== 'lobby') return none;
-      return { state: s, emit: [{ type: 'transfer', transfer: action.transfer }] };
+    case "transferred":
+      if (s.phase !== "lobby") return none;
+      return { state: s, emit: [{ type: "transfer", transfer: action.transfer }] };
 
-    case 'dissolve':
-      return { state: { ...s, dissolved: true }, emit: [{ type: 'dissolved' }] };
+    case "dissolve":
+      return { state: { ...s, dissolved: true }, emit: [{ type: "dissolved" }] };
   }
 }
 
@@ -510,10 +510,10 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
 export function snapshotOf(
   state: GmState,
   now: number,
-): Omit<GmSnapshot, 'pid' | 'seq' | 'epoch' | 'lastEventSeq'> {
+): Omit<GmSnapshot, "pid" | "seq" | "epoch" | "lastEventSeq"> {
   const s = state;
   return {
-    type: 'snapshot',
+    type: "snapshot",
     phase: s.phase,
     round: s.round,
     rounds: s.rounds,
@@ -524,10 +524,10 @@ export function snapshotOf(
     gameId: s.gameId,
     hints: s.hints.slice(0, s.hintsSent),
     turnElapsedMs:
-      s.phase === 'playerTurn' && s.turnStartedAt !== null ? now - s.turnStartedAt : null,
+      s.phase === "playerTurn" && s.turnStartedAt !== null ? now - s.turnStartedAt : null,
     submitted: Object.keys(s.submissions),
     results: s.results,
     ranking: s.lastRanking,
-    final: s.phase === 'final' ? (s.lastRanking?.totals ?? rankTotals(s.players, undefined)) : null,
+    final: s.phase === "final" ? (s.lastRanking?.totals ?? rankTotals(s.players, undefined)) : null,
   };
 }

@@ -34,7 +34,7 @@ export function scoreRound(input: {
     );
   }
   if (new Set(picks).size !== picks.length) {
-    throw new RangeError('scoreRound: picks contains duplicate pids');
+    throw new RangeError("scoreRound: picks contains duplicate pids");
   }
 
   return participants.map((pid) => {

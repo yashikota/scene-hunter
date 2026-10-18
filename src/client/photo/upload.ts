@@ -9,8 +9,8 @@ export interface UploadApi {
 async function put(url: string, blob: Blob): Promise<boolean> {
   try {
     const res = await fetch(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'image/jpeg' },
+      method: "PUT",
+      headers: { "Content-Type": "image/jpeg" },
       body: blob,
     });
     return res.ok;
@@ -30,5 +30,5 @@ export async function uploadPhoto(
   if (await put(first.url, blob)) return first.key;
   const second = await ask();
   if (await put(second.url, blob)) return second.key;
-  throw new Error('photo upload failed');
+  throw new Error("photo upload failed");
 }

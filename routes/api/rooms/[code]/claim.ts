@@ -1,7 +1,7 @@
-import * as v from 'valibot';
-import { defineHandler } from 'void';
-import { bearer, errorResponse, roomDeps } from '../../../../src/server/deps';
-import { claimGm } from '../../../../src/server/services/rooms';
+import * as v from "valibot";
+import { defineHandler } from "void";
+import { bearer, errorResponse, roomDeps } from "../../../../src/server/deps";
+import { claimGm } from "../../../../src/server/services/rooms";
 
 const transferSchema = v.object({
   body: v.object({
@@ -23,7 +23,7 @@ export const POST = defineHandler.withValidator({
       bearer(c),
       body.transfer,
       { name: body.name, pubkey: body.pubkey },
-      c.req.param('code') ?? '',
+      c.req.param("code") ?? "",
     );
   } catch (e) {
     return errorResponse(c, e);

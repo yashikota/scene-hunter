@@ -1,5 +1,5 @@
-import type { RoundPhoto } from '../api';
-import type { GmAction, GmState } from './gmMachine';
+import type { RoundPhoto } from "../api";
+import type { GmAction, GmState } from "./gmMachine";
 
 // picking に入った GM が、そのラウンドの写真を集めて確かめる：
 // 各プレイヤーの写真を取得して SHA-256 を計算し、shutter で申告されたハッシュと比べる。
@@ -28,7 +28,7 @@ const FETCH_RETRY_MS = 1000;
 
 function withTimeout<T>(p: Promise<T>): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error('timeout')), PHOTO_TIMEOUT_MS);
+    const t = setTimeout(() => reject(new Error("timeout")), PHOTO_TIMEOUT_MS);
     p.then(resolve, reject).finally(() => clearTimeout(t));
   });
 }
@@ -42,7 +42,7 @@ async function listUntilDone(
     try {
       return await withTimeout(d.listPhotos({ gameId: s.gameId!, round: s.round }));
     } catch (e) {
-      console.warn('写真の一覧を取れなかった', e);
+      console.warn("写真の一覧を取れなかった", e);
       if (i === LIST_MAX_TRIES - 1) break;
       await d.sleep(LIST_RETRY_MS[Math.min(i, LIST_RETRY_MS.length - 1)]!);
       if (d.stopped()) return null;
@@ -56,7 +56,7 @@ async function fetchWithRetry(url: string, d: PhotoCheckDeps): Promise<Uint8Arra
     try {
       return await withTimeout(d.fetchBytes(url));
     } catch (e) {
-      console.warn('写真を取得できなかった', e);
+      console.warn("写真を取得できなかった", e);
       if (i < FETCH_RETRIES) await d.sleep(FETCH_RETRY_MS);
       if (d.stopped()) return null;
     }
@@ -71,10 +71,10 @@ export async function checkRoundPhotos(s: GmState, d: PhotoCheckDeps): Promise<v
   if (listed === null || d.stopped()) return;
   if (listed === undefined) {
     // 写真を見せられないので、提出はすべて無効にして results を送る（選べる写真が無いまま次へ進める）。
-    console.error('写真の一覧を取れないまま、あきらめた');
+    console.error("写真の一覧を取れないまま、あきらめた");
     for (const pid of Object.keys(s.submissions))
-      d.dispatch({ type: 'photoChecked', pid, valid: false });
-    d.dispatch({ type: 'resultsReady', gmPhotoUrl: '', photos: [] });
+      d.dispatch({ type: "photoChecked", pid, valid: false });
+    d.dispatch({ type: "resultsReady", gmPhotoUrl: "", photos: [] });
     return;
   }
   const photos = listed;
@@ -92,12 +92,12 @@ export async function checkRoundPhotos(s: GmState, d: PhotoCheckDeps): Promise<v
       // 取得できない写真は見せられないので無効にする。
       const valid = bytes !== null && (await d.sha256Hex(bytes)) === s.shutters[pid]?.hash;
       if (d.stopped()) return;
-      d.dispatch({ type: 'photoChecked', pid, valid });
+      d.dispatch({ type: "photoChecked", pid, valid });
     }),
   );
   if (d.stopped()) return;
 
   const gmPhoto =
     photos.find((p) => p.key === s.gmPhotoKey) ?? photos.find((p) => p.pid === s.gmPid);
-  d.dispatch({ type: 'resultsReady', gmPhotoUrl: gmPhoto?.url ?? '', photos: submitted });
+  d.dispatch({ type: "resultsReady", gmPhotoUrl: gmPhoto?.url ?? "", photos: submitted });
 }

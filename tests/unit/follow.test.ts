@@ -1,19 +1,19 @@
-import { describe, expect, it, vi } from 'vite-plus/test';
-import { followGm } from '../../src/client/moq/follow';
-import { MoqSession } from '../../src/client/moq/session';
-import { issueCert, type CertBody } from '../../src/shared/cert';
-import { exportPublicKey, generateKeyPair } from '../../src/shared/crypto';
-import { EnvelopeVerifier, seal } from '../../src/shared/envelope';
-import type { GmEvent, GmSnapshot } from '../../src/shared/protocol';
-import { FakeRelay, flush } from './fakeMoq';
+import { describe, expect, it, vi } from "vite-plus/test";
+import { followGm } from "../../src/client/moq/follow";
+import { MoqSession } from "../../src/client/moq/session";
+import { issueCert, type CertBody } from "../../src/shared/cert";
+import { exportPublicKey, generateKeyPair } from "../../src/shared/crypto";
+import { EnvelopeVerifier, seal } from "../../src/shared/envelope";
+import type { GmEvent, GmSnapshot } from "../../src/shared/protocol";
+import { FakeRelay, flush } from "./fakeMoq";
 
-const ROOM = '123456';
+const ROOM = "123456";
 const enc = (v: unknown) => new TextEncoder().encode(JSON.stringify(v));
 
 async function setup(opts: { dropAnnounce?: boolean } = {}) {
   const server = await generateKeyPair();
   const serverPub = await exportPublicKey(server.publicKey);
-  const mk = async (pid: string, role: CertBody['role']) => {
+  const mk = async (pid: string, role: CertBody["role"]) => {
     const kp = await generateKeyPair();
     const cert = await issueCert(server.privateKey, {
       room: ROOM,
@@ -31,7 +31,7 @@ async function setup(opts: { dropAnnounce?: boolean } = {}) {
   };
   const relay = new FakeRelay();
   relay.dropAnnounce = opts.dropAnnounce ?? false;
-  const session = new MoqSession('https://relay/x', relay.connector);
+  const session = new MoqSession("https://relay/x", relay.connector);
   await session.start();
   const verifier = new EnvelopeVerifier(serverPub, ROOM, () => 1000);
   const seen = { events: [] as GmEvent[], snapshots: [] as GmSnapshot[], epochs: [] as number[] };
@@ -46,8 +46,8 @@ async function setup(opts: { dropAnnounce?: boolean } = {}) {
 /** GM 役の接続で gm/{epoch} の events と state を publish する。 */
 function gmBroadcast(relay: FakeRelay, epoch: number) {
   const c = relay.connect();
-  const events = c.publish(`gm/${epoch}`, 'events').appendGroup();
-  const state = c.publish(`gm/${epoch}`, 'state');
+  const events = c.publish(`gm/${epoch}`, "events").appendGroup();
+  const state = c.publish(`gm/${epoch}`, "state");
   return {
     conn: c,
     event: (b: Uint8Array) => events.writeFrame(b),
@@ -59,14 +59,14 @@ const snapshotBody = (epoch: number, seq: number) => ({
   epoch,
   seq,
   lastEventSeq: -1,
-  type: 'snapshot',
-  phase: 'lobby',
+  type: "snapshot",
+  phase: "lobby",
   round: 0,
   rounds: 3,
   limitSec: 60,
-  locale: 'ja',
+  locale: "ja",
   players: [],
-  gmPid: 'gm',
+  gmPid: "gm",
   gameId: null,
   hints: [],
   turnElapsedMs: null,
@@ -76,21 +76,21 @@ const snapshotBody = (epoch: number, seq: number) => ({
   final: null,
 });
 
-const isGm = (pid: string) => pid === 'gm';
+const isGm = (pid: string) => pid === "gm";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-describe('followGm', () => {
-  it('follows epoch 1 by announce, then subscribes epoch 2 without announce and switches', async () => {
+describe("followGm", () => {
+  it("follows epoch 1 by announce, then subscribes epoch 2 without announce and switches", async () => {
     const t = await setup();
-    const gm = await t.mk('gm', 'gm');
+    const gm = await t.mk("gm", "gm");
     const stop = followGm(t.session, t.verifier, isGm, t.on);
 
     const e1 = gmBroadcast(t.relay, 1);
     e1.snapshot(await gm.frame(snapshotBody(1, 0)));
     await vi.waitFor(() => expect(t.seen.epochs).toEqual([1]));
     await vi.waitFor(() => expect(t.seen.snapshots).toHaveLength(1));
-    e1.event(await gm.frame({ epoch: 1, seq: 1, type: 'hinting' }));
-    await vi.waitFor(() => expect(t.seen.events.map((e) => e.type)).toEqual(['hinting']));
+    e1.event(await gm.frame({ epoch: 1, seq: 1, type: "hinting" }));
+    await vi.waitFor(() => expect(t.seen.events.map((e) => e.type)).toEqual(["hinting"]));
 
     // GM が再接続して epoch 2 で publish するが、announce は届かない
     t.relay.dropAnnounce = true;
@@ -102,21 +102,21 @@ describe('followGm', () => {
     // epoch 2 の購読は announce を待たない
     const probes = t.relay.connections
       .flatMap((c) => c.subscribes)
-      .filter((x) => x.path === 'gm/2');
+      .filter((x) => x.path === "gm/2");
     expect(probes.every((x) => !x.announced)).toBe(true);
 
-    e2.event(await gm.frame({ epoch: 2, seq: 3, type: 'hint_error' }));
+    e2.event(await gm.frame({ epoch: 2, seq: 3, type: "hint_error" }));
     await vi.waitFor(() =>
-      expect(t.seen.events.map((e) => e.type)).toEqual(['hinting', 'hint_error']),
+      expect(t.seen.events.map((e) => e.type)).toEqual(["hinting", "hint_error"]),
     );
     stop();
     t.session.close();
   });
 
-  it('does not switch to an epoch published by someone who is not the GM', async () => {
+  it("does not switch to an epoch published by someone who is not the GM", async () => {
     const t = await setup();
-    const gm = await t.mk('gm', 'gm');
-    const mallory = await t.mk('mallory', 'player');
+    const gm = await t.mk("gm", "gm");
+    const mallory = await t.mk("mallory", "player");
     const stop = followGm(t.session, t.verifier, isGm, t.on);
 
     const e1 = gmBroadcast(t.relay, 1);
@@ -129,7 +129,7 @@ describe('followGm', () => {
     const fake3 = gmBroadcast(t.relay, 3);
     fake3.snapshot(await mallory.frame(snapshotBody(3, 9)));
     fake3.event(
-      await mallory.frame({ epoch: 3, seq: 10, type: 'player_turn', round: 1, limitSec: 60 }),
+      await mallory.frame({ epoch: 3, seq: 10, type: "player_turn", round: 1, limitSec: 60 }),
     );
     // 最初の Track not found から 500ms 後のやり直しまで待つ
     await sleep(1200);
@@ -138,25 +138,25 @@ describe('followGm', () => {
     expect(t.seen.events).toEqual([]);
     // gm/2 は Track not found の後のやり直しで、gm/3 は announce で購読していた
     const subs = t.relay.connections.flatMap((c) => c.subscribes);
-    expect(subs.filter((x) => x.path === 'gm/2').length).toBeGreaterThan(1);
-    expect(subs.some((x) => x.path === 'gm/3')).toBe(true);
+    expect(subs.filter((x) => x.path === "gm/2").length).toBeGreaterThan(1);
+    expect(subs.some((x) => x.path === "gm/3")).toBe(true);
 
     // epoch 1 の GM のイベントは引き続き届く
-    e1.event(await gm.frame({ epoch: 1, seq: 1, type: 'hinting' }));
-    await vi.waitFor(() => expect(t.seen.events.map((e) => e.type)).toEqual(['hinting']));
+    e1.event(await gm.frame({ epoch: 1, seq: 1, type: "hinting" }));
+    await vi.waitFor(() => expect(t.seen.events.map((e) => e.type)).toEqual(["hinting"]));
     stop();
     t.session.close();
   });
 
-  it('does not switch when a stolen GM frame is replayed on another epoch', async () => {
+  it("does not switch when a stolen GM frame is replayed on another epoch", async () => {
     const t = await setup();
-    const gm = await t.mk('gm', 'gm');
+    const gm = await t.mk("gm", "gm");
     const stop = followGm(t.session, t.verifier, isGm, t.on);
 
     const e1 = gmBroadcast(t.relay, 1);
     const snap = await gm.frame(snapshotBody(1, 0));
     e1.snapshot(snap);
-    const turn = await gm.frame({ epoch: 1, seq: 1, type: 'player_turn', round: 1, limitSec: 60 });
+    const turn = await gm.frame({ epoch: 1, seq: 1, type: "player_turn", round: 1, limitSec: 60 });
     e1.event(turn);
     await vi.waitFor(() => expect(t.seen.events).toHaveLength(1));
 
@@ -167,7 +167,7 @@ describe('followGm', () => {
     const replay3 = gmBroadcast(t.relay, 3);
     replay3.snapshot(snap);
     await sleep(1200);
-    expect(t.relay.connections.flatMap((c) => c.subscribes).some((x) => x.path === 'gm/2')).toBe(
+    expect(t.relay.connections.flatMap((c) => c.subscribes).some((x) => x.path === "gm/2")).toBe(
       true,
     );
     expect(t.seen.epochs).toEqual([1]);
@@ -177,24 +177,24 @@ describe('followGm', () => {
     t.session.close();
   });
 
-  it('does not deliver an event twice when the events track is subscribed again', async () => {
+  it("does not deliver an event twice when the events track is subscribed again", async () => {
     const t = await setup();
-    const gm = await t.mk('gm', 'gm');
+    const gm = await t.mk("gm", "gm");
     const stop = followGm(t.session, t.verifier, isGm, t.on);
 
     const e1 = gmBroadcast(t.relay, 1);
     e1.snapshot(await gm.frame(snapshotBody(1, 0)));
-    e1.event(await gm.frame({ epoch: 1, seq: 1, type: 'hinting' }));
-    e1.event(await gm.frame({ epoch: 1, seq: 2, type: 'hint_error' }));
+    e1.event(await gm.frame({ epoch: 1, seq: 1, type: "hinting" }));
+    e1.event(await gm.frame({ epoch: 1, seq: 2, type: "hint_error" }));
     await vi.waitFor(() => expect(t.seen.events.map((e) => e.seq)).toEqual([1, 2]));
 
     // 予算を使い切らせて張り直させる。新しい接続で開いたグループが最初から届き直す
     while (t.relay.connections.length < 2) {
-      t.session.subscribe('dummy', 'track', () => {}, { blind: true });
+      t.session.subscribe("dummy", "track", () => {}, { blind: true });
       await flush();
     }
     await vi.waitFor(() => expect(t.relay.connections[1].live.size).toBeGreaterThanOrEqual(2));
-    e1.event(await gm.frame({ epoch: 1, seq: 3, type: 'hinting' }));
+    e1.event(await gm.frame({ epoch: 1, seq: 3, type: "hinting" }));
     await vi.waitFor(() => expect(t.seen.events.map((e) => e.seq)).toEqual([1, 2, 3]));
     await sleep(50);
     expect(t.seen.events.map((e) => e.seq)).toEqual([1, 2, 3]);
@@ -203,9 +203,9 @@ describe('followGm', () => {
     t.session.close();
   });
 
-  it('keeps at most two watches even when ten epochs are announced', async () => {
+  it("keeps at most two watches even when ten epochs are announced", async () => {
     const t = await setup();
-    const gm = await t.mk('gm', 'gm');
+    const gm = await t.mk("gm", "gm");
     const stop = followGm(t.session, t.verifier, isGm, t.on);
     const e1 = gmBroadcast(t.relay, 1);
     e1.snapshot(await gm.frame(snapshotBody(1, 0)));
@@ -217,47 +217,47 @@ describe('followGm', () => {
     const live = () =>
       [...t.relay.connections.at(-1)!.live].map((x) => `${x.path}#${x.track}`).sort();
     // 乗り換え済みの gm/1 の 2 本 + 乗り換え先を探す 2 本（current + 1 と announce の最大）
-    expect(live()).toEqual(['gm/1#events', 'gm/1#state', 'gm/11#state', 'gm/2#state']);
+    expect(live()).toEqual(["gm/1#events", "gm/1#state", "gm/11#state", "gm/2#state"]);
     stop();
     t.session.close();
   });
 
-  it('accepts the new GM after a transfer even though its seq starts over', async () => {
+  it("accepts the new GM after a transfer even though its seq starts over", async () => {
     const t = await setup();
-    const a = await t.mk('gm', 'gm');
-    const b = await t.mk('bob', 'gm');
-    let gmPid = 'gm';
+    const a = await t.mk("gm", "gm");
+    const b = await t.mk("bob", "gm");
+    let gmPid = "gm";
     const stop = followGm(t.session, t.verifier, (pid) => pid === gmPid, t.on);
 
     const e1 = gmBroadcast(t.relay, 1);
     e1.snapshot(await a.frame(snapshotBody(1, 50)));
-    e1.event(await a.frame({ epoch: 1, seq: 50, type: 'hinting' }));
+    e1.event(await a.frame({ epoch: 1, seq: 50, type: "hinting" }));
     await vi.waitFor(() => expect(t.seen.events).toHaveLength(1));
 
     // 交代：以後は bob が GM。bob は seq を 0 から数え、epoch 2 で publish する
-    gmPid = 'bob';
+    gmPid = "bob";
     const e2 = gmBroadcast(t.relay, 2);
-    e2.snapshot(await b.frame({ ...snapshotBody(2, 1), gmPid: 'bob' }));
-    e2.event(await b.frame({ epoch: 2, seq: 1, type: 'hint_error' }));
+    e2.snapshot(await b.frame({ ...snapshotBody(2, 1), gmPid: "bob" }));
+    e2.event(await b.frame({ epoch: 2, seq: 1, type: "hint_error" }));
     await vi.waitFor(() => expect(t.seen.epochs).toEqual([1, 2]), { timeout: 3000 });
     await vi.waitFor(() =>
       expect(t.seen.events.map((e) => [e.pid, e.seq])).toEqual([
-        ['gm', 50],
-        ['bob', 1],
+        ["gm", 50],
+        ["bob", 1],
       ]),
     );
     expect(t.seen.snapshots.map((s) => [s.pid, s.seq])).toEqual([
-      ['gm', 50],
-      ['bob', 1],
+      ["gm", 50],
+      ["bob", 1],
     ]);
     stop();
     t.session.close();
   });
 
-  it('frees the announced watch when its first frame fails verification', async () => {
+  it("frees the announced watch when its first frame fails verification", async () => {
     const t = await setup();
-    const gm = await t.mk('gm', 'gm');
-    const mallory = await t.mk('mallory', 'player');
+    const gm = await t.mk("gm", "gm");
+    const mallory = await t.mk("mallory", "player");
     const stop = followGm(t.session, t.verifier, isGm, t.on);
     const e1 = gmBroadcast(t.relay, 1);
     e1.snapshot(await gm.frame(snapshotBody(1, 0)));
@@ -275,37 +275,37 @@ describe('followGm', () => {
     t.session.close();
   });
 
-  it('ignores announced paths whose epoch is empty or not a number', async () => {
+  it("ignores announced paths whose epoch is empty or not a number", async () => {
     const t = await setup();
     const stop = followGm(t.session, t.verifier, isGm, t.on);
-    for (const p of ['gm/', 'gm/abc', 'gm/1x', 'gm/-1', 'gm/0']) t.relay.announce(p, true);
+    for (const p of ["gm/", "gm/abc", "gm/1x", "gm/-1", "gm/0"]) t.relay.announce(p, true);
     await flush();
     const paths = t.relay.connections[0].subscribes.map((x) => x.path);
-    expect(paths.filter((p) => p !== 'gm/1')).toEqual([]);
+    expect(paths.filter((p) => p !== "gm/1")).toEqual([]);
     stop();
     t.session.close();
   });
 
-  it('finds the GM on epoch 3 without any announce by probing epochs 1 to 5', async () => {
+  it("finds the GM on epoch 3 without any announce by probing epochs 1 to 5", async () => {
     const t = await setup({ dropAnnounce: true });
-    const gm = await t.mk('gm', 'gm');
+    const gm = await t.mk("gm", "gm");
     const e3 = gmBroadcast(t.relay, 3);
     e3.snapshot(await gm.frame(snapshotBody(3, 7)));
     const stop = followGm(t.session, t.verifier, isGm, t.on);
     await vi.waitFor(() => expect(t.seen.epochs).toEqual([3]), { timeout: 5000 });
     await vi.waitFor(() => expect(t.seen.snapshots.map((s) => s.seq)).toEqual([7]));
     const probed = t.relay.connections[0].subscribes
-      .filter((x) => x.track === 'state')
+      .filter((x) => x.track === "state")
       .map((x) => x.path);
-    expect(probed.slice(0, 3)).toEqual(['gm/1', 'gm/2', 'gm/3']);
+    expect(probed.slice(0, 3)).toEqual(["gm/1", "gm/2", "gm/3"]);
     expect(t.relay.connections[0].subscribes.every((x) => !x.announced)).toBe(true);
     stop();
     t.session.close();
   });
 
-  it('drops frames with a broken signature, invalid JSON, or an invalid schema', async () => {
+  it("drops frames with a broken signature, invalid JSON, or an invalid schema", async () => {
     const t = await setup();
-    const gm = await t.mk('gm', 'gm');
+    const gm = await t.mk("gm", "gm");
     const stop = followGm(t.session, t.verifier, isGm, t.on);
 
     const e1 = gmBroadcast(t.relay, 1);
@@ -313,28 +313,28 @@ describe('followGm', () => {
     await vi.waitFor(() => expect(t.seen.epochs).toEqual([1]));
 
     const good = JSON.parse(
-      new TextDecoder().decode(await gm.frame({ epoch: 1, seq: 1, type: 'hinting' })),
+      new TextDecoder().decode(await gm.frame({ epoch: 1, seq: 1, type: "hinting" })),
     );
-    e1.event(enc({ ...good, body: { ...good.body, type: 'dissolved' } })); // 署名が合わない
-    e1.event(new TextEncoder().encode('{not json'));
-    e1.event(await gm.frame({ epoch: 1, seq: 2, type: 'no_such_event' })); // スキーマに合わない
-    e1.event(await gm.frame({ seq: 3, type: 'hint_error' })); // epoch が無い
-    e1.event(await gm.frame({ epoch: 1, seq: 4, type: 'hint_error' }));
+    e1.event(enc({ ...good, body: { ...good.body, type: "dissolved" } })); // 署名が合わない
+    e1.event(new TextEncoder().encode("{not json"));
+    e1.event(await gm.frame({ epoch: 1, seq: 2, type: "no_such_event" })); // スキーマに合わない
+    e1.event(await gm.frame({ seq: 3, type: "hint_error" })); // epoch が無い
+    e1.event(await gm.frame({ epoch: 1, seq: 4, type: "hint_error" }));
     await vi.waitFor(() => expect(t.seen.events.map((e) => e.seq)).toEqual([4]));
-    expect(t.seen.events[0].type).toBe('hint_error');
+    expect(t.seen.events[0].type).toBe("hint_error");
     stop();
     t.session.close();
   });
 
-  it('stop() unsubscribes everything', async () => {
+  it("stop() unsubscribes everything", async () => {
     const t = await setup();
-    const gm = await t.mk('gm', 'gm');
+    const gm = await t.mk("gm", "gm");
     const stop = followGm(t.session, t.verifier, isGm, t.on);
     const e1 = gmBroadcast(t.relay, 1);
     e1.snapshot(await gm.frame(snapshotBody(1, 0)));
     await vi.waitFor(() => expect(t.seen.epochs).toEqual([1]));
     stop();
-    e1.event(await gm.frame({ epoch: 1, seq: 1, type: 'hinting' }));
+    e1.event(await gm.frame({ epoch: 1, seq: 1, type: "hinting" }));
     await sleep(50);
     expect(t.seen.events).toEqual([]);
     expect(t.relay.connections[0].live.size).toBe(0);

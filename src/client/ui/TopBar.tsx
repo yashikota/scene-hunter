@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 /** 画面の上端：左に画面の名前（「ロビー」など）、右に部屋の番号や印。 */
 export function TopBar({ left, right }: { left: ReactNode; right?: ReactNode }) {

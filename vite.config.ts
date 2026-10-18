@@ -1,8 +1,8 @@
-import { tanstackRouter } from '@tanstack/router-plugin/vite';
-import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite-plus';
-import { paraglideVitePlugin } from '@inlang/paraglide-js';
-import { voidPlugin } from 'void';
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite-plus";
+import { paraglideVitePlugin } from "@inlang/paraglide-js";
+import { voidPlugin } from "void";
 
 // voidPlugin は独自に dev サーバーを張るため、vitest の中では読み込まない。
 const underTest = Boolean(process.env.VITEST);
@@ -15,32 +15,31 @@ export default defineConfig({
     : [
         ...(clientOnly ? [] : [voidPlugin()]),
         tanstackRouter({
-          target: 'react',
-          routesDirectory: './src/client/routes',
-          generatedRouteTree: './src/client/routeTree.gen.ts',
+          target: "react",
+          routesDirectory: "./src/client/routes",
+          generatedRouteTree: "./src/client/routeTree.gen.ts",
           autoCodeSplitting: true,
         }),
         react(),
         paraglideVitePlugin({
-          project: './project.inlang',
-          outdir: './src/client/paraglide',
-          strategy: ['globalVariable', 'baseLocale'],
+          project: "./project.inlang",
+          outdir: "./src/client/paraglide",
+          strategy: ["globalVariable", "baseLocale"],
         }),
       ],
   fmt: {
-    singleQuote: true,
     printWidth: 100,
     // 生成物と検証用の使い捨てコードは整形しない
     ignorePatterns: [
-      'src/client/paraglide/**',
-      'src/client/routeTree.gen.ts',
-      'poc/**',
-      'docs/**',
-      '.superpowers/**',
+      "src/client/paraglide/**",
+      "src/client/routeTree.gen.ts",
+      "poc/**",
+      "docs/**",
+      ".superpowers/**",
     ],
   },
   test: {
-    include: ['tests/unit/**/*.test.{ts,tsx}'],
+    include: ["tests/unit/**/*.test.{ts,tsx}"],
     // 画面のテスト（happy-dom）で Google Fonts の CSS を取りに行かない
     environmentOptions: {
       happyDOM: {

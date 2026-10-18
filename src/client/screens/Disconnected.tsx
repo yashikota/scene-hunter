@@ -1,10 +1,10 @@
-import { m } from '../paraglide/messages';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { formatNumber } from '../ui/format';
-import { Screen } from '../ui/Screen';
-import { formatCode, TopBar } from '../ui/TopBar';
-import { useNow } from '../ui/useNow';
+import { m } from "../paraglide/messages";
+import { Button } from "../ui/Button";
+import { Card } from "../ui/Card";
+import { formatNumber } from "../ui/format";
+import { Screen } from "../ui/Screen";
+import { formatCode, TopBar } from "../ui/TopBar";
+import { useNow } from "../ui/useNow";
 
 export interface DisconnectedProps {
   code: string;
@@ -21,7 +21,7 @@ export interface DisconnectedProps {
 /** 経過時間を m:ss で。 */
 export function formatElapsed(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
 /** プレイヤーの画面：GM の接続が切れた。GM が戻ればそのまま続きから再開する。 */
@@ -45,17 +45,17 @@ export function Disconnected({
         role="alert"
         style={{
           flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
           gap: 16,
-          textAlign: 'center',
+          textAlign: "center",
         }}
       >
         <div
           className="sh-icon-tile"
-          style={{ width: 88, height: 88, background: 'var(--color-gold)', borderRadius: 22 }}
+          style={{ width: 88, height: 88, background: "var(--color-gold)", borderRadius: 22 }}
         >
           <svg
             width="46"
@@ -81,7 +81,7 @@ export function Disconnected({
         <div
           className="sh-chip"
           role="timer"
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+          style={{ display: "flex", alignItems: "center", gap: 8 }}
         >
           <span
             className="sh-pulse"
@@ -89,9 +89,9 @@ export function Disconnected({
             style={{
               width: 12,
               height: 12,
-              borderRadius: '50%',
-              background: 'var(--color-timer)',
-              border: 'var(--border)',
+              borderRadius: "50%",
+              background: "var(--color-timer)",
+              border: "var(--border)",
             }}
           />
           {m.disconnected_waiting({ time: formatElapsed(now - since) })}
@@ -100,16 +100,16 @@ export function Disconnected({
       {me && (
         <Card
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '12px 16px',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "12px 16px",
           }}
         >
           <span className="sh-sub" style={{ fontSize: 13, fontWeight: 800 }}>
             {m.disconnected_you()}
           </span>
-          <span style={{ fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+          <span style={{ fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>
             {me.rank === null
               ? m.points_value({ count: formatNumber(me.total) })
               : m.rank_points({ rank: me.rank, points: formatNumber(me.total) })}

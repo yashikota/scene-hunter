@@ -1,7 +1,7 @@
-import * as v from 'valibot';
-import { defineHandler } from 'void';
-import { ai } from 'void/ai';
-import { allow } from '../../../../src/server/limits';
+import * as v from "valibot";
+import { defineHandler } from "void";
+import { ai } from "void/ai";
+import { allow } from "../../../../src/server/limits";
 import {
   bearer,
   e2eMode,
@@ -9,40 +9,40 @@ import {
   limiter,
   roomDeps,
   tooMany,
-} from '../../../../src/server/deps';
-import { E2E_HINTS } from '../../../../src/server/e2e';
-import { generateHints, HintGenerationError } from '../../../../src/server/hints';
-import { MAX_PHOTO_BYTES, parsePhotoKey } from '../../../../src/server/presign';
-import { authorize, NotFoundError } from '../../../../src/server/services/rooms';
+} from "../../../../src/server/deps";
+import { E2E_HINTS } from "../../../../src/server/e2e";
+import { generateHints, HintGenerationError } from "../../../../src/server/hints";
+import { MAX_PHOTO_BYTES, parsePhotoKey } from "../../../../src/server/presign";
+import { authorize, NotFoundError } from "../../../../src/server/services/rooms";
 
 export const POST = defineHandler.withValidator({
   body: v.object({ key: v.string() }),
 })(async (c, { body }) => {
-  const code = c.req.param('code') ?? '';
+  const code = c.req.param("code") ?? "";
   try {
     const d = await roomDeps(c);
-    const { rec } = await authorize(d, bearer(c), 'gm', code);
-    if (!(await allow(limiter(c, 'RL_HINTS'), code))) return tooMany(c);
+    const { rec } = await authorize(d, bearer(c), "gm", code);
+    if (!(await allow(limiter(c, "RL_HINTS"), code))) return tooMany(c);
     const parsed = parsePhotoKey(body.key);
     if (!parsed || parsed.code !== code || parsed.pid !== rec.gmPid) {
-      return c.json({ error: 'bad_request', message: 'invalid photo key' }, 400);
+      return c.json({ error: "bad_request", message: "invalid photo key" }, 400);
     }
     const obj = await (c.env as { STORAGE: R2Bucket }).STORAGE.get(body.key);
-    if (!obj) throw new NotFoundError('photo not found');
-    if (obj.size > MAX_PHOTO_BYTES) return c.json({ error: 'payload_too_large' }, 413);
+    if (!obj) throw new NotFoundError("photo not found");
+    if (obj.size > MAX_PHOTO_BYTES) return c.json({ error: "payload_too_large" }, 413);
     const image = new Uint8Array(await obj.arrayBuffer());
     // e2e テストでは AI を呼ばない（写真の確かめまでは本番と同じ道を通す）。
     if (e2eMode(c)) return { hints: [...E2E_HINTS] };
-    const qwen = ai.provider('qwen', {
-      apiKeyEnv: 'QWEN_API_KEY',
-      apiKeyHeader: 'Authorization',
-      apiKeyPrefix: 'Bearer ',
+    const qwen = ai.provider("qwen", {
+      apiKeyEnv: "QWEN_API_KEY",
+      apiKeyHeader: "Authorization",
+      apiKeyPrefix: "Bearer ",
     });
     const hints = await generateHints(
       {
         ai,
         qwen: async (b) => {
-          const res = await qwen.fetch('/chat/completions', { body: b });
+          const res = await qwen.fetch("/chat/completions", { body: b });
           if (!res.ok) throw new Error(`qwen api ${res.status}`);
           return res.json();
         },
@@ -52,7 +52,7 @@ export const POST = defineHandler.withValidator({
     );
     return { hints };
   } catch (e) {
-    if (e instanceof HintGenerationError) return c.json({ error: 'hint_generation_failed' }, 502);
+    if (e instanceof HintGenerationError) return c.json({ error: "hint_generation_failed" }, 502);
     return errorResponse(c, e);
   }
 });

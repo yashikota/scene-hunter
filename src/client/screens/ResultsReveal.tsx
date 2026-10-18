@@ -1,12 +1,12 @@
-import type { Total } from '../../shared/protocol';
-import type { RoundScore } from '../../shared/scoring';
-import { m } from '../paraglide/messages';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { formatMultiplier, formatNumber } from '../ui/format';
-import { Screen } from '../ui/Screen';
-import { formatCode, TopBar } from '../ui/TopBar';
-import { Thumb } from './ResultsParts';
+import type { Total } from "../../shared/protocol";
+import type { RoundScore } from "../../shared/scoring";
+import { m } from "../paraglide/messages";
+import { Button } from "../ui/Button";
+import { Card } from "../ui/Card";
+import { formatMultiplier, formatNumber } from "../ui/format";
+import { Screen } from "../ui/Screen";
+import { formatCode, TopBar } from "../ui/TopBar";
+import { Thumb } from "./ResultsParts";
 
 export interface RevealPlayer {
   pid: string;
@@ -45,7 +45,7 @@ export function ResultsReveal({
 }: ResultsRevealProps) {
   const label = (pid: string) => {
     const p = players.find((x) => x.pid === pid);
-    return p ? (p.left ? `${p.label} · ${m.status_left()}` : p.label) : '';
+    return p ? (p.left ? `${p.label} · ${m.status_left()}` : p.label) : "";
   };
   const named = (pid: string) => (pid === mePid ? m.you_tag({ name: label(pid) }) : label(pid));
   const picked = scores.filter((s) => s.rank !== null).sort((a, b) => a.rank! - b.rank!);
@@ -68,27 +68,27 @@ export function ResultsReveal({
       ) : (
         <ol
           style={{
-            display: 'flex',
-            flexDirection: 'column',
+            display: "flex",
+            flexDirection: "column",
             gap: 8,
             margin: 0,
             padding: 0,
-            listStyle: 'none',
+            listStyle: "none",
           }}
         >
           {picked.map((s) => (
             <li
               key={s.pid}
               style={{
-                background: 'var(--color-surface)',
-                border: 'var(--border)',
+                background: "var(--color-surface)",
+                border: "var(--border)",
                 borderRadius: 12,
-                boxShadow: `4px 4px 0 ${s.rank === 1 ? 'var(--color-ink)' : s.rank === 2 ? 'var(--color-accent)' : 'transparent'}`,
+                boxShadow: `4px 4px 0 ${s.rank === 1 ? "var(--color-ink)" : s.rank === 2 ? "var(--color-accent)" : "transparent"}`,
                 padding: 8,
-                display: 'grid',
-                gridTemplateColumns: '30px 56px minmax(0, 1fr)',
+                display: "grid",
+                gridTemplateColumns: "30px 56px minmax(0, 1fr)",
                 gap: 10,
-                alignItems: 'center',
+                alignItems: "center",
               }}
             >
               <span
@@ -97,32 +97,32 @@ export function ResultsReveal({
                 style={{
                   width: 30,
                   height: 30,
-                  borderRadius: '50%',
-                  background: s.rank === 1 ? 'var(--color-gold)' : 'var(--color-surface)',
-                  border: 'var(--border)',
+                  borderRadius: "50%",
+                  background: s.rank === 1 ? "var(--color-gold)" : "var(--color-surface)",
+                  border: "var(--border)",
                   fontSize: 14,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 {s.rank}
               </span>
               <Thumb url={photoUrls[s.pid]} alt={label(s.pid)} height={56} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                <span style={{ fontSize: 15, fontWeight: 800, overflowWrap: 'anywhere' }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                <span style={{ fontSize: 15, fontWeight: 800, overflowWrap: "anywhere" }}>
                   {named(s.pid)}
                   {s.bonus > 0 && (
                     <span
                       style={{
                         marginLeft: 6,
                         fontSize: 11,
-                        background: 'var(--color-ink)',
-                        color: 'var(--color-gold)',
+                        background: "var(--color-ink)",
+                        color: "var(--color-gold)",
                         borderRadius: 999,
-                        padding: '1px 7px',
+                        padding: "1px 7px",
                         verticalAlign: 2,
-                        whiteSpace: 'nowrap',
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {m.streak_badge({ streak: s.streak, bonus: formatNumber(s.bonus) })}
@@ -131,7 +131,7 @@ export function ResultsReveal({
                 </span>
                 <span
                   className="sh-sub"
-                  style={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}
+                  style={{ fontSize: 13, fontVariantNumeric: "tabular-nums" }}
                 >
                   {m.score_detail({
                     sec: Math.round((s.tMs ?? 0) / 1000),
@@ -150,28 +150,28 @@ export function ResultsReveal({
         </p>
       )}
 
-      <Card style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <h2 style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 800 }}>{m.total_heading()}</h2>
+      <Card style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
+        <h2 style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 800 }}>{m.total_heading()}</h2>
         <ol
           style={{
-            display: 'grid',
-            gridTemplateColumns: '24px minmax(0, 1fr) auto 44px',
+            display: "grid",
+            gridTemplateColumns: "24px minmax(0, 1fr) auto 44px",
             gap: 8,
-            alignItems: 'center',
+            alignItems: "center",
             margin: 0,
             padding: 0,
-            listStyle: 'none',
+            listStyle: "none",
             fontSize: 15,
-            fontVariantNumeric: 'tabular-nums',
+            fontVariantNumeric: "tabular-nums",
           }}
         >
           {totals.map((t) => (
             <li
               key={t.pid}
-              style={{ display: 'contents', fontWeight: t.pid === mePid ? 800 : 500 }}
+              style={{ display: "contents", fontWeight: t.pid === mePid ? 800 : 500 }}
             >
               <span style={{ fontWeight: 800 }}>{t.rank}</span>
-              <span style={{ overflowWrap: 'anywhere' }}>{named(t.pid)}</span>
+              <span style={{ overflowWrap: "anywhere" }}>{named(t.pid)}</span>
               <span>{formatNumber(t.total)}</span>
               <Delta delta={t.delta} />
             </li>
@@ -188,7 +188,7 @@ export function ResultsReveal({
           <p
             className="sh-sub"
             role="status"
-            style={{ margin: 0, fontSize: 14, textAlign: 'center' }}
+            style={{ margin: 0, fontSize: 14, textAlign: "center" }}
           >
             {m.wait_next_gm()}
           </p>
@@ -199,7 +199,7 @@ export function ResultsReveal({
 }
 
 function Delta({ delta }: { delta: number }) {
-  const text = delta > 0 ? `↑${delta}` : delta < 0 ? `↓${-delta}` : '−';
+  const text = delta > 0 ? `↑${delta}` : delta < 0 ? `↓${-delta}` : "−";
   const label =
     delta > 0
       ? m.rank_up({ count: delta })
@@ -212,8 +212,8 @@ function Delta({ delta }: { delta: number }) {
       style={{
         fontSize: 12,
         fontWeight: 800,
-        textAlign: 'right',
-        color: delta > 0 ? 'var(--color-timer)' : 'var(--color-sub)',
+        textAlign: "right",
+        color: delta > 0 ? "var(--color-timer)" : "var(--color-sub)",
       }}
     >
       {text}

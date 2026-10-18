@@ -1,12 +1,12 @@
-import { MAX_PHOTO_BYTES, parsePhotoKey, photoKey } from '../presign';
-import type { Presigner } from '../presign';
-import { authorize, checkCode } from './rooms';
-import type { RoomDeps } from './rooms';
+import { MAX_PHOTO_BYTES, parsePhotoKey, photoKey } from "../presign";
+import type { Presigner } from "../presign";
+import { authorize, checkCode } from "./rooms";
+import type { RoomDeps } from "./rooms";
 
 export interface PhotoDeps {
   presigner: Presigner;
-  storage: Pick<R2Bucket, 'list' | 'get'>;
-  store: RoomDeps['store'];
+  storage: Pick<R2Bucket, "list" | "get">;
+  store: RoomDeps["store"];
   hmacSecret: string;
   now: () => number;
   /** 16 桁の小文字 16 進数の乱数（'-' を含まないこと。parsePhotoKey が前提にする）。 */
@@ -17,7 +17,7 @@ const GAME_ID = /^[A-Za-z0-9_-]{1,32}$/;
 const MAX_ROUND = 10;
 
 function checkRound(input: { gameId: string; round: number }): void {
-  if (!GAME_ID.test(input.gameId)) throw new RangeError('invalid gameId');
+  if (!GAME_ID.test(input.gameId)) throw new RangeError("invalid gameId");
   if (!Number.isInteger(input.round) || input.round < 1 || input.round > MAX_ROUND) {
     throw new RangeError(`round must be an integer in 1-${MAX_ROUND}`);
   }
@@ -34,7 +34,7 @@ export async function requestUpload(
   if (!Number.isInteger(input.size) || input.size <= 0 || input.size > MAX_PHOTO_BYTES) {
     throw new RangeError(`size must be an integer in 1-${MAX_PHOTO_BYTES}`);
   }
-  const { payload } = await authorize(d, token, 'any', code);
+  const { payload } = await authorize(d, token, "any", code);
   const key = photoKey({
     code,
     gameId: input.gameId,
@@ -54,7 +54,7 @@ export async function listRoundPhotos(
 ): Promise<{ pid: string; key: string; url: string }[]> {
   checkCode(code);
   checkRound(input);
-  await authorize(d, token, 'gm', code);
+  await authorize(d, token, "gm", code);
   const prefix = `rooms/${code}/${input.gameId}/${input.round}/`;
   const keys: string[] = [];
   let cursor: string | undefined;

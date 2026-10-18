@@ -1,6 +1,6 @@
-import type { Cert } from './cert';
-import { verifyCert } from './cert';
-import { sign, verify } from './crypto';
+import type { Cert } from "./cert";
+import { verifyCert } from "./cert";
+import { sign, verify } from "./crypto";
 
 export interface Envelope<B> {
   cert?: Cert;
@@ -34,7 +34,7 @@ export class EnvelopeVerifier {
   async open<B extends { pid: string }>(env: Envelope<B>): Promise<{ body: B; cert: Cert } | null> {
     try {
       const { body, sig } = env;
-      if (typeof body?.pid !== 'string' || typeof sig !== 'string') return null;
+      if (typeof body?.pid !== "string" || typeof sig !== "string") return null;
 
       let cert: Cert | undefined;
       let fresh = false;

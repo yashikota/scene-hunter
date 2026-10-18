@@ -1,21 +1,21 @@
-import { verifyTransfer, type TransferCert } from '../../shared/cert';
-import type { EnvelopeVerifier } from '../../shared/envelope';
-import { seal } from '../../shared/envelope';
-import type { GmEvent, GmSnapshot, PlayerEvent } from '../../shared/protocol';
-import { followGm } from '../moq/follow';
-import { EVENTS_TRACK, gmPath, playerPath } from '../moq/paths';
-import { MoqSession, type FrameWriter, type MoqConnector } from '../moq/session';
-import { LinkWatch } from './linkWatch';
-import type { Me } from './membership';
-import { applyEvent, applySnapshot, hasGap, initialView, type PlayerView } from './playerView';
-import { encodeFrame, keepStarting } from './wire';
+import { verifyTransfer, type TransferCert } from "../../shared/cert";
+import type { EnvelopeVerifier } from "../../shared/envelope";
+import { seal } from "../../shared/envelope";
+import type { GmEvent, GmSnapshot, PlayerEvent } from "../../shared/protocol";
+import { followGm } from "../moq/follow";
+import { EVENTS_TRACK, gmPath, playerPath } from "../moq/paths";
+import { MoqSession, type FrameWriter, type MoqConnector } from "../moq/session";
+import { LinkWatch } from "./linkWatch";
+import type { Me } from "./membership";
+import { applyEvent, applySnapshot, hasGap, initialView, type PlayerView } from "./playerView";
+import { encodeFrame, keepStarting } from "./wire";
 
 // プレイヤーのブラウザ側。MoQ のセッションを 2 本使う（R21）：
 // p/{pid} に publish するだけのセッションと、gm/* を追いかけるだけのセッション。
 
 /** 送るイベントの本体（pid と seq は送るときに付ける）。 */
 export type PlayerEventBody = WithoutHeader<PlayerEvent>;
-type WithoutHeader<E> = E extends unknown ? Omit<E, 'pid' | 'seq'> : never;
+type WithoutHeader<E> = E extends unknown ? Omit<E, "pid" | "seq"> : never;
 
 /** resync を送る最短の間隔。 */
 const RESYNC_MIN_MS = 3000;
@@ -127,7 +127,7 @@ export class PlayerEngine {
 
     const follow = new MoqSession(this.#me.moqUrl, connector);
     this.#followSession = follow;
-    follow.onStatus((st) => this.#link.set('follow', st));
+    follow.onStatus((st) => this.#link.set("follow", st));
     this.#stopFollow = followGm(follow, verifier, (pid) => this.#isGm(pid), {
       event: (e) => this.#onEvent(e),
       snapshot: (s) => this.#onSnapshot(s),
@@ -144,25 +144,25 @@ export class PlayerEngine {
     });
     keepStarting(follow, () => this.#closed);
     this.#rejoinTimer = setInterval(() => this.#checkListed(), 1000);
-    this.#pingTimer = setInterval(() => this.send({ type: 'ping' }), PING_EVERY_MS);
+    this.#pingTimer = setInterval(() => this.send({ type: "ping" }), PING_EVERY_MS);
     // タブを閉じる（かもしれない）ときは away を送る。再読み込みでも起きるので leave にはしない
     // （再読み込みした後の join で GM は away を解く）。届かなくても ping が途切れて away になる。
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const hide = () => {
-        this.send({ type: 'away' });
+        this.send({ type: "away" });
         // 閉じるかもしれないので、確保した分ではなく使った分だけを保存し直す（再読み込みでの飛びを小さくする）。
         // bfcache から戻って続けるときは、次に送るときに確保し直す。
         this.#seqReserved = this.#seq;
         this.#deps.saveSeq(this.#seq);
       };
       const show = (e: PageTransitionEvent) => {
-        if (e.persisted) this.send({ type: 'ping' });
+        if (e.persisted) this.send({ type: "ping" });
       };
-      window.addEventListener('pagehide', hide);
-      window.addEventListener('pageshow', show);
+      window.addEventListener("pagehide", hide);
+      window.addEventListener("pageshow", show);
       this.#unlisten = () => {
-        window.removeEventListener('pagehide', hide);
-        window.removeEventListener('pageshow', show);
+        window.removeEventListener("pagehide", hide);
+        window.removeEventListener("pageshow", show);
       };
     }
   }
@@ -171,14 +171,14 @@ export class PlayerEngine {
     if (this.#stopped) return;
     const now = this.#deps.now();
     if (
-      body.type === 'ping' &&
+      body.type === "ping" &&
       (this.#groupFrames >= GROUP_MAX_FRAMES ||
         (this.#groupFrames > 0 && now - this.#groupStartedAt >= GROUP_MAX_MS))
     ) {
       // 書く順は送った順（1 本の鎖）なので、区切りも同じ鎖に入れる。
       this.#groupFrames = 0;
       this.#enqueue(() => this.#writer?.rotate());
-      this.#write({ type: 'join', name: this.#me.name }, now);
+      this.#write({ type: "join", name: this.#me.name }, now);
     }
     this.#write(body, now);
   }
@@ -207,7 +207,7 @@ export class PlayerEngine {
         if (this.#closed) return;
         await job();
       })
-      .catch((err: unknown) => console.error('メッセージを送れなかった', err));
+      .catch((err: unknown) => console.error("メッセージを送れなかった", err));
   }
 
   /** ここまでに送ったメッセージを書き終えるまで待つ。 */
@@ -218,7 +218,7 @@ export class PlayerEngine {
   /** 従っている GM の名前（参加証の名前）。 */
   gmName(): string {
     const pid = this.gmPid ?? this.view.gmPid;
-    return (pid && this.#deps.verifier.certOf(pid)?.body.name) || '';
+    return (pid && this.#deps.verifier.certOf(pid)?.body.name) || "";
   }
 
   subscribe(fn: () => void): () => void {
@@ -228,7 +228,7 @@ export class PlayerEngine {
 
   /** 部屋を出たことを GM に知らせる。この後に close(lingerMs) で閉じる。 */
   leave(): void {
-    this.send({ type: 'leave' });
+    this.send({ type: "leave" });
   }
 
   /**
@@ -260,13 +260,13 @@ export class PlayerEngine {
     this.#pubSession = session;
     this.#writer = session.publish(playerPath(this.#me.pid), EVENTS_TRACK);
     session.onStatus((st) => {
-      this.#link.set('pub', st);
-      if (st === 'down') this.#restartGroup();
+      this.#link.set("pub", st);
+      if (st === "down") this.#restartGroup();
     });
     // 新しい Track は最初のフレームで新しいグループを開く
     this.#groupFrames = 0;
     keepStarting(session, () => this.#closed || this.#pubSession !== session);
-    this.send({ type: 'join', name: this.#me.name });
+    this.send({ type: "join", name: this.#me.name });
   }
 
   /**
@@ -278,14 +278,14 @@ export class PlayerEngine {
     if (this.#stopped) return;
     this.#groupFrames = 0;
     this.#enqueue(() => this.#writer?.rotate());
-    this.#write({ type: 'join', name: this.#me.name }, this.#deps.now());
+    this.#write({ type: "join", name: this.#me.name }, this.#deps.now());
   }
 
   /** GM が announce を受け損ねると自分が一覧に載らないので、publish をやり直して announce し直す。 */
   #checkListed(): void {
     const v = this.view;
     const listed = v.players.some((p) => p.pid === this.#me.pid);
-    if (listed || v.phase === 'connecting' || v.phase === 'dissolved') {
+    if (listed || v.phase === "connecting" || v.phase === "dissolved") {
       this.#unlistedSince = null;
       if (listed) this.#rejoinAfterMs = REJOIN_AFTER_MS;
       return;
@@ -303,7 +303,7 @@ export class PlayerEngine {
       this.#closed ||
       this.#goneTimer ||
       this.gmDisconnectedSince !== null ||
-      this.view.phase === 'dissolved'
+      this.view.phase === "dissolved"
     )
       return;
     const mark = () => {
@@ -329,15 +329,15 @@ export class PlayerEngine {
 
   /** 従う GM のフレームか。GM の参加証（role が gm）で、従っている pid のものだけ。 */
   #isGm(pid: string): boolean {
-    if (this.#deps.verifier.certOf(pid)?.body.role !== 'gm') return false;
+    if (this.#deps.verifier.certOf(pid)?.body.role !== "gm") return false;
     return this.gmPid === null || pid === this.gmPid;
   }
 
   #onEvent(e: GmEvent): void {
     this.gmPid ??= e.pid;
-    if (e.type === 'transfer') {
+    if (e.type === "transfer") {
       this.#onTransfer(e).catch((err: unknown) =>
-        console.error('GM の交代を処理できなかった', err),
+        console.error("GM の交代を処理できなかった", err),
       );
       return;
     }
@@ -348,11 +348,11 @@ export class PlayerEngine {
   #onSnapshot(s: GmSnapshot): void {
     this.gmPid ??= s.pid;
     // 受け取り済みのイベントより古いスナップショットは使わない（state と events は別の Track で、順番が前後する）。
-    if (this.view.phase !== 'connecting' && s.lastEventSeq < this.view.lastSeq) return;
+    if (this.view.phase !== "connecting" && s.lastEventSeq < this.view.lastSeq) return;
     this.#set(applySnapshot(this.view, s, this.#deps.now()));
   }
 
-  async #onTransfer(e: Extract<GmEvent, { type: 'transfer' }>): Promise<void> {
+  async #onTransfer(e: Extract<GmEvent, { type: "transfer" }>): Promise<void> {
     const { transfer } = e;
     const nowSec = Math.floor(this.#deps.now() / 1000);
     if (transfer.body.from !== e.pid) return;
@@ -370,12 +370,12 @@ export class PlayerEngine {
     const now = this.#deps.now();
     if (now - this.#lastResyncAt < RESYNC_MIN_MS) return;
     this.#lastResyncAt = now;
-    this.send({ type: 'resync' });
+    this.send({ type: "resync" });
   }
 
   #set(v: PlayerView): void {
     // 解散したら、その後に届くもの（古いスナップショットなど）では画面を変えない。
-    if (v === this.view || this.view.phase === 'dissolved') return;
+    if (v === this.view || this.view.phase === "dissolved") return;
     this.view = v;
     this.#notify();
   }

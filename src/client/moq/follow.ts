@@ -1,13 +1,13 @@
-import * as v from 'valibot';
-import type { Envelope, EnvelopeVerifier } from '../../shared/envelope';
+import * as v from "valibot";
+import type { Envelope, EnvelopeVerifier } from "../../shared/envelope";
 import {
   GmEventSchema,
   GmSnapshotSchema,
   type GmEvent,
   type GmSnapshot,
-} from '../../shared/protocol';
-import { EVENTS_TRACK, GM_PREFIX, gmPath, STATE_TRACK } from './paths';
-import { keepSubscribed, type MoqSession } from './session';
+} from "../../shared/protocol";
+import { EVENTS_TRACK, GM_PREFIX, gmPath, STATE_TRACK } from "./paths";
+import { keepSubscribed, type MoqSession } from "./session";
 
 // プレイヤーが `gm/{epoch}` を追いかける。動きは poc/moq-verify/client.ts の follow をもとにする：
 // - 乗り換え先を探す購読（watch）は最大 2 本：announce なしの current + 1 と、
@@ -170,7 +170,7 @@ export function followGm(
   const deliver = (body: { pid: string; type?: unknown }) => {
     let last = lastSeq.get(body.pid);
     if (!last) lastSeq.set(body.pid, (last = { event: -1, snapshot: -1 }));
-    if (body.type === 'snapshot') {
+    if (body.type === "snapshot") {
       const r = v.safeParse(GmSnapshotSchema, body);
       if (!r.success || r.output.seq <= last.snapshot) return;
       last.snapshot = r.output.seq;

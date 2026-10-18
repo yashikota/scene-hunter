@@ -1,8 +1,8 @@
-import { beforeAll, describe, expect, it, vi } from 'vite-plus/test';
-import { verifyCert } from '../../src/shared/cert';
-import { exportPublicKey, generateKeyPair } from '../../src/shared/crypto';
-import { issueRoomToken } from '../../src/server/hmac';
-import { createRoomStore } from '../../src/server/roomStore';
+import { beforeAll, describe, expect, it, vi } from "vite-plus/test";
+import { verifyCert } from "../../src/shared/cert";
+import { exportPublicKey, generateKeyPair } from "../../src/shared/crypto";
+import { issueRoomToken } from "../../src/server/hmac";
+import { createRoomStore } from "../../src/server/roomStore";
 import {
   AuthError,
   NotFoundError,
@@ -12,8 +12,8 @@ import {
   joinRoom,
   roomExists,
   transferGm,
-} from '../../src/server/services/rooms';
-import type { RoomDeps } from '../../src/server/services/rooms';
+} from "../../src/server/services/rooms";
+import type { RoomDeps } from "../../src/server/services/rooms";
 
 const NOW_MS = 1_800_000_000_000;
 const NOW_SEC = NOW_MS / 1000;
@@ -36,7 +36,7 @@ function setup(opts: { codes?: string[]; putFalseTimes?: number } = {}) {
   const clock = { ms: NOW_MS };
   let relayN = 0;
   let putFalse = opts.putFalseTimes ?? 0;
-  const codes = [...(opts.codes ?? ['111111', '222222', '333333'])];
+  const codes = [...(opts.codes ?? ["111111", "222222", "333333"])];
   let idN = 0;
 
   const kv = {
@@ -56,8 +56,8 @@ function setup(opts: { codes?: string[]; putFalseTimes?: number } = {}) {
     },
   };
   const pages = [
-    { objects: [{ key: 'rooms/111111/1/a.jpg' }], truncated: true, cursor: 'c1' },
-    { objects: [{ key: 'rooms/111111/2/b.jpg' }], truncated: false },
+    { objects: [{ key: "rooms/111111/1/a.jpg" }], truncated: true, cursor: "c1" },
+    { objects: [{ key: "rooms/111111/2/b.jpg" }], truncated: false },
   ];
   let relayDeleteFails = false;
   const d: RoomDeps = {
@@ -68,7 +68,7 @@ function setup(opts: { codes?: string[]; putFalseTimes?: number } = {}) {
       },
       delete: async (uid) => {
         deleted.push(uid);
-        if (relayDeleteFails) throw new Error('relay delete failed');
+        if (relayDeleteFails) throw new Error("relay delete failed");
       },
       list: async () => [],
     },
@@ -80,11 +80,11 @@ function setup(opts: { codes?: string[]; putFalseTimes?: number } = {}) {
       },
       delete: async (keys: string | string[]) => void r2Deleted.push([keys].flat()),
     } as never,
-    hmacSecret: 'secret',
+    hmacSecret: "secret",
     serverKey,
     now: () => clock.ms,
     newId: () => `pid-${++idN}`,
-    randomCode: () => codes.shift() ?? '999999',
+    randomCode: () => codes.shift() ?? "999999",
   };
   return {
     d,
@@ -97,344 +97,344 @@ function setup(opts: { codes?: string[]; putFalseTimes?: number } = {}) {
   };
 }
 
-const input = { name: 'はるか', locale: 'ja' as const };
+const input = { name: "はるか", locale: "ja" as const };
 
-describe('createRoom', () => {
-  it('既定値を保存し、GM の参加証と Relay のトークンで終わる URL を返す', async () => {
+describe("createRoom", () => {
+  it("既定値を保存し、GM の参加証と Relay のトークンで終わる URL を返す", async () => {
     const { d, kvMap } = setup();
     const j = await createRoom(d, { ...input, pubkey });
     expect(j).toMatchObject({
-      code: '111111',
+      code: "111111",
       rounds: 3,
       limitSec: 60,
-      locale: 'ja',
-      pid: 'pid-1',
+      locale: "ja",
+      pid: "pid-1",
     });
-    expect(j.cert.body).toMatchObject({ role: 'gm', room: '111111', pubkey, name: 'はるか' });
+    expect(j.cert.body).toMatchObject({ role: "gm", room: "111111", pubkey, name: "はるか" });
     expect(j.cert.body.exp - j.cert.body.iat).toBe(43200);
-    expect(await verifyCert(serverPub, j.cert, '111111', NOW_SEC)).toBe(true);
-    expect(j.moqUrl.endsWith('/TOKEN1')).toBe(true);
-    expect(JSON.parse(kvMap.get('room:111111')!)).toMatchObject({
-      relayUid: 'uid-1-sh-111111',
-      locale: 'ja',
+    expect(await verifyCert(serverPub, j.cert, "111111", NOW_SEC)).toBe(true);
+    expect(j.moqUrl.endsWith("/TOKEN1")).toBe(true);
+    expect(JSON.parse(kvMap.get("room:111111")!)).toMatchObject({
+      relayUid: "uid-1-sh-111111",
+      locale: "ja",
       rounds: 3,
       limitSec: 60,
     });
   });
 
-  it('moqUrl は既定で Cloudflare の Relay、差し替えがあればそれを使う（e2e）', async () => {
+  it("moqUrl は既定で Cloudflare の Relay、差し替えがあればそれを使う（e2e）", async () => {
     const { d } = setup();
     const j = await createRoom(d, { ...input, pubkey });
-    expect(j.moqUrl).toBe('https://draft-16.cloudflare.mediaoverquic.com/TOKEN1');
+    expect(j.moqUrl).toBe("https://draft-16.cloudflare.mediaoverquic.com/TOKEN1");
     const e2e = setup();
     e2e.d.moqUrl = (t) => `http://localhost:4443/${t}`;
     const k = await createRoom(e2e.d, { ...input, pubkey });
-    expect(k.moqUrl).toBe('http://localhost:4443/TOKEN1');
+    expect(k.moqUrl).toBe("http://localhost:4443/TOKEN1");
     expect(
       (await joinRoom(e2e.d, k.code, { ...input, pubkey })) as { moqUrl: string },
-    ).toMatchObject({ moqUrl: 'http://localhost:4443/TOKEN1' });
+    ).toMatchObject({ moqUrl: "http://localhost:4443/TOKEN1" });
   });
 
-  it('名前の前後の空白を落とす', async () => {
+  it("名前の前後の空白を落とす", async () => {
     const { d } = setup();
-    const j = await createRoom(d, { ...input, name: '  ab  ', pubkey });
-    expect(j.cert.body.name).toBe('ab');
+    const j = await createRoom(d, { ...input, name: "  ab  ", pubkey });
+    expect(j.cert.body.name).toBe("ab");
   });
 
-  it('範囲外は RangeError', async () => {
+  it("範囲外は RangeError", async () => {
     const { d } = setup();
     await expect(createRoom(d, { ...input, pubkey, rounds: 11 })).rejects.toThrow(RangeError);
     await expect(createRoom(d, { ...input, pubkey, rounds: 0 })).rejects.toThrow(RangeError);
     await expect(createRoom(d, { ...input, pubkey, limitSec: 20 })).rejects.toThrow(RangeError);
     await expect(createRoom(d, { ...input, pubkey, limitSec: 121 })).rejects.toThrow(RangeError);
-    await expect(createRoom(d, { ...input, pubkey, name: 'あ'.repeat(13) })).rejects.toThrow(
+    await expect(createRoom(d, { ...input, pubkey, name: "あ".repeat(13) })).rejects.toThrow(
       RangeError,
     );
-    await expect(createRoom(d, { ...input, pubkey, name: '   ' })).rejects.toThrow(RangeError);
-    await expect(createRoom(d, { ...input, pubkey: 'bad' })).rejects.toThrow(RangeError);
+    await expect(createRoom(d, { ...input, pubkey, name: "   " })).rejects.toThrow(RangeError);
+    await expect(createRoom(d, { ...input, pubkey: "bad" })).rejects.toThrow(RangeError);
   });
 
-  it('put が false なら Relay を 1 本消して別の番号で作り直す', async () => {
+  it("put が false なら Relay を 1 本消して別の番号で作り直す", async () => {
     const { d, deleted } = setup({ putFalseTimes: 1 });
     const j = await createRoom(d, { ...input, pubkey });
-    expect(j.code).toBe('222222');
-    expect(deleted).toEqual(['uid-1-sh-111111']);
+    expect(j.code).toBe("222222");
+    expect(deleted).toEqual(["uid-1-sh-111111"]);
   });
 
-  it('3 回続けて衝突したら Error で、作った Relay はすべて消す', async () => {
+  it("3 回続けて衝突したら Error で、作った Relay はすべて消す", async () => {
     const { d, deleted } = setup({ putFalseTimes: 3 });
-    await expect(createRoom(d, { ...input, pubkey })).rejects.toThrow('could not allocate');
+    await expect(createRoom(d, { ...input, pubkey })).rejects.toThrow("could not allocate");
     expect(deleted).toHaveLength(3);
   });
 
-  it('Relay の後始末が失敗しても元の例外を隠さない', async () => {
+  it("Relay の後始末が失敗しても元の例外を隠さない", async () => {
     const { d, failRelayDelete } = setup();
     failRelayDelete();
     d.store.put = async () => {
-      throw new Error('kv down');
+      throw new Error("kv down");
     };
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    await expect(createRoom(d, { ...input, pubkey })).rejects.toThrow('kv down');
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(createRoom(d, { ...input, pubkey })).rejects.toThrow("kv down");
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
 
-  it('使われている番号は上書きせず、別の番号で作る（Relay も作らない）', async () => {
-    const { d, kvMap, deleted } = setup({ codes: ['111111', '111111', '222222'] });
+  it("使われている番号は上書きせず、別の番号で作る（Relay も作らない）", async () => {
+    const { d, kvMap, deleted } = setup({ codes: ["111111", "111111", "222222"] });
     const first = await createRoom(d, { ...input, pubkey });
-    const before = kvMap.get('room:111111');
+    const before = kvMap.get("room:111111");
     const second = await createRoom(d, { ...input, pubkey });
-    expect(second.code).toBe('222222');
-    expect(kvMap.get('room:111111')).toBe(before);
-    expect(JSON.parse(kvMap.get('room:111111')!).gmPid).toBe(first.pid);
-    expect(second.moqUrl.endsWith('/TOKEN2')).toBe(true); // 衝突した番号の Relay は作っていない
+    expect(second.code).toBe("222222");
+    expect(kvMap.get("room:111111")).toBe(before);
+    expect(JSON.parse(kvMap.get("room:111111")!).gmPid).toBe(first.pid);
+    expect(second.moqUrl.endsWith("/TOKEN2")).toBe(true); // 衝突した番号の Relay は作っていない
     expect(deleted).toEqual([]);
   });
 
-  it('使われている番号ばかりなら、3 回であきらめる', async () => {
-    const { d } = setup({ codes: ['111111', '111111', '111111', '111111'] });
+  it("使われている番号ばかりなら、3 回であきらめる", async () => {
+    const { d } = setup({ codes: ["111111", "111111", "111111", "111111"] });
     await createRoom(d, { ...input, pubkey });
-    await expect(createRoom(d, { ...input, pubkey })).rejects.toThrow('could not allocate');
+    await expect(createRoom(d, { ...input, pubkey })).rejects.toThrow("could not allocate");
   });
 
-  it('GM の pid を KV に保存する', async () => {
+  it("GM の pid を KV に保存する", async () => {
     const { d, kvMap } = setup();
     await createRoom(d, { ...input, pubkey });
-    expect(JSON.parse(kvMap.get('room:111111')!).gmPid).toBe('pid-1');
+    expect(JSON.parse(kvMap.get("room:111111")!).gmPid).toBe("pid-1");
   });
 });
 
-describe('roomExists', () => {
-  it('作った部屋は true、無い番号や形の違う番号は false', async () => {
+describe("roomExists", () => {
+  it("作った部屋は true、無い番号や形の違う番号は false", async () => {
     const { d } = setup();
     await createRoom(d, { ...input, pubkey });
-    expect(await roomExists(d.store, '111111')).toBe(true);
-    expect(await roomExists(d.store, '000000')).toBe(false);
-    expect(await roomExists(d.store, 'abc')).toBe(false);
+    expect(await roomExists(d.store, "111111")).toBe(true);
+    expect(await roomExists(d.store, "000000")).toBe(false);
+    expect(await roomExists(d.store, "abc")).toBe(false);
   });
 });
 
-describe('joinRoom', () => {
-  it('6 桁の数字でない番号は not_found', async () => {
+describe("joinRoom", () => {
+  it("6 桁の数字でない番号は not_found", async () => {
     const { d } = setup();
-    expect(await joinRoom(d, 'abc', { name: 'a', pubkey })).toEqual({ error: 'not_found' });
-    expect(await joinRoom(d, '1234567', { name: 'a', pubkey })).toEqual({ error: 'not_found' });
+    expect(await joinRoom(d, "abc", { name: "a", pubkey })).toEqual({ error: "not_found" });
+    expect(await joinRoom(d, "1234567", { name: "a", pubkey })).toEqual({ error: "not_found" });
   });
 
-  it('存在しない番号は not_found', async () => {
+  it("存在しない番号は not_found", async () => {
     const { d } = setup();
-    expect(await joinRoom(d, '000000', { name: 'a', pubkey })).toEqual({ error: 'not_found' });
+    expect(await joinRoom(d, "000000", { name: "a", pubkey })).toEqual({ error: "not_found" });
   });
 
-  it('player の参加証に送った pubkey を入れる', async () => {
+  it("player の参加証に送った pubkey を入れる", async () => {
     const { d } = setup();
     await createRoom(d, { ...input, pubkey });
     const other = await exportPublicKey((await generateKeyPair()).publicKey);
-    const j = await joinRoom(d, '111111', { name: 'たろう', pubkey: other });
-    if ('error' in j) throw new Error('unexpected');
+    const j = await joinRoom(d, "111111", { name: "たろう", pubkey: other });
+    if ("error" in j) throw new Error("unexpected");
     expect(j.cert.body).toMatchObject({
-      role: 'player',
+      role: "player",
       pubkey: other,
-      name: 'たろう',
-      room: '111111',
+      name: "たろう",
+      room: "111111",
     });
-    expect(j).toMatchObject({ locale: 'ja', rounds: 3, limitSec: 60 });
-    expect(j.moqUrl.endsWith('/TOKEN1')).toBe(true);
-    expect(j.pid).not.toBe('pid-1');
+    expect(j).toMatchObject({ locale: "ja", rounds: 3, limitSec: 60 });
+    expect(j.moqUrl.endsWith("/TOKEN1")).toBe(true);
+    expect(j.pid).not.toBe("pid-1");
   });
 });
 
-describe('GM 交代', () => {
+describe("GM 交代", () => {
   async function lobby() {
     const s = setup();
     const gm = await createRoom(s.d, { ...input, pubkey });
     const ppub = await exportPublicKey((await generateKeyPair()).publicKey);
-    const p = await joinRoom(s.d, '111111', { name: 'p', pubkey: ppub });
-    if ('error' in p) throw new Error('unexpected');
+    const p = await joinRoom(s.d, "111111", { name: "p", pubkey: ppub });
+    if ("error" in p) throw new Error("unexpected");
     return { ...s, gm, p, ppub };
   }
-  const claimInput = (pub: string) => ({ name: 'ぷれいや', pubkey: pub });
+  const claimInput = (pub: string) => ({ name: "ぷれいや", pubkey: pub });
 
-  it('プレイヤーのトークンでは transferGm が AuthError', async () => {
+  it("プレイヤーのトークンでは transferGm が AuthError", async () => {
     const { d, p, gm } = await lobby();
-    await expect(transferGm(d, p.roomToken, gm.pid, '111111')).rejects.toThrow(AuthError);
-    await expect(transferGm(d, 'garbage', p.pid, '111111')).rejects.toThrow(AuthError);
+    await expect(transferGm(d, p.roomToken, gm.pid, "111111")).rejects.toThrow(AuthError);
+    await expect(transferGm(d, "garbage", p.pid, "111111")).rejects.toThrow(AuthError);
   });
 
-  it('別の部屋の番号を添えると AuthError、形式違いや存在しない部屋は NotFoundError', async () => {
+  it("別の部屋の番号を添えると AuthError、形式違いや存在しない部屋は NotFoundError", async () => {
     const { d, gm, p } = await lobby();
     await createRoom(d, { ...input, pubkey }); // 222222
-    await expect(transferGm(d, gm.roomToken, p.pid, '222222')).rejects.toThrow(AuthError);
-    await expect(transferGm(d, gm.roomToken, p.pid, 'abc')).rejects.toThrow(NotFoundError);
-    await expect(closeRoom(d, gm.roomToken, '12345')).rejects.toThrow(NotFoundError);
+    await expect(transferGm(d, gm.roomToken, p.pid, "222222")).rejects.toThrow(AuthError);
+    await expect(transferGm(d, gm.roomToken, p.pid, "abc")).rejects.toThrow(NotFoundError);
+    await expect(closeRoom(d, gm.roomToken, "12345")).rejects.toThrow(NotFoundError);
   });
 
-  it('claimGm は to が違うと AuthError、正しいと名前入りの role: gm の参加証', async () => {
+  it("claimGm は to が違うと AuthError、正しいと名前入りの role: gm の参加証", async () => {
     const { d, gm, p, ppub, kvMap } = await lobby();
-    const t = await transferGm(d, gm.roomToken, p.pid, '111111');
-    expect(t.body).toMatchObject({ room: '111111', from: gm.pid, to: p.pid });
+    const t = await transferGm(d, gm.roomToken, p.pid, "111111");
+    expect(t.body).toMatchObject({ room: "111111", from: gm.pid, to: p.pid });
 
-    const third = await joinRoom(d, '111111', { name: 'q', pubkey: ppub });
-    if ('error' in third) throw new Error('unexpected');
-    await expect(claimGm(d, third.roomToken, t, claimInput(ppub), '111111')).rejects.toThrow(
+    const third = await joinRoom(d, "111111", { name: "q", pubkey: ppub });
+    if ("error" in third) throw new Error("unexpected");
+    await expect(claimGm(d, third.roomToken, t, claimInput(ppub), "111111")).rejects.toThrow(
       AuthError,
     );
-    await expect(claimGm(d, gm.roomToken, t, claimInput(ppub), '111111')).rejects.toThrow(
+    await expect(claimGm(d, gm.roomToken, t, claimInput(ppub), "111111")).rejects.toThrow(
       AuthError,
     );
 
-    const c = await claimGm(d, p.roomToken, t, claimInput(ppub), '111111');
+    const c = await claimGm(d, p.roomToken, t, claimInput(ppub), "111111");
     expect(c.cert.body).toMatchObject({
-      role: 'gm',
+      role: "gm",
       pid: p.pid,
       pubkey: ppub,
-      room: '111111',
-      name: 'ぷれいや',
+      room: "111111",
+      name: "ぷれいや",
     });
-    expect(await verifyCert(serverPub, c.cert, '111111', NOW_SEC)).toBe(true);
-    expect(JSON.parse(kvMap.get('room:111111')!).gmPid).toBe(p.pid);
-    await expect(transferGm(d, c.roomToken, gm.pid, '111111')).resolves.toBeDefined();
+    expect(await verifyCert(serverPub, c.cert, "111111", NOW_SEC)).toBe(true);
+    expect(JSON.parse(kvMap.get("room:111111")!).gmPid).toBe(p.pid);
+    await expect(transferGm(d, c.roomToken, gm.pid, "111111")).resolves.toBeDefined();
   });
 
-  it('create と join はいまの GM の pid を返し、claim の後に入った人には交代先の pid を返す', async () => {
+  it("create と join はいまの GM の pid を返し、claim の後に入った人には交代先の pid を返す", async () => {
     const { d, gm, p, ppub } = await lobby();
     expect(gm.gmPid).toBe(gm.pid);
     expect(p.gmPid).toBe(gm.pid);
-    const t = await transferGm(d, gm.roomToken, p.pid, '111111');
-    await claimGm(d, p.roomToken, t, claimInput(ppub), '111111');
-    const late = await joinRoom(d, '111111', { name: 'late', pubkey: ppub });
-    if ('error' in late) throw new Error('unexpected');
+    const t = await transferGm(d, gm.roomToken, p.pid, "111111");
+    await claimGm(d, p.roomToken, t, claimInput(ppub), "111111");
+    const late = await joinRoom(d, "111111", { name: "late", pubkey: ppub });
+    if ("error" in late) throw new Error("unexpected");
     expect(late.gmPid).toBe(p.pid);
   });
 
-  it('claimGm の名前は join と同じ検証', async () => {
+  it("claimGm の名前は join と同じ検証", async () => {
     const { d, gm, p, ppub } = await lobby();
-    const t = await transferGm(d, gm.roomToken, p.pid, '111111');
+    const t = await transferGm(d, gm.roomToken, p.pid, "111111");
     await expect(
-      claimGm(d, p.roomToken, t, { name: '  ', pubkey: ppub }, '111111'),
+      claimGm(d, p.roomToken, t, { name: "  ", pubkey: ppub }, "111111"),
     ).rejects.toThrow(RangeError);
     await expect(
-      claimGm(d, p.roomToken, t, { name: 'あ'.repeat(13), pubkey: ppub }, '111111'),
+      claimGm(d, p.roomToken, t, { name: "あ".repeat(13), pubkey: ppub }, "111111"),
     ).rejects.toThrow(RangeError);
   });
 
-  it('交代後の元の GM は transfer も close もできない', async () => {
+  it("交代後の元の GM は transfer も close もできない", async () => {
     const { d, gm, p, ppub, deleted } = await lobby();
-    const t = await transferGm(d, gm.roomToken, p.pid, '111111');
-    await claimGm(d, p.roomToken, t, claimInput(ppub), '111111');
-    await expect(transferGm(d, gm.roomToken, p.pid, '111111')).rejects.toThrow(AuthError);
-    await expect(closeRoom(d, gm.roomToken, '111111')).rejects.toThrow(AuthError);
+    const t = await transferGm(d, gm.roomToken, p.pid, "111111");
+    await claimGm(d, p.roomToken, t, claimInput(ppub), "111111");
+    await expect(transferGm(d, gm.roomToken, p.pid, "111111")).rejects.toThrow(AuthError);
+    await expect(closeRoom(d, gm.roomToken, "111111")).rejects.toThrow(AuthError);
     expect(deleted).toEqual([]);
   });
 
-  it('部屋 A のプレイヤーのトークンで部屋 B に claim すると AuthError', async () => {
+  it("部屋 A のプレイヤーのトークンで部屋 B に claim すると AuthError", async () => {
     const { d, gm, p, ppub } = await lobby();
     await createRoom(d, { ...input, pubkey }); // 222222
-    const t = await transferGm(d, gm.roomToken, p.pid, '111111');
-    await expect(claimGm(d, p.roomToken, t, claimInput(ppub), '222222')).rejects.toThrow(AuthError);
+    const t = await transferGm(d, gm.roomToken, p.pid, "111111");
+    await expect(claimGm(d, p.roomToken, t, claimInput(ppub), "222222")).rejects.toThrow(AuthError);
   });
 
-  it('(a) C が先に claim した後の B の claim は AuthError', async () => {
+  it("(a) C が先に claim した後の B の claim は AuthError", async () => {
     const { d, gm, p, ppub, clock } = await lobby();
-    const c = await joinRoom(d, '111111', { name: 'c', pubkey: ppub });
-    if ('error' in c) throw new Error('unexpected');
-    const tB = await transferGm(d, gm.roomToken, p.pid, '111111');
-    const tC = await transferGm(d, gm.roomToken, c.pid, '111111');
-    await claimGm(d, c.roomToken, tC, claimInput(ppub), '111111');
+    const c = await joinRoom(d, "111111", { name: "c", pubkey: ppub });
+    if ("error" in c) throw new Error("unexpected");
+    const tB = await transferGm(d, gm.roomToken, p.pid, "111111");
+    const tC = await transferGm(d, gm.roomToken, c.pid, "111111");
+    await claimGm(d, c.roomToken, tC, claimInput(ppub), "111111");
     clock.ms += 5000;
-    await expect(claimGm(d, p.roomToken, tB, claimInput(ppub), '111111')).rejects.toThrow(
+    await expect(claimGm(d, p.roomToken, tB, claimInput(ppub), "111111")).rejects.toThrow(
       AuthError,
     );
   });
 
-  it('(b) A→B→A の後に B が最初の交代証で claim すると AuthError', async () => {
+  it("(b) A→B→A の後に B が最初の交代証で claim すると AuthError", async () => {
     const { d, gm, p, ppub, clock } = await lobby();
-    const t1 = await transferGm(d, gm.roomToken, p.pid, '111111');
-    const b = await claimGm(d, p.roomToken, t1, claimInput(ppub), '111111');
+    const t1 = await transferGm(d, gm.roomToken, p.pid, "111111");
+    const b = await claimGm(d, p.roomToken, t1, claimInput(ppub), "111111");
     clock.ms += 5000;
-    const t2 = await transferGm(d, b.roomToken, gm.pid, '111111');
+    const t2 = await transferGm(d, b.roomToken, gm.pid, "111111");
     // A は player のトークンを持たないので、新しく入って pid を得た A' に戻す代わりに、
     // 元の A の pid 宛ての交代証を使えるよう player トークンを発行する。
-    const aTok = await issueRoomToken('secret', {
-      room: '111111',
-      role: 'player',
+    const aTok = await issueRoomToken("secret", {
+      room: "111111",
+      role: "player",
       pid: gm.pid,
       exp: NOW_SEC + 40000,
     });
     clock.ms += 5000;
-    await claimGm(d, aTok, t2, claimInput(ppub), '111111');
+    await claimGm(d, aTok, t2, claimInput(ppub), "111111");
     clock.ms += 5000;
-    await expect(claimGm(d, p.roomToken, t1, claimInput(ppub), '111111')).rejects.toThrow(
+    await expect(claimGm(d, p.roomToken, t1, claimInput(ppub), "111111")).rejects.toThrow(
       AuthError,
     );
   });
 
-  it('(c) 同じ交代証での 2 回目の claim は AuthError', async () => {
+  it("(c) 同じ交代証での 2 回目の claim は AuthError", async () => {
     const { d, gm, p, ppub, clock } = await lobby();
-    const t = await transferGm(d, gm.roomToken, p.pid, '111111');
-    await claimGm(d, p.roomToken, t, claimInput(ppub), '111111');
+    const t = await transferGm(d, gm.roomToken, p.pid, "111111");
+    await claimGm(d, p.roomToken, t, claimInput(ppub), "111111");
     clock.ms += 5000;
-    await expect(claimGm(d, p.roomToken, t, claimInput(ppub), '111111')).rejects.toThrow(AuthError);
+    await expect(claimGm(d, p.roomToken, t, claimInput(ppub), "111111")).rejects.toThrow(AuthError);
   });
 
-  it('改ざんした交代証は AuthError', async () => {
+  it("改ざんした交代証は AuthError", async () => {
     const { d, gm, p, ppub } = await lobby();
-    const t = await transferGm(d, gm.roomToken, 'someone-else', '111111');
+    const t = await transferGm(d, gm.roomToken, "someone-else", "111111");
     const forged = { ...t, body: { ...t.body, to: p.pid } };
-    await expect(claimGm(d, p.roomToken, forged, claimInput(ppub), '111111')).rejects.toThrow(
+    await expect(claimGm(d, p.roomToken, forged, claimInput(ppub), "111111")).rejects.toThrow(
       AuthError,
     );
   });
 
-  it('自分への交代は RangeError', async () => {
+  it("自分への交代は RangeError", async () => {
     const { d, gm } = await lobby();
-    await expect(transferGm(d, gm.roomToken, gm.pid, '111111')).rejects.toThrow(RangeError);
+    await expect(transferGm(d, gm.roomToken, gm.pid, "111111")).rejects.toThrow(RangeError);
   });
 
-  it('期限切れのトークンは AuthError', async () => {
+  it("期限切れのトークンは AuthError", async () => {
     const { d, p } = await lobby();
-    const expired = await issueRoomToken('secret', {
-      room: '111111',
-      role: 'gm',
+    const expired = await issueRoomToken("secret", {
+      room: "111111",
+      role: "gm",
       pid: p.pid,
       exp: NOW_SEC - 1,
     });
-    await expect(transferGm(d, expired, 'x', '111111')).rejects.toThrow(AuthError);
+    await expect(transferGm(d, expired, "x", "111111")).rejects.toThrow(AuthError);
   });
 });
 
-describe('closeRoom', () => {
-  it('Relay、R2 の rooms/{code}/ 以下、KV を消す', async () => {
+describe("closeRoom", () => {
+  it("Relay、R2 の rooms/{code}/ 以下、KV を消す", async () => {
     const s = setup();
     const gm = await createRoom(s.d, { ...input, pubkey });
-    await closeRoom(s.d, gm.roomToken, '111111');
-    expect(s.deleted).toEqual(['uid-1-sh-111111']);
-    expect(s.r2Prefixes).toEqual(['rooms/111111/', 'rooms/111111/']);
-    expect(s.r2Deleted).toEqual([['rooms/111111/1/a.jpg'], ['rooms/111111/2/b.jpg']]);
-    expect(s.kvMap.has('room:111111')).toBe(false);
+    await closeRoom(s.d, gm.roomToken, "111111");
+    expect(s.deleted).toEqual(["uid-1-sh-111111"]);
+    expect(s.r2Prefixes).toEqual(["rooms/111111/", "rooms/111111/"]);
+    expect(s.r2Deleted).toEqual([["rooms/111111/1/a.jpg"], ["rooms/111111/2/b.jpg"]]);
+    expect(s.kvMap.has("room:111111")).toBe(false);
   });
 
-  it('プレイヤーのトークンでは閉じられない', async () => {
+  it("プレイヤーのトークンでは閉じられない", async () => {
     const s = setup();
     await createRoom(s.d, { ...input, pubkey });
-    const p = await joinRoom(s.d, '111111', { name: 'p', pubkey });
-    if ('error' in p) throw new Error('unexpected');
-    await expect(closeRoom(s.d, p.roomToken, '111111')).rejects.toThrow(AuthError);
+    const p = await joinRoom(s.d, "111111", { name: "p", pubkey });
+    if ("error" in p) throw new Error("unexpected");
+    await expect(closeRoom(s.d, p.roomToken, "111111")).rejects.toThrow(AuthError);
     expect(s.deleted).toEqual([]);
   });
 
-  it('部屋 A のトークンで部屋 B の番号を閉じようとすると AuthError', async () => {
+  it("部屋 A のトークンで部屋 B の番号を閉じようとすると AuthError", async () => {
     const s = setup();
     const a = await createRoom(s.d, { ...input, pubkey });
     await createRoom(s.d, { ...input, pubkey }); // 222222
-    await expect(closeRoom(s.d, a.roomToken, '222222')).rejects.toThrow(AuthError);
+    await expect(closeRoom(s.d, a.roomToken, "222222")).rejects.toThrow(AuthError);
     expect(s.deleted).toEqual([]);
   });
 
-  it('閉じた後の部屋は NotFoundError', async () => {
+  it("閉じた後の部屋は NotFoundError", async () => {
     const s = setup();
     const gm = await createRoom(s.d, { ...input, pubkey });
-    await closeRoom(s.d, gm.roomToken, '111111');
-    await expect(closeRoom(s.d, gm.roomToken, '111111')).rejects.toThrow(NotFoundError);
+    await closeRoom(s.d, gm.roomToken, "111111");
+    await expect(closeRoom(s.d, gm.roomToken, "111111")).rejects.toThrow(NotFoundError);
   });
 });

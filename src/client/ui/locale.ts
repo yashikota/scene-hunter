@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { matchLocale, type Locale } from '../../shared/locales';
-import { setLocale } from '../paraglide/runtime';
-import { applyLocaleFonts } from './fonts';
+import { useState } from "react";
+import { matchLocale, type Locale } from "../../shared/locales";
+import { setLocale } from "../paraglide/runtime";
+import { applyLocaleFonts } from "./fonts";
 
 /** 画面の言語を切り替える（文言、フォント、<html lang>）。ページは読み込み直さない。 */
 export function switchLocale(locale: Locale): void {
@@ -27,4 +27,4 @@ export function useBrowserLocale(): [Locale, (l: Locale) => void] {
 }
 
 /** WebTransport が使えるブラウザか（Chrome 系だけ）。 */
-export const isSupportedBrowser = (): boolean => typeof WebTransport !== 'undefined';
+export const isSupportedBrowser = (): boolean => typeof WebTransport !== "undefined";

@@ -23,52 +23,52 @@
  * - TODO(未確認): ai.provider('qwen') が AI Gateway 経由でこの base URL に届くか。
  *   届かない場合は QWEN_BASE_URL を直接 fetch する形に変える（呼び出し側は変わらない）。
  */
-import { LOCALE_NAMES } from '../shared/locales';
-import type { Locale } from '../shared/locales';
+import { LOCALE_NAMES } from "../shared/locales";
+import type { Locale } from "../shared/locales";
 
-export const HINT_MODEL = '@cf/qwen/qwen3.8-27b';
+export const HINT_MODEL = "@cf/qwen/qwen3.8-27b";
 /** TODO(未確認): 公式 API 上の表記。help.aliyun.com の製品ページでは `qwen3.8-27b`。 */
-export const QWEN_MODEL = 'qwen3.8-27b';
+export const QWEN_MODEL = "qwen3.8-27b";
 
 export const HINT_SCHEMA = {
-  type: 'object',
-  properties: { hints: { type: 'array', items: { type: 'string' }, minItems: 5, maxItems: 5 } },
-  required: ['hints'],
+  type: "object",
+  properties: { hints: { type: "array", items: { type: "string" }, minItems: 5, maxItems: 5 } },
+  required: ["hints"],
 } as const;
 
 export const LOCALE_ENGLISH_NAMES: Record<Locale, string> = {
-  ja: 'Japanese',
-  en: 'English',
-  'zh-Hans': 'Simplified Chinese',
-  'zh-Hant': 'Traditional Chinese',
-  ko: 'Korean',
-  es: 'Spanish',
-  fr: 'French',
-  de: 'German',
-  'pt-BR': 'Brazilian Portuguese',
-  id: 'Indonesian',
-  vi: 'Vietnamese',
+  ja: "Japanese",
+  en: "English",
+  "zh-Hans": "Simplified Chinese",
+  "zh-Hant": "Traditional Chinese",
+  ko: "Korean",
+  es: "Spanish",
+  fr: "French",
+  de: "German",
+  "pt-BR": "Brazilian Portuguese",
+  id: "Indonesian",
+  vi: "Vietnamese",
 };
 
 export function buildHintPrompt(locale: Locale): string {
   const language = LOCALE_ENGLISH_NAMES[locale] ?? LOCALE_NAMES[locale];
   return [
-    'You are the host of a photo-hunting game. Players will try to take a photo that matches the attached photo.',
+    "You are the host of a photo-hunting game. Players will try to take a photo that matches the attached photo.",
     `Write exactly 5 hints about the scene in the photo. Write them in ${language}.`,
-    'Hint 1 must be the vaguest, such as the general mood, colors or kind of object.',
-    'Each following hint must be more specific than the previous one, and hint 5 must be the most concrete, describing what is in the frame and how it is arranged.',
-    'Do not name the specific place where the photo was taken (a proper noun such as a shop, building or town) in hints 1 to 4. You may do so only in hint 5.',
-    'Each hint is one short sentence. Do not number the hints.',
+    "Hint 1 must be the vaguest, such as the general mood, colors or kind of object.",
+    "Each following hint must be more specific than the previous one, and hint 5 must be the most concrete, describing what is in the frame and how it is arranged.",
+    "Do not name the specific place where the photo was taken (a proper noun such as a shop, building or town) in hints 1 to 4. You may do so only in hint 5.",
+    "Each hint is one short sentence. Do not number the hints.",
     'Respond only with JSON of the form {"hints": ["...", "...", "...", "...", "..."]}.',
-  ].join('\n');
+  ].join("\n");
 }
 
 export function isQuotaError(e: unknown): boolean {
-  if (typeof e === 'object' && e !== null) {
+  if (typeof e === "object" && e !== null) {
     const o = e as { status?: unknown; statusCode?: unknown };
     if (o.status === 429 || o.statusCode === 429) return true;
   }
-  const msg = e instanceof Error ? e.message : typeof e === 'string' ? e : '';
+  const msg = e instanceof Error ? e.message : typeof e === "string" ? e : "";
   return /neurons|\b4006\b|daily free allocation/i.test(msg);
 }
 
@@ -81,7 +81,7 @@ export interface HintDeps {
 }
 
 function toBase64(bytes: Uint8Array): string {
-  let s = '';
+  let s = "";
   for (let i = 0; i < bytes.length; i += 0x8000) {
     s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   }
@@ -91,10 +91,10 @@ function toBase64(bytes: Uint8Array): string {
 function messages(image: Uint8Array, locale: Locale) {
   return [
     {
-      role: 'user',
+      role: "user",
       content: [
-        { type: 'text', text: buildHintPrompt(locale) },
-        { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${toBase64(image)}` } },
+        { type: "text", text: buildHintPrompt(locale) },
+        { type: "image_url", image_url: { url: `data:image/jpeg;base64,${toBase64(image)}` } },
       ],
     },
   ];
@@ -107,14 +107,14 @@ function extractHints(result: unknown): string[] {
     choices?: { message?: { content?: unknown } }[];
   } | null;
   let v: unknown = r?.response ?? r?.choices?.[0]?.message?.content;
-  if (typeof v === 'string') v = JSON.parse(v);
+  if (typeof v === "string") v = JSON.parse(v);
   const hints = (v as { hints?: unknown } | null)?.hints;
   if (
     !Array.isArray(hints) ||
     hints.length !== 5 ||
-    !hints.every((h) => typeof h === 'string' && h.trim() !== '')
+    !hints.every((h) => typeof h === "string" && h.trim() !== "")
   ) {
-    throw new Error('hints must be 5 non-empty strings');
+    throw new Error("hints must be 5 non-empty strings");
   }
   return hints.map((h: string) => h.trim());
 }
@@ -135,14 +135,14 @@ export async function generateHints(
             model: QWEN_MODEL,
             messages: msgs,
             response_format: {
-              type: 'json_schema',
-              json_schema: { name: 'hints', strict: true, schema: HINT_SCHEMA },
+              type: "json_schema",
+              json_schema: { name: "hints", strict: true, schema: HINT_SCHEMA },
             },
             enable_thinking: false,
           })
         : await d.ai.run(HINT_MODEL, {
             messages: msgs,
-            response_format: { type: 'json_schema', json_schema: HINT_SCHEMA },
+            response_format: { type: "json_schema", json_schema: HINT_SCHEMA },
             chat_template_kwargs: { enable_thinking: false },
           });
       return extractHints(result);
@@ -151,5 +151,5 @@ export async function generateHints(
       if (!useQwen && isQuotaError(e)) useQwen = true;
     }
   }
-  throw new HintGenerationError('hint generation failed', { cause: last });
+  throw new HintGenerationError("hint generation failed", { cause: last });
 }

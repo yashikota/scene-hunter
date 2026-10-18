@@ -1,5 +1,5 @@
-import type { ReactNode, RefObject } from 'react';
-import { m } from '../paraglide/messages';
+import type { ReactNode, RefObject } from "react";
+import { m } from "../paraglide/messages";
 
 /** カメラの映像の枠（四隅の印つき）。video が無いときは children を中に出す。 */
 export function CameraFrame({

@@ -1,5 +1,5 @@
-import type { HintsResult } from '../api';
-import type { GmAction, GmState } from './gmMachine';
+import type { HintsResult } from "../api";
+import type { GmAction, GmState } from "./gmMachine";
 
 /**
  * ヒントの生成を待つ上限。サーバーは 1 回 6.7〜78 秒かかる生成を 3 回まで試すので、それより長くする。
@@ -21,13 +21,13 @@ export async function requestHintsAction(
     const r = await Promise.race([
       request(),
       new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error('hint request timed out')), timeoutMs);
+        timer = setTimeout(() => reject(new Error("hint request timed out")), timeoutMs);
       }),
     ]);
-    return r.ok ? { type: 'hintsReady', hints: r.hints, at: now() } : { type: 'hintsFailed' };
+    return r.ok ? { type: "hintsReady", hints: r.hints, at: now() } : { type: "hintsFailed" };
   } catch (e) {
-    console.warn('ヒントを作れなかった', e);
-    return { type: 'hintsFailed' };
+    console.warn("ヒントを作れなかった", e);
+    return { type: "hintsFailed" };
   } finally {
     clearTimeout(timer);
   }
@@ -38,5 +38,5 @@ export async function requestHintsAction(
  * ヒントの依頼は再読み込みで消えるので、頼み直さないとこの段階から抜けられない。
  */
 export function hintsToResume(s: GmState): string | null {
-  return s.phase === 'hinting' && s.gmPhotoKey ? s.gmPhotoKey : null;
+  return s.phase === "hinting" && s.gmPhotoKey ? s.gmPhotoKey : null;
 }

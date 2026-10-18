@@ -1,9 +1,9 @@
-import type { EnvelopeVerifier } from '../../shared/envelope';
-import { seal } from '../../shared/envelope';
-import type { GmEventBody, GmSnapshot, PlayerEvent } from '../../shared/protocol';
-import { GmInbox } from '../moq/gmInbox';
-import { EVENTS_TRACK, gmPath, STATE_TRACK } from '../moq/paths';
-import { MoqSession, type FrameWriter, type MoqConnector } from '../moq/session';
+import type { EnvelopeVerifier } from "../../shared/envelope";
+import { seal } from "../../shared/envelope";
+import type { GmEventBody, GmSnapshot, PlayerEvent } from "../../shared/protocol";
+import { GmInbox } from "../moq/gmInbox";
+import { EVENTS_TRACK, gmPath, STATE_TRACK } from "../moq/paths";
+import { MoqSession, type FrameWriter, type MoqConnector } from "../moq/session";
 import {
   gmReduce,
   hasLeft,
@@ -11,12 +11,12 @@ import {
   snapshotOf,
   type GmAction,
   type GmState,
-} from './gmMachine';
-import { clearGm, loadGm, saveGm } from './gmPersist';
-import { LinkWatch } from './linkWatch';
-import type { Me } from './membership';
-import { applySnapshot, initialView, type PlayerView } from './playerView';
-import { encodeFrame, keepStarting } from './wire';
+} from "./gmMachine";
+import { clearGm, loadGm, saveGm } from "./gmPersist";
+import { LinkWatch } from "./linkWatch";
+import type { Me } from "./membership";
+import { applySnapshot, initialView, type PlayerView } from "./playerView";
+import { encodeFrame, keepStarting } from "./wire";
 
 // GM のブラウザでゲームを回す：gmReduce に入れたアクションのイベントを封筒に入れて gm/{epoch} の events に書き、
 // 状態が変わるたびと 5 秒ごとに state にスナップショットを書き、localStorage に保存する。
@@ -41,7 +41,7 @@ export const PRESENCE_SUSPEND_GAP_MS = 5000;
  * 戻す方はすぐに受け付ける（再読み込みの直後の join などで待たせない）。切り替えは 1 人につき 2 秒に 1 往復まで。
  */
 export const PRESENCE_FLIP_MIN_MS = 2000;
-const PLAYER_PREFIX = 'p/';
+const PLAYER_PREFIX = "p/";
 /**
  * gm/{epoch} の接続が切れたら、epoch を 1 つ上げた新しいセッションでつなぎ直す（同じパスの publish し直しは
  * PoC で 5 回中 3 回しか届かなかったため、再読み込みと同じく epoch を上げる）。
@@ -73,7 +73,7 @@ const linkKey = (room: string) => `sh:gmlink:${room}`;
 
 function loadLink(room: string): Link {
   try {
-    const o = JSON.parse(localStorage.getItem(linkKey(room)) ?? 'null') as Partial<Link> | null;
+    const o = JSON.parse(localStorage.getItem(linkKey(room)) ?? "null") as Partial<Link> | null;
     if (
       o &&
       Number.isInteger(o.epoch) &&
@@ -187,17 +187,17 @@ export class GmEngine {
     }
     this.#open(minEpoch, 0);
     this.#timers.push(
-      setInterval(() => this.dispatch({ type: 'tick', now: this.#deps.now() }), TICK_MS),
+      setInterval(() => this.dispatch({ type: "tick", now: this.#deps.now() }), TICK_MS),
       setInterval(() => this.#writeSnapshot(), SNAPSHOT_EVERY_MS),
       setInterval(() => this.#checkPresence(), PRESENCE_CHECK_MS),
     );
     // タブが見えるようになったら、止まっていた間の分で誰かを away にしないよう数え直す。
-    if (typeof document !== 'undefined') {
+    if (typeof document !== "undefined") {
       const onVisible = () => {
-        if (document.visibilityState === 'visible') this.#reseed();
+        if (document.visibilityState === "visible") this.#reseed();
       };
-      document.addEventListener('visibilitychange', onVisible);
-      this.#unlisten = () => document.removeEventListener('visibilitychange', onVisible);
+      document.addEventListener("visibilitychange", onVisible);
+      this.#unlisten = () => document.removeEventListener("visibilitychange", onVisible);
     }
   }
 
@@ -222,8 +222,8 @@ export class GmEngine {
       else this.#inbox?.remove(pid);
     });
     session.onStatus((st) => {
-      this.#linkWatch.set('gm', st);
-      if (st === 'down') this.#reopen(session);
+      this.#linkWatch.set("gm", st);
+      if (st === "down") this.#reopen(session);
     });
     const begin = () => keepStarting(session, () => this.#closed || this.#session !== session);
     if (delayMs > 0) this.#reconnectTimer = setTimeout(begin, delayMs);
@@ -324,7 +324,7 @@ export class GmEngine {
       const seen = this.#lastSeen.get(pid);
       if (seen === undefined) this.#lastSeen.set(pid, now);
       else if (now - seen > PRESENCE_TIMEOUT_MS)
-        this.dispatch({ type: 'presence', pid, active: false });
+        this.dispatch({ type: "presence", pid, active: false });
     }
   }
 
@@ -341,37 +341,37 @@ export class GmEngine {
     if (!p || !p.away === active) return;
     if (!active && at - (this.#lastFlip.get(pid) ?? -Infinity) < PRESENCE_FLIP_MIN_MS) return;
     this.#lastFlip.set(pid, at);
-    this.dispatch({ type: 'presence', pid, active });
+    this.dispatch({ type: "presence", pid, active });
   }
 
   #onPlayer(e: PlayerEvent): void {
     // プレイヤーの参加証を持つ人のメッセージだけを受け付ける（GmInbox が署名と pid の一致を確かめた後）。
     const cert = this.#deps.verifier.certOf(e.pid);
-    if (cert?.body.role !== 'player') return;
+    if (cert?.body.role !== "player") return;
     // 部屋を出た人のメッセージは、もう何も受け付けない。
     if (hasLeft(this.state, e.pid)) return;
     const at = this.#deps.now();
     this.#lastSeen.set(e.pid, at);
-    if (e.type === 'leave') {
+    if (e.type === "leave") {
       this.#lastSeen.delete(e.pid);
-      this.dispatch({ type: 'playerLeft', pid: e.pid });
+      this.dispatch({ type: "playerLeft", pid: e.pid });
       this.#inbox?.remove(e.pid);
       return;
     }
-    if (e.type === 'away') return this.#flip(e.pid, false, at);
+    if (e.type === "away") return this.#flip(e.pid, false, at);
     // away だった人は、何か届いた時点で戻す（提出などの処理より先に。away でなければ何も起きない）。
     this.#flip(e.pid, true, at);
     switch (e.type) {
-      case 'ping':
+      case "ping":
         return;
-      case 'join':
+      case "join":
         // 名前は Worker が署名した参加証のものを使う。
-        return this.dispatch({ type: 'playerJoined', pid: e.pid, name: cert.body.name, at });
-      case 'shutter':
-        return this.dispatch({ type: 'shutter', round: e.round, pid: e.pid, hash: e.hash, at });
-      case 'submit':
-        return this.dispatch({ type: 'submit', round: e.round, pid: e.pid, key: e.key, at });
-      case 'resync':
+        return this.dispatch({ type: "playerJoined", pid: e.pid, name: cert.body.name, at });
+      case "shutter":
+        return this.dispatch({ type: "shutter", round: e.round, pid: e.pid, hash: e.hash, at });
+      case "submit":
+        return this.dispatch({ type: "submit", round: e.round, pid: e.pid, key: e.key, at });
+      case "resync":
         if (at - this.#lastResyncAt < RESYNC_MIN_MS) return;
         this.#lastResyncAt = at;
         return this.#writeSnapshot();
@@ -382,8 +382,8 @@ export class GmEngine {
     const now = this.#deps.now();
     if (
       this.#groupFrames > 0 &&
-      (e.type === 'lobby' ||
-        e.type === 'gm_turn' ||
+      (e.type === "lobby" ||
+        e.type === "gm_turn" ||
         this.#groupFrames >= GM_GROUP_MAX_FRAMES ||
         now - this.#groupStartedAt >= GM_GROUP_MAX_MS)
     ) {
@@ -407,7 +407,7 @@ export class GmEngine {
     if (this.#stopped || this.state.dissolved) return;
     const seq = ++this.#link.snapshotSeq;
     saveLink(this.#me.code, this.#link);
-    const body: Omit<GmSnapshot, 'epoch'> = {
+    const body: Omit<GmSnapshot, "epoch"> = {
       ...snapshotOf(this.state, this.#deps.now()),
       pid: this.#me.pid,
       seq,
@@ -431,6 +431,6 @@ export class GmEngine {
         if (this.#closed) return;
         await job();
       })
-      .catch((err: unknown) => console.error('GM のメッセージを送れなかった', err));
+      .catch((err: unknown) => console.error("GM のメッセージを送れなかった", err));
   }
 }

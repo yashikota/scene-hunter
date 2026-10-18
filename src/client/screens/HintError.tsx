@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { m } from '../paraglide/messages';
-import { Button } from '../ui/Button';
-import { Screen } from '../ui/Screen';
-import { TopBar } from '../ui/TopBar';
+import { useState } from "react";
+import { m } from "../paraglide/messages";
+import { Button } from "../ui/Button";
+import { Screen } from "../ui/Screen";
+import { TopBar } from "../ui/TopBar";
 
 export interface HintErrorProps {
   round: number;
@@ -32,18 +32,18 @@ export function HintError({ round, rounds, onRetry, onDissolve }: HintErrorProps
         role="alert"
         style={{
           flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
           gap: 14,
-          textAlign: 'center',
+          textAlign: "center",
         }}
       >
         <div
           className="sh-icon-tile"
           aria-hidden="true"
-          style={{ width: 88, height: 88, background: 'var(--color-gold)', borderRadius: 22 }}
+          style={{ width: 88, height: 88, background: "var(--color-gold)", borderRadius: 22 }}
         >
           <svg
             width="44"
@@ -66,7 +66,7 @@ export function HintError({ round, rounds, onRetry, onDissolve }: HintErrorProps
           {m.hint_error_body()}
         </p>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <Button variant="primary" disabled={busy} onClick={() => void retry()}>
           {m.hint_retry()}
         </Button>

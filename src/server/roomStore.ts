@@ -1,4 +1,4 @@
-import type { Locale } from '../shared/locales';
+import type { Locale } from "../shared/locales";
 
 export interface RoomRecord {
   code: string;
@@ -20,12 +20,12 @@ const KV_CACHE_TTL_SEC = 30;
 
 const key = (code: string) => `room:${code}`;
 
-export function createRoomStore(kv: Pick<KVNamespace, 'get' | 'put' | 'delete'>) {
+export function createRoomStore(kv: Pick<KVNamespace, "get" | "put" | "delete">) {
   async function get(code: string): Promise<RoomRecord | null> {
     // KV は無かったという結果も各拠点で覚える（既定 60 秒）。できた直後の部屋や GM の交代が見えるのを早めるため、
     // 覚える時間を最短の 30 秒にする。
     return (
-      (await kv.get<RoomRecord>(key(code), { type: 'json', cacheTtl: KV_CACHE_TTL_SEC })) ?? null
+      (await kv.get<RoomRecord>(key(code), { type: "json", cacheTtl: KV_CACHE_TTL_SEC })) ?? null
     );
   }
 
@@ -58,5 +58,5 @@ function secureRoomNumber(): number {
 /** `rand` はテスト用の差し替え。省略時は CSPRNG と棄却サンプリングを使う。 */
 export function randomRoomCode(rand?: () => number): string {
   const n = rand ? Math.floor(rand() * 1_000_000) : secureRoomNumber();
-  return String(n).padStart(6, '0');
+  return String(n).padStart(6, "0");
 }

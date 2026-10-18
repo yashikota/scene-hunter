@@ -1,10 +1,10 @@
-import { m } from '../paraglide/messages';
-import { Card } from '../ui/Card';
-import { Screen } from '../ui/Screen';
-import { TopBar } from '../ui/TopBar';
-import { useNow } from '../ui/useNow';
-import { HintList } from './HintList';
-import { remainingSec } from './turnTime';
+import { m } from "../paraglide/messages";
+import { Card } from "../ui/Card";
+import { Screen } from "../ui/Screen";
+import { TopBar } from "../ui/TopBar";
+import { useNow } from "../ui/useNow";
+import { HintList } from "./HintList";
+import { remainingSec } from "./turnTime";
 
 export interface PlayerTurnGmProps {
   round: number;
@@ -45,25 +45,25 @@ export function PlayerTurnGm(props: PlayerTurnGmProps) {
         left={m.round_label({ round, rounds })}
         right={<span className="sh-badge">{m.you_are_gm()}</span>}
       />
-      <Card raised style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12 }}>
+      <Card raised style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12 }}>
         <div
           style={{
-            aspectRatio: '4 / 3',
-            borderRadius: 'var(--radius-sm)',
-            border: 'var(--border)',
-            background: 'var(--color-bg)',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textAlign: 'center',
+            aspectRatio: "4 / 3",
+            borderRadius: "var(--radius-sm)",
+            border: "var(--border)",
+            background: "var(--color-bg)",
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
           }}
         >
           {photoUrl ? (
             <img
               src={photoUrl}
               alt={m.topic_photo()}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           ) : (
             <span className="sh-sub" style={{ fontSize: 13, padding: 12 }}>
@@ -71,27 +71,27 @@ export function PlayerTurnGm(props: PlayerTurnGmProps) {
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <span style={{ fontWeight: 800 }}>{m.photo_taking()}</span>
           <span className="sh-timer" role="timer" style={{ fontSize: 28 }}>
             {remainingSec(turnStartedLocalAt, limitSec, now)}
             <small> {m.sec_suffix()}</small>
           </span>
         </div>
-        <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: 'center' }}>
+        <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: "center" }}>
           {m.keep_screen_on()}
         </p>
       </Card>
 
-      <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <h2 className="sh-display" style={{ fontSize: 17 }}>
           {m.hints_heading()}
         </h2>
         <HintList hints={hints} shown={shown} turnStartedLocalAt={turnStartedLocalAt} now={now} />
       </section>
 
-      <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+      <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <h2 className="sh-display" style={{ fontSize: 17 }}>
             {m.submissions_heading()}
           </h2>
@@ -106,9 +106,9 @@ export function PlayerTurnGm(props: PlayerTurnGmProps) {
             return (
               <li
                 key={p.pid}
-                className={`sh-tile ${ok ? 'sh-tile--me' : gone ? 'sh-tile--away' : ''}`}
+                className={`sh-tile ${ok ? "sh-tile--me" : gone ? "sh-tile--away" : ""}`}
               >
-                <span>{p.label}</span>{' '}
+                <span>{p.label}</span>{" "}
                 <span style={{ fontSize: 12 }}>
                   {ok
                     ? m.status_submitted()

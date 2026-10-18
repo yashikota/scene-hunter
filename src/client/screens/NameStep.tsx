@@ -1,11 +1,11 @@
-import { useId, useRef, useState, type FormEvent } from 'react';
-import { loadLastName, saveLastName } from '../game/membership';
-import { m } from '../paraglide/messages';
-import { Button } from '../ui/Button';
-import { Screen } from '../ui/Screen';
-import { formatCode } from '../ui/TopBar';
-import { Connecting } from './Connecting';
-import { cleanName, errorMessage, NAME_MAX } from './entryErrors';
+import { useId, useRef, useState, type FormEvent } from "react";
+import { loadLastName, saveLastName } from "../game/membership";
+import { m } from "../paraglide/messages";
+import { Button } from "../ui/Button";
+import { Screen } from "../ui/Screen";
+import { formatCode } from "../ui/TopBar";
+import { Connecting } from "./Connecting";
+import { cleanName, errorMessage, NAME_MAX } from "./entryErrors";
 
 export interface NameStepProps {
   /** 入る部屋の番号。部屋を作るときは無し。 */
@@ -22,7 +22,7 @@ export interface NameStepProps {
 export function NameStep({ code, onSubmit, onBack }: NameStepProps) {
   const id = useId();
   const [name, setName] = useState(loadLastName);
-  const [status, setStatus] = useState<'idle' | 'busy' | 'preparing'>('idle');
+  const [status, setStatus] = useState<"idle" | "busy" | "preparing">("idle");
   const [error, setError] = useState<string | null>(null);
   const running = useRef(false);
 
@@ -34,29 +34,29 @@ export function NameStep({ code, onSubmit, onBack }: NameStepProps) {
     running.current = true;
     saveLastName(n);
     setError(null);
-    setStatus('busy');
+    setStatus("busy");
     try {
-      await onSubmit(n, { onWaiting: () => setStatus('preparing') });
+      await onSubmit(n, { onWaiting: () => setStatus("preparing") });
     } catch (err) {
-      setStatus('idle');
+      setStatus("idle");
       setError(errorMessage(err));
     } finally {
       running.current = false;
     }
   };
 
-  if (status === 'preparing') return <Connecting preparing />;
-  const busy = status === 'busy';
+  if (status === "preparing") return <Connecting preparing />;
+  const busy = status === "busy";
 
   return (
     <Screen variant="top">
       <form onSubmit={submit} noValidate className="sh-stack">
         {code ? (
-          <p className="sh-display sh-code" style={{ textAlign: 'center' }}>
+          <p className="sh-display sh-code" style={{ textAlign: "center" }}>
             {formatCode(code)}
           </p>
         ) : (
-          <p className="sh-display" style={{ fontSize: 28, textAlign: 'center', margin: 0 }}>
+          <p className="sh-display" style={{ fontSize: 28, textAlign: "center", margin: 0 }}>
             {m.create_button()}
           </p>
         )}

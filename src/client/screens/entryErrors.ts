@@ -1,4 +1,4 @@
-import { m } from '../paraglide/messages';
+import { m } from "../paraglide/messages";
 
 /** 部屋の番号は 6 桁の数字。 */
 export const CODE_RE = /^\d{6}$/;

@@ -1,4 +1,4 @@
-import type { Role } from '../shared/cert';
+import type { Role } from "../shared/cert";
 
 export interface RoomTokenPayload {
   room: string;
@@ -11,25 +11,25 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 function toBase64Url(bytes: Uint8Array): string {
-  let bin = '';
+  let bin = "";
   for (const b of bytes) bin += String.fromCharCode(b);
-  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 function fromBase64Url(s: string): Uint8Array<ArrayBuffer> {
-  if (!/^[A-Za-z0-9_-]*$/.test(s)) throw new Error('invalid base64url');
-  const b64 = s.replace(/-/g, '+').replace(/_/g, '/');
-  const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
+  if (!/^[A-Za-z0-9_-]*$/.test(s)) throw new Error("invalid base64url");
+  const b64 = s.replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4));
   const out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
 
-function importKey(secret: string, usage: 'sign' | 'verify'): Promise<CryptoKey> {
+function importKey(secret: string, usage: "sign" | "verify"): Promise<CryptoKey> {
   return crypto.subtle.importKey(
-    'raw',
+    "raw",
     encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
+    { name: "HMAC", hash: "SHA-256" },
     false,
     [usage],
   );
@@ -39,19 +39,19 @@ function importKey(secret: string, usage: 'sign' | 'verify'): Promise<CryptoKey>
 export async function issueRoomToken(secret: string, p: RoomTokenPayload): Promise<string> {
   const body = toBase64Url(encoder.encode(JSON.stringify(p)));
   const sig = new Uint8Array(
-    await crypto.subtle.sign('HMAC', await importKey(secret, 'sign'), encoder.encode(body)),
+    await crypto.subtle.sign("HMAC", await importKey(secret, "sign"), encoder.encode(body)),
   );
   return `${body}.${toBase64Url(sig)}`;
 }
 
 function isRoomTokenPayload(v: unknown): v is RoomTokenPayload {
-  if (v === null || typeof v !== 'object') return false;
+  if (v === null || typeof v !== "object") return false;
   const o = v as Record<string, unknown>;
   return (
-    typeof o.room === 'string' &&
-    (o.role === 'gm' || o.role === 'player') &&
-    typeof o.pid === 'string' &&
-    typeof o.exp === 'number'
+    typeof o.room === "string" &&
+    (o.role === "gm" || o.role === "player") &&
+    typeof o.pid === "string" &&
+    typeof o.exp === "number"
   );
 }
 
@@ -62,12 +62,12 @@ export async function verifyRoomToken(
   nowSec: number,
 ): Promise<RoomTokenPayload | null> {
   try {
-    const parts = token.split('.');
+    const parts = token.split(".");
     if (parts.length !== 2) return null;
     const [body, sig] = parts;
     const valid = await crypto.subtle.verify(
-      'HMAC',
-      await importKey(secret, 'verify'),
+      "HMAC",
+      await importKey(secret, "verify"),
       fromBase64Url(sig),
       encoder.encode(body),
     );

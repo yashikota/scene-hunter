@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
-import type { Room } from '../game/useRoom';
-import { GmTurn } from './GmTurn';
-import { GmTurnPlayer } from './GmTurnPlayer';
-import { HintError } from './HintError';
-import { HintWait } from './HintWait';
-import { PlayerTurn } from './PlayerTurn';
-import { PlayerTurnGm } from './PlayerTurnGm';
+import { useEffect, useRef, useState } from "react";
+import type { Room } from "../game/useRoom";
+import { GmTurn } from "./GmTurn";
+import { GmTurnPlayer } from "./GmTurnPlayer";
+import { HintError } from "./HintError";
+import { HintWait } from "./HintWait";
+import { PlayerTurn } from "./PlayerTurn";
+import { PlayerTurnGm } from "./PlayerTurnGm";
 
 /** GM のターンからプレイヤーのターンまでの画面を、役割と段階で選ぶ。 */
 export function TurnScreen({ room, code }: { room: Room; code: string }) {
   const { view, actions, me, gmName } = room;
-  const isGm = room.role === 'gm';
+  const isGm = room.role === "gm";
   const [gmPhotoUrl, setGmPhotoUrl] = useState<string>();
   const urlRef = useRef<string | undefined>(undefined);
   useEffect(
@@ -26,7 +26,7 @@ export function TurnScreen({ room, code }: { room: Room; code: string }) {
   const counted = others.filter((p) => (!p.away && !p.left) || view.submitted.includes(p.pid));
 
   switch (view.phase) {
-    case 'gmTurn':
+    case "gmTurn":
       return isGm ? (
         <GmTurn
           {...common}
@@ -48,9 +48,9 @@ export function TurnScreen({ room, code }: { room: Room; code: string }) {
           }
         />
       );
-    case 'hinting':
+    case "hinting":
       return <HintWait {...common} code={code} gm={isGm} />;
-    case 'hintError':
+    case "hintError":
       return isGm ? (
         <HintError
           {...common}

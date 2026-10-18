@@ -13,8 +13,8 @@ export function fitWithin(w: number, h: number, maxSide = 1280): { w: number; h:
 function toBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error('JPEG encoding failed'))),
-      'image/jpeg',
+      (b) => (b ? resolve(b) : reject(new Error("JPEG encoding failed"))),
+      "image/jpeg",
       quality,
     );
   });
@@ -30,11 +30,11 @@ export async function encodeJpeg(
   h: number,
   quality = 0.8,
 ): Promise<Blob> {
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = w;
   canvas.height = h;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('2d context unavailable');
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("2d context unavailable");
   ctx.drawImage(src, 0, 0, w, h);
   let q = quality;
   let blob = await toBlob(canvas, q);
@@ -47,5 +47,5 @@ export async function encodeJpeg(
 
 /** ファイルを読み込む。EXIF の向きは読み込み時に反映する（再エンコードで EXIF が消えるため）。 */
 export function loadImageFile(file: File): Promise<ImageBitmap> {
-  return createImageBitmap(file, { imageOrientation: 'from-image' });
+  return createImageBitmap(file, { imageOrientation: "from-image" });
 }

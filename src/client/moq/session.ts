@@ -1,4 +1,4 @@
-import * as Moq from '@moq/net';
+import * as Moq from "@moq/net";
 
 // MoQ の 1 本の接続（WebTransport セッション）を、リクエストの予算つきで包む。
 // Cloudflare の Relay は 1 セッションで 50 件までしかリクエストを受け付けない（poc/moq-verify/README.md）。
@@ -92,7 +92,7 @@ interface Pub {
 }
 
 /** 接続が切れたか、つながったか。MoqSession.onStatus で受け取る。 */
-export type SessionStatus = 'up' | 'down';
+export type SessionStatus = "up" | "down";
 
 const RETRY_MIN_MS = 500;
 const RETRY_MAX_MS = 5000;
@@ -229,7 +229,7 @@ export class MoqSession {
         try {
           return this.#install(await this.#connect());
         } catch (e) {
-          console.warn('MoQ の再接続に失敗した', e);
+          console.warn("MoQ の再接続に失敗した", e);
           await new Promise((r) => setTimeout(r, delay));
           delay = Math.min(delay * 2, RETRY_MAX_MS);
         }
@@ -243,7 +243,7 @@ export class MoqSession {
       let late = false;
       const timer = setTimeout(() => {
         late = true;
-        reject(new Error('MoQ の接続がタイムアウトした'));
+        reject(new Error("MoQ の接続がタイムアウトした"));
       }, CONNECT_TIMEOUT_MS);
       this.connector.connect(this.url).then(
         (conn) => {
@@ -275,7 +275,7 @@ export class MoqSession {
         `MoQ: 張り直した直後のリクエストが ${this.#requests} 件で、予算 ${this.budget} を超えている`,
       );
     }
-    this.#emit('up');
+    this.#emit("up");
   }
 
   /**
@@ -284,8 +284,8 @@ export class MoqSession {
    */
   #dropped(conn: MoqConnection, error: unknown): void {
     if (this.#closed || this.#conn !== conn) return;
-    console.warn('MoQ の接続が切れた', error);
-    this.#emit('down');
+    console.warn("MoQ の接続が切れた", error);
+    this.#emit("down");
     if (this.#closed || this.#conn !== conn) return; // 受け手が閉じた、または張り直した
     this.#reconnect();
   }
@@ -482,7 +482,7 @@ class MoqNetConnection implements MoqConnection {
         if (cancelled) return sub.close();
         for (;;) {
           const group = await sub.recvGroup();
-          if (!group) throw new Error('track ended');
+          if (!group) throw new Error("track ended");
           for (;;) {
             const f = await group.readFrame();
             if (!f) break;
@@ -518,7 +518,7 @@ class MoqNetConnection implements MoqConnection {
       try {
         for await (const a of stream) {
           if (stopped) return;
-          onPath(String(a.prefix), a.kind !== 'retracted');
+          onPath(String(a.prefix), a.kind !== "retracted");
         }
       } catch {
         // 接続が閉じた

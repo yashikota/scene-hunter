@@ -1,14 +1,14 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
-import { isLocale, LOCALE_NAMES, LOCALES, type Locale } from '../../shared/locales';
-import { createAndSave, findRoom, isRoomFound } from '../game/membership';
-import { m } from '../paraglide/messages';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { isSupportedBrowser, useBrowserLocale } from '../ui/locale';
-import { Screen } from '../ui/Screen';
-import { CODE_RE, errorMessage } from './entryErrors';
-import { NameStep } from './NameStep';
-import { Unsupported } from './Unsupported';
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { isLocale, LOCALE_NAMES, LOCALES, type Locale } from "../../shared/locales";
+import { createAndSave, findRoom, isRoomFound } from "../game/membership";
+import { m } from "../paraglide/messages";
+import { Button } from "../ui/Button";
+import { Card } from "../ui/Card";
+import { isSupportedBrowser, useBrowserLocale } from "../ui/locale";
+import { Screen } from "../ui/Screen";
+import { CODE_RE, errorMessage } from "./entryErrors";
+import { NameStep } from "./NameStep";
+import { Unsupported } from "./Unsupported";
 
 export interface TopDeps {
   /** 部屋を作って資格を保存し、部屋の番号を返す。 */
@@ -44,7 +44,7 @@ export function Top(props: TopProps) {
 
 /** トップ：部屋の番号を入れて入るか、部屋を作る。名前は部屋を選んだ後に聞く。 */
 function TopForm({
-  initialCode = '',
+  initialCode = "",
   onEntered,
   deps = defaultDeps,
   locale,
@@ -52,7 +52,7 @@ function TopForm({
 }: TopProps & { locale: Locale; onLocale(l: Locale): void }) {
   const ids = useId();
   const [code, setCode] = useState(initialCode);
-  const [status, setStatus] = useState<'idle' | 'checking' | 'naming'>('idle');
+  const [status, setStatus] = useState<"idle" | "checking" | "naming">("idle");
   const [error, setError] = useState<string | null>(null);
   /** いまの確かめの番号。やめたり番号を変えたりした後に届いた結果は捨てる。 */
   const attempt = useRef(0);
@@ -60,13 +60,13 @@ function TopForm({
   const find = async (c: string) => {
     const mine = ++attempt.current;
     setError(null);
-    setStatus('checking');
+    setStatus("checking");
     try {
       await deps.find(c);
       if (attempt.current === mine) onEntered(c);
     } catch (err) {
       if (attempt.current !== mine) return;
-      setStatus('idle');
+      setStatus("idle");
       setError(errorMessage(err));
     }
   };
@@ -88,26 +88,26 @@ function TopForm({
 
   const join = (e: FormEvent) => {
     e.preventDefault();
-    if (status !== 'idle') return;
+    if (status !== "idle") return;
     if (!CODE_RE.test(code)) return setError(m.error_code());
     void find(code);
   };
 
-  if (status === 'naming') {
+  if (status === "naming") {
     return (
       <NameStep
         onSubmit={async (name) => onEntered(await deps.create(name, locale))}
-        onBack={() => setStatus('idle')}
+        onBack={() => setStatus("idle")}
       />
     );
   }
 
-  const checking = status === 'checking';
+  const checking = status === "checking";
   return (
     <Screen variant="top">
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <label
-          style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800 }}
+          style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 800 }}
         >
           <svg
             width="18"
@@ -138,10 +138,10 @@ function TopForm({
         </label>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
         <div
           className="sh-icon-tile"
-          style={{ width: 96, height: 96, background: 'var(--color-accent)', borderRadius: 24 }}
+          style={{ width: 96, height: 96, background: "var(--color-accent)", borderRadius: 24 }}
         >
           <svg
             width="52"
@@ -158,7 +158,7 @@ function TopForm({
             <circle cx="12" cy="13" r="3.5" />
           </svg>
         </div>
-        <h1 className="sh-display" style={{ fontSize: 34, letterSpacing: '0.02em' }}>
+        <h1 className="sh-display" style={{ fontSize: 34, letterSpacing: "0.02em" }}>
           {m.app_name()}
         </h1>
       </div>
@@ -178,12 +178,12 @@ function TopForm({
             placeholder={m.code_label()}
             value={code}
             onChange={(e) => {
-              setCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+              setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
               setError(null);
               // 番号を直したら、確かめの途中の結果は捨てる
               if (checking) {
                 attempt.current++;
-                setStatus('idle');
+                setStatus("idle");
               }
             }}
           />
@@ -201,14 +201,14 @@ function TopForm({
 
       <div
         className="sh-sub"
-        style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13 }}
+        style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13 }}
       >
-        <div style={{ flexGrow: 1, height: 2, background: 'currentColor', opacity: 0.25 }} />
+        <div style={{ flexGrow: 1, height: 2, background: "currentColor", opacity: 0.25 }} />
         <span>{m.or()}</span>
-        <div style={{ flexGrow: 1, height: 2, background: 'currentColor', opacity: 0.25 }} />
+        <div style={{ flexGrow: 1, height: 2, background: "currentColor", opacity: 0.25 }} />
       </div>
 
-      <Button onClick={() => setStatus('naming')} disabled={checking}>
+      <Button onClick={() => setStatus("naming")} disabled={checking}>
         {m.create_button()}
       </Button>
     </Screen>

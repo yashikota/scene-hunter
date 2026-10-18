@@ -1,4 +1,4 @@
-import type { SessionStatus } from '../moq/session';
+import type { SessionStatus } from "../moq/session";
 
 /** 自分の接続が切れてから、画面に「つなぎ直しています」を出すまでの時間。短い切断では何も出さない。 */
 export const RECONNECT_NOTICE_MS = 3000;
@@ -28,7 +28,7 @@ export class LinkWatch {
   }
 
   set(key: string, status: SessionStatus): void {
-    if (status === 'down') {
+    if (status === "down") {
       this.#down.add(key);
       if (this.#since !== null) return;
       this.#since = this.now();

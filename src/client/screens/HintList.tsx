@@ -1,5 +1,5 @@
-import { m } from '../paraglide/messages';
-import { HINT_COUNT, hintProgress } from './turnTime';
+import { m } from "../paraglide/messages";
+import { HINT_COUNT, hintProgress } from "./turnTime";
 
 export interface HintListProps {
   /** 文言が分かっているヒント（プレイヤーは公開済みのものだけ、GM は 5 つとも）。 */

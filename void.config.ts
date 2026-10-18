@@ -1,4 +1,4 @@
-import { defineConfig } from 'void/config';
+import { defineConfig } from "void/config";
 
 // Rate Limiting binding の period は 10 か 60 秒しか選べない。
 const rateLimit = (name: string, namespaceId: string, limit: number) => ({
@@ -11,15 +11,15 @@ const rateLimit = (name: string, namespaceId: string, limit: number) => ({
 // （deploy など）で、どちらも argv[2] がコマンド名になる。SH_E2E が残ったシェルでビルドやデプロイをすると
 // AI の binding の無い Worker ができてしまうので、そのときは止める。
 const command = process.argv[2];
-if (process.env.SH_E2E && (command === 'build' || command === 'deploy')) {
+if (process.env.SH_E2E && (command === "build" || command === "deploy")) {
   throw new Error(
     `SH_E2E is set (${JSON.stringify(process.env.SH_E2E)}); refusing to run "${command}". Unset SH_E2E before building or deploying.`,
   );
 }
-const e2eDev = process.env.SH_E2E === '1' && command === 'dev';
+const e2eDev = process.env.SH_E2E === "1" && command === "dev";
 
 export default defineConfig({
-  target: 'cloudflare',
+  target: "cloudflare",
   // void/kv と void/storage の import ではなく素の binding を使うので、明示する。
   // e2e テスト（SH_E2E=1 の dev）では AI を呼ばない（src/server/e2e.ts）。Workers AI の binding は dev でも
   // Cloudflare につなぐので、認証の無い CI では dev が起動できない。そのため e2e の dev のときだけ binding を外す。
@@ -27,7 +27,7 @@ export default defineConfig({
     bindings: { kv: true, storage: true, ...(e2eDev ? { ai: false } : {}) },
   },
   cloudflare: {
-    name: 'scene-hunter',
+    name: "scene-hunter",
     // 本番は workers.dev で公開する。preview_urls は Void がデプロイ前の版を確かめるのに使う。
     workers_dev: true,
     preview_urls: true,
@@ -41,11 +41,11 @@ export default defineConfig({
       traces: { enabled: true, head_sampling_rate: 1 },
     },
     ratelimits: [
-      rateLimit('RL_CREATE', '1001', 2), // IP
+      rateLimit("RL_CREATE", "1001", 2), // IP
       // 会場の Wi-Fi では全員が 1 つの IP に見える。数十人が 1 分のうちに入れるよう広げる（GM の交代の入り直しも数える）。
-      rateLimit('RL_JOIN', '1002', 60), // IP
-      rateLimit('RL_HINTS', '1003', 3), // 部屋
-      rateLimit('RL_UPLOAD', '1004', 5), // 部屋とプレイヤー
+      rateLimit("RL_JOIN", "1002", 60), // IP
+      rateLimit("RL_HINTS", "1003", 3), // 部屋
+      rateLimit("RL_UPLOAD", "1004", 5), // 部屋とプレイヤー
     ],
   },
 });

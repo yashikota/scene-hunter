@@ -1,7 +1,7 @@
-import type { Cert, TransferCert } from '../../shared/cert';
-import { exportPrivateKey, exportPublicKey, generateKeyPair } from '../../shared/crypto';
-import { isLocale, type Locale } from '../../shared/locales';
-import { checkRoom, claim, createRoom, joinRoom, type Joined } from '../api';
+import type { Cert, TransferCert } from "../../shared/cert";
+import { exportPrivateKey, exportPublicKey, generateKeyPair } from "../../shared/crypto";
+import { isLocale, type Locale } from "../../shared/locales";
+import { checkRoom, claim, createRoom, joinRoom, type Joined } from "../api";
 
 // 部屋の一員としての資格（参加証、秘密鍵、部屋トークン）を sessionStorage の `sh:me:{code}` に置く。
 // 再読み込みしても同じ pid のまま戻れるように、プレイヤーが送るイベントの seq もここに置く
@@ -11,7 +11,7 @@ export interface Me {
   code: string;
   pid: string;
   name: string;
-  role: 'gm' | 'player';
+  role: "gm" | "player";
   roomToken: string;
   cert: Cert;
   /** Ed25519 の秘密鍵（PKCS8 の base64url）。 */
@@ -41,8 +41,8 @@ export interface Me {
 }
 
 export type PendingStep =
-  | { kind: 'claim'; transfer: TransferCert; fromEpoch: number }
-  | { kind: 'rejoin'; gmPid: string };
+  | { kind: "claim"; transfer: TransferCert; fromEpoch: number }
+  | { kind: "rejoin"; gmPid: string };
 
 const keyOf = (code: string) => `sh:me:${code}`;
 
@@ -63,24 +63,24 @@ export function loadMe(code: string): Me | null {
     if (
       !o ||
       o.code !== code ||
-      typeof o.pid !== 'string' ||
-      typeof o.name !== 'string' ||
-      (o.role !== 'gm' && o.role !== 'player') ||
-      typeof o.roomToken !== 'string' ||
-      typeof o.cert?.body?.pid !== 'string' ||
-      typeof o.privateKey !== 'string' ||
-      typeof o.pubkey !== 'string' ||
-      typeof o.moqUrl !== 'string' ||
+      typeof o.pid !== "string" ||
+      typeof o.name !== "string" ||
+      (o.role !== "gm" && o.role !== "player") ||
+      typeof o.roomToken !== "string" ||
+      typeof o.cert?.body?.pid !== "string" ||
+      typeof o.privateKey !== "string" ||
+      typeof o.pubkey !== "string" ||
+      typeof o.moqUrl !== "string" ||
       !isLocale(o.locale) ||
-      typeof o.rounds !== 'number' ||
-      typeof o.limitSec !== 'number' ||
+      typeof o.rounds !== "number" ||
+      typeof o.limitSec !== "number" ||
       !Number.isInteger(o.seq) ||
-      (o.gmPid !== undefined && typeof o.gmPid !== 'string')
+      (o.gmPid !== undefined && typeof o.gmPid !== "string")
     ) {
       return null;
     }
     const pending = o.pending as Partial<PendingStep> | undefined;
-    if (pending !== undefined && pending?.kind !== 'claim' && pending?.kind !== 'rejoin')
+    if (pending !== undefined && pending?.kind !== "claim" && pending?.kind !== "rejoin")
       return null;
     return o as Me;
   } catch {
@@ -127,7 +127,7 @@ const foundRooms = new Set<string>();
 /** 部屋があるか確かめ、あれば覚えておく。無ければ（数秒待ち直しても 404 なら）投げる。 */
 export async function findRoom(
   code: string,
-  api: Pick<typeof import('../api'), 'checkRoom'> = { checkRoom },
+  api: Pick<typeof import("../api"), "checkRoom"> = { checkRoom },
 ): Promise<void> {
   await api.checkRoom(code);
   foundRooms.add(code);
@@ -135,14 +135,14 @@ export async function findRoom(
 
 export const isRoomFound = (code: string): boolean => foundRooms.has(code);
 
-const NAME_KEY = 'sh:name';
+const NAME_KEY = "sh:name";
 
 /** 前に使った名前（入力の初期値にするだけの便利機能）。読めなければ空。 */
 export function loadLastName(): string {
   try {
-    return localStorage.getItem(NAME_KEY) ?? '';
+    return localStorage.getItem(NAME_KEY) ?? "";
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -158,7 +158,7 @@ export function saveLastName(name: string): void {
 export async function createAndSave(
   name: string,
   locale: Locale,
-  api: Pick<typeof import('../api'), 'createRoom'> = { createRoom },
+  api: Pick<typeof import("../api"), "createRoom"> = { createRoom },
 ): Promise<string> {
   const keys = await newKeys();
   const joined = await api.createRoom({ name, pubkey: keys.pubkey, locale });
@@ -171,7 +171,7 @@ export async function joinAndSave(
   code: string,
   name: string,
   opts: { onWaiting?: () => void } = {},
-  api: Pick<typeof import('../api'), 'joinRoom'> = { joinRoom },
+  api: Pick<typeof import("../api"), "joinRoom"> = { joinRoom },
 ): Promise<Me> {
   const keys = await newKeys();
   const joined = await api.joinRoom(
@@ -213,7 +213,7 @@ const MAX_RETRY_MS = 30_000;
  */
 export async function claimUntilDone(
   me: Me,
-  step: Extract<PendingStep, { kind: 'claim' }>,
+  step: Extract<PendingStep, { kind: "claim" }>,
   opts: { claim?: typeof claim; retry?: RetryDeps; stopped?: () => boolean } = {},
 ): Promise<Me | null> {
   const doClaim = opts.claim ?? claim;
@@ -225,9 +225,9 @@ export async function claimUntilDone(
         pubkey: me.pubkey,
         name: me.name,
       });
-      return { ...me, role: 'gm', roomToken, cert, pending: undefined };
+      return { ...me, role: "gm", roomToken, cert, pending: undefined };
     } catch (e) {
-      console.warn('GM の参加証を取り直せなかった', e);
+      console.warn("GM の参加証を取り直せなかった", e);
       if (isPermanent(e)) return null;
       await sleep(delay);
       delay = Math.min(delay * 2, MAX_RETRY_MS);
@@ -249,7 +249,7 @@ export async function rejoinUntilDone(
     try {
       return await joinAndSave(me.code, me.name, {}, { joinRoom: opts.join ?? joinRoom });
     } catch (e) {
-      console.warn('プレイヤーとして入り直せなかった', e);
+      console.warn("プレイヤーとして入り直せなかった", e);
       if (isPermanent(e)) return null;
       await sleep(delay);
       delay = Math.min(delay * 2, MAX_RETRY_MS);

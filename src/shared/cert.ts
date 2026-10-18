@@ -1,6 +1,6 @@
-import { sign, verify } from './crypto';
+import { sign, verify } from "./crypto";
 
-export type Role = 'gm' | 'player';
+export type Role = "gm" | "player";
 
 export interface CertBody {
   room: string;
@@ -31,8 +31,8 @@ export interface TransferCert {
 /** 端末の時計のずれを許す秒数（iat より前でもこの範囲なら有効とみなす）。 */
 const CLOCK_SKEW_SEC = 60;
 
-const isStr = (v: unknown): v is string => typeof v === 'string';
-const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+const isStr = (v: unknown): v is string => typeof v === "string";
+const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
 const isCertBody = (b: any): b is CertBody =>
   !!b &&
@@ -40,7 +40,7 @@ const isCertBody = (b: any): b is CertBody =>
   isStr(b.pid) &&
   isStr(b.name) &&
   isStr(b.pubkey) &&
-  (b.role === 'gm' || b.role === 'player') &&
+  (b.role === "gm" || b.role === "player") &&
   isNum(b.iat) &&
   isNum(b.exp);
 
@@ -49,18 +49,18 @@ const isTransferBody = (b: any): b is TransferBody =>
 
 // 同じサーバー鍵で署名するので、用途（typ）を署名対象に含めて取り違えを防ぐ。
 export async function issueCert(serverPriv: CryptoKey, body: CertBody): Promise<Cert> {
-  return { body, sig: await sign(serverPriv, { typ: 'cert', body }) };
+  return { body, sig: await sign(serverPriv, { typ: "cert", body }) };
 }
 
 export async function issueTransfer(
   serverPriv: CryptoKey,
   body: TransferBody,
 ): Promise<TransferCert> {
-  return { body, sig: await sign(serverPriv, { typ: 'transfer', body }) };
+  return { body, sig: await sign(serverPriv, { typ: "transfer", body }) };
 }
 
 async function verifySigned(
-  typ: 'cert' | 'transfer',
+  typ: "cert" | "transfer",
   serverPub: string,
   body: { room: string; iat: number; exp: number },
   sig: unknown,
@@ -79,7 +79,7 @@ async function verifySigned(
 
 export async function verifyCert(serverPub: string, cert: Cert, room: string, nowSec: number) {
   if (!isCertBody(cert?.body)) return false;
-  return verifySigned('cert', serverPub, cert.body, cert.sig, room, nowSec);
+  return verifySigned("cert", serverPub, cert.body, cert.sig, room, nowSec);
 }
 
 export async function verifyTransfer(
@@ -89,5 +89,5 @@ export async function verifyTransfer(
   nowSec: number,
 ) {
   if (!isTransferBody(t?.body)) return false;
-  return verifySigned('transfer', serverPub, t.body, t.sig, room, nowSec);
+  return verifySigned("transfer", serverPub, t.body, t.sig, room, nowSec);
 }

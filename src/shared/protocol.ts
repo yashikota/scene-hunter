@@ -1,5 +1,5 @@
-import * as v from 'valibot';
-import { LOCALES } from './locales';
+import * as v from "valibot";
+import { LOCALES } from "./locales";
 
 // MoQ の封筒（envelope.ts）の body に入るイベントのスキーマ。
 // 受け取った側は v.safeParse で形を確かめてから使う。
@@ -9,14 +9,14 @@ const round = v.pipe(v.number(), v.integer(), v.minValue(1));
 const nonNegInt = v.pipe(v.number(), v.integer(), v.minValue(0));
 
 export const PhaseSchema = v.picklist([
-  'lobby',
-  'gmTurn',
-  'hinting',
-  'hintError',
-  'playerTurn',
-  'picking',
-  'reveal',
-  'final',
+  "lobby",
+  "gmTurn",
+  "hinting",
+  "hintError",
+  "playerTurn",
+  "picking",
+  "reveal",
+  "final",
 ]);
 export type Phase = v.InferOutput<typeof PhaseSchema>;
 
@@ -69,57 +69,57 @@ const TransferCertSchema = v.object({
 const epoch = v.pipe(v.number(), v.integer(), v.minValue(1));
 const gm = { pid, seq: nonNegInt, epoch };
 
-export const GmEventSchema = v.variant('type', [
+export const GmEventSchema = v.variant("type", [
   v.object({
     ...gm,
-    type: v.literal('lobby'),
+    type: v.literal("lobby"),
     players: v.array(LobbyPlayerSchema),
     gmPid: pid,
     locale: v.picklist(LOCALES),
     rounds: round,
     limitSec: v.number(),
   }),
-  v.object({ ...gm, type: v.literal('gm_turn'), round, gameId: v.string() }),
-  v.object({ ...gm, type: v.literal('hinting') }),
-  v.object({ ...gm, type: v.literal('hint_error') }),
-  v.object({ ...gm, type: v.literal('player_turn'), round, limitSec: v.number() }),
+  v.object({ ...gm, type: v.literal("gm_turn"), round, gameId: v.string() }),
+  v.object({ ...gm, type: v.literal("hinting") }),
+  v.object({ ...gm, type: v.literal("hint_error") }),
+  v.object({ ...gm, type: v.literal("player_turn"), round, limitSec: v.number() }),
   v.object({
     ...gm,
-    type: v.literal('hint'),
+    type: v.literal("hint"),
     round,
     index: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(4)),
     text: v.string(),
   }),
-  v.object({ ...gm, type: v.literal('picking'), round }),
-  v.object({ ...gm, type: v.literal('submitted'), pids: v.array(pid) }),
+  v.object({ ...gm, type: v.literal("picking"), round }),
+  v.object({ ...gm, type: v.literal("submitted"), pids: v.array(pid) }),
   v.object({
     ...gm,
-    type: v.literal('results'),
+    type: v.literal("results"),
     round,
     gmPhotoUrl: v.string(),
     photos: v.array(ResultPhotoSchema),
   }),
   v.object({
     ...gm,
-    type: v.literal('ranking'),
+    type: v.literal("ranking"),
     round,
     scores: v.array(RoundScoreSchema),
     totals: v.array(TotalSchema),
   }),
-  v.object({ ...gm, type: v.literal('final'), totals: v.array(TotalSchema) }),
-  v.object({ ...gm, type: v.literal('transfer'), transfer: TransferCertSchema }),
-  v.object({ ...gm, type: v.literal('dissolved') }),
+  v.object({ ...gm, type: v.literal("final"), totals: v.array(TotalSchema) }),
+  v.object({ ...gm, type: v.literal("transfer"), transfer: TransferCertSchema }),
+  v.object({ ...gm, type: v.literal("dissolved") }),
 ]);
 export type GmEvent = v.InferOutput<typeof GmEventSchema>;
 
 /** union の各要素から pid、seq、epoch を外す（送信側が付ける前の本体）。 */
 export type GmEventBody = WithoutHeader<GmEvent>;
-type WithoutHeader<E> = E extends unknown ? Omit<E, 'pid' | 'seq' | 'epoch'> : never;
+type WithoutHeader<E> = E extends unknown ? Omit<E, "pid" | "seq" | "epoch"> : never;
 
 /** `state` Track に流す丸ごとの状態。途中参加と再同期に使う。 */
 export const GmSnapshotSchema = v.object({
   ...gm,
-  type: v.literal('snapshot'),
+  type: v.literal("snapshot"),
   /**
    * このスナップショットに反映済みの最後のイベントの seq（まだ 1 つも送っていなければ -1）。
    * seq はスナップショットどうしの通し番号で、イベントの seq とは別に数えるので、
@@ -151,16 +151,16 @@ export type GmSnapshot = v.InferOutput<typeof GmSnapshotSchema>;
 // seq は送信者ごとに単調に増やす。受け手（GmInbox）は seq が増えていないフレームを重複として捨てる。
 const player = { pid, seq: nonNegInt };
 
-export const PlayerEventSchema = v.variant('type', [
-  v.object({ ...player, type: v.literal('join'), name: v.string() }),
-  v.object({ ...player, type: v.literal('shutter'), round, hash: v.string() }),
-  v.object({ ...player, type: v.literal('submit'), round, key: v.string() }),
-  v.object({ ...player, type: v.literal('resync') }),
+export const PlayerEventSchema = v.variant("type", [
+  v.object({ ...player, type: v.literal("join"), name: v.string() }),
+  v.object({ ...player, type: v.literal("shutter"), round, hash: v.string() }),
+  v.object({ ...player, type: v.literal("submit"), round, key: v.string() }),
+  v.object({ ...player, type: v.literal("resync") }),
   /** 生きている知らせ。GM はこれを含むメッセージが途切れた人を away にする。 */
-  v.object({ ...player, type: v.literal('ping') }),
+  v.object({ ...player, type: v.literal("ping") }),
   /** タブを閉じた（かもしれない）。GM はすぐ away にし、次のメッセージで戻す。 */
-  v.object({ ...player, type: v.literal('away') }),
+  v.object({ ...player, type: v.literal("away") }),
   /** 部屋を出た。GM はこの pid を一覧から外し、以後のメッセージを無視する。 */
-  v.object({ ...player, type: v.literal('leave') }),
+  v.object({ ...player, type: v.literal("leave") }),
 ]);
 export type PlayerEvent = v.InferOutput<typeof PlayerEventSchema>;

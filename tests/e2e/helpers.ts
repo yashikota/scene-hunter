@@ -1,4 +1,4 @@
-import { expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
 // e2e テストの共通の操作。1 人 = 1 つのブラウザコンテキスト（鍵と sessionStorage を分ける）。
 
@@ -9,7 +9,7 @@ export interface Person {
 }
 
 export async function newPerson(browser: Browser, name: string): Promise<Person> {
-  const context = await browser.newContext({ locale: 'ja-JP', permissions: ['camera'] });
+  const context = await browser.newContext({ locale: "ja-JP", permissions: ["camera"] });
   const page = await context.newPage();
   return { name, context, page };
 }
@@ -28,27 +28,27 @@ export function roomCode(page: Page): string {
 /** トップから部屋を作り、GM のロビーまで進む。部屋の番号を返す。 */
 export async function createRoom(gm: Person): Promise<string> {
   const { page } = gm;
-  await page.goto('/');
-  await page.getByRole('button', { name: '部屋を作る' }).click();
-  await page.getByPlaceholder('名前').fill(gm.name);
-  await page.getByRole('button', { name: '部屋を作る' }).click();
-  await expect(page.getByText('あなたが GM')).toBeVisible();
+  await page.goto("/");
+  await page.getByRole("button", { name: "部屋を作る" }).click();
+  await page.getByPlaceholder("名前").fill(gm.name);
+  await page.getByRole("button", { name: "部屋を作る" }).click();
+  await expect(page.getByText("あなたが GM")).toBeVisible();
   await page.waitForURL(/\/r\/\d{6}$/);
   return roomCode(page);
 }
 
 /** 名前の入力からプレイヤーのロビーまで進む（番号は確かめ済みであること）。 */
 async function enterName(p: Person): Promise<void> {
-  await p.page.getByPlaceholder('名前').fill(p.name);
-  await p.page.getByRole('button', { name: '部屋に入る' }).click();
-  await expect(p.page.getByText('GM の開始を待っています')).toBeVisible();
+  await p.page.getByPlaceholder("名前").fill(p.name);
+  await p.page.getByRole("button", { name: "部屋に入る" }).click();
+  await expect(p.page.getByText("GM の開始を待っています")).toBeVisible();
 }
 
 /** トップで番号を打って入る。 */
 export async function joinByCode(p: Person, code: string): Promise<void> {
-  await p.page.goto('/');
-  await p.page.getByPlaceholder('部屋の番号').fill(code);
-  await p.page.getByRole('button', { name: '部屋に入る' }).click();
+  await p.page.goto("/");
+  await p.page.getByPlaceholder("部屋の番号").fill(code);
+  await p.page.getByRole("button", { name: "部屋に入る" }).click();
   await enterName(p);
 }
 

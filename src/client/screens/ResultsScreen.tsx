@@ -1,22 +1,22 @@
-import { activeEligiblePids } from '../game/gmMachine';
-import type { Room } from '../game/useRoom';
-import { Final } from './Final';
-import { ResultsPick, type ResultPhotoView } from './ResultsPick';
-import { ResultsReveal } from './ResultsReveal';
-import { ResultsWait } from './ResultsWait';
+import { activeEligiblePids } from "../game/gmMachine";
+import type { Room } from "../game/useRoom";
+import { Final } from "./Final";
+import { ResultsPick, type ResultPhotoView } from "./ResultsPick";
+import { ResultsReveal } from "./ResultsReveal";
+import { ResultsWait } from "./ResultsWait";
 
 /** 中間結果（写真を見る・選ぶ・得点と順位）と最終結果の画面を、役割と段階で選ぶ。 */
 export function ResultsScreen({ room, code }: { room: Room; code: string }) {
   const { view, actions, me, gmName } = room;
-  const isGm = room.role === 'gm';
+  const isGm = room.role === "gm";
   const others = view.players.filter((p) => p.pid !== view.gmPid);
-  const labelOf = (pid: string) => others.find((p) => p.pid === pid)?.label ?? '';
+  const labelOf = (pid: string) => others.find((p) => p.pid === pid)?.label ?? "";
   const photos: ResultPhotoView[] | null =
     view.results?.photos.map((p) => ({ ...p, label: labelOf(p.pid) })) ?? null;
   const gmPhotoUrl = view.results?.gmPhotoUrl || undefined;
 
   switch (view.phase) {
-    case 'picking':
+    case "picking":
       return isGm ? (
         <ResultsPick
           round={view.round}
@@ -46,7 +46,7 @@ export function ResultsScreen({ room, code }: { room: Room; code: string }) {
           mePid={me.pid}
         />
       );
-    case 'reveal':
+    case "reveal":
       return (
         <ResultsReveal
           code={code}

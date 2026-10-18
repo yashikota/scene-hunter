@@ -1,11 +1,11 @@
-import type { Locale } from '../../shared/locales';
-import type { GmEvent, GmSnapshot, LobbyPlayer, Total } from '../../shared/protocol';
-import type { Phase } from './gmMachine';
+import type { Locale } from "../../shared/locales";
+import type { GmEvent, GmSnapshot, LobbyPlayer, Total } from "../../shared/protocol";
+import type { Phase } from "./gmMachine";
 
 // プレイヤーの画面に出すものを、検証済みの GM イベントとスナップショットから作る純粋な reducer。
 
-type Results = NonNullable<GmSnapshot['results']>;
-type Ranking = NonNullable<GmSnapshot['ranking']>;
+type Results = NonNullable<GmSnapshot["results"]>;
+type Ranking = NonNullable<GmSnapshot["ranking"]>;
 
 export interface ViewPlayer {
   pid: string;
@@ -25,7 +25,7 @@ export const activePlayers = <P extends { away?: boolean; left?: boolean }>(
 ): P[] => players.filter((p) => !p.away && !p.left);
 
 export interface PlayerView {
-  phase: Phase | 'connecting' | 'disconnected' | 'dissolved';
+  phase: Phase | "connecting" | "disconnected" | "dissolved";
   round: number;
   rounds: number;
   limitSec: number;
@@ -44,13 +44,13 @@ export interface PlayerView {
 
 export function initialView(): PlayerView {
   return {
-    phase: 'connecting',
+    phase: "connecting",
     round: 0,
     rounds: 0,
     limitSec: 0,
-    locale: 'ja',
+    locale: "ja",
     players: [],
-    gmPid: '',
+    gmPid: "",
     gameId: null,
     hints: [],
     turnStartedLocalAt: null,
@@ -94,11 +94,11 @@ export function applyEvent(v: PlayerView, e: GmEvent, localNow: number): PlayerV
 
 function reduce(v: PlayerView, e: GmEvent, localNow: number): PlayerView {
   switch (e.type) {
-    case 'lobby':
+    case "lobby":
       // 新しいゲームの始まり。前のゲームの状態は持ち越さない。
       return {
         ...initialView(),
-        phase: 'lobby',
+        phase: "lobby",
         lastSeq: v.lastSeq,
         players: fromLobby(e.players),
         gmPid: e.gmPid,
@@ -106,10 +106,10 @@ function reduce(v: PlayerView, e: GmEvent, localNow: number): PlayerView {
         rounds: e.rounds,
         limitSec: e.limitSec,
       };
-    case 'gm_turn':
+    case "gm_turn":
       return {
         ...v,
-        phase: 'gmTurn',
+        phase: "gmTurn",
         round: e.round,
         gameId: e.gameId,
         hints: [],
@@ -117,14 +117,14 @@ function reduce(v: PlayerView, e: GmEvent, localNow: number): PlayerView {
         submitted: [],
         results: null,
       };
-    case 'hinting':
-      return { ...v, phase: 'hinting' };
-    case 'hint_error':
-      return { ...v, phase: 'hintError' };
-    case 'player_turn':
+    case "hinting":
+      return { ...v, phase: "hinting" };
+    case "hint_error":
+      return { ...v, phase: "hintError" };
+    case "player_turn":
       return {
         ...v,
-        phase: 'playerTurn',
+        phase: "playerTurn",
         round: e.round,
         limitSec: e.limitSec,
         hints: [],
@@ -132,40 +132,40 @@ function reduce(v: PlayerView, e: GmEvent, localNow: number): PlayerView {
         submitted: [],
         results: null,
       };
-    case 'hint':
+    case "hint":
       // 古いラウンドのヒントと、すでにある index は取り込まない。
       if (e.round !== v.round || e.index !== v.hints.length) return v;
       return { ...v, hints: [...v.hints, e.text] };
-    case 'picking':
-      return e.round === v.round ? { ...v, phase: 'picking' } : v;
-    case 'submitted':
+    case "picking":
+      return e.round === v.round ? { ...v, phase: "picking" } : v;
+    case "submitted":
       return { ...v, submitted: [...new Set([...v.submitted, ...e.pids])] };
-    case 'results':
+    case "results":
       return {
         ...v,
-        phase: 'picking',
+        phase: "picking",
         round: e.round,
         results: { gmPhotoUrl: e.gmPhotoUrl, photos: e.photos },
       };
-    case 'ranking':
+    case "ranking":
       return {
         ...v,
-        phase: 'reveal',
+        phase: "reveal",
         round: e.round,
         ranking: { round: e.round, scores: e.scores, totals: e.totals },
         players: withTotals(v.players, e.totals),
       };
-    case 'final':
+    case "final":
       return {
         ...v,
-        phase: 'final',
+        phase: "final",
         final: e.totals,
         players: withTotals(v.players, e.totals),
       };
-    case 'transfer':
+    case "transfer":
       return v;
-    case 'dissolved':
-      return { ...v, phase: 'dissolved' };
+    case "dissolved":
+      return { ...v, phase: "dissolved" };
   }
 }
 

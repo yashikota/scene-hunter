@@ -1,4 +1,4 @@
-import { defaultParseSearch, defaultStringifySearch } from '@tanstack/react-router';
+import { defaultParseSearch, defaultStringifySearch } from "@tanstack/react-router";
 
 /**
  * 検索文字列の読み取り。ルーターの既定は値を JSON として読むので、?code=1e5 が数の 100000 に、
@@ -6,7 +6,7 @@ import { defaultParseSearch, defaultStringifySearch } from '@tanstack/react-rout
  */
 export function parseSearch(searchStr: string): Record<string, unknown> {
   const parsed: Record<string, unknown> = defaultParseSearch(searchStr);
-  const raw = new URLSearchParams(searchStr).get('code');
+  const raw = new URLSearchParams(searchStr).get("code");
   if (raw !== null) parsed.code = raw;
   return parsed;
 }
@@ -15,8 +15,8 @@ export function parseSearch(searchStr: string): Record<string, unknown> {
 export function stringifySearch(search: Record<string, unknown>): string {
   const { code, ...rest } = search;
   const base = defaultStringifySearch(rest);
-  if (typeof code !== 'string') return base;
-  const params = new URLSearchParams(base.replace(/^\?/, ''));
-  params.set('code', code);
+  if (typeof code !== "string") return base;
+  const params = new URLSearchParams(base.replace(/^\?/, ""));
+  params.set("code", code);
   return `?${params.toString()}`;
 }

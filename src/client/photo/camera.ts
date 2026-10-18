@@ -1,10 +1,10 @@
-import { fitWithin } from './encode';
+import { fitWithin } from "./encode";
 
-export type CameraError = 'denied' | 'unavailable';
+export type CameraError = "denied" | "unavailable";
 
 function toCameraError(e: unknown): CameraError {
   const name = e instanceof Error ? e.name : (e as { name?: string } | null)?.name;
-  return name === 'NotAllowedError' || name === 'SecurityError' ? 'denied' : 'unavailable';
+  return name === "NotAllowedError" || name === "SecurityError" ? "denied" : "unavailable";
 }
 
 /** 背面カメラを優先して起動し、video に映す。失敗は例外にせず error で返す。 */
@@ -14,7 +14,7 @@ export async function startCamera(
   let stream: MediaStream;
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' } },
+      video: { facingMode: { ideal: "environment" } },
       audio: false,
     });
   } catch (e) {
@@ -42,9 +42,9 @@ export function captureFrame(video: HTMLVideoElement): {
   h: number;
 } {
   const { w, h } = fitWithin(video.videoWidth, video.videoHeight);
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = w;
   canvas.height = h;
-  canvas.getContext('2d')?.drawImage(video, 0, 0, w, h);
+  canvas.getContext("2d")?.drawImage(video, 0, 0, w, h);
   return { canvas, w, h };
 }

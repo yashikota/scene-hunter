@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { m } from '../paraglide/messages';
-import { Card } from '../ui/Card';
-import { Screen } from '../ui/Screen';
-import { formatCode, TopBar } from '../ui/TopBar';
-import { useNow } from '../ui/useNow';
-import { GM_TURN_SEC, remainingSec } from './turnTime';
+import { useState } from "react";
+import { m } from "../paraglide/messages";
+import { Card } from "../ui/Card";
+import { Screen } from "../ui/Screen";
+import { formatCode, TopBar } from "../ui/TopBar";
+import { useNow } from "../ui/useNow";
+import { GM_TURN_SEC, remainingSec } from "./turnTime";
 
 export interface GmTurnPlayerProps {
   code: string;
@@ -27,12 +27,12 @@ export function GmTurnPlayer({ code, round, rounds, gmName, me }: GmTurnPlayerPr
       <div
         style={{
           flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
           gap: 14,
-          textAlign: 'center',
+          textAlign: "center",
         }}
       >
         <span className="sh-timer" role="timer" style={{ fontSize: 64 }}>
@@ -48,17 +48,17 @@ export function GmTurnPlayer({ code, round, rounds, gmName, me }: GmTurnPlayerPr
       </div>
       <Card
         style={{
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: 12,
-          padding: '10px 14px',
-          background: 'var(--color-accent)',
+          padding: "10px 14px",
+          background: "var(--color-accent)",
         }}
       >
         <span className="sh-display" style={{ fontSize: 20 }}>
-          {me.rank ?? '–'}
+          {me.rank ?? "–"}
         </span>
-        <span style={{ flexGrow: 1, fontWeight: 800, overflowWrap: 'anywhere' }}>
+        <span style={{ flexGrow: 1, fontWeight: 800, overflowWrap: "anywhere" }}>
           {m.you_tag({ name: me.label })}
         </span>
         <span style={{ fontWeight: 800 }}>

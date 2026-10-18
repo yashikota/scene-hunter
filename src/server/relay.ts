@@ -1,4 +1,4 @@
-const API_BASE = 'https://api.cloudflare.com/client/v4';
+const API_BASE = "https://api.cloudflare.com/client/v4";
 
 export interface RelayApi {
   create(name: string): Promise<{ uid: string; token: string }>;
@@ -38,7 +38,7 @@ export function createRelayApi(opts: {
       method,
       headers: {
         Authorization: `Bearer ${opts.apiToken}`,
-        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
@@ -50,22 +50,22 @@ export function createRelayApi(opts: {
 
   return {
     async create(name) {
-      const res = await call('POST', base, { name });
+      const res = await call("POST", base, { name });
       const json = (await res.json()) as CfEnvelope<{
         uid: string;
         issuers: { cloudflare_tokens: CfToken[] }[];
       }>;
       const tokens = json.result.issuers?.[0]?.cloudflare_tokens ?? [];
-      const publisher = tokens.find((t) => t.operations.includes('publish'));
-      if (!publisher) throw new Error('Cloudflare MoQ API: publish token not found');
+      const publisher = tokens.find((t) => t.operations.includes("publish"));
+      if (!publisher) throw new Error("Cloudflare MoQ API: publish token not found");
       return { uid: json.result.uid, token: publisher.secret };
     },
     async delete(uid) {
       // 404 は既に消えている。再試行で詰まらないよう成功扱いにする。
-      await call('DELETE', `${base}/${encodeURIComponent(uid)}`, undefined, [404]);
+      await call("DELETE", `${base}/${encodeURIComponent(uid)}`, undefined, [404]);
     },
     async list() {
-      const res = await call('GET', `${base}?per_page=1000`);
+      const res = await call("GET", `${base}?per_page=1000`);
       const json = (await res.json()) as CfEnvelope<
         { uid: string; name: string; created: string }[]
       >;

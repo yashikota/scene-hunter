@@ -1,8 +1,8 @@
-import * as v from 'valibot';
-import type { Envelope, EnvelopeVerifier } from '../../shared/envelope';
-import { PlayerEventSchema, type PlayerEvent } from '../../shared/protocol';
-import { EVENTS_TRACK, playerPath } from './paths';
-import { keepSubscribed, MoqSession, type MoqConnector } from './session';
+import * as v from "valibot";
+import type { Envelope, EnvelopeVerifier } from "../../shared/envelope";
+import { PlayerEventSchema, type PlayerEvent } from "../../shared/protocol";
+import { EVENTS_TRACK, playerPath } from "./paths";
+import { keepSubscribed, MoqSession, type MoqConnector } from "./session";
 
 // GM がプレイヤーの `p/{pid}` の events を受け取るための購読の束。
 // 1 セッションのリクエスト予算（40）に余裕を残すよう、perSession 人ごとに別の MoqSession を張る。
@@ -45,7 +45,7 @@ export class GmInbox {
       const p = pool;
       const connect = (): void =>
         void p.session.start().catch((e: unknown) => {
-          console.warn('MoQ の接続に失敗した', e);
+          console.warn("MoQ の接続に失敗した", e);
           if (this.#pools.includes(p)) setTimeout(connect, 1000);
         });
       connect();

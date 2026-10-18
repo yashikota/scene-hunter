@@ -1,8 +1,8 @@
-import { defineHandler } from 'void';
-import { allow } from '../../../../src/server/limits';
-import { clientIp, limiter, tooMany } from '../../../../src/server/deps';
-import { createRoomStore } from '../../../../src/server/roomStore';
-import { roomExists } from '../../../../src/server/services/rooms';
+import { defineHandler } from "void";
+import { allow } from "../../../../src/server/limits";
+import { clientIp, limiter, tooMany } from "../../../../src/server/deps";
+import { createRoomStore } from "../../../../src/server/roomStore";
+import { roomExists } from "../../../../src/server/services/rooms";
 
 /**
  * 部屋があるかだけを返す（{ exists: true } か { exists: false }。どちらも 200）。
@@ -13,7 +13,7 @@ import { roomExists } from '../../../../src/server/services/rooms';
  * 分かるので、確かめを分けても総当たりのしやすさはほとんど変わらない。
  */
 export const GET = defineHandler(async (c) => {
-  if (!(await allow(limiter(c, 'RL_JOIN'), `exists:${clientIp(c)}`))) return tooMany(c);
+  if (!(await allow(limiter(c, "RL_JOIN"), `exists:${clientIp(c)}`))) return tooMany(c);
   const store = createRoomStore((c.env as { KV: KVNamespace }).KV);
-  return { exists: await roomExists(store, c.req.param('code') ?? '') };
+  return { exists: await roomExists(store, c.req.param("code") ?? "") };
 });

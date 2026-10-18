@@ -1,6 +1,6 @@
-import { m } from '../paraglide/messages';
-import { Screen } from '../ui/Screen';
-import { formatCode, TopBar } from '../ui/TopBar';
+import { m } from "../paraglide/messages";
+import { Screen } from "../ui/Screen";
+import { formatCode, TopBar } from "../ui/TopBar";
 
 /** バーが 90 % 近くまで伸びるまでの秒数。AI の応答は数秒から 1 分以上までばらつくので、満タンにはしない。 */
 export const HINT_WAIT_EASE_SEC = 30;

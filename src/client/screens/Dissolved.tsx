@@ -1,7 +1,7 @@
-import { m } from '../paraglide/messages';
-import { Button } from '../ui/Button';
-import { Screen } from '../ui/Screen';
-import { formatCode, TopBar } from '../ui/TopBar';
+import { m } from "../paraglide/messages";
+import { Button } from "../ui/Button";
+import { Screen } from "../ui/Screen";
+import { formatCode, TopBar } from "../ui/TopBar";
 
 /** 部屋が閉じられた（GM が解散した）。 */
 export function Dissolved({ code, onLeave }: { code: string; onLeave(): void }) {
@@ -11,7 +11,7 @@ export function Dissolved({ code, onLeave }: { code: string; onLeave(): void }) 
       <h1
         role="status"
         className="sh-display"
-        style={{ fontSize: 24, textAlign: 'center', margin: 'auto 0', lineHeight: 1.4 }}
+        style={{ fontSize: 24, textAlign: "center", margin: "auto 0", lineHeight: 1.4 }}
       >
         {m.dissolved_title()}
       </h1>

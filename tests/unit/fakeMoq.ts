@@ -7,7 +7,7 @@ import type {
   MoqConnector,
   MoqTrackWriter,
   TrackSink,
-} from '../../src/client/moq/session';
+} from "../../src/client/moq/session";
 
 interface FakeTrack {
   owner: FakeConnection;
@@ -104,7 +104,7 @@ export class FakeConnection implements MoqConnection {
     queueMicrotask(() => {
       if (!live) return;
       t = this.relay.tracks.get(`${path}#${track}`);
-      if (!t) return sink.end(new Error('Track not found'));
+      if (!t) return sink.end(new Error("Track not found"));
       this.live.add(entry);
       for (const f of t.groups.at(-1) ?? []) sink.frame(f);
       t.subs.add(wrapped);
@@ -130,7 +130,7 @@ export class FakeConnection implements MoqConnection {
   }
 
   /** 相手側から接続が切れた（回線の断絶や Relay の切断）ことにする。 */
-  drop(error: unknown = new Error('connection lost')): void {
+  drop(error: unknown = new Error("connection lost")): void {
     this.#shut(error);
   }
 
@@ -141,7 +141,7 @@ export class FakeConnection implements MoqConnection {
     for (const [key, t] of this.relay.tracks) {
       if (t.owner !== this) continue;
       this.relay.tracks.delete(key);
-      for (const s of t.subs) s.end(new Error('track ended'));
+      for (const s of t.subs) s.end(new Error("track ended"));
     }
     // 本物（Established.closed）と同じく、閉じたことは後から知らせる。
     for (const cb of this.#onClose.splice(0)) queueMicrotask(() => cb(error));

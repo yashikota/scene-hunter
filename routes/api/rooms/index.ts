@@ -1,9 +1,9 @@
-import * as v from 'valibot';
-import { defineHandler } from 'void';
-import { LOCALES } from '../../../src/shared/locales';
-import { allow } from '../../../src/server/limits';
-import { clientIp, errorResponse, limiter, roomDeps, tooMany } from '../../../src/server/deps';
-import { createRoom } from '../../../src/server/services/rooms';
+import * as v from "valibot";
+import { defineHandler } from "void";
+import { LOCALES } from "../../../src/shared/locales";
+import { allow } from "../../../src/server/limits";
+import { clientIp, errorResponse, limiter, roomDeps, tooMany } from "../../../src/server/deps";
+import { createRoom } from "../../../src/server/services/rooms";
 
 export const POST = defineHandler.withValidator({
   body: v.object({
@@ -14,7 +14,7 @@ export const POST = defineHandler.withValidator({
     limitSec: v.optional(v.number()),
   }),
 })(async (c, { body }) => {
-  if (!(await allow(limiter(c, 'RL_CREATE'), clientIp(c)))) return tooMany(c);
+  if (!(await allow(limiter(c, "RL_CREATE"), clientIp(c)))) return tooMany(c);
   try {
     return await createRoom(await roomDeps(c), body);
   } catch (e) {

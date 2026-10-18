@@ -1,19 +1,19 @@
-import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { importPrivateKey, sha256Hex } from '../../shared/crypto';
-import { EnvelopeVerifier } from '../../shared/envelope';
-import * as api from '../api';
-import { createMoqNetConnector, type MoqConnector } from '../moq/session';
-import { uploadPhoto } from '../photo/upload';
-import { switchLocale } from '../ui/locale';
-import { useWakeLock } from '../ui/useWakeLock';
-import type { GmAction, GmState } from './gmMachine';
-import { forgetGm, GmEngine } from './gmEngine';
-import { hintsToResume, requestHintsAction } from './hintRequest';
-import { claimUntilDone, clearMe, loadMe, rejoinUntilDone, saveMe, type Me } from './membership';
-import { checkRoundPhotos } from './photoCheck';
-import { PlayerEngine } from './playerEngine';
-import { initialView, type PlayerView } from './playerView';
+import { useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { importPrivateKey, sha256Hex } from "../../shared/crypto";
+import { EnvelopeVerifier } from "../../shared/envelope";
+import * as api from "../api";
+import { createMoqNetConnector, type MoqConnector } from "../moq/session";
+import { uploadPhoto } from "../photo/upload";
+import { switchLocale } from "../ui/locale";
+import { useWakeLock } from "../ui/useWakeLock";
+import type { GmAction, GmState } from "./gmMachine";
+import { forgetGm, GmEngine } from "./gmEngine";
+import { hintsToResume, requestHintsAction } from "./hintRequest";
+import { claimUntilDone, clearMe, loadMe, rejoinUntilDone, saveMe, type Me } from "./membership";
+import { checkRoundPhotos } from "./photoCheck";
+import { PlayerEngine } from "./playerEngine";
+import { initialView, type PlayerView } from "./playerView";
 
 // 部屋の画面が使う 1 つの入り口。役割（GM / プレイヤー）に応じて GmEngine か PlayerEngine を回し、
 // 画面には同じ形の表示モデル（PlayerView）と操作（actions）を渡す。
@@ -43,7 +43,7 @@ export interface RoomActions {
 }
 
 export interface Room {
-  role: 'gm' | 'player';
+  role: "gm" | "player";
   me: { pid: string; label: string };
   /** GM の名前（参加証の名前）。まだ分からなければ空文字。 */
   gmName: string;
@@ -54,7 +54,7 @@ export interface Room {
    * claiming：交代先として GM の参加証を取り直している。rejoining：GM を渡し、プレイヤーとして入り直している。
    * claimFailed：取り直せなかった（部屋が無い、交代証の期限切れなど）。
    */
-  status: 'claiming' | 'rejoining' | 'claimFailed' | null;
+  status: "claiming" | "rejoining" | "claimFailed" | null;
   /** プレイヤー：GM の接続が切れたと判断した時刻（ミリ秒）。つながっている間は null。 */
   gmDisconnectedSince: number | null;
   /** 自分の接続が切れて、3 秒以上つなぎ直せていない（つなぎ直しは自動）。 */
@@ -69,7 +69,7 @@ const TRANSFER_LINGER_MS = 5000;
 /** 部屋を出た後、leave が Relay に届くまでプレイヤーの接続を残す。 */
 const LEAVE_LINGER_MS = 3000;
 
-const serverPub = (): string => import.meta.env.VITE_SERVER_PUBLIC_KEY ?? '';
+const serverPub = (): string => import.meta.env.VITE_SERVER_PUBLIC_KEY ?? "";
 const nowMs = () => Date.now();
 /** 写真の取得が応答なしで止まったときにあきらめるまでの時間。 */
 const PHOTO_TIMEOUT_MS = 10_000;
@@ -77,10 +77,10 @@ const PHOTO_TIMEOUT_MS = 10_000;
 /** start に渡す GameId：16 文字の小文字の 16 進数。 */
 export function newGameId(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(8));
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-type Engine = { kind: 'gm'; gm: GmEngine } | { kind: 'player'; player: PlayerEngine };
+type Engine = { kind: "gm"; gm: GmEngine } | { kind: "player"; player: PlayerEngine };
 
 export function useRoom(code: string, connector: MoqConnector = defaultConnector()): Room {
   const navigate = useNavigate();
@@ -113,12 +113,12 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
 
   const exit = useCallback(() => {
     clearMe(code);
-    void navigate({ to: '/' });
+    void navigate({ to: "/" });
   }, [code, navigate]);
 
   const pending = me.pending;
   // 入り直しの最中は MoQ を使わない（GM の接続は交代のときに閉じた）。
-  const rejoining = pending?.kind === 'rejoin';
+  const rejoining = pending?.kind === "rejoin";
 
   useEffect(() => {
     if (rejoining) {
@@ -131,12 +131,12 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
       const privateKey = await importPrivateKey(me.privateKey);
       if (cancelled) return;
       const verifier = new EnvelopeVerifier(serverPub(), code, () => Math.floor(nowMs() / 1000));
-      if (me.role === 'gm') {
+      if (me.role === "gm") {
         const gm = new GmEngine(me, { connector, verifier, privateKey, now: nowMs });
         gm.subscribe(rerender);
         // 交代先として GM になったときは、前の GM の epoch を越える
         gm.start(meRef.current.gmEpochFloor ?? 0);
-        made = { kind: 'gm', gm };
+        made = { kind: "gm", gm };
       } else {
         // 使った seq は保存した方に入っている（state の me は seq を更新しない）
         const player: PlayerEngine = new PlayerEngine(loadMe(code) ?? me, {
@@ -149,14 +149,14 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
           saveGmPid: (gmPid) => saveMe({ ...(loadMe(code) ?? meRef.current), gmPid }),
           onTransferToMe: (transfer) =>
             updateMe((cur) =>
-              cur.pending?.kind === 'claim'
+              cur.pending?.kind === "claim"
                 ? cur
-                : { ...cur, pending: { kind: 'claim', transfer, fromEpoch: player.epoch } },
+                : { ...cur, pending: { kind: "claim", transfer, fromEpoch: player.epoch } },
             ),
         });
         player.subscribe(rerender);
         player.start();
-        made = { kind: 'player', player };
+        made = { kind: "player", player };
       }
       setEngine(made);
     };
@@ -164,22 +164,22 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     const timer = setTimeout(() => {
       start().catch((e: unknown) => {
         // 保存した資格が壊れている（鍵を読み込めないなど）。入り直してもらう。
-        console.error('部屋につなげなかった', e);
+        console.error("部屋につなげなかった", e);
         if (!cancelled) exit();
       });
     }, 0);
     return () => {
       cancelled = true;
       clearTimeout(timer);
-      if (made?.kind === 'gm') made.gm.close(linger.current);
-      if (made?.kind === 'player') made.player.close(linger.current);
+      if (made?.kind === "gm") made.gm.close(linger.current);
+      if (made?.kind === "player") made.player.close(linger.current);
       linger.current = 0;
     };
   }, [code, me.role, me.pid, me.privateKey, rejoining, connector, updateMe, exit]);
 
   // 交代先に選ばれたら、交代証で GM の参加証を取り直す（再読み込みしても保存した交代証で続ける）。
   useEffect(() => {
-    if (pending?.kind !== 'claim') return;
+    if (pending?.kind !== "claim") return;
     let stopped = false;
     const timer = setTimeout(() => {
       claimUntilDone(loadMe(code) ?? meRef.current, pending, { stopped: () => stopped })
@@ -189,7 +189,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
           updateMe((cur) => ({ ...cur, pending: undefined }));
           setClaimFailed(true);
         })
-        .catch((e: unknown) => console.error('GM を引き継げなかった', e));
+        .catch((e: unknown) => console.error("GM を引き継げなかった", e));
     }, 0);
     return () => {
       stopped = true;
@@ -199,7 +199,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
 
   // GM を渡した後は、新しい鍵でプレイヤーとして入り直す（入れるまで間隔を伸ばしながら）。
   useEffect(() => {
-    if (pending?.kind !== 'rejoin') return;
+    if (pending?.kind !== "rejoin") return;
     let stopped = false;
     const timer = setTimeout(() => {
       rejoinUntilDone(loadMe(code) ?? meRef.current, { stopped: () => stopped })
@@ -209,7 +209,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
           // サーバーの記録はまだ交代先の claim 前のこともあるので、自分が渡した交代先に従う
           updateMe(() => ({ ...next, gmPid: pending.gmPid }));
         })
-        .catch((e: unknown) => console.error('プレイヤーとして入り直せなかった', e));
+        .catch((e: unknown) => console.error("プレイヤーとして入り直せなかった", e));
     }, 0);
     return () => {
       stopped = true;
@@ -217,8 +217,8 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     };
   }, [pending, code, updateMe, exit]);
 
-  const gm = engine?.kind === 'gm' ? engine.gm : undefined;
-  const player = engine?.kind === 'player' ? engine.player : undefined;
+  const gm = engine?.kind === "gm" ? engine.gm : undefined;
+  const player = engine?.kind === "player" ? engine.player : undefined;
   const gmState = gm?.state;
   const playerView = player?.view;
   const view = useMemo(
@@ -228,10 +228,10 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
   );
 
   // GM：ゲームの間は画面を消さない（GM の端末が止まると、撮影の時刻とヒントが狂う）。
-  useWakeLock(gmState !== undefined && gmState.phase !== 'lobby' && !gmState.dissolved);
+  useWakeLock(gmState !== undefined && gmState.phase !== "lobby" && !gmState.dissolved);
 
   // 部屋の言語を lobby で受け取ったら、画面をその言語にする。
-  const roomLocale = view.phase === 'connecting' ? me.locale : view.locale;
+  const roomLocale = view.phase === "connecting" ? me.locale : view.locale;
   const [appliedLocale, setAppliedLocale] = useState(me.locale);
   useEffect(() => {
     if (roomLocale === appliedLocale) return;
@@ -241,7 +241,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
 
   // GM：picking に入ったら（results がまだ無ければ）写真を確かめて results を送る。
   const checkKey =
-    gmState?.phase === 'picking' && gmState.results === null
+    gmState?.phase === "picking" && gmState.results === null
       ? `${gmState.gameId}:${gmState.round}`
       : null;
   useEffect(() => {
@@ -259,7 +259,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
       dispatch: (a) => gm.dispatch(a),
       stopped: () => stopped,
       sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
-    }).catch((e: unknown) => console.error('写真を確かめられなかった', e));
+    }).catch((e: unknown) => console.error("写真を確かめられなかった", e));
     return () => {
       stopped = true;
     };
@@ -287,63 +287,63 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
       dispatch(await requestHintsAction(() => api.requestHints(code, me.roomToken, key), nowMs));
     const dissolve = async () => {
       if (!gm) return;
-      gm.dispatch({ type: 'dissolve' });
+      gm.dispatch({ type: "dissolve" });
       await gm.flush();
       linger.current = DISSOLVE_LINGER_MS;
       try {
         await api.closeRoom(code, me.roomToken);
       } catch (e) {
         // 部屋の後始末は cron と有効期限でも行われるので、トップには戻す。
-        console.error('部屋を閉じられなかった', e);
+        console.error("部屋を閉じられなかった", e);
       }
       forgetGm(code);
       exit();
     };
     return {
-      start: () => dispatch({ type: 'start', gameId: newGameId() }),
+      start: () => dispatch({ type: "start", gameId: newGameId() }),
       shutter: async (blob) => {
         if (gm) {
           const s = gm.state;
-          if (s.phase !== 'gmTurn' || !s.gameId) return;
+          if (s.phase !== "gmTurn" || !s.gameId) return;
           const key = await uploadPhoto(uploader(me.roomToken), blob, {
             gameId: s.gameId,
             round: s.round,
           });
-          gm.dispatch({ type: 'gmPhotoUploaded', key });
+          gm.dispatch({ type: "gmPhotoUploaded", key });
           await askHints(key);
         } else if (player) {
           const { round, gameId } = player.view;
           if (!gameId) return;
           if (!shuttered.current.has(blob)) {
             const hash = await sha256Hex(new Uint8Array(await blob.arrayBuffer()));
-            player.send({ type: 'shutter', round, hash });
+            player.send({ type: "shutter", round, hash });
             shuttered.current.add(blob);
           }
           const key = await uploadPhoto(uploader(me.roomToken), blob, { gameId, round });
-          player.send({ type: 'submit', round, key });
+          player.send({ type: "submit", round, key });
         }
       },
       retryHints: async () => {
         const key = gm?.state.gmPhotoKey;
-        if (!gm || gm.state.phase !== 'hintError' || !key) return;
-        gm.dispatch({ type: 'retryHints' });
+        if (!gm || gm.state.phase !== "hintError" || !key) return;
+        gm.dispatch({ type: "retryHints" });
         await askHints(key);
       },
-      pickToggle: (pid) => dispatch({ type: 'togglePick', pid }),
-      confirmPicks: () => dispatch({ type: 'confirmPicks' }),
-      nextRound: () => dispatch({ type: 'nextRound' }),
-      backToLobby: () => dispatch({ type: 'backToLobby' }),
+      pickToggle: (pid) => dispatch({ type: "togglePick", pid }),
+      confirmPicks: () => dispatch({ type: "confirmPicks" }),
+      nextRound: () => dispatch({ type: "nextRound" }),
+      backToLobby: () => dispatch({ type: "backToLobby" }),
       transfer: async (pid) => {
-        if (!gm || gm.state.phase !== 'lobby') return;
+        if (!gm || gm.state.phase !== "lobby") return;
         const cert = await api.transfer(code, me.roomToken, pid);
-        gm.dispatch({ type: 'transferred', transfer: cert });
+        gm.dispatch({ type: "transferred", transfer: cert });
         await gm.flush();
         // 交代のイベントを流したら GM としては何もしない（接続は交代のイベントが届くよう少し残して閉じる）。
         // 先に閉じるので、この後に状態や epoch が書き戻されることも無い。
         gm.close(TRANSFER_LINGER_MS);
         forgetGm(code);
         // GM の参加証のままではプレイヤーになれないので、新しい鍵で入り直す（再読み込みしても続ける）。
-        updateMe((cur) => ({ ...cur, pending: { kind: 'rejoin', gmPid: pid } }));
+        updateMe((cur) => ({ ...cur, pending: { kind: "rejoin", gmPid: pid } }));
       },
       dissolve,
       leave: async () => {
@@ -359,18 +359,18 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
   }, [gm, player, code, me.roomToken, exit, updateMe]);
 
   const label =
-    me.role === 'gm' ? me.name : (view.players.find((p) => p.pid === me.pid)?.label ?? me.name);
+    me.role === "gm" ? me.name : (view.players.find((p) => p.pid === me.pid)?.label ?? me.name);
   const status = claimFailed
-    ? 'claimFailed'
-    : pending?.kind === 'claim'
-      ? 'claiming'
-      : pending?.kind === 'rejoin'
-        ? 'rejoining'
+    ? "claimFailed"
+    : pending?.kind === "claim"
+      ? "claiming"
+      : pending?.kind === "rejoin"
+        ? "rejoining"
         : null;
   return {
     role: me.role,
     me: { pid: me.pid, label },
-    gmName: gm ? me.name : (player?.gmName() ?? ''),
+    gmName: gm ? me.name : (player?.gmName() ?? ""),
     view,
     gm: gm && { state: gm.state, dispatch: (a) => gm.dispatch(a) },
     status,

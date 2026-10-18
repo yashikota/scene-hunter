@@ -8,16 +8,16 @@
  * - ヒント：AI を呼ばず、決まった 5 つを返す。
  * - 回数制限：数え方は同じで上限だけ上げる（localhost では全員が同じ IP になるため）。
  */
-import type { Presigner } from './presign';
-import { MAX_PHOTO_BYTES } from './presign';
-import type { Limiter } from './limits';
-import type { RelayApi } from './relay';
+import type { Presigner } from "./presign";
+import { MAX_PHOTO_BYTES } from "./presign";
+import type { Limiter } from "./limits";
+import type { RelayApi } from "./relay";
 
-const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 /** e2e の切り替え。SH_E2E が '1' で、かつリクエストの宛先が手元（localhost）のときだけ true。 */
 export function isE2e(flag: string | undefined, requestUrl: string): boolean {
-  if (flag !== '1') return false;
+  if (flag !== "1") return false;
   try {
     return LOOPBACK_HOSTS.has(new URL(requestUrl).hostname);
   } catch {
@@ -25,19 +25,19 @@ export function isE2e(flag: string | undefined, requestUrl: string): boolean {
   }
 }
 
-export const E2E_RELAY_URL = 'http://localhost:4443/';
+export const E2E_RELAY_URL = "http://localhost:4443/";
 
 const randomHex = (bytes: number) =>
   Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) =>
-    b.toString(16).padStart(2, '0'),
-  ).join('');
+    b.toString(16).padStart(2, "0"),
+  ).join("");
 
 /** 手元の moq-relay を使う RelayApi。部屋ごとに乱数のパスを配り、そのパスを moqUrl にする。 */
 export function createE2eRelay(base = E2E_RELAY_URL): {
   relay: RelayApi;
   moqUrl(token: string): string;
 } {
-  const root = base.endsWith('/') ? base : `${base}/`;
+  const root = base.endsWith("/") ? base : `${base}/`;
   return {
     relay: {
       create: async () => ({ uid: `e2e-${randomHex(8)}`, token: `e2e-${randomHex(16)}` }),
@@ -50,36 +50,36 @@ export function createE2eRelay(base = E2E_RELAY_URL): {
 
 /** e2e のヒント。AI を呼ばずにすぐ返す。 */
 export const E2E_HINTS = [
-  'e2e hint 1: something in the room',
-  'e2e hint 2: it has a color',
-  'e2e hint 3: it is near the camera',
-  'e2e hint 4: it is in the middle of the frame',
-  'e2e hint 5: the fake camera test pattern',
+  "e2e hint 1: something in the room",
+  "e2e hint 2: it has a color",
+  "e2e hint 3: it is near the camera",
+  "e2e hint 4: it is in the middle of the frame",
+  "e2e hint 5: the fake camera test pattern",
 ] as const;
 
 const PUT_EXPIRES_SEC = 300;
 const GET_EXPIRES_SEC = 3600;
-export const E2E_BLOB_PATH = '/api/e2e/blob';
+export const E2E_BLOB_PATH = "/api/e2e/blob";
 
 const encoder = new TextEncoder();
 
 function hmacKey(secret: string): Promise<CryptoKey> {
   // 部屋のトークンと同じ秘密から、用途を変えた鍵を作る（署名の取り違えを防ぐ）。
   return crypto.subtle.importKey(
-    'raw',
+    "raw",
     encoder.encode(`e2e-blob:${secret}`),
-    { name: 'HMAC', hash: 'SHA-256' },
+    { name: "HMAC", hash: "SHA-256" },
     false,
-    ['sign', 'verify'],
+    ["sign", "verify"],
   );
 }
 
-type BlobClaim = { method: 'PUT' | 'GET'; key: string; size: number; exp: number };
+type BlobClaim = { method: "PUT" | "GET"; key: string; size: number; exp: number };
 
 const claimText = (c: BlobClaim) => `${c.method}\n${c.key}\n${c.size}\n${c.exp}`;
 
 function hex(bytes: ArrayBuffer): string {
-  return Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 /** R2 の署名付き URL の代わり。PUT は content-type と大きさを、GET はキーだけを署名する。 */
@@ -90,20 +90,20 @@ export function createE2ePresigner(o: {
 }): Presigner {
   async function sign(c: BlobClaim): Promise<string> {
     const sig = hex(
-      await crypto.subtle.sign('HMAC', await hmacKey(o.secret), encoder.encode(claimText(c))),
+      await crypto.subtle.sign("HMAC", await hmacKey(o.secret), encoder.encode(claimText(c))),
     );
     const url = new URL(E2E_BLOB_PATH, o.origin);
-    url.searchParams.set('m', c.method);
-    url.searchParams.set('key', c.key);
-    url.searchParams.set('size', String(c.size));
-    url.searchParams.set('exp', String(c.exp));
-    url.searchParams.set('sig', sig);
+    url.searchParams.set("m", c.method);
+    url.searchParams.set("key", c.key);
+    url.searchParams.set("size", String(c.size));
+    url.searchParams.set("exp", String(c.exp));
+    url.searchParams.set("sig", sig);
     return url.toString();
   }
   const nowSec = () => Math.floor(o.now() / 1000);
   return {
-    put: (key, size) => sign({ method: 'PUT', key, size, exp: nowSec() + PUT_EXPIRES_SEC }),
-    get: (key) => sign({ method: 'GET', key, size: 0, exp: nowSec() + GET_EXPIRES_SEC }),
+    put: (key, size) => sign({ method: "PUT", key, size, exp: nowSec() + PUT_EXPIRES_SEC }),
+    get: (key) => sign({ method: "GET", key, size: 0, exp: nowSec() + GET_EXPIRES_SEC }),
   };
 }
 
@@ -111,22 +111,22 @@ export function createE2ePresigner(o: {
 export async function verifyBlobUrl(
   secret: string,
   url: URL,
-  method: 'PUT' | 'GET',
+  method: "PUT" | "GET",
   nowSec: number,
 ): Promise<BlobClaim | null> {
   const q = url.searchParams;
-  const key = q.get('key') ?? '';
-  const size = Number(q.get('size'));
-  const exp = Number(q.get('exp'));
-  const sig = q.get('sig') ?? '';
-  if (q.get('m') !== method || !key || !Number.isInteger(size) || !Number.isInteger(exp)) {
+  const key = q.get("key") ?? "";
+  const size = Number(q.get("size"));
+  const exp = Number(q.get("exp"));
+  const sig = q.get("sig") ?? "";
+  if (q.get("m") !== method || !key || !Number.isInteger(size) || !Number.isInteger(exp)) {
     return null;
   }
   if (!/^[0-9a-f]{64}$/.test(sig) || nowSec >= exp) return null;
   const claim: BlobClaim = { method, key, size, exp };
   const sigBytes = new Uint8Array(sig.match(/../g)!.map((h) => parseInt(h, 16)));
   const ok = await crypto.subtle.verify(
-    'HMAC',
+    "HMAC",
     await hmacKey(secret),
     sigBytes,
     encoder.encode(claimText(claim)),
@@ -141,7 +141,7 @@ export function checkBlobPut(
   body: Uint8Array,
 ): boolean {
   return (
-    contentType === 'image/jpeg' &&
+    contentType === "image/jpeg" &&
     claim.size > 0 &&
     claim.size <= MAX_PHOTO_BYTES &&
     body.byteLength === claim.size

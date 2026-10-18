@@ -1,9 +1,9 @@
-import { m } from '../paraglide/messages';
-import { Card } from '../ui/Card';
-import { Screen } from '../ui/Screen';
-import { TopBar } from '../ui/TopBar';
-import { useNow } from '../ui/useNow';
-import { remainingSec } from './turnTime';
+import { m } from "../paraglide/messages";
+import { Card } from "../ui/Card";
+import { Screen } from "../ui/Screen";
+import { TopBar } from "../ui/TopBar";
+import { useNow } from "../ui/useNow";
+import { remainingSec } from "./turnTime";
 
 export interface PlayerSubmittedProps {
   round: number;
@@ -37,7 +37,7 @@ export function PlayerSubmitted({
           </span>
         }
       />
-      <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div role="status" style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <span
           className="sh-icon-tile"
           aria-hidden="true"
@@ -45,7 +45,7 @@ export function PlayerSubmitted({
             width: 48,
             height: 48,
             borderRadius: 14,
-            background: 'var(--color-accent)',
+            background: "var(--color-accent)",
             fontSize: 24,
           }}
         >
@@ -55,24 +55,24 @@ export function PlayerSubmitted({
           {m.sent_title()}
         </h1>
       </div>
-      <Card raised style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12 }}>
+      <Card raised style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12 }}>
         <div
           style={{
-            aspectRatio: '4 / 3',
-            borderRadius: 'var(--radius-sm)',
-            border: 'var(--border)',
-            background: 'var(--color-bg)',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            aspectRatio: "4 / 3",
+            borderRadius: "var(--radius-sm)",
+            border: "var(--border)",
+            background: "var(--color-bg)",
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           {photoUrl ? (
             <img
               src={photoUrl}
               alt={m.your_photo()}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           ) : (
             <span className="sh-sub" style={{ fontSize: 13 }}>
@@ -81,8 +81,8 @@ export function PlayerSubmitted({
           )}
         </div>
       </Card>
-      <Card style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800 }}>
+      <Card style={{ display: "flex", flexDirection: "column", gap: 8, padding: "12px 16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800 }}>
           <span>{m.everyone_submitted()}</span>
           <span>{m.people_ratio({ done: submitted, total })}</span>
         </div>

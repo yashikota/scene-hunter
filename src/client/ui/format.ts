@@ -1,4 +1,4 @@
-import { getLocale } from '../paraglide/runtime';
+import { getLocale } from "../paraglide/runtime";
 
 // 数の書式は、いまの画面の言語の Intl に任せる（1,150 / 1.150 など）。
 

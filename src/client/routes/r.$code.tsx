@@ -1,20 +1,20 @@
-import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
-import { m } from '../paraglide/messages';
-import { isRoomFound, joinAndSave, loadMe } from '../game/membership';
-import { useRoom } from '../game/useRoom';
-import { Connecting } from '../screens/Connecting';
-import { Disconnected } from '../screens/Disconnected';
-import { Dissolved } from '../screens/Dissolved';
-import { LobbyGm } from '../screens/LobbyGm';
-import { LobbyPlayer } from '../screens/LobbyPlayer';
-import { NameStep } from '../screens/NameStep';
-import { ResultsScreen } from '../screens/ResultsScreen';
-import { TurnScreen } from '../screens/TurnScreen';
-import { Unsupported } from '../screens/Unsupported';
-import { isSupportedBrowser, useBrowserLocale } from '../ui/locale';
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { m } from "../paraglide/messages";
+import { isRoomFound, joinAndSave, loadMe } from "../game/membership";
+import { useRoom } from "../game/useRoom";
+import { Connecting } from "../screens/Connecting";
+import { Disconnected } from "../screens/Disconnected";
+import { Dissolved } from "../screens/Dissolved";
+import { LobbyGm } from "../screens/LobbyGm";
+import { LobbyPlayer } from "../screens/LobbyPlayer";
+import { NameStep } from "../screens/NameStep";
+import { ResultsScreen } from "../screens/ResultsScreen";
+import { TurnScreen } from "../screens/TurnScreen";
+import { Unsupported } from "../screens/Unsupported";
+import { isSupportedBrowser, useBrowserLocale } from "../ui/locale";
 
-export const Route = createFileRoute('/r/$code')({
+export const Route = createFileRoute("/r/$code")({
   component: RoomRoute,
 });
 
@@ -41,7 +41,7 @@ function RoomEntry({ code }: { code: string }) {
           setEntered(true);
         }}
         // 番号は残したトップに戻る（確かめ済みなので、トップはそのまま留まる）
-        onBack={() => void navigate({ to: '/', search: { code }, replace: true })}
+        onBack={() => void navigate({ to: "/", search: { code }, replace: true })}
       />
     );
   }
@@ -73,14 +73,14 @@ function RoomView({ room, code }: { room: ReturnType<typeof useRoom>; code: stri
     return (
       <Connecting
         kind={room.status}
-        onLeave={room.status === 'claimFailed' ? () => void actions.leave() : undefined}
+        onLeave={room.status === "claimFailed" ? () => void actions.leave() : undefined}
       />
     );
   }
   if (
     room.gmDisconnectedSince !== null &&
-    view.phase !== 'connecting' &&
-    view.phase !== 'dissolved'
+    view.phase !== "connecting" &&
+    view.phase !== "dissolved"
   ) {
     const mine = view.players.find((p) => p.pid === room.me.pid);
     return (
@@ -96,10 +96,10 @@ function RoomView({ room, code }: { room: ReturnType<typeof useRoom>; code: stri
     );
   }
   switch (view.phase) {
-    case 'connecting':
+    case "connecting":
       return <Connecting />;
-    case 'lobby':
-      return room.role === 'gm' ? (
+    case "lobby":
+      return room.role === "gm" ? (
         <LobbyGm
           code={code}
           gmName={room.gmName}
@@ -121,16 +121,16 @@ function RoomView({ room, code }: { room: ReturnType<typeof useRoom>; code: stri
           onLeave={() => void actions.leave()}
         />
       );
-    case 'dissolved':
+    case "dissolved":
       return <Dissolved code={code} onLeave={() => void actions.leave()} />;
-    case 'gmTurn':
-    case 'hinting':
-    case 'hintError':
-    case 'playerTurn':
+    case "gmTurn":
+    case "hinting":
+    case "hintError":
+    case "playerTurn":
       return <TurnScreen room={room} code={code} />;
-    case 'picking':
-    case 'reveal':
-    case 'final':
+    case "picking":
+    case "reveal":
+    case "final":
       return <ResultsScreen room={room} code={code} />;
     default:
       return <Connecting />;

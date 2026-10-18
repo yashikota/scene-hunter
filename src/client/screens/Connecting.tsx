@@ -1,8 +1,8 @@
-import { m } from '../paraglide/messages';
-import { Button } from '../ui/Button';
-import { Screen } from '../ui/Screen';
+import { m } from "../paraglide/messages";
+import { Button } from "../ui/Button";
+import { Screen } from "../ui/Screen";
 
-export type WaitKind = 'connecting' | 'preparing' | 'claiming' | 'rejoining' | 'claimFailed';
+export type WaitKind = "connecting" | "preparing" | "claiming" | "rejoining" | "claimFailed";
 
 const TITLE: Record<WaitKind, () => string> = {
   connecting: () => m.connecting_title(),
@@ -29,12 +29,12 @@ export function Connecting({
   preparing?: boolean;
   onLeave?: () => void;
 }) {
-  const k = kind ?? (preparing ? 'preparing' : 'connecting');
-  const failed = k === 'claimFailed';
+  const k = kind ?? (preparing ? "preparing" : "connecting");
+  const failed = k === "claimFailed";
   return (
     <Screen>
-      <div role={failed ? 'alert' : 'status'} className="sh-center">
-        {k === 'preparing' ? (
+      <div role={failed ? "alert" : "status"} className="sh-center">
+        {k === "preparing" ? (
           <span className="sh-bar sh-bar--wide" aria-hidden="true">
             <span
               className="sh-bar-fill sh-fill-over"
@@ -44,17 +44,17 @@ export function Connecting({
         ) : (
           <div
             className="sh-icon-tile"
-            style={{ width: 88, height: 88, background: 'var(--color-surface)', borderRadius: 22 }}
+            style={{ width: 88, height: 88, background: "var(--color-surface)", borderRadius: 22 }}
           >
             <span
-              className={failed ? undefined : 'sh-pulse'}
+              className={failed ? undefined : "sh-pulse"}
               aria-hidden="true"
               style={{
                 width: 28,
                 height: 28,
-                borderRadius: '50%',
-                background: failed ? 'var(--color-gold)' : 'var(--color-timer)',
-                border: 'var(--border)',
+                borderRadius: "50%",
+                background: failed ? "var(--color-gold)" : "var(--color-timer)",
+                border: "var(--border)",
               }}
             />
           </div>

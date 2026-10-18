@@ -1,8 +1,8 @@
-import { m } from '../paraglide/messages';
-import { Button } from '../ui/Button';
-import { Screen } from '../ui/Screen';
-import { TopBar } from '../ui/TopBar';
-import { Collecting, Thumb, TopicCard } from './ResultsParts';
+import { m } from "../paraglide/messages";
+import { Button } from "../ui/Button";
+import { Screen } from "../ui/Screen";
+import { TopBar } from "../ui/TopBar";
+import { Collecting, Thumb, TopicCard } from "./ResultsParts";
 
 export const MAX_PICKS = 3;
 
@@ -50,7 +50,7 @@ export function ResultsPick({
         left={m.round_label({ round, rounds })}
         right={<span className="sh-badge">{m.you_are_gm()}</span>}
       />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <h1 className="sh-display" style={{ fontSize: 22 }}>
           {m.results_pick_title()}
         </h1>
@@ -64,40 +64,40 @@ export function ResultsPick({
       ) : (
         <ul
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
             gap: 10,
             margin: 0,
             padding: 0,
-            listStyle: 'none',
+            listStyle: "none",
           }}
         >
           {photos.map((p) => {
             const order = picks.indexOf(p.pid);
             const picked = order !== -1;
             return (
-              <li key={p.pid} style={{ display: 'flex' }}>
+              <li key={p.pid} style={{ display: "flex" }}>
                 <button
                   type="button"
                   disabled={!p.valid}
                   aria-pressed={picked}
                   onClick={() => onToggle(p.pid)}
                   style={{
-                    position: 'relative',
-                    width: '100%',
+                    position: "relative",
+                    width: "100%",
                     padding: 0,
-                    background: 'var(--color-surface)',
-                    border: picked ? '3px solid var(--color-ink)' : 'var(--border)',
+                    background: "var(--color-surface)",
+                    border: picked ? "3px solid var(--color-ink)" : "var(--border)",
                     borderRadius: 12,
                     boxShadow: picked
-                      ? `3px 3px 0 ${order === 0 ? 'var(--color-accent)' : 'var(--color-timer)'}`
-                      : 'none',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden',
-                    cursor: p.valid ? 'pointer' : 'not-allowed',
-                    fontFamily: 'inherit',
-                    color: 'var(--color-ink)',
+                      ? `3px 3px 0 ${order === 0 ? "var(--color-accent)" : "var(--color-timer)"}`
+                      : "none",
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",
+                    cursor: p.valid ? "pointer" : "not-allowed",
+                    fontFamily: "inherit",
+                    color: "var(--color-ink)",
                   }}
                 >
                   <Thumb url={p.url} alt={p.label} height={100} dim={!p.valid} />
@@ -106,7 +106,7 @@ export function ResultsPick({
                       padding: 6,
                       fontSize: 13,
                       fontWeight: picked ? 800 : 500,
-                      overflowWrap: 'anywhere',
+                      overflowWrap: "anywhere",
                     }}
                   >
                     {p.label}
@@ -117,19 +117,19 @@ export function ResultsPick({
                       aria-label={m.rank_label({ rank: order + 1 })}
                       className="sh-display"
                       style={{
-                        position: 'absolute',
+                        position: "absolute",
                         top: 6,
                         left: 6,
                         width: 28,
                         height: 28,
-                        borderRadius: '50%',
-                        background: order === 0 ? 'var(--color-accent)' : 'var(--color-timer)',
-                        color: order === 0 ? 'var(--color-ink)' : '#fff',
-                        border: 'var(--border)',
+                        borderRadius: "50%",
+                        background: order === 0 ? "var(--color-accent)" : "var(--color-timer)",
+                        color: order === 0 ? "var(--color-ink)" : "#fff",
+                        border: "var(--border)",
                         fontSize: 14,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
                       {order + 1}
@@ -144,16 +144,16 @@ export function ResultsPick({
               key={name}
               className="sh-sub sh-pre"
               style={{
-                border: '2px dashed var(--color-sub)',
+                border: "2px dashed var(--color-sub)",
                 borderRadius: 12,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
                 fontSize: 12,
                 padding: 6,
-                overflowWrap: 'anywhere',
+                overflowWrap: "anywhere",
               }}
             >
               <b>{name}</b>

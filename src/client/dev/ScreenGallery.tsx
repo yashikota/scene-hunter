@@ -1,32 +1,32 @@
 // 開発用：すべての画面を代表的な値で並べて見る（/__screens）。main.tsx から import.meta.env.DEV のときだけ読み込む。
 // ?screen=<id>&lang=<locale> で 1 画面だけを出す（スクリーンショット用）。screen が無ければ一覧。
-import { useState, type ReactNode } from 'react';
-import { isLocale, LOCALE_NAMES, LOCALES, type Locale } from '../../shared/locales';
-import type { Total } from '../../shared/protocol';
-import type { RoundScore } from '../../shared/scoring';
-import { switchLocale } from '../ui/locale';
-import { CameraBlocked } from '../screens/CameraBlocked';
-import { Connecting } from '../screens/Connecting';
-import { Disconnected } from '../screens/Disconnected';
-import { Dissolved } from '../screens/Dissolved';
-import { Final } from '../screens/Final';
-import { GmTurn } from '../screens/GmTurn';
-import { GmTurnPlayer } from '../screens/GmTurnPlayer';
-import { HintError } from '../screens/HintError';
-import { HintWait } from '../screens/HintWait';
-import { LobbyGm } from '../screens/LobbyGm';
-import { LobbyPlayer } from '../screens/LobbyPlayer';
-import { PlayerSubmitted } from '../screens/PlayerSubmitted';
-import { PlayerTurn } from '../screens/PlayerTurn';
-import { PlayerTurnGm } from '../screens/PlayerTurnGm';
-import { ResultsPick, type ResultPhotoView } from '../screens/ResultsPick';
-import { ResultsReveal } from '../screens/ResultsReveal';
-import { ResultsWait } from '../screens/ResultsWait';
-import { Top, type TopDeps } from '../screens/Top';
-import { Unsupported } from '../screens/Unsupported';
-import { NameStep } from '../screens/NameStep';
+import { useState, type ReactNode } from "react";
+import { isLocale, LOCALE_NAMES, LOCALES, type Locale } from "../../shared/locales";
+import type { Total } from "../../shared/protocol";
+import type { RoundScore } from "../../shared/scoring";
+import { switchLocale } from "../ui/locale";
+import { CameraBlocked } from "../screens/CameraBlocked";
+import { Connecting } from "../screens/Connecting";
+import { Disconnected } from "../screens/Disconnected";
+import { Dissolved } from "../screens/Dissolved";
+import { Final } from "../screens/Final";
+import { GmTurn } from "../screens/GmTurn";
+import { GmTurnPlayer } from "../screens/GmTurnPlayer";
+import { HintError } from "../screens/HintError";
+import { HintWait } from "../screens/HintWait";
+import { LobbyGm } from "../screens/LobbyGm";
+import { LobbyPlayer } from "../screens/LobbyPlayer";
+import { PlayerSubmitted } from "../screens/PlayerSubmitted";
+import { PlayerTurn } from "../screens/PlayerTurn";
+import { PlayerTurnGm } from "../screens/PlayerTurnGm";
+import { ResultsPick, type ResultPhotoView } from "../screens/ResultsPick";
+import { ResultsReveal } from "../screens/ResultsReveal";
+import { ResultsWait } from "../screens/ResultsWait";
+import { Top, type TopDeps } from "../screens/Top";
+import { Unsupported } from "../screens/Unsupported";
+import { NameStep } from "../screens/NameStep";
 
-const CODE = '482913';
+const CODE = "482913";
 const noop = () => {};
 const never = () => new Promise<never>(() => {});
 const neverDeps: TopDeps = { create: never, find: never };
@@ -38,14 +38,14 @@ const photo = (hue: number) =>
   )}`;
 
 const NAMES = [
-  'はるか',
-  'そうた',
-  'みお',
-  'けんた',
-  'あや',
-  'Maximilianus',
-  'ながいなまえのプレイヤー',
-  'WWWWWWWWWWWW',
+  "はるか",
+  "そうた",
+  "みお",
+  "けんた",
+  "あや",
+  "Maximilianus",
+  "ながいなまえのプレイヤー",
+  "WWWWWWWWWWWW",
 ];
 const members = (n: number) =>
   Array.from({ length: n }, (_, i) => ({
@@ -58,31 +58,31 @@ const members = (n: number) =>
 const FEW = members(4);
 const MANY = members(59); // GM と合わせて 60 人
 const HINTS_JA = [
-  '暖かい色が多い、落ち着いた場所',
-  '近くに水がある',
-  '見上げる角度で撮っている',
-  '赤い看板の下に自転車が 2 台並んでいる',
-  '駅前の商店街の入口にある、赤いアーチの真下',
+  "暖かい色が多い、落ち着いた場所",
+  "近くに水がある",
+  "見上げる角度で撮っている",
+  "赤い看板の下に自転車が 2 台並んでいる",
+  "駅前の商店街の入口にある、赤いアーチの真下",
 ];
 const hints = (locale: Locale) =>
-  locale === 'ja'
+  locale === "ja"
     ? HINTS_JA
     : [
-        'A calm place with mostly warm colours',
-        'There is water nearby',
-        'Shot from a low angle looking up',
-        'Two bicycles side by side under a red sign',
-        'Right under the red arch at the entrance of the shopping street by the station',
+        "A calm place with mostly warm colours",
+        "There is water nearby",
+        "Shot from a low angle looking up",
+        "Two bicycles side by side under a red sign",
+        "Right under the red arch at the entrance of the shopping street by the station",
       ];
 
 const photos = (n: number): ResultPhotoView[] =>
   members(n).map((p, i) => ({ ...p, url: photo(i * 47), valid: i !== 2 }));
 
 const scores: RoundScore[] = [
-  { pid: 'p1', rank: 1, tMs: 12_000, multiplier: 0.9, points: 900, bonus: 200, streak: 3 },
-  { pid: 'p6', rank: 2, tMs: 6_000, multiplier: 0.95, points: 665, bonus: 0, streak: 1 },
-  { pid: 'p0', rank: 3, tMs: 31_000, multiplier: 0.74, points: 370, bonus: 0, streak: 1 },
-  { pid: 'p3', rank: null, tMs: 20_000, multiplier: null, points: 0, bonus: 0, streak: 0 },
+  { pid: "p1", rank: 1, tMs: 12_000, multiplier: 0.9, points: 900, bonus: 200, streak: 3 },
+  { pid: "p6", rank: 2, tMs: 6_000, multiplier: 0.95, points: 665, bonus: 0, streak: 1 },
+  { pid: "p0", rank: 3, tMs: 31_000, multiplier: 0.74, points: 370, bonus: 0, streak: 1 },
+  { pid: "p3", rank: null, tMs: 20_000, multiplier: null, points: 0, bonus: 0, streak: 0 },
 ];
 const totals = (n: number): Total[] =>
   members(n).map((p, i) => ({
@@ -97,17 +97,17 @@ type Entry = { id: string; render(locale: Locale): ReactNode };
 const ago = (ms: number) => Date.now() - ms;
 
 export const ENTRIES: Entry[] = [
-  { id: 'top', render: () => <Top onEntered={noop} deps={neverDeps} /> },
-  { id: 'name-join', render: () => <NameStep code={CODE} onSubmit={never} onBack={noop} /> },
-  { id: 'name-create', render: () => <NameStep onSubmit={never} onBack={noop} /> },
-  { id: 'unsupported', render: () => <Unsupported /> },
-  { id: 'connecting', render: () => <Connecting /> },
-  { id: 'preparing', render: () => <Connecting preparing /> },
-  { id: 'claiming', render: () => <Connecting kind="claiming" /> },
-  { id: 'rejoining', render: () => <Connecting kind="rejoining" /> },
-  { id: 'claim-failed', render: () => <Connecting kind="claimFailed" onLeave={noop} /> },
+  { id: "top", render: () => <Top onEntered={noop} deps={neverDeps} /> },
+  { id: "name-join", render: () => <NameStep code={CODE} onSubmit={never} onBack={noop} /> },
+  { id: "name-create", render: () => <NameStep onSubmit={never} onBack={noop} /> },
+  { id: "unsupported", render: () => <Unsupported /> },
+  { id: "connecting", render: () => <Connecting /> },
+  { id: "preparing", render: () => <Connecting preparing /> },
+  { id: "claiming", render: () => <Connecting kind="claiming" /> },
+  { id: "rejoining", render: () => <Connecting kind="rejoining" /> },
+  { id: "claim-failed", render: () => <Connecting kind="claimFailed" onLeave={noop} /> },
   {
-    id: 'lobby-gm-empty',
+    id: "lobby-gm-empty",
     render: () => (
       <LobbyGm
         code={CODE}
@@ -122,7 +122,7 @@ export const ENTRIES: Entry[] = [
     ),
   },
   {
-    id: 'lobby-gm',
+    id: "lobby-gm",
     render: () => (
       <LobbyGm
         code={CODE}
@@ -137,7 +137,7 @@ export const ENTRIES: Entry[] = [
     ),
   },
   {
-    id: 'lobby-gm-60',
+    id: "lobby-gm-60",
     render: () => (
       <LobbyGm
         code={CODE}
@@ -152,7 +152,7 @@ export const ENTRIES: Entry[] = [
     ),
   },
   {
-    id: 'lobby-player',
+    id: "lobby-player",
     render: () => (
       <LobbyPlayer
         code={CODE}
@@ -166,7 +166,7 @@ export const ENTRIES: Entry[] = [
     ),
   },
   {
-    id: 'lobby-player-long',
+    id: "lobby-player-long",
     render: () => (
       <LobbyPlayer
         code={CODE}
@@ -179,26 +179,26 @@ export const ENTRIES: Entry[] = [
       />
     ),
   },
-  { id: 'gm-turn', render: () => <GmTurn round={2} rounds={3} onPhoto={never} /> },
+  { id: "gm-turn", render: () => <GmTurn round={2} rounds={3} onPhoto={never} /> },
   {
-    id: 'gm-turn-player',
+    id: "gm-turn-player",
     render: () => (
       <GmTurnPlayer
         code={CODE}
         round={2}
         rounds={3}
         gmName="ながいなまえのプレイヤー"
-        me={{ label: 'そうた', total: 1520, rank: 2 }}
+        me={{ label: "そうた", total: 1520, rank: 2 }}
       />
     ),
   },
-  { id: 'hint-wait', render: () => <HintWait code={CODE} round={2} rounds={3} /> },
+  { id: "hint-wait", render: () => <HintWait code={CODE} round={2} rounds={3} /> },
   {
-    id: 'hint-error',
+    id: "hint-error",
     render: () => <HintError round={2} rounds={3} onRetry={never} onDissolve={noop} />,
   },
   {
-    id: 'player-turn',
+    id: "player-turn",
     render: (l) => (
       <PlayerTurn
         code={CODE}
@@ -215,7 +215,7 @@ export const ENTRIES: Entry[] = [
     ),
   },
   {
-    id: 'player-turn-gm',
+    id: "player-turn-gm",
     render: (l) => (
       <PlayerTurnGm
         round={2}
@@ -226,12 +226,12 @@ export const ENTRIES: Entry[] = [
         shown={3}
         photoUrl={photo(200)}
         players={FEW}
-        submitted={['p0', 'p2']}
+        submitted={["p0", "p2"]}
       />
     ),
   },
   {
-    id: 'player-turn-gm-60',
+    id: "player-turn-gm-60",
     render: (l) => (
       <PlayerTurnGm
         round={2}
@@ -247,7 +247,7 @@ export const ENTRIES: Entry[] = [
     ),
   },
   {
-    id: 'player-submitted',
+    id: "player-submitted",
     render: () => (
       <PlayerSubmitted
         round={2}
@@ -261,7 +261,7 @@ export const ENTRIES: Entry[] = [
     ),
   },
   {
-    id: 'results-pick-checking',
+    id: "results-pick-checking",
     render: () => (
       <ResultsPick
         round={2}
@@ -276,22 +276,22 @@ export const ENTRIES: Entry[] = [
     ),
   },
   {
-    id: 'results-pick',
+    id: "results-pick",
     render: () => (
       <ResultsPick
         round={2}
         rounds={3}
         gmPhotoUrl={photo(200)}
         photos={photos(7)}
-        missing={['WWWWWWWWWWWW']}
-        picks={['p1', 'p6']}
+        missing={["WWWWWWWWWWWW"]}
+        picks={["p1", "p6"]}
         onToggle={noop}
         onConfirm={noop}
       />
     ),
   },
   {
-    id: 'results-wait',
+    id: "results-wait",
     render: () => (
       <ResultsWait
         code={CODE}
@@ -305,13 +305,13 @@ export const ENTRIES: Entry[] = [
     ),
   },
   {
-    id: 'results-wait-collecting',
+    id: "results-wait-collecting",
     render: () => (
       <ResultsWait code={CODE} round={2} rounds={3} gmName="ゆうき" photos={null} mePid="p1" />
     ),
   },
   ...[true, false].map((isGm) => ({
-    id: isGm ? 'results-reveal-gm' : 'results-reveal',
+    id: isGm ? "results-reveal-gm" : "results-reveal",
     render: () => (
       <ResultsReveal
         code={CODE}
@@ -328,7 +328,7 @@ export const ENTRIES: Entry[] = [
     ),
   })),
   ...[true, false].map((isGm) => ({
-    id: isGm ? 'final-gm' : 'final',
+    id: isGm ? "final-gm" : "final",
     render: () => (
       <Final
         code={CODE}
@@ -343,7 +343,7 @@ export const ENTRIES: Entry[] = [
     ),
   })),
   {
-    id: 'disconnected',
+    id: "disconnected",
     render: () => (
       <Disconnected
         code={CODE}
@@ -356,23 +356,23 @@ export const ENTRIES: Entry[] = [
       />
     ),
   },
-  { id: 'dissolved', render: () => <Dissolved code={CODE} onLeave={noop} /> },
-  { id: 'camera-denied', render: () => <CameraBlocked reason="denied" onRetry={noop} /> },
-  { id: 'camera-unavailable', render: () => <CameraBlocked reason="unavailable" onRetry={noop} /> },
+  { id: "dissolved", render: () => <Dissolved code={CODE} onLeave={noop} /> },
+  { id: "camera-denied", render: () => <CameraBlocked reason="denied" onRetry={noop} /> },
+  { id: "camera-unavailable", render: () => <CameraBlocked reason="unavailable" onRetry={noop} /> },
 ];
 
 /** Top は navigator.languages から言語を決めるので、指定した言語を先頭にしておく。 */
 function forceLocale(locale: Locale) {
-  Object.defineProperty(navigator, 'languages', { configurable: true, get: () => [locale] });
+  Object.defineProperty(navigator, "languages", { configurable: true, get: () => [locale] });
   switchLocale(locale);
 }
 
 export function ScreenGallery() {
   const params = new URLSearchParams(location.search);
-  const lang = params.get('lang');
-  const locale: Locale = isLocale(lang) ? lang : 'ja';
+  const lang = params.get("lang");
+  const locale: Locale = isLocale(lang) ? lang : "ja";
   const [ready] = useState(() => (forceLocale(locale), true));
-  const id = params.get('screen');
+  const id = params.get("screen");
   const entry = ENTRIES.find((e) => e.id === id);
   if (!ready) return null;
   if (entry) return <>{entry.render(locale)}</>;
@@ -380,9 +380,9 @@ export function ScreenGallery() {
     <main
       style={{
         maxWidth: 720,
-        margin: '0 auto',
+        margin: "0 auto",
         padding: 20,
-        fontFamily: 'var(--font-body), sans-serif',
+        fontFamily: "var(--font-body), sans-serif",
       }}
     >
       <h1 className="sh-display" style={{ fontSize: 24 }}>

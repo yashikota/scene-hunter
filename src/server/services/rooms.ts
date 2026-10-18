@@ -1,17 +1,17 @@
-import { issueCert, issueTransfer, verifyTransfer } from '../../shared/cert';
-import type { Cert, Role, TransferCert } from '../../shared/cert';
-import { importPublicKey } from '../../shared/crypto';
-import type { Locale } from '../../shared/locales';
-import { issueRoomToken, verifyRoomToken } from '../hmac';
-import type { RoomTokenPayload } from '../hmac';
-import { moqUrl } from '../relay';
-import type { RelayApi } from '../relay';
-import type { createRoomStore, RoomRecord } from '../roomStore';
+import { issueCert, issueTransfer, verifyTransfer } from "../../shared/cert";
+import type { Cert, Role, TransferCert } from "../../shared/cert";
+import { importPublicKey } from "../../shared/crypto";
+import type { Locale } from "../../shared/locales";
+import { issueRoomToken, verifyRoomToken } from "../hmac";
+import type { RoomTokenPayload } from "../hmac";
+import { moqUrl } from "../relay";
+import type { RelayApi } from "../relay";
+import type { createRoomStore, RoomRecord } from "../roomStore";
 
 export interface RoomDeps {
   relay: RelayApi;
   store: ReturnType<typeof createRoomStore>;
-  storage: Pick<R2Bucket, 'list' | 'delete'>;
+  storage: Pick<R2Bucket, "list" | "delete">;
   hmacSecret: string;
   serverKey: CryptoKey;
   /** 現在時刻（ミリ秒）。 */
@@ -51,7 +51,7 @@ const DEFAULT_LIMIT_SEC = 60;
 function checkName(raw: string): string {
   const name = raw.trim();
   const len = [...name].length;
-  if (len < 1 || len > 12) throw new RangeError('name must be 1-12 characters');
+  if (len < 1 || len > 12) throw new RangeError("name must be 1-12 characters");
   return name;
 }
 
@@ -59,7 +59,7 @@ async function checkPubkey(pubkey: string): Promise<void> {
   try {
     await importPublicKey(pubkey);
   } catch {
-    throw new RangeError('invalid pubkey');
+    throw new RangeError("invalid pubkey");
   }
 }
 
@@ -89,24 +89,24 @@ async function issueMember(
 const ROOM_CODE = /^\d{6}$/;
 
 export function checkCode(code: string): void {
-  if (!ROOM_CODE.test(code)) throw new NotFoundError('room not found');
+  if (!ROOM_CODE.test(code)) throw new NotFoundError("room not found");
 }
 
 /** トークンを検証し、部屋の記録を返す。GM の操作では、いまの GM 本人であることも確かめる。 */
 export async function authorize(
-  d: Pick<RoomDeps, 'store' | 'hmacSecret' | 'now'>,
+  d: Pick<RoomDeps, "store" | "hmacSecret" | "now">,
   token: string,
-  role: Role | 'any',
+  role: Role | "any",
   code: string,
 ): Promise<{ payload: RoomTokenPayload; rec: RoomRecord }> {
   checkCode(code);
   const payload = await verifyRoomToken(d.hmacSecret, token, Math.floor(d.now() / 1000));
-  if (!payload) throw new AuthError('invalid token');
-  if (role !== 'any' && payload.role !== role) throw new AuthError(`${role} token required`);
-  if (payload.room !== code) throw new AuthError('token is for another room');
+  if (!payload) throw new AuthError("invalid token");
+  if (role !== "any" && payload.role !== role) throw new AuthError(`${role} token required`);
+  if (payload.room !== code) throw new AuthError("token is for another room");
   const rec = await d.store.get(code);
-  if (!rec) throw new NotFoundError('room not found');
-  if (payload.role === 'gm' && payload.pid !== rec.gmPid) throw new AuthError('no longer the GM');
+  if (!rec) throw new NotFoundError("room not found");
+  if (payload.role === "gm" && payload.pid !== rec.gmPid) throw new AuthError("no longer the GM");
   return { payload, rec };
 }
 
@@ -115,7 +115,7 @@ async function discardRelay(d: RoomDeps, uid: string): Promise<void> {
   try {
     await d.relay.delete(uid);
   } catch (e) {
-    console.error('failed to delete relay', uid, e);
+    console.error("failed to delete relay", uid, e);
   }
 }
 
@@ -124,8 +124,8 @@ export async function createRoom(
   input: { name: string; pubkey: string; locale: Locale; rounds?: number; limitSec?: number },
 ): Promise<Joined> {
   const name = checkName(input.name);
-  const rounds = checkInt(input.rounds ?? DEFAULT_ROUNDS, 1, 10, 'rounds');
-  const limitSec = checkInt(input.limitSec ?? DEFAULT_LIMIT_SEC, 30, 120, 'limitSec');
+  const rounds = checkInt(input.rounds ?? DEFAULT_ROUNDS, 1, 10, "rounds");
+  const limitSec = checkInt(input.limitSec ?? DEFAULT_LIMIT_SEC, 30, 120, "limitSec");
   await checkPubkey(input.pubkey);
 
   for (let attempt = 0; attempt < MAX_CREATE_ATTEMPTS; attempt++) {
@@ -157,7 +157,7 @@ export async function createRoom(
       room: code,
       pid,
       name,
-      role: 'gm',
+      role: "gm",
       pubkey: input.pubkey,
     });
     return {
@@ -172,12 +172,12 @@ export async function createRoom(
       gmPid: pid,
     };
   }
-  throw new Error('could not allocate a room code');
+  throw new Error("could not allocate a room code");
 }
 
 /** 部屋があるか。名前を入れてもらう前の確かめに使い、部屋のほかの情報は返さない。 */
 export async function roomExists(
-  store: Pick<RoomDeps['store'], 'get'>,
+  store: Pick<RoomDeps["store"], "get">,
   code: string,
 ): Promise<boolean> {
   if (!ROOM_CODE.test(code)) return false;
@@ -188,19 +188,19 @@ export async function joinRoom(
   d: RoomDeps,
   code: string,
   input: { name: string; pubkey: string },
-): Promise<Joined | { error: 'not_found' }> {
-  if (!ROOM_CODE.test(code)) return { error: 'not_found' };
+): Promise<Joined | { error: "not_found" }> {
+  if (!ROOM_CODE.test(code)) return { error: "not_found" };
   const name = checkName(input.name);
   await checkPubkey(input.pubkey);
   const rec = await d.store.get(code);
-  if (!rec) return { error: 'not_found' };
+  if (!rec) return { error: "not_found" };
 
   const pid = d.newId();
   const { roomToken, cert } = await issueMember(d, {
     room: code,
     pid,
     name,
-    role: 'player',
+    role: "player",
     pubkey: input.pubkey,
   });
   return {
@@ -222,8 +222,8 @@ export async function transferGm(
   toPid: string,
   code: string,
 ): Promise<TransferCert> {
-  const { payload: p } = await authorize(d, token, 'gm', code);
-  if (toPid === p.pid) throw new RangeError('cannot transfer to self');
+  const { payload: p } = await authorize(d, token, "gm", code);
+  if (toPid === p.pid) throw new RangeError("cannot transfer to self");
   const iat = Math.floor(d.now() / 1000);
   return issueTransfer(d.serverKey, {
     room: p.room,
@@ -236,8 +236,8 @@ export async function transferGm(
 
 /** 秘密鍵（extractable）から対応する公開鍵（raw の base64url）を取り出す。 */
 async function serverPublicKey(priv: CryptoKey): Promise<string> {
-  const jwk = await crypto.subtle.exportKey('jwk', priv);
-  if (!jwk.x) throw new Error('server key has no public part');
+  const jwk = await crypto.subtle.exportKey("jwk", priv);
+  if (!jwk.x) throw new Error("server key has no public part");
   return jwk.x;
 }
 
@@ -248,26 +248,26 @@ export async function claimGm(
   input: { name: string; pubkey: string },
   code: string,
 ): Promise<{ roomToken: string; cert: Cert }> {
-  const { payload: p, rec } = await authorize(d, token, 'player', code);
+  const { payload: p, rec } = await authorize(d, token, "player", code);
   const nowSec = Math.floor(d.now() / 1000);
   if (!(await verifyTransfer(await serverPublicKey(d.serverKey), transfer, p.room, nowSec))) {
-    throw new AuthError('invalid transfer');
+    throw new AuthError("invalid transfer");
   }
-  if (transfer.body.to !== p.pid) throw new AuthError('transfer is for another player');
+  if (transfer.body.to !== p.pid) throw new AuthError("transfer is for another player");
   // 古い交代証や使用済みの交代証で GM を奪えないよう、いまの GM 発行で、現 GM の就任後のものに限る。
   if (transfer.body.from !== rec.gmPid || transfer.body.iat < rec.gmSince) {
-    throw new AuthError('stale transfer');
+    throw new AuthError("stale transfer");
   }
   const name = checkName(input.name);
   await checkPubkey(input.pubkey);
   if (!(await d.store.put({ ...rec, gmPid: p.pid, gmSince: nowSec + 1 }))) {
-    throw new Error('could not record the new GM');
+    throw new Error("could not record the new GM");
   }
-  return issueMember(d, { room: p.room, pid: p.pid, name, role: 'gm', pubkey: input.pubkey });
+  return issueMember(d, { room: p.room, pid: p.pid, name, role: "gm", pubkey: input.pubkey });
 }
 
 export async function closeRoom(d: RoomDeps, token: string, code: string): Promise<void> {
-  const { payload: p, rec } = await authorize(d, token, 'gm', code);
+  const { payload: p, rec } = await authorize(d, token, "gm", code);
 
   await d.relay.delete(rec.relayUid);
   const prefix = `rooms/${p.room}/`;
