@@ -139,7 +139,7 @@ function TopForm({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-        <img src="/icon-192.png" alt="" width={112} height={112} />
+        <img src="/camera.webp" alt="" width={112} height={112} />
         <h1 className="sh-display sh-brand" style={{ fontSize: 34, letterSpacing: "0.02em" }}>
           {m.app_name()}
         </h1>
