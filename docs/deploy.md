@@ -72,6 +72,19 @@ CLOUDFLARE_ACCOUNT_ID=4723b654d7c87a32f3a5b3e260da5eec scripts/r2-setup.sh
 
 ## 5. デプロイ
 
+`main` に push すると、Cloudflare の Workers Builds がデプロイする（GitHub Actions の CI の結果は待たない）。設定は次のとおり（`cf builds triggers list --external-script-id <Worker の ID>` で見られる）。
+
+| 項目 | 値 |
+|---|---|
+| ブランチ | `main` |
+| Build command | `pnpm run build` |
+| Deploy command | `pnpm exec void deploy --platform cloudflare && pnpm deploy:settings` |
+| ビルド用の環境変数 | `CLOUDFLARE_WORKERS_SUBDOMAIN=scene-hunter` |
+
+Workers Builds は `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を自動で渡すので、Void のログインは要らない。pnpm の版は `package.json` の `packageManager` で決まる（無いと pnpm 9 が使われ、install が止まる）。デプロイの後は `pnpm e2e:prod` で本番を 1 ゲーム通す。
+
+### 手元からデプロイするとき
+
 デプロイは、コミット済みの HEAD をきれいに取り出した作業ツリーから行う。手元の作業ツリーには、まだコミットしていない変更や作業中のファイルが残っていることがあり、そのままデプロイするとそれも本番に載る（一度、作業中の変更を載せてしまい、すぐに HEAD から出し直した）。
 
 `SH_E2E`（e2e テストのモード）を export したシェルではデプロイしない。`void.config.ts` は `SH_E2E` があると build と deploy を止める（そのまま進むと Workers AI の binding の無い Worker ができる）。下の手順では、念のため `env -u SH_E2E` で外して実行する。
