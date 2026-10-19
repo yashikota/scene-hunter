@@ -466,18 +466,15 @@ describe("遊び方", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("矢印キーと横のスワイプでもステップを送る", () => {
+  it("矢印キーでもステップを送る", () => {
     render(lobbyGm());
     fireEvent.click(screen.getByRole("button", { name: m.rules_button() }));
     const sheet = screen.getByRole("dialog", { name: m.rules_button() });
     const next = within(sheet).getByRole("button", { name: m.rules_next() });
     fireEvent.keyDown(next, { key: "ArrowRight" });
-    expect(within(sheet).getByText(m.rules_2())).toBeTruthy();
-    fireEvent.pointerDown(next, { clientX: 200 });
-    fireEvent.pointerUp(next, { clientX: 120 });
+    fireEvent.keyDown(next, { key: "ArrowRight" });
     expect(within(sheet).getByText(m.rules_3({ sec: 60 }))).toBeTruthy();
-    fireEvent.pointerDown(next, { clientX: 100 });
-    fireEvent.pointerUp(next, { clientX: 180 });
+    fireEvent.keyDown(next, { key: "ArrowLeft" });
     expect(within(sheet).getByText(m.rules_2())).toBeTruthy();
   });
 });

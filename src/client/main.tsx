@@ -2,6 +2,7 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
+import { MotionRoot } from "./ui/motion";
 import "./ui/tokens.css";
 import "./ui/ui.css";
 
@@ -19,14 +20,18 @@ if (import.meta.env.DEV && location.pathname === "/__screens") {
   void import("./dev/ScreenGallery").then(({ ScreenGallery }) =>
     root.render(
       <StrictMode>
-        <ScreenGallery />
+        <MotionRoot>
+          <ScreenGallery />
+        </MotionRoot>
       </StrictMode>,
     ),
   );
 } else {
   root.render(
     <StrictMode>
-      <RouterProvider router={router} />
+      <MotionRoot>
+        <RouterProvider router={router} />
+      </MotionRoot>
     </StrictMode>,
   );
 }

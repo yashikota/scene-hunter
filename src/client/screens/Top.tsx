@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { isLocale, LOCALE_NAMES, LOCALES, type Locale } from "../../shared/locales";
 import { createAndSave, findRoom, isRoomFound } from "../game/membership";
+import * as mo from "motion/react-m";
 import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
@@ -139,7 +140,19 @@ function TopForm({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-        <img src="/camera.webp" alt="" width={112} height={112} />
+        <mo.img
+          src="/camera.webp"
+          alt=""
+          width={112}
+          height={112}
+          initial={{ scale: 0, rotate: -25 }}
+          animate={{ scale: 1, rotate: 0, y: [0, -6, 0] }}
+          transition={{
+            scale: { type: "spring", stiffness: 300, damping: 12 },
+            rotate: { type: "spring", stiffness: 300, damping: 12 },
+            y: { duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 0.8 },
+          }}
+        />
         <h1 className="sh-display sh-brand" style={{ fontSize: 34, letterSpacing: "0.02em" }}>
           {m.app_name()}
         </h1>

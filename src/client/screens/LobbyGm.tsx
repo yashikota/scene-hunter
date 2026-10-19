@@ -1,3 +1,5 @@
+import { AnimatePresence } from "motion/react";
+import * as mo from "motion/react-m";
 import { useRef, useState } from "react";
 import { activePlayers } from "../game/playerView";
 import { m } from "../paraglide/messages";
@@ -19,6 +21,12 @@ export interface LobbyMember {
   left?: boolean;
 }
 
+/** 参加者の札は、はずみながら出す。 */
+const TILE_IN = {
+  initial: { opacity: 0, scale: 0.5 },
+  animate: { opacity: 1, scale: 1 },
+  transition: { type: "spring", stiffness: 500, damping: 20 },
+} as const;
 /** 通信が切れたらしい人と出た人に添える「通信なし」「退出」。 */
 export const AwayNote = ({ p }: { p: { away?: boolean; left?: boolean } }) =>
   p.left || p.away ? (
@@ -49,19 +57,29 @@ export function PlayerTiles({
         </span>
       </div>
       <ul className="sh-tiles">
-        <li className="sh-tile sh-tile--gm">{m.gm_tag({ name: gmName })}</li>
-        {players.map((p) =>
-          p.pid === meId ? (
-            <li key={p.pid} className="sh-tile sh-tile--me">
-              {m.you_tag({ name: p.label })}
-            </li>
-          ) : (
-            <li key={p.pid} className={`sh-tile ${p.away || p.left ? "sh-tile--away" : ""}`}>
-              {p.label}
-              <AwayNote p={p} />
-            </li>
-          ),
-        )}
+        <mo.li className="sh-tile sh-tile--gm" {...TILE_IN}>
+          {m.gm_tag({ name: gmName })}
+        </mo.li>
+        <AnimatePresence mode="popLayout">
+          {players.map((p) => (
+            <mo.li
+              key={p.pid}
+              layout
+              {...TILE_IN}
+              exit={{ opacity: 0, scale: 0.4, transition: { duration: 0.2 } }}
+              className={`sh-tile ${p.pid === meId ? "sh-tile--me" : p.away || p.left ? "sh-tile--away" : ""}`}
+            >
+              {p.pid === meId ? (
+                m.you_tag({ name: p.label })
+              ) : (
+                <>
+                  {p.label}
+                  <AwayNote p={p} />
+                </>
+              )}
+            </mo.li>
+          ))}
+        </AnimatePresence>
       </ul>
     </section>
   );
@@ -196,44 +214,43 @@ export function LobbyGm({
         </div>
       </div>
 
-      {confirming && (
-        <Sheet title={m.dissolve_confirm()} onCancel={() => setConfirming(false)}>
-          <div className="sh-row sh-row--even">
-            <Button variant="quiet" onClick={() => setConfirming(false)} autoFocus>
-              {m.cancel()}
-            </Button>
-            <Button variant="primary" onClick={onDissolve}>
-              {m.dissolve_button()}
-            </Button>
-          </div>
-        </Sheet>
-      )}
-      {choosing && (
-        <TransferSheet
-          players={active}
-          busy={transferring}
-          onPick={transfer}
-          onCancel={() => setChoosing(false)}
-        />
-      )}
+      <Sheet open={confirming} title={m.dissolve_confirm()} onCancel={() => setConfirming(false)}>
+        <div className="sh-row sh-row--even">
+          <Button variant="quiet" onClick={() => setConfirming(false)} autoFocus>
+            {m.cancel()}
+          </Button>
+          <Button variant="primary" onClick={onDissolve}>
+            {m.dissolve_button()}
+          </Button>
+        </div>
+      </Sheet>
+      <TransferSheet
+        open={choosing}
+        players={active}
+        busy={transferring}
+        onPick={transfer}
+        onCancel={() => setChoosing(false)}
+      />
     </Screen>
   );
 }
 
 /** GM を渡す相手を選ぶシート。 */
 function TransferSheet({
+  open,
   players,
   busy,
   onPick,
   onCancel,
 }: {
+  open: boolean;
   players: readonly LobbyMember[];
   busy: boolean;
   onPick(pid: string): void;
   onCancel(): void;
 }) {
   return (
-    <Sheet title={m.transfer_title()} busy={busy} onCancel={onCancel}>
+    <Sheet open={open} title={m.transfer_title()} busy={busy} onCancel={onCancel}>
       <ul
         style={{
           listStyle: "none",

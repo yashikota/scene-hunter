@@ -1,4 +1,6 @@
+import * as mo from "motion/react-m";
 import { m } from "../paraglide/messages";
+import { SPRING } from "../ui/motion";
 import { HINT_COUNT, HINT_INTERVAL_SEC, HINT_TIMELINE_SEC, hintTimeline } from "./turnTime";
 
 export interface HintListProps {
@@ -52,12 +54,26 @@ export function HintList({ hints, shown, turnStartedLocalAt, now }: HintListProp
           const text = hints[i];
           const locked = i >= shown;
           return (
-            <li key={i} className={locked ? "sh-hint sh-hint--locked" : "sh-hint"}>
-              <span className="sh-hint-no">{i + 1}</span>
+            // 公開された瞬間に作り直し、横から飛び込ませる
+            <mo.li
+              key={`${i}-${locked}`}
+              className={locked ? "sh-hint sh-hint--locked" : "sh-hint"}
+              initial={locked ? false : { opacity: 0, x: -24, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={SPRING}
+            >
+              <mo.span
+                className="sh-hint-no"
+                initial={locked ? false : { rotate: -180, scale: 0.3 }}
+                animate={{ rotate: 0, scale: 1 }}
+                transition={{ ...SPRING, delay: 0.08 }}
+              >
+                {i + 1}
+              </mo.span>
               {text !== undefined && (
                 <span className={locked ? "sh-hint-preview" : undefined}>{text}</span>
               )}
-            </li>
+            </mo.li>
           );
         })}
       </ol>

@@ -1,10 +1,14 @@
 import type { Total } from "../../shared/protocol";
+import * as mo from "motion/react-m";
+import { useEffect } from "react";
 import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
 import { formatNumber } from "../ui/format";
 import { Screen } from "../ui/Screen";
 import { TopBar } from "../ui/TopBar";
 import { RoomBadge } from "../ui/RoomCode";
+import { celebrate } from "../ui/confetti";
+import { CountUp, SMOOTH, SPRING, useStill } from "../ui/motion";
 import type { RevealPlayer } from "./ResultsReveal";
 
 export interface FinalProps {
@@ -19,12 +23,14 @@ export interface FinalProps {
   onLeave(): void;
 }
 
-// 表彰台は 2・1・3 の順に並べる。高さは 1 位が一番高い。
+// 表彰台は 2・1・3 の順に並べる。高さは 1 位が一番高い。台は 3 位、2 位、1 位の順に伸ばす（at は秒）。
 const PODIUM = [
-  { index: 1, height: 96, bg: "var(--color-surface)" },
-  { index: 0, height: 128, bg: "var(--color-gold)" },
-  { index: 2, height: 72, bg: "var(--color-surface)" },
+  { index: 1, height: 96, bg: "var(--color-surface)", at: 1.0 },
+  { index: 0, height: 128, bg: "var(--color-gold)", at: 1.9 },
+  { index: 2, height: 72, bg: "var(--color-surface)", at: 0.3 },
 ] as const;
+/** 1 位の台が伸びきって、紙吹雪を出すまでの秒数。 */
+const CHAMPION_AT = 2.5;
 
 /** 最終結果：上位 3 人の表彰台と、それ以降の順位。 */
 export function Final({
@@ -44,12 +50,27 @@ export function Final({
     return pid === mePid ? m.you_tag({ name: label }) : label;
   };
   const rest = totals.slice(3);
+  const still = useStill();
+  const at = (sec: number) => (still ? 0 : sec);
+  useEffect(() => {
+    let stop = () => {};
+    const id = setTimeout(() => (stop = celebrate(3600)), CHAMPION_AT * 1000);
+    return () => {
+      clearTimeout(id);
+      stop();
+    };
+  }, []);
   return (
     <Screen>
       <TopBar left={m.rounds_done({ rounds })} right={<RoomBadge code={code} />} />
-      <h1 className="sh-display" style={{ fontSize: 28, textAlign: "center" }}>
+      <mo.h1
+        className="sh-display sh-final-title"
+        initial={{ scale: 0.3, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 380, damping: 14 }}
+      >
         {m.final_title()}
-      </h1>
+      </mo.h1>
 
       <ol
         aria-label={m.final_title()}
@@ -63,7 +84,7 @@ export function Final({
           listStyle: "none",
         }}
       >
-        {PODIUM.map(({ index, height, bg }) => {
+        {PODIUM.map(({ index, height, bg, at: rise }) => {
           const t = totals[index];
           if (!t) return <li key={index} aria-hidden="true" />;
           return (
@@ -78,18 +99,57 @@ export function Final({
                 minWidth: 0,
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 800, overflowWrap: "anywhere" }}>
+              {index === 0 && (
+                <mo.svg
+                  viewBox="0 0 40 26"
+                  width={40}
+                  height={26}
+                  aria-hidden="true"
+                  className="sh-crown"
+                  initial={{ y: -60, opacity: 0, rotate: -30 }}
+                  animate={{ y: 0, opacity: 1, rotate: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 12,
+                    delay: at(CHAMPION_AT),
+                  }}
+                >
+                  <path d="M3 22 L6 6 L14 14 L20 3 L26 14 L34 6 L37 22 Z" />
+                  <circle cx={20} cy={3} r={2.5} />
+                  <circle cx={6} cy={6} r={2.5} />
+                  <circle cx={34} cy={6} r={2.5} />
+                </mo.svg>
+              )}
+              <mo.span
+                style={{ fontSize: 14, fontWeight: 800, overflowWrap: "anywhere" }}
+                initial={{ opacity: 0, y: -14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...SPRING, delay: at(rise + 0.35) }}
+              >
                 {name(t.pid)}
-              </span>
-              <span
+              </mo.span>
+              <mo.span
                 className="sh-display"
                 style={{ fontSize: 18, fontVariantNumeric: "tabular-nums" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: at(rise) }}
               >
-                {formatNumber(t.total)}
-              </span>
-              <div
-                className="sh-display"
+                <CountUp
+                  from={0}
+                  to={t.total}
+                  delay={at(rise)}
+                  duration={0.9}
+                  format={formatNumber}
+                />
+              </mo.span>
+              <mo.div
+                className={`sh-display sh-podium ${index === 0 ? "sh-podium--1" : ""}`}
                 aria-label={m.rank_label({ rank: t.rank })}
+                initial={{ scaleY: 0 }}
+                animate={{ scaleY: 1 }}
+                transition={{ type: "spring", stiffness: 220, damping: 16, delay: at(rise) }}
                 style={{
                   width: "100%",
                   height,
@@ -105,15 +165,18 @@ export function Final({
                 }}
               >
                 {t.rank}
-              </div>
+              </mo.div>
             </li>
           );
         })}
       </ol>
 
       {rest.length > 0 && (
-        <ol
+        <mo.ol
           start={4}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...SMOOTH, delay: at(CHAMPION_AT + 0.4) }}
           style={{
             display: "grid",
             gridTemplateColumns: "28px minmax(0, 1fr) auto",
@@ -137,10 +200,15 @@ export function Final({
               <span>{formatNumber(t.total)}</span>
             </li>
           ))}
-        </ol>
+        </mo.ol>
       )}
 
-      <div className="sh-actions">
+      <mo.div
+        className="sh-actions"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...SMOOTH, delay: at(CHAMPION_AT + 0.6) }}
+      >
         {isGm ? (
           <Button variant="primary" onClick={onBackToLobby}>
             {m.back_to_lobby()}
@@ -159,7 +227,7 @@ export function Final({
             </Button>
           </>
         )}
-      </div>
+      </mo.div>
     </Screen>
   );
 }

@@ -1,3 +1,4 @@
+import * as mo from "motion/react-m";
 import { m } from "../paraglide/messages";
 import { Card } from "../ui/Card";
 import { Screen } from "../ui/Screen";
@@ -38,9 +39,12 @@ export function PlayerSubmitted({
         }
       />
       <div role="status" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span
+        <mo.span
           className="sh-icon-tile"
           aria-hidden="true"
+          initial={{ scale: 0, rotate: -120 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 400, damping: 14 }}
           style={{
             width: 48,
             height: 48,
@@ -50,37 +54,43 @@ export function PlayerSubmitted({
           }}
         >
           ✓
-        </span>
+        </mo.span>
         <h1 className="sh-display" style={{ fontSize: 24 }}>
           {m.sent_title()}
         </h1>
       </div>
-      <Card raised style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12 }}>
-        <div
-          style={{
-            aspectRatio: "4 / 3",
-            borderRadius: "var(--radius-sm)",
-            border: "var(--border)",
-            background: "var(--color-bg)",
-            overflow: "hidden",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {photoUrl ? (
-            <img
-              src={photoUrl}
-              alt={m.your_photo()}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            <span className="sh-sub" style={{ fontSize: 13 }}>
-              {m.your_photo()}
-            </span>
-          )}
-        </div>
-      </Card>
+      <mo.div
+        initial={{ y: -40, rotate: -8, opacity: 0 }}
+        animate={{ y: 0, rotate: -1.5, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 15, delay: 0.1 }}
+      >
+        <Card raised style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12 }}>
+          <div
+            style={{
+              aspectRatio: "4 / 3",
+              borderRadius: "var(--radius-sm)",
+              border: "var(--border)",
+              background: "var(--color-bg)",
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={m.your_photo()}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <span className="sh-sub" style={{ fontSize: 13 }}>
+                {m.your_photo()}
+              </span>
+            )}
+          </div>
+        </Card>
+      </mo.div>
       <Card style={{ display: "flex", flexDirection: "column", gap: 8, padding: "12px 16px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800 }}>
           <span>{m.everyone_submitted()}</span>

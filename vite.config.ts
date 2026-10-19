@@ -40,6 +40,7 @@ export default defineConfig({
   },
   test: {
     include: ["tests/unit/**/*.test.{ts,tsx}"],
+    setupFiles: ["tests/unit/setup.ts"],
     // 画面のテスト（happy-dom）で Google Fonts の CSS を取りに行かない
     environmentOptions: {
       happyDOM: {
