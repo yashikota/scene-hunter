@@ -751,6 +751,14 @@ body {
   stroke: var(--color-ink);
   stroke-width: 1.5;
 }
+.ra-mtn--far {
+  fill: #b48ad8;
+}
+.ra-sea {
+  fill: #4f97e8;
+  stroke: var(--color-ink);
+  stroke-width: 1.5;
+}
 .ra-frame {
   fill: none;
   stroke: var(--color-ink);

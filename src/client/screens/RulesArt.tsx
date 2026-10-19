@@ -24,7 +24,12 @@ function useFrame(count: number, last = count - 1): number {
 
 const on = (shown: boolean) => (shown ? "ra-on" : "ra-off");
 
-/** 山と太陽の景色の写真。 */
+/**
+ * 景色の写真。scene はお題（topic）との似かた：near は少しずれた同じ山、far は別の山、sea は海。
+ * 遊び方の 4 つめで、お題に近い順に選ぶ様子を見せるのに使う。
+ */
+type Scene = "topic" | "near" | "far" | "sea";
+
 function Photo({
   x,
   y,
@@ -32,6 +37,7 @@ function Photo({
   h,
   className,
   framed = true,
+  scene = "topic",
 }: {
   x: number;
   y: number;
@@ -39,15 +45,37 @@ function Photo({
   h: number;
   className?: string;
   framed?: boolean;
+  scene?: Scene;
 }) {
+  const at = (px: number, py: number) => `${x + w * px} ${y + h * py}`;
+  const sun = { topic: [0.74, 0.3], near: [0.62, 0.36], far: [0.24, 0.28], sea: [0.5, 0.56] }[
+    scene
+  ];
   return (
     <g className={className}>
       <rect x={x} y={y} width={w} height={h} rx={6} className="ra-sky" />
-      <circle cx={x + w * 0.74} cy={y + h * 0.3} r={h * 0.13} className="ra-sun" />
-      <path
-        d={`M${x + 2} ${y + h - 2} L${x + w * 0.34} ${y + h * 0.42} L${x + w * 0.54} ${y + h * 0.7} L${x + w * 0.7} ${y + h * 0.56} L${x + w - 2} ${y + h - 2} Z`}
-        className="ra-mtn"
-      />
+      <circle cx={x + w * sun[0]} cy={y + h * sun[1]} r={h * 0.13} className="ra-sun" />
+      {scene === "topic" && (
+        <path
+          d={`M${at(0, 1)} L${at(0.34, 0.42)} L${at(0.54, 0.7)} L${at(0.7, 0.56)} L${at(1, 1)} Z`}
+          className="ra-mtn"
+        />
+      )}
+      {scene === "near" && (
+        <path
+          d={`M${at(0, 1)} L${at(0.42, 0.48)} L${at(0.6, 0.74)} L${at(0.78, 0.6)} L${at(1, 0.9)} L${at(1, 1)} Z`}
+          className="ra-mtn"
+        />
+      )}
+      {scene === "far" && (
+        <path d={`M${at(0, 1)} L${at(0.56, 0.36)} L${at(1, 1)} Z`} className="ra-mtn ra-mtn--far" />
+      )}
+      {scene === "sea" && (
+        <path
+          d={`M${at(0, 0.62)} Q${at(0.25, 0.56)} ${at(0.5, 0.62)} T${at(1, 0.62)} V${y + h - 6} Q${at(1, 1)} ${x + w - 6} ${y + h} H${x + 6} Q${at(0, 1)} ${x} ${y + h - 6} Z`}
+          className="ra-sea"
+        />
+      )}
       {framed && <rect x={x} y={y} width={w} height={h} rx={6} className="ra-frame" />}
     </g>
   );
@@ -174,20 +202,30 @@ function Hunt() {
 /** 4. GM が近い順に 3 枚を選ぶ。 */
 function Pick() {
   const f = useFrame(7, 5);
-  const medal = [2, 0, 3, 1];
+  // 写真ごとのお題との似かたと、付く順位（0 は選ばれない）
+  const shots: { scene: Scene; rank: number }[] = [
+    { scene: "far", rank: 3 },
+    { scene: "topic", rank: 1 },
+    { scene: "sea", rank: 0 },
+    { scene: "near", rank: 2 },
+  ];
   return (
     <>
-      {[0, 1, 2, 3].map((i) => {
-        const rank = medal[i];
+      <Photo x={8} y={40} w={46} h={58} />
+      <rect x={8} y={40} width={46} height={58} rx={6} className="ra-frame ra-frame--gold" />
+      <path d="M61 30 V116" className="ra-stroke ra-dash" />
+      {shots.map(({ scene, rank }, i) => {
+        const x = 68 + i * 43;
+        // 1 位、2 位、3 位の順に付ける
         const shown = rank > 0 && f >= rank;
         return (
-          <g key={i} className={f >= 4 && rank === 0 ? "ra-dim" : ""}>
+          <g key={scene} className={f >= 4 && rank === 0 ? "ra-dim" : ""}>
             <g className={shown ? "ra-lift" : "ra-rest"}>
-              <Photo x={14 + i * 56} y={46} w={46} h={58} />
+              <Photo x={x} y={56} w={38} h={48} scene={scene} />
             </g>
             <g className={`ra-pop ${on(shown)}`}>
-              <circle cx={37 + i * 56} cy={36} r={13} className={`ra-medal ra-medal--${rank}`} />
-              <text x={37 + i * 56} y={41} className="ra-num">
+              <circle cx={x + 19} cy={42} r={11} className={`ra-medal ra-medal--${rank}`} />
+              <text x={x + 19} y={47} className="ra-num">
                 {rank}
               </text>
             </g>

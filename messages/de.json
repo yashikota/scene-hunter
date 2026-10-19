@@ -150,12 +150,12 @@
   "rules_button": "Spielregeln",
   "rules_next": "Weiter",
   "rules_prev": "Zurück",
-  "rules_1": "Der GM macht ein Foto als Aufgabe",
+  "rules_1": "Der Game Master (GM) macht ein Foto als Aufgabe",
   "rules_2": "Alle 10 Sekunden kommt ein KI-Hinweis dazu (bis zu 5)",
   "rules_3": "Finde dieselbe Szene, fotografiere sie und reiche sie in {sec} Sekunden ein. Vor dem Einreichen kannst du neu aufnehmen",
-  "rules_4": "Der GM wählt die 3 ähnlichsten Fotos der Reihe nach",
+  "rules_4": "Der Game Master (GM) wählt die 3 ähnlichsten Fotos der Reihe nach",
   "rules_5": "1. Platz 1000, 2. Platz 700, 3. Platz 400 Punkte. Je später du einreichst, desto weniger, am Ende nur die Hälfte",
   "rules_6": "Wirst du mehrmals hintereinander gewählt, gibt es jedes Mal +100 (bis zu +500)",
-  "rules_7": "Die höchste Summe nach {rounds} Runden gewinnt. Der GM bekommt keine Punkte",
+  "rules_7": "Die höchste Summe nach {rounds} Runden gewinnt. Der Game Master (GM) bekommt keine Punkte",
   "close": "Schließen"
 }

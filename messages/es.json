@@ -150,12 +150,12 @@
   "rules_button": "Cómo jugar",
   "rules_next": "Siguiente",
   "rules_prev": "Atrás",
-  "rules_1": "El GM toma una foto como tema",
+  "rules_1": "El máster del juego (GM) toma una foto como tema",
   "rules_2": "Las pistas de la IA aparecen cada 10 segundos (hasta 5)",
   "rules_3": "Encuentra la misma escena, fotografíala y envíala en {sec} segundos. Puedes repetirla antes de enviar",
-  "rules_4": "El GM elige las 3 fotos más parecidas, en orden",
+  "rules_4": "El máster del juego (GM) elige las 3 fotos más parecidas, en orden",
   "rules_5": "1.º 1000, 2.º 700, 3.º 400 puntos. Cuanto más tarde envíes, menos puntos, hasta la mitad al final",
   "rules_6": "Si te eligen seguido, +100 cada vez (hasta +500)",
-  "rules_7": "Gana el mayor total tras {rounds} rondas. El GM no suma puntos",
+  "rules_7": "Gana el mayor total tras {rounds} rondas. El máster del juego (GM) no suma puntos",
   "close": "Cerrar"
 }

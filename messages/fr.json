@@ -150,12 +150,12 @@
   "rules_button": "Règles du jeu",
   "rules_next": "Suivant",
   "rules_prev": "Retour",
-  "rules_1": "Le GM prend une photo comme sujet",
+  "rules_1": "Le maître du jeu (GM) prend une photo comme sujet",
   "rules_2": "Les indices de l’IA arrivent toutes les 10 secondes (5 au maximum)",
   "rules_3": "Trouvez la même scène, photographiez-la et envoyez-la en {sec} secondes. Vous pouvez reprendre la photo avant l’envoi",
-  "rules_4": "Le GM choisit les 3 photos les plus proches, dans l’ordre",
+  "rules_4": "Le maître du jeu (GM) choisit les 3 photos les plus proches, dans l’ordre",
   "rules_5": "1er 1000, 2e 700, 3e 400 points. Plus vous envoyez tard, moins vous gagnez, jusqu’à la moitié à la fin",
   "rules_6": "Choisi plusieurs fois de suite : +100 à chaque fois (jusqu’à +500)",
-  "rules_7": "Le meilleur total après {rounds} manches gagne. Le GM ne marque pas de points",
+  "rules_7": "Le meilleur total après {rounds} manches gagne. Le maître du jeu (GM) ne marque pas de points",
   "close": "Fermer"
 }

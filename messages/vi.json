@@ -132,12 +132,12 @@
   "rules_button": "Cách chơi",
   "rules_next": "Tiếp",
   "rules_prev": "Quay lại",
-  "rules_1": "GM chụp một bức ảnh làm đề",
+  "rules_1": "Quản trò (GM) chụp một bức ảnh làm đề",
   "rules_2": "Gợi ý của AI hiện thêm mỗi 10 giây (tối đa 5)",
   "rules_3": "Tìm cùng khung cảnh, chụp và nộp trong {sec} giây. Có thể chụp lại trước khi nộp",
-  "rules_4": "GM chọn 3 ảnh giống nhất theo thứ tự",
+  "rules_4": "Quản trò (GM) chọn 3 ảnh giống nhất theo thứ tự",
   "rules_5": "Hạng 1: 1000, hạng 2: 700, hạng 3: 400 điểm. Nộp càng muộn càng ít điểm, đến cuối chỉ còn một nửa",
   "rules_6": "Được chọn liên tiếp: +100 mỗi lần (tối đa +500)",
-  "rules_7": "Tổng điểm cao nhất sau {rounds} vòng sẽ thắng. GM không được tính điểm",
+  "rules_7": "Tổng điểm cao nhất sau {rounds} vòng sẽ thắng. Quản trò (GM) không được tính điểm",
   "close": "Đóng"
 }

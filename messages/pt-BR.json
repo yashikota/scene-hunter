@@ -150,12 +150,12 @@
   "rules_button": "Como jogar",
   "rules_next": "Próximo",
   "rules_prev": "Voltar",
-  "rules_1": "O GM tira uma foto como tema",
+  "rules_1": "O mestre do jogo (GM) tira uma foto como tema",
   "rules_2": "Dicas da IA aparecem a cada 10 segundos (até 5)",
   "rules_3": "Encontre a mesma cena, fotografe e envie em {sec} segundos. Dá para refazer antes de enviar",
-  "rules_4": "O GM escolhe as 3 fotos mais parecidas, em ordem",
+  "rules_4": "O mestre do jogo (GM) escolhe as 3 fotos mais parecidas, em ordem",
   "rules_5": "1º 1000, 2º 700, 3º 400 pontos. Quanto mais tarde enviar, menos pontos, até a metade no fim",
   "rules_6": "Escolhido em sequência: +100 a cada vez (até +500)",
-  "rules_7": "Vence o maior total após {rounds} rodadas. O GM não pontua",
+  "rules_7": "Vence o maior total após {rounds} rodadas. O mestre do jogo (GM) não pontua",
   "close": "Fechar"
 }

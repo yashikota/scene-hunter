@@ -150,12 +150,12 @@
   "rules_button": "How to play",
   "rules_next": "Next",
   "rules_prev": "Back",
-  "rules_1": "The GM takes a photo as the topic",
+  "rules_1": "The Game Master (GM) takes a photo as the topic",
   "rules_2": "AI hints appear every 10 seconds (up to 5)",
   "rules_3": "Find the same scene, shoot it and submit within {sec} seconds. You can retake before submitting",
-  "rules_4": "The GM picks the 3 closest photos in order",
+  "rules_4": "The Game Master (GM) picks the 3 closest photos in order",
   "rules_5": "1st 1000, 2nd 700, 3rd 400 points. The later you submit, the fewer you get, down to half at the buzzer",
   "rules_6": "Get picked in a row for +100 each time (up to +500)",
-  "rules_7": "Highest total after {rounds} rounds wins. The GM scores no points",
+  "rules_7": "Highest total after {rounds} rounds wins. The Game Master (GM) scores no points",
   "close": "Close"
 }
