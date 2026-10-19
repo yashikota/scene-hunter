@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { isLocale, LOCALE_NAMES, LOCALES, type Locale } from "../../shared/locales";
+import type { Locale } from "../../shared/locales";
 import { createAndSave, findRoom, isRoomFound } from "../game/membership";
 import * as mo from "motion/react-m";
 import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
+import { LanguageSelect } from "../ui/LanguageSelect";
 import { isSupportedBrowser, useBrowserLocale } from "../ui/locale";
 import { Screen } from "../ui/Screen";
 import { CODE_RE, errorMessage } from "./entryErrors";
@@ -107,36 +108,7 @@ function TopForm({
   return (
     <Screen variant="top">
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <label
-          style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 800 }}
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="9" />
-            <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
-          </svg>
-          <span className="sh-sr-only">{m.language_label()}</span>
-          <select
-            className="sh-select"
-            value={locale}
-            onChange={(e) => isLocale(e.target.value) && onLocale(e.target.value)}
-          >
-            {LOCALES.map((l) => (
-              <option key={l} value={l} lang={l}>
-                {LOCALE_NAMES[l]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <LanguageSelect locale={locale} onLocale={onLocale} />
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
@@ -206,6 +178,9 @@ function TopForm({
       <Button onClick={() => setStatus("naming")} disabled={checking}>
         {m.create_button()}
       </Button>
+      <a href="/lp" className="sh-link">
+        {m.lp_link()}
+      </a>
     </Screen>
   );
 }

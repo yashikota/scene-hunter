@@ -1110,3 +1110,379 @@ body {
     transition: none !important;
   }
 }
+
+/* 文の中の控えめなリンク（トップから紹介のページへ）。 */
+.sh-link {
+  align-self: center;
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 800;
+  text-underline-offset: 3px;
+}
+
+/* 紹介のページ（/lp）。ゲームの画面より広く使い、広い画面では 2 列にする。 */
+.lp {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 12px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  overflow-x: clip;
+}
+.lp-header .sh-topbar-brand {
+  white-space: nowrap;
+}
+.lp-header .sh-select {
+  max-width: 150px;
+}
+.lp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.lp-hero {
+  position: relative;
+  display: grid;
+  gap: 28px;
+  align-items: center;
+  padding-top: 12px;
+}
+@media (min-width: 820px) {
+  .lp-hero {
+    grid-template-columns: 1.1fr 1fr;
+    padding-top: 40px;
+  }
+}
+.lp-hero-text {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+}
+.lp-title {
+  margin: 0;
+  font-size: clamp(38px, 9vw, 64px);
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-shadow: 3px 3px 0 var(--color-gold);
+}
+.lp-tagline {
+  margin: 0;
+  max-width: 34em;
+  font-size: 17px;
+  font-weight: 800;
+}
+.lp-hero-art {
+  position: relative;
+  padding: 12px;
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 6px 6px 0 var(--color-ink);
+}
+.lp-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.lp-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 240px;
+  font-size: 22px;
+  padding: 18px 32px;
+  box-shadow: 4px 4px 0 var(--color-ink);
+  text-decoration: none;
+}
+.lp-cta .sh-sub {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* 飾りの丸。ゆっくり上下に漂う。 */
+.lp-floaters {
+  position: absolute;
+  inset: -20px 0;
+  pointer-events: none;
+}
+.lp-floater {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: var(--border);
+  border-radius: 50%;
+  animation: lp-float 5s ease-in-out infinite alternate;
+}
+.lp-floater--0 {
+  left: 4%;
+  top: 12%;
+}
+.lp-floater--1 {
+  left: 16%;
+  top: 70%;
+  width: 12px;
+  height: 12px;
+  animation-delay: -1.5s;
+}
+.lp-floater--2 {
+  left: 44%;
+  top: 2%;
+  width: 10px;
+  height: 10px;
+  animation-delay: -3s;
+}
+.lp-floater--3 {
+  right: 6%;
+  top: 8%;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  animation-delay: -2s;
+}
+.lp-floater--4 {
+  right: 3%;
+  bottom: 6%;
+  width: 22px;
+  height: 22px;
+  animation-delay: -4s;
+}
+.lp-floater--5 {
+  left: 8%;
+  bottom: 30%;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  animation-delay: -0.7s;
+}
+@keyframes lp-float {
+  from {
+    transform: translateY(-10px) rotate(-15deg);
+  }
+  to {
+    transform: translateY(12px) rotate(25deg);
+  }
+}
+
+.lp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.lp-h2 {
+  font-size: clamp(26px, 6vw, 36px);
+  text-align: center;
+}
+.lp-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+.lp-step {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+.lp-step-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display), sans-serif;
+  font-weight: var(--font-display-weight);
+  font-size: 19px;
+}
+.lp-step-text {
+  margin: 0;
+  font-size: 15px;
+  color: var(--color-sub);
+  font-weight: 800;
+}
+
+.lp-card {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.lp-lead {
+  margin: 0;
+  font-weight: 800;
+}
+.lp-score {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.lp-score-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 800;
+}
+.lp-score-slider span {
+  display: flex;
+  justify-content: space-between;
+  font-variant-numeric: tabular-nums;
+}
+.lp-score-slider input {
+  width: 100%;
+  accent-color: var(--color-timer);
+}
+.lp-mult {
+  font-family: var(--font-display), sans-serif;
+  color: var(--color-timer);
+}
+/* 順位の名前の幅は言語で変わるので、3 行で 1 つの格子を共有してバーの左端をそろえる。 */
+.lp-score-bars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  gap: 10px;
+  align-items: center;
+  font-weight: 800;
+}
+.lp-score-bars li {
+  display: contents;
+}
+.lp-score-track {
+  height: 26px;
+  background: var(--color-bg);
+  border: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.lp-score-fill {
+  display: block;
+  height: 100%;
+  border-right: var(--border);
+}
+.lp-score-fill--1 {
+  background: var(--color-gold);
+}
+.lp-score-fill--2 {
+  background: #dfe4ea;
+}
+.lp-score-fill--3 {
+  background: #f2b98a;
+}
+.lp-score-pts {
+  text-align: right;
+  font-family: var(--font-display), sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.lp-streak {
+  border-top: 2px dashed var(--color-ink);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lp-streak p {
+  margin: 0;
+  font-weight: 800;
+}
+.lp-streak-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.lp-streak-chip {
+  font-family: var(--font-display), sans-serif;
+  background: var(--color-accent);
+  border: var(--border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  box-shadow: 2px 2px 0 var(--color-ink);
+}
+
+.lp-features {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.lp-feature {
+  padding: 18px;
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lp-feature h3 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-weight: var(--font-display-weight);
+  font-size: 18px;
+}
+.lp-feature p {
+  margin: 0;
+  color: var(--color-sub);
+  font-weight: 800;
+  font-size: 14px;
+}
+.lp-feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: var(--color-gold);
+  border: var(--border);
+  border-radius: 14px;
+  box-shadow: 2px 2px 0 var(--color-ink);
+}
+.lp-feature:nth-child(2n) .lp-feature-icon {
+  background: var(--color-accent);
+}
+
+.lp-final {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  padding: 36px 16px;
+  background: var(--color-gold);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 6px 6px 0 var(--color-ink);
+}
+.lp-final h2 {
+  font-size: clamp(24px, 6vw, 34px);
+}
+.lp-final .sh-sub {
+  color: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-floater {
+    animation: none;
+  }
+}
