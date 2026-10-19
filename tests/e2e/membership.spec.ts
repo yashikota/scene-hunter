@@ -80,3 +80,39 @@ test("ロビーで GM を渡すと、渡した先が GM になり、前の GM �
     await closeAll([gm, alice, bob]);
   }
 });
+
+test("ロビーで名前を変えると、ほかの人の画面にも新しい名前で出て、再読み込みしても残る", async ({
+  browser,
+}) => {
+  const gm = await newPerson(browser, "ジーエム");
+  const alice = await newPerson(browser, "アリス");
+  const rename = async (page: (typeof gm)["page"], name: string) => {
+    await page.getByRole("button", { name: "名前を変える" }).click();
+    const sheet = page.getByRole("dialog", { name: "自分の名前を変える" });
+    await sheet.getByPlaceholder("自分の名前").fill(name);
+    await sheet.getByRole("button", { name: "変更する" }).click();
+    await expect(sheet).toHaveCount(0);
+  };
+  try {
+    const code = await createRoom(gm);
+    await joinByCode(alice, code);
+    await expectLobbyCount(gm, 2);
+
+    await rename(alice.page, "アリサ");
+    await expect(alice.page.getByText("アリサ（あなた）")).toBeVisible();
+    await expect(gm.page.locator(".sh-tile", { hasText: "アリサ" })).toBeVisible();
+    await expect(gm.page.locator(".sh-tile", { hasText: "アリス" })).toHaveCount(0);
+
+    await rename(gm.page, "ゲームマスター");
+    await expect(gm.page.getByText("ゲームマスター（GM）")).toBeVisible();
+    await expect(alice.page.getByText("ゲームマスター（GM）")).toBeVisible();
+
+    // 名前は取り直した参加証と一緒に保存してあるので、再読み込みしても新しい名前のまま
+    await alice.page.reload();
+    await expect(alice.page.getByText("アリサ（あなた）")).toBeVisible();
+    await expectLobbyCount(gm, 2);
+    await expect(gm.page.locator(".sh-tile", { hasText: "アリサ" })).toBeVisible();
+  } finally {
+    await closeAll([gm, alice]);
+  }
+});

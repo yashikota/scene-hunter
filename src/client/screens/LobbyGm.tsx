@@ -10,6 +10,7 @@ import { copyText, useCopied } from "../ui/copy";
 import { RoomCode } from "../ui/RoomCode";
 import { Sheet } from "../ui/Sheet";
 import { TopBar } from "../ui/TopBar";
+import { RenameButton } from "./Rename";
 import { RulesButton } from "./Rules";
 
 export interface LobbyMember {
@@ -94,6 +95,8 @@ export interface LobbyGmProps {
   onStart(): void;
   onTransfer(pid: string): Promise<void>;
   onDissolve(): void;
+  /** 自分（GM）の名前を変える。 */
+  onRename(name: string): Promise<void>;
 }
 
 /** 共有するリンク。開くと番号が入ったトップになる。 */
@@ -108,6 +111,7 @@ export function LobbyGm({
   onStart,
   onTransfer,
   onDissolve,
+  onRename,
 }: LobbyGmProps) {
   const [choosing, setChoosing] = useState(false);
   const [transferring, setTransferring] = useState(false);
@@ -178,7 +182,10 @@ export function LobbyGm({
       >
         {m.rounds_chip({ count: rounds })} · {m.seconds({ count: limitSec })}
       </p>
-      <RulesButton rounds={rounds} limitSec={limitSec} />
+      <div className="sh-row sh-row--even">
+        <RulesButton rounds={rounds} limitSec={limitSec} />
+        <RenameButton name={gmName} onRename={onRename} />
+      </div>
 
       {failed && (
         <p role="alert" className="sh-error">

@@ -118,6 +118,7 @@ export const ENTRIES: Entry[] = [
         onStart={noop}
         onTransfer={never}
         onDissolve={noop}
+        onRename={async () => {}}
       />
     ),
   },
@@ -133,6 +134,7 @@ export const ENTRIES: Entry[] = [
         onStart={noop}
         onTransfer={never}
         onDissolve={noop}
+        onRename={async () => {}}
       />
     ),
   },
@@ -148,6 +150,7 @@ export const ENTRIES: Entry[] = [
         onStart={noop}
         onTransfer={never}
         onDissolve={noop}
+        onRename={async () => {}}
       />
     ),
   },
@@ -156,7 +159,8 @@ export const ENTRIES: Entry[] = [
     render: () => (
       <LobbyPlayer
         code={CODE}
-        me={FEW[1]!}
+        me={{ ...FEW[1]!, name: FEW[1]!.label }}
+        onRename={async () => {}}
         gmName="ゆうき"
         players={FEW}
         rounds={3}
@@ -170,7 +174,8 @@ export const ENTRIES: Entry[] = [
     render: () => (
       <LobbyPlayer
         code={CODE}
-        me={members(8)[6]!}
+        me={{ ...members(8)[6]!, name: members(8)[6]!.label }}
+        onRename={async () => {}}
         gmName="Maximilianus"
         players={members(8)}
         rounds={3}

@@ -126,6 +126,7 @@ function RoomView({ room, code }: { room: ReturnType<typeof useRoom>; code: stri
           onStart={actions.start}
           onTransfer={actions.transfer}
           onDissolve={() => void actions.dissolve()}
+          onRename={actions.rename}
         />
       ) : (
         <LobbyPlayer
@@ -136,6 +137,7 @@ function RoomView({ room, code }: { room: ReturnType<typeof useRoom>; code: stri
           rounds={view.rounds}
           limitSec={view.limitSec}
           onLeave={() => void actions.leave()}
+          onRename={actions.rename}
         />
       );
     case "dissolved":

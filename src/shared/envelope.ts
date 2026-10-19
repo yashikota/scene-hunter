@@ -49,7 +49,9 @@ export class EnvelopeVerifier {
       }
 
       if (!(await verify(cert.body.pubkey, body, sig))) return null;
-      if (fresh) this.certs.set(body.pid, cert);
+      // 名前を変えると参加証を出し直すので、後から届いた古いフレームの参加証では戻さない
+      const known = this.certs.get(body.pid);
+      if (fresh && !(known && known.body.iat > cert.body.iat)) this.certs.set(body.pid, cert);
       return { body, cert };
     } catch {
       return null;

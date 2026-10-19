@@ -31,6 +31,7 @@ const lobbyGm = (over: Partial<Parameters<typeof LobbyGm>[0]> = {}) => (
     onStart={() => {}}
     onTransfer={async () => {}}
     onDissolve={() => {}}
+    onRename={async () => {}}
     {...over}
   />
 );
@@ -329,6 +330,7 @@ describe("LobbyGm", () => {
       "482913",
       m.copy_link(),
       m.rules_button(),
+      m.rename_button(),
       m.start_button(),
       m.transfer_button(),
       m.dissolve_button(),
@@ -393,7 +395,8 @@ describe("部屋の番号のコピー", () => {
     render(
       <LobbyPlayer
         code="482913"
-        me={players[0]}
+        me={{ ...players[0]!, name: players[0]!.label }}
+        onRename={async () => {}}
         gmName="ゆうき"
         players={players}
         rounds={3}
@@ -517,7 +520,8 @@ describe("LobbyPlayer", () => {
     render(
       <LobbyPlayer
         code="482913"
-        me={{ pid: "a", label: "はるか" }}
+        me={{ pid: "a", label: "はるか", name: "はるか" }}
+        onRename={async () => {}}
         gmName="ゆうき"
         players={players}
         rounds={3}
@@ -532,5 +536,51 @@ describe("LobbyPlayer", () => {
     expect(screen.getByText("部屋 482913")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: m.leave_button() }));
     expect(onLeave).toHaveBeenCalled();
+  });
+});
+
+describe("ロビーで名前を変える", () => {
+  const lobbyPlayer = (onRename: (name: string) => Promise<void>) => (
+    <LobbyPlayer
+      code="482913"
+      me={{ pid: "a", label: "はるか (2)", name: "はるか" }}
+      gmName="ゆうき"
+      players={players}
+      rounds={3}
+      limitSec={60}
+      onLeave={() => {}}
+      onRename={onRename}
+    />
+  );
+
+  it("自分で付けた名前を入れたシートを開き、変えた名前を渡して閉じる", async () => {
+    const onRename = vi.fn(async () => {});
+    render(lobbyPlayer(onRename));
+    fireEvent.click(screen.getByRole("button", { name: m.rename_button() }));
+    const sheet = screen.getByRole("dialog", { name: m.rename_title() });
+    const input = within(sheet).getByPlaceholderText(m.name_label()) as HTMLInputElement;
+    expect(input.value).toBe("はるか");
+    fireEvent.change(input, { target: { value: "  みお " } });
+    fireEvent.click(within(sheet).getByRole("button", { name: m.rename_save() }));
+    await vi.waitFor(() => expect(onRename).toHaveBeenCalledWith("みお"));
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("空の名前は送らず、失敗したらシートに理由を出す", async () => {
+    const onRename = vi.fn(async () => {
+      throw new Error("network");
+    });
+    render(lobbyPlayer(onRename));
+    fireEvent.click(screen.getByRole("button", { name: m.rename_button() }));
+    const sheet = screen.getByRole("dialog", { name: m.rename_title() });
+    const input = within(sheet).getByPlaceholderText(m.name_label());
+    fireEvent.change(input, { target: { value: "   " } });
+    fireEvent.click(within(sheet).getByRole("button", { name: m.rename_save() }));
+    expect(within(sheet).getByRole("alert").textContent).toBe(m.error_name());
+    expect(onRename).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: "みお" } });
+    fireEvent.click(within(sheet).getByRole("button", { name: m.rename_save() }));
+    expect(await within(sheet).findByRole("alert")).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: m.rename_title() })).toBeTruthy();
   });
 });

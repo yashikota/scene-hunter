@@ -10,7 +10,15 @@ import { useWakeLock } from "../ui/useWakeLock";
 import type { GmAction, GmState } from "./gmMachine";
 import { forgetGm, GmEngine } from "./gmEngine";
 import { hintsToResume, requestHintsAction } from "./hintRequest";
-import { claimUntilDone, clearMe, loadMe, rejoinUntilDone, saveMe, type Me } from "./membership";
+import {
+  claimUntilDone,
+  clearMe,
+  loadMe,
+  rejoinUntilDone,
+  saveLastName,
+  saveMe,
+  type Me,
+} from "./membership";
 import { checkRoundPhotos } from "./photoCheck";
 import { PlayerEngine } from "./playerEngine";
 import { initialView, type PlayerView } from "./playerView";
@@ -40,11 +48,14 @@ export interface RoomActions {
   dissolve(): Promise<void>;
   /** プレイヤー：部屋を出てトップに戻る（GM は解散）。 */
   leave(): Promise<void>;
+  /** ロビーで自分の名前を変える。参加証を取り直し、GM（自分が GM なら全員）に知らせる。 */
+  rename(name: string): Promise<void>;
 }
 
 export interface Room {
   role: "gm" | "player";
-  me: { pid: string; label: string };
+  /** label は画面に出す名前（同じ名前の人がいれば「(2)」が付く）、name は自分で付けた名前。 */
+  me: { pid: string; label: string; name: string };
   /** GM の名前（参加証の名前）。まだ分からなければ空文字。 */
   gmName: string;
   view: PlayerView;
@@ -346,6 +357,18 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
         updateMe((cur) => ({ ...cur, pending: { kind: "rejoin", gmPid: pid } }));
       },
       dissolve,
+      rename: async (name) => {
+        const cur = loadMe(code) ?? meRef.current;
+        const { roomToken, cert } = await api.rename(code, cur.roomToken, {
+          name,
+          pubkey: cur.pubkey,
+        });
+        const next = { name: cert.body.name, roomToken, cert };
+        updateMe((m) => ({ ...m, ...next }));
+        saveLastName(next.name);
+        gm?.rename(next);
+        player?.rename(next);
+      },
       leave: async () => {
         if (gm) return dissolve();
         if (player) {
@@ -369,7 +392,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
         : null;
   return {
     role: me.role,
-    me: { pid: me.pid, label },
+    me: { pid: me.pid, label, name: me.name },
     gmName: gm ? me.name : (player?.gmName() ?? ""),
     view,
     gm: gm && { state: gm.state, dispatch: (a) => gm.dispatch(a) },

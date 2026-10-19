@@ -173,6 +173,21 @@ export function claim(
   }) as Promise<{ roomToken: string; cert: Cert }>;
 }
 
+/** 自分の名前を変え、その名前の参加証を受け取る。 */
+export function rename(
+  code: string,
+  token: string,
+  input: { name: string; pubkey: string },
+): Promise<{ roomToken: string; cert: Cert }> {
+  return fetch("/api/rooms/:code/name", {
+    method: "POST",
+    params: { code },
+    headers: auth(token),
+    body: input,
+    retry: 0,
+  }) as Promise<{ roomToken: string; cert: Cert }>;
+}
+
 export async function closeRoom(code: string, token: string): Promise<void> {
   await fetch("/api/rooms/:code/close", {
     method: "POST",

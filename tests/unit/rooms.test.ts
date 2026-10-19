@@ -10,6 +10,7 @@ import {
   closeRoom,
   createRoom,
   joinRoom,
+  renameMember,
   roomExists,
   transferGm,
 } from "../../src/server/services/rooms";
@@ -241,6 +242,41 @@ describe("joinRoom", () => {
     expect(j).toMatchObject({ locale: "ja", rounds: 3, limitSec: 60 });
     expect(j.moqUrl.endsWith("/TOKEN1")).toBe(true);
     expect(j.pid).not.toBe("pid-1");
+  });
+});
+
+describe("renameMember", () => {
+  it("同じ pid と役割のまま、新しい名前の参加証を出す", async () => {
+    const { d } = setup();
+    const gm = await createRoom(d, { ...input, pubkey });
+    const p = await joinRoom(d, "111111", { name: "たろう", pubkey });
+    if ("error" in p) throw new Error("unexpected");
+    const r = await renameMember(d, p.roomToken, { name: "  じろう ", pubkey }, "111111");
+    expect(r.cert.body).toMatchObject({
+      pid: p.pid,
+      role: "player",
+      name: "じろう",
+      room: "111111",
+    });
+    expect(await verifyCert(serverPub, r.cert, "111111", NOW_SEC)).toBe(true);
+    const g = await renameMember(d, gm.roomToken, { name: "けんた", pubkey }, "111111");
+    expect(g.cert.body).toMatchObject({ pid: gm.pid, role: "gm", name: "けんた" });
+  });
+
+  it("名前が空や長すぎるとき、ほかの部屋のトークンのときは断る", async () => {
+    const { d } = setup();
+    await createRoom(d, { ...input, pubkey });
+    const p = await joinRoom(d, "111111", { name: "たろう", pubkey });
+    if ("error" in p) throw new Error("unexpected");
+    await expect(renameMember(d, p.roomToken, { name: "  ", pubkey }, "111111")).rejects.toThrow(
+      RangeError,
+    );
+    await expect(
+      renameMember(d, p.roomToken, { name: "あ".repeat(13), pubkey }, "111111"),
+    ).rejects.toThrow(RangeError);
+    await expect(renameMember(d, p.roomToken, { name: "a", pubkey }, "222222")).rejects.toThrow(
+      AuthError,
+    );
   });
 });
 

@@ -5,16 +5,20 @@ import { Screen } from "../ui/Screen";
 import { TopBar } from "../ui/TopBar";
 import { RoomBadge } from "../ui/RoomCode";
 import { PlayerTiles, type LobbyMember } from "./LobbyGm";
+import { RenameButton } from "./Rename";
 import { RulesButton } from "./Rules";
 
 export interface LobbyPlayerProps {
   code: string;
-  me: LobbyMember;
+  /** name は自分で付けた名前（名前を変えるシートに入れておく）。 */
+  me: LobbyMember & { name: string };
   gmName: string;
   players: readonly LobbyMember[];
   rounds: number;
   limitSec: number;
   onLeave(): void;
+  /** 自分の名前を変える。 */
+  onRename(name: string): Promise<void>;
 }
 
 export function LobbyPlayer({
@@ -25,6 +29,7 @@ export function LobbyPlayer({
   rounds,
   limitSec,
   onLeave,
+  onRename,
 }: LobbyPlayerProps) {
   return (
     <Screen>
@@ -63,10 +68,11 @@ export function LobbyPlayer({
       <div className="sh-actions">
         <div className="sh-row sh-row--even">
           <RulesButton rounds={rounds} limitSec={limitSec} />
-          <Button variant="quiet" onClick={onLeave}>
-            {m.leave_button()}
-          </Button>
+          <RenameButton name={me.name} onRename={onRename} />
         </div>
+        <Button variant="quiet" onClick={onLeave}>
+          {m.leave_button()}
+        </Button>
       </div>
     </Screen>
   );

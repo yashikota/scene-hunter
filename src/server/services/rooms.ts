@@ -266,6 +266,22 @@ export async function claimGm(
   return issueMember(d, { room: p.room, pid: p.pid, name, role: "gm", pubkey: input.pubkey });
 }
 
+/**
+ * 名前を変えた参加証を出し直す。pid、役割、部屋トークンの持ち主は変えない。
+ * GM はいまの GM 本人に限る（authorize が確かめる）。
+ */
+export async function renameMember(
+  d: RoomDeps,
+  token: string,
+  input: { name: string; pubkey: string },
+  code: string,
+): Promise<{ roomToken: string; cert: Cert }> {
+  const { payload: p } = await authorize(d, token, "any", code);
+  const name = checkName(input.name);
+  await checkPubkey(input.pubkey);
+  return issueMember(d, { room: p.room, pid: p.pid, name, role: p.role, pubkey: input.pubkey });
+}
+
 export async function closeRoom(d: RoomDeps, token: string, code: string): Promise<void> {
   const { payload: p, rec } = await authorize(d, token, "gm", code);
 

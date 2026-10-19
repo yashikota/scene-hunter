@@ -68,7 +68,10 @@ export interface GmState {
 }
 
 export type GmAction =
+  /** 参加の知らせ。ロビーで、もう居る人から別の名前で届いたら、名前を変えたとみなす。 */
   | { type: "playerJoined"; pid: string; name: string; at: number }
+  /** GM が自分の名前を変えた。名前は参加証で伝わるので、ロビーの知らせを流し直すだけ。 */
+  | { type: "gmRenamed" }
   /** プレイヤーが部屋を出た（署名つきの leave を受けた）。 */
   | { type: "playerLeft"; pid: string }
   /** メッセージが途切れた（active: false）か、また届いた（active: true）。 */
@@ -258,8 +261,18 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
 
   switch (action.type) {
     case "playerJoined": {
-      if (action.pid === s.gmPid || own(s.players, action.pid) || hasLeft(s, action.pid))
-        return none;
+      if (action.pid === s.gmPid || hasLeft(s, action.pid)) return none;
+      if (own(s.players, action.pid)) {
+        const cur = s.players[action.pid]!;
+        if (s.phase !== "lobby" || cur.name === action.name) return none;
+        // 名前の変更。表示名は、自分を除いた人たちと重ならないように付け直す
+        const label = uniqueLabel(without(s.players, action.pid), action.name);
+        const next = {
+          ...s,
+          players: { ...s.players, [action.pid]: { ...cur, name: action.name, label } },
+        };
+        return { state: next, emit: [lobbyEvent(next)] };
+      }
       const player: GmPlayer = {
         name: action.name,
         label: uniqueLabel(s.players, action.name),
@@ -271,6 +284,9 @@ export function gmReduce(state: GmState, action: GmAction): GmStep {
       // ゲーム中の参加者の一覧は state Track のスナップショットで伝える。
       return { state: next, emit: s.phase === "lobby" ? [lobbyEvent(next)] : [] };
     }
+
+    case "gmRenamed":
+      return s.phase === "lobby" ? { state: s, emit: [lobbyEvent(s)] } : none;
 
     case "playerLeft": {
       const pid = action.pid;

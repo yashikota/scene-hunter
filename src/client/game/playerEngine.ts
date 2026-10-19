@@ -78,7 +78,7 @@ export class PlayerEngine {
    * GM を渡した後は TRANSFER_GRACE_MS の間、null のまま待つ。
    */
   gmDisconnectedSince: number | null = null;
-  readonly #me: Me;
+  #me: Me;
   readonly #deps: PlayerEngineDeps;
   readonly #listeners = new Set<() => void>();
   #seq: number;
@@ -213,6 +213,12 @@ export class PlayerEngine {
   /** ここまでに送ったメッセージを書き終えるまで待つ。 */
   flush(): Promise<void> {
     return this.#queue;
+  }
+
+  /** 名前を変えて取り直した参加証に替え、新しい名前を GM に知らせる。 */
+  rename(me: Pick<Me, "name" | "cert">): void {
+    this.#me = { ...this.#me, name: me.name, cert: me.cert };
+    this.send({ type: "join", name: me.name });
   }
 
   /** 従っている GM の名前（参加証の名前）。 */

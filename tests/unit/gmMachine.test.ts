@@ -352,7 +352,7 @@ describe("途中参加と名前", () => {
     expect(s.players.p3?.label).toBe("はるか (3)");
   });
 
-  it("ロビーでの参加は lobby を emit し、GM 自身と既存の pid は無視する", () => {
+  it("ロビーでの参加は lobby を emit し、GM 自身と、既存の pid の同じ名前での参加は無視する", () => {
     const r = run(init(), join("a", "あ"));
     expect(r.emit).toEqual([
       {
@@ -364,10 +364,47 @@ describe("途中参加と名前", () => {
         limitSec: 60,
       },
     ]);
-    const r2 = run(r.state, join("gm"), join("a", "別名"));
+    const r2 = run(r.state, join("gm"), join("a", "あ"));
     expect(r2.emit).toEqual([]);
     expect(Object.keys(r2.state.players)).toEqual(["a"]);
     expect(r2.state.players.a?.name).toBe("あ");
+  });
+});
+
+describe("名前の変更", () => {
+  it("ロビーで、居る人から別の名前で参加が届いたら、名前と表示名を変えて知らせ直す", () => {
+    const { state, emit } = run(
+      init(),
+      join("a", "はるか"),
+      join("b", "そうた"),
+      join("a", "そうた"),
+    );
+    expect(state.players.a).toMatchObject({ name: "そうた", label: "そうた (2)" });
+    expect(emit.at(-1)).toMatchObject({
+      type: "lobby",
+      players: [
+        { pid: "a", label: "そうた (2)" },
+        { pid: "b", label: "そうた" },
+      ],
+    });
+  });
+
+  it("同じ名前の参加（つなぎ直し）では何も送らない", () => {
+    const { emit } = run(run(init(), join("a", "はるか")).state, join("a", "はるか"));
+    expect(emit).toEqual([]);
+  });
+
+  it("ゲームの途中では名前を変えない", () => {
+    const s = inPlayerTurn();
+    const { state, emit } = run(s, join("a", "べつ"));
+    expect(state.players.a!.label).toBe("a");
+    expect(emit).toEqual([]);
+  });
+
+  it("GM の名前の変更は、ロビーの知らせを流し直す（名前は参加証で伝わる）", () => {
+    const s = run(init(), join("a")).state;
+    expect(run(s, { type: "gmRenamed" }).emit).toMatchObject([{ type: "lobby" }]);
+    expect(run(inPlayerTurn(), { type: "gmRenamed" }).emit).toEqual([]);
   });
 });
 

@@ -118,7 +118,7 @@ export class GmEngine {
   state: GmState;
   /** start で決まる。 */
   epoch = 0;
-  readonly #me: Me;
+  #me: Me;
   readonly #deps: GmEngineDeps;
   readonly #link: Link;
   readonly #listeners = new Set<() => void>();
@@ -245,6 +245,12 @@ export class GmEngine {
 
   #notify(): void {
     for (const fn of this.#listeners) fn();
+  }
+
+  /** 名前を変えて取り直した参加証に替え、ロビーの知らせを流し直す（新しい参加証が付いて届く）。 */
+  rename(me: Pick<Me, "name" | "cert">): void {
+    this.#me = { ...this.#me, name: me.name, cert: me.cert };
+    this.dispatch({ type: "gmRenamed" });
   }
 
   dispatch(action: GmAction): void {
