@@ -24,7 +24,7 @@ describe("紹介のページ（/lp）", () => {
   it("遊び方の 7 つのステップを、ルールの文と並べて出す", async () => {
     await open();
     for (const title of [m.lp_step_1(), m.lp_step_4(), m.lp_step_7()]) {
-      expect(screen.getByText(title)).toBeTruthy();
+      expect(screen.getByRole("heading", { name: new RegExp(`${title}$`) })).toBeTruthy();
     }
     expect(screen.getByText(m.rules_3({ sec: 60 }))).toBeTruthy();
     expect(screen.getByText(m.rules_7({ rounds: 3 }))).toBeTruthy();

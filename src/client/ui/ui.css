@@ -1122,6 +1122,10 @@ body {
 
 /* 紹介のページ（/lp）。ゲームの画面より広く使い、広い画面では 2 列にする。 */
 .lp {
+  /* 改行は BudouX が入れた文節の切れ目（<wbr>）と空白だけにし、収まらない長い語だけ途中で折る */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
   max-width: 1040px;
   margin: 0 auto;
   padding: 12px 16px 48px;
@@ -1205,11 +1209,20 @@ body {
   font-weight: 800;
 }
 
-/* 飾りの丸。ゆっくり上下に漂う。 */
+/* 飾りの丸。文字に重ならないよう、広い画面で右の絵のまわりにだけ置き、ゆっくり漂わせる。 */
 .lp-floaters {
-  position: absolute;
-  inset: -20px 0;
-  pointer-events: none;
+  display: none;
+}
+@media (min-width: 820px) {
+  .lp-floaters {
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 48%;
+    pointer-events: none;
+  }
 }
 .lp-floater {
   position: absolute;
@@ -1220,41 +1233,41 @@ body {
   animation: lp-float 5s ease-in-out infinite alternate;
 }
 .lp-floater--0 {
-  left: 4%;
-  top: 12%;
+  left: 0;
+  top: 4%;
 }
 .lp-floater--1 {
-  left: 16%;
-  top: 70%;
+  left: 6%;
+  bottom: 4%;
   width: 12px;
   height: 12px;
   animation-delay: -1.5s;
 }
 .lp-floater--2 {
-  left: 44%;
-  top: 2%;
+  left: 40%;
+  top: 0;
   width: 10px;
   height: 10px;
   animation-delay: -3s;
 }
 .lp-floater--3 {
-  right: 6%;
-  top: 8%;
+  right: 2%;
+  top: 6%;
   width: 14px;
   height: 14px;
   border-radius: 4px;
   animation-delay: -2s;
 }
 .lp-floater--4 {
-  right: 3%;
-  bottom: 6%;
+  right: 0;
+  bottom: 2%;
   width: 22px;
   height: 22px;
   animation-delay: -4s;
 }
 .lp-floater--5 {
-  left: 8%;
-  bottom: 30%;
+  left: 55%;
+  bottom: 0;
   width: 12px;
   height: 12px;
   border-radius: 3px;
@@ -1273,6 +1286,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+.lp h1,
+.lp h2,
+.lp h3 {
+  text-wrap: balance;
 }
 .lp-h2 {
   font-size: clamp(26px, 6vw, 36px);
@@ -1310,6 +1328,257 @@ body {
   font-size: 15px;
   color: var(--color-sub);
   font-weight: 800;
+}
+
+/* どんなゲーム？：公園に集まった人の絵と、3 つの札。 */
+.lp-party {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--color-bg);
+  border: var(--border);
+  border-radius: var(--radius-sm);
+}
+.lp-ink {
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.lp-face {
+  fill: #ffe0c7;
+}
+.lp-phone {
+  fill: var(--color-surface);
+}
+.lp-crown {
+  fill: var(--color-gold);
+}
+.lp-person {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: lp-hop 1.6s ease-in-out infinite;
+}
+@keyframes lp-hop {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-7px);
+  }
+}
+.lp-about-points {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.lp-about-points li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+}
+.lp-about-points .lp-feature-icon {
+  flex: none;
+}
+
+/* 2 つの役割：GM は金、プレイヤーはオレンジの見出し。 */
+.lp-roles-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.lp-roles {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+.lp-role {
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.lp-role-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: var(--border);
+}
+.lp-role--gm .lp-role-head {
+  background: var(--color-gold);
+}
+.lp-role--player .lp-role-head {
+  background: var(--color-accent);
+}
+.lp-role-head h3 {
+  margin: 0;
+  flex: 1;
+  font-family: var(--font-display), sans-serif;
+  font-weight: var(--font-display-weight);
+  font-size: 20px;
+}
+.lp-role-art svg {
+  display: block;
+}
+.lp-role-count {
+  font-family: var(--font-display), sans-serif;
+  font-size: 18px;
+}
+.lp-role-items {
+  margin: 0;
+  padding: 14px 16px 16px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-weight: 800;
+}
+.lp-role-items li {
+  position: relative;
+  padding-left: 26px;
+}
+.lp-role-items li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.25em;
+  width: 16px;
+  height: 16px;
+  border: var(--border);
+  border-radius: 50%;
+  background: var(--color-bg);
+}
+.lp-role--gm .lp-role-items li::before {
+  background: var(--color-gold);
+}
+.lp-role--player .lp-role-items li::before {
+  background: var(--color-accent);
+}
+.lp-note {
+  margin: 0;
+  text-align: center;
+  color: var(--color-sub);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* ゲームの流れ：上から下へ。ラウンドの中身はくり返しの枠で囲む。 */
+.lp-flow {
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.lp-flow-node {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 var(--color-ink);
+  font-weight: 800;
+  font-size: 17px;
+}
+.lp-flow-node--final {
+  background: var(--color-gold);
+}
+.lp-flow-who {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: var(--border);
+  border-radius: 50%;
+  background: var(--color-bg);
+  font-family: var(--font-display), sans-serif;
+  font-size: 14px;
+}
+.lp-flow-who svg {
+  width: 24px;
+  height: 24px;
+}
+.lp-flow-who--gm {
+  background: var(--color-gold);
+}
+.lp-flow-arrow {
+  display: flex;
+  justify-content: center;
+}
+.lp-flow-loop {
+  position: relative;
+  padding: 26px 14px 14px;
+  border: 3px dashed var(--color-timer);
+  border-radius: var(--radius-lg);
+  background: rgb(61 107 240 / 0.06);
+}
+.lp-flow-loop-label {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  white-space: nowrap;
+  background: var(--color-timer);
+  color: #fff;
+  border: var(--border);
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 14px;
+}
+.lp-flow-loop-label .ra-stroke {
+  stroke: #fff;
+}
+.lp-spin {
+  animation: lp-spin 2.4s linear infinite;
+}
+@keyframes lp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.lp-flow-round {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  counter-reset: none;
+}
+.lp-flow-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  font-weight: 800;
+}
+.lp-flow-chip .sh-rule-num {
+  flex: none;
 }
 
 .lp-card {
@@ -1482,7 +1751,9 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lp-floater {
+  .lp-floater,
+  .lp-person,
+  .lp-spin {
     animation: none;
   }
 }

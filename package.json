@@ -19,6 +19,7 @@
     "fmt:check": "vp fmt --check"
   },
   "dependencies": {
+    "budoux": "0.9.3",
     "canvas-confetti": "1.9.4",
     "motion": "13.5.1"
   },
