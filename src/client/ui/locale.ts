@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { matchLocale, type Locale } from "../../shared/locales";
+import { isLocale, matchLocale, type Locale } from "../../shared/locales";
 import { setLocale } from "../paraglide/runtime";
 import { applyLocaleFonts } from "./fonts";
 
@@ -10,10 +10,33 @@ export function switchLocale(locale: Locale): void {
   document.documentElement.lang = locale;
 }
 
-/** ブラウザの言語設定に最も近い対応言語。初回の描画の前に画面をその言語にする。 */
+const LOCALE_KEY = "sh:locale";
+
+/** 前に選んだ言語。選んでいなければ、または読めなければ null。 */
+export function loadSavedLocale(): Locale | null {
+  try {
+    const l = localStorage.getItem(LOCALE_KEY);
+    return isLocale(l) ? l : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveLocale(locale: Locale): void {
+  try {
+    localStorage.setItem(LOCALE_KEY, locale);
+  } catch {
+    // 覚えられなくても、次はブラウザの言語設定から選ぶだけ。
+  }
+}
+
+/**
+ * 画面の言語。前に選んだ言語があればそれ、無ければブラウザの言語設定に最も近い対応言語。
+ * 初回の描画の前に画面をその言語にする。選び直した言語は覚えておき、次に開いたときも使う。
+ */
 export function useBrowserLocale(): [Locale, (l: Locale) => void] {
   const [locale, set] = useState<Locale>(() => {
-    const l = matchLocale(navigator.languages ?? []);
+    const l = loadSavedLocale() ?? matchLocale(navigator.languages ?? []);
     switchLocale(l);
     return l;
   });
@@ -21,6 +44,7 @@ export function useBrowserLocale(): [Locale, (l: Locale) => void] {
     locale,
     (l) => {
       switchLocale(l);
+      saveLocale(l);
       set(l);
     },
   ];

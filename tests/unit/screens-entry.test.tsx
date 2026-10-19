@@ -44,6 +44,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  localStorage.clear();
 });
 
 describe("Top", () => {
@@ -68,6 +69,24 @@ describe("Top", () => {
       expect(select.value).toBe("ko");
       // 画面の文言もその言語になる
       expect(screen.getByRole("button", { name: "방에 들어가기" })).toBeTruthy();
+    });
+
+    it("選び直した言語を覚え、次に開いたときはブラウザの言語より優先する", () => {
+      setLanguages(["ko-KR"]);
+      const { unmount } = render(<Top onEntered={() => {}} />);
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "de" } });
+      expect(localStorage.getItem("sh:locale")).toBe("de");
+      unmount();
+      render(<Top onEntered={() => {}} />);
+      expect((screen.getByRole("combobox") as unknown as HTMLSelectElement).value).toBe("de");
+      expect(document.documentElement.lang).toBe("de");
+    });
+
+    it("覚えた言語が壊れていたら、ブラウザの言語で出す", () => {
+      setLanguages(["ko-KR"]);
+      localStorage.setItem("sh:locale", "xx");
+      render(<Top onEntered={() => {}} />);
+      expect((screen.getByRole("combobox") as unknown as HTMLSelectElement).value).toBe("ko");
     });
 
     it("トップには名前の入力が無い", () => {
