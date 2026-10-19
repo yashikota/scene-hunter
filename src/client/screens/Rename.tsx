@@ -1,58 +1,75 @@
 import { useId, useState, type FormEvent } from "react";
 import { m } from "../paraglide/messages";
-import { Button } from "../ui/Button";
-import { Sheet } from "../ui/Sheet";
 import { cleanName, errorMessage, NAME_MAX } from "./entryErrors";
 
-/** ロビーに置く「名前を変える」のボタン。押すと、名前を入れ直すシートを出す。 */
-export function RenameButton({
-  name,
-  onRename,
-}: {
-  /** いまの自分の名前。 */
-  name: string;
-  onRename(name: string): Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
+const PENCIL = "M4 20h4L19 9l-4-4L4 16v4M13.5 6.5l4 4";
+const CHECK = "M5 12.5l4.5 4.5L19 7.5";
+const CROSS = "M6 6l12 12M18 6L6 18";
+
+function Icon({ d }: { d: string }) {
   return (
-    <>
-      <Button variant="quiet" onClick={() => setOpen(true)} aria-haspopup="dialog">
-        {m.rename_button()}
-      </Button>
-      <Sheet open={open} title={m.rename_title()} busy={busy} onCancel={() => setOpen(false)}>
-        <RenameForm
-          name={name}
-          busy={busy}
-          onCancel={() => setOpen(false)}
-          onSubmit={async (n) => {
-            setBusy(true);
-            try {
-              await onRename(n);
-              setOpen(false);
-            } finally {
-              setBusy(false);
-            }
-          }}
-        />
-      </Sheet>
-    </>
+    <svg
+      viewBox="0 0 24 24"
+      width={18}
+      height={18}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={d} />
+    </svg>
   );
 }
 
-function RenameForm({
+/**
+ * ロビーの自分の札の中身。名前の横の鉛筆を押すと、その場で名前を入れ直せる。
+ * Enter か ✓ で決め、Esc か × でやめる。
+ */
+export function EditableName({
+  display,
+  name,
+  onRename,
+}: {
+  /** ふだん出す文字（「はるか（あなた）」など）。 */
+  display: string;
+  /** 自分で付けた名前。入れ直すときの初めの値。 */
+  name: string;
+  onRename(name: string): Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  if (!editing) {
+    return (
+      <span className="sh-name-view">
+        <span className="sh-name-text">{display}</span>
+        <button
+          type="button"
+          className="sh-icon-btn"
+          aria-label={m.rename_button()}
+          onClick={() => setEditing(true)}
+        >
+          <Icon d={PENCIL} />
+        </button>
+      </span>
+    );
+  }
+  return <NameEditor name={name} onRename={onRename} onDone={() => setEditing(false)} />;
+}
+
+function NameEditor({
   name: initial,
-  busy,
-  onCancel,
-  onSubmit,
+  onRename,
+  onDone,
 }: {
   name: string;
-  busy: boolean;
-  onCancel(): void;
-  onSubmit(name: string): Promise<void>;
+  onRename(name: string): Promise<void>;
+  onDone(): void;
 }) {
   const id = useId();
   const [name, setName] = useState(initial);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async (e: FormEvent) => {
@@ -61,53 +78,72 @@ function RenameForm({
     const n = cleanName(name);
     if (!n) return setError(m.error_name());
     // 同じ名前なら、参加証を取り直さずに閉じる
-    if (n === initial) return onCancel();
+    if (n === initial) return onDone();
     setError(null);
+    setBusy(true);
     try {
-      await onSubmit(n);
+      await onRename(n);
+      onDone();
     } catch (err) {
       setError(errorMessage(err));
+      setBusy(false);
     }
   };
 
   return (
-    <form onSubmit={submit} noValidate className="sh-stack">
-      <label htmlFor={`${id}-name`} className="sh-sr-only">
-        {m.name_label()}
-      </label>
-      <input
-        id={`${id}-name`}
-        className="sh-input sh-input--big"
-        // 名前の欄だけのフォームは、パスワードマネージャーにログインの欄と見なされやすい。保存も補完も止める
-        name="sh-player-name"
-        autoComplete="off"
-        data-1p-ignore=""
-        data-lpignore="true"
-        data-bwignore=""
-        data-form-type="other"
-        enterKeyHint="done"
-        autoFocus
-        maxLength={NAME_MAX}
-        placeholder={m.name_label()}
-        value={name}
-        disabled={busy}
-        onChange={(e) => setName(e.target.value)}
-        onFocus={(e) => e.currentTarget.select()}
-      />
+    <form
+      className="sh-name-edit"
+      onSubmit={submit}
+      noValidate
+      onKeyDown={(e) => e.key === "Escape" && !busy && onDone()}
+    >
+      <div className="sh-name-edit-row">
+        <label htmlFor={`${id}-name`} className="sh-sr-only">
+          {m.name_label()}
+        </label>
+        <input
+          id={`${id}-name`}
+          className="sh-input sh-input--inline"
+          // 名前の欄だけのフォームは、パスワードマネージャーにログインの欄と見なされやすい。保存も補完も止める
+          name="sh-player-name"
+          autoComplete="off"
+          data-1p-ignore=""
+          data-lpignore="true"
+          data-bwignore=""
+          data-form-type="other"
+          enterKeyHint="done"
+          autoFocus
+          maxLength={NAME_MAX}
+          placeholder={m.name_label()}
+          value={name}
+          disabled={busy}
+          onChange={(e) => setName(e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
+        />
+        <button
+          type="submit"
+          className="sh-icon-btn sh-icon-btn--ok"
+          aria-label={m.rename_save()}
+          disabled={busy}
+          aria-busy={busy}
+        >
+          {busy ? <span className="sh-spinner" aria-hidden="true" /> : <Icon d={CHECK} />}
+        </button>
+        <button
+          type="button"
+          className="sh-icon-btn"
+          aria-label={m.cancel()}
+          disabled={busy}
+          onClick={onDone}
+        >
+          <Icon d={CROSS} />
+        </button>
+      </div>
       {error && (
-        <p role="alert" className="sh-error">
+        <p role="alert" className="sh-error" style={{ margin: 0 }}>
           {error}
         </p>
       )}
-      <div className="sh-row sh-row--even">
-        <Button variant="quiet" onClick={onCancel} disabled={busy}>
-          {m.cancel()}
-        </Button>
-        <Button type="submit" variant="primary" disabled={busy} aria-busy={busy}>
-          {busy && <span className="sh-spinner" aria-hidden="true" />}
-          {m.rename_save()}
-        </Button>
-      </div>
     </form>
   );
 }

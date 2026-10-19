@@ -10,7 +10,7 @@ import { copyText, useCopied } from "../ui/copy";
 import { RoomCode } from "../ui/RoomCode";
 import { Sheet } from "../ui/Sheet";
 import { TopBar } from "../ui/TopBar";
-import { RenameButton } from "./Rename";
+import { EditableName } from "./Rename";
 import { RulesButton } from "./Rules";
 
 export interface LobbyMember {
@@ -42,11 +42,17 @@ export function PlayerTiles({
   gmName,
   players,
   meId,
+  self,
 }: {
   gmName: string;
   players: readonly LobbyMember[];
+  /** プレイヤーとして見ているときの自分の pid。 */
   meId?: string;
+  /** 自分の札で名前を変えられるようにする。name は自分で付けた名前（GM なら GM の札が自分）。 */
+  self?: { name: string; onRename(name: string): Promise<void> };
 }) {
+  const own = (display: string) =>
+    self ? <EditableName display={display} name={self.name} onRename={self.onRename} /> : display;
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -58,8 +64,8 @@ export function PlayerTiles({
         </span>
       </div>
       <ul className="sh-tiles">
-        <mo.li className="sh-tile sh-tile--gm" {...TILE_IN}>
-          {m.gm_tag({ name: gmName })}
+        <mo.li className="sh-tile sh-tile--gm" layout {...TILE_IN}>
+          {meId === undefined ? own(m.gm_tag({ name: gmName })) : m.gm_tag({ name: gmName })}
         </mo.li>
         <AnimatePresence mode="popLayout">
           {players.map((p) => (
@@ -71,7 +77,7 @@ export function PlayerTiles({
               className={`sh-tile ${p.pid === meId ? "sh-tile--me" : p.away || p.left ? "sh-tile--away" : ""}`}
             >
               {p.pid === meId ? (
-                m.you_tag({ name: p.label })
+                own(m.you_tag({ name: p.label }))
               ) : (
                 <>
                   {p.label}
@@ -174,7 +180,7 @@ export function LobbyGm({
         )}
       </Card>
 
-      <PlayerTiles gmName={gmName} players={players} />
+      <PlayerTiles gmName={gmName} players={players} self={{ name: gmName, onRename }} />
 
       <p
         className="sh-sub"
@@ -182,10 +188,7 @@ export function LobbyGm({
       >
         {m.rounds_chip({ count: rounds })} · {m.seconds({ count: limitSec })}
       </p>
-      <div className="sh-row sh-row--even">
-        <RulesButton rounds={rounds} limitSec={limitSec} />
-        <RenameButton name={gmName} onRename={onRename} />
-      </div>
+      <RulesButton rounds={rounds} limitSec={limitSec} />
 
       {failed && (
         <p role="alert" className="sh-error">

@@ -88,10 +88,10 @@ test("ロビーで名前を変えると、ほかの人の画面にも新しい�
   const alice = await newPerson(browser, "アリス");
   const rename = async (page: (typeof gm)["page"], name: string) => {
     await page.getByRole("button", { name: "名前を変える" }).click();
-    const sheet = page.getByRole("dialog", { name: "自分の名前を変える" });
-    await sheet.getByPlaceholder("自分の名前").fill(name);
-    await sheet.getByRole("button", { name: "変更する" }).click();
-    await expect(sheet).toHaveCount(0);
+    const input = page.getByPlaceholder("自分の名前");
+    await input.fill(name);
+    await input.press("Enter");
+    await expect(input).toHaveCount(0);
   };
   try {
     const code = await createRoom(gm);

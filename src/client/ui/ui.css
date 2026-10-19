@@ -247,6 +247,65 @@ body {
   background: var(--color-accent);
   font-weight: 800;
 }
+/* 自分の札：名前の横に鉛筆。押すと札を横いっぱいに広げて、その場で名前を入れ直す。 */
+.sh-tile:has(.sh-name-edit) {
+  grid-column: 1 / -1;
+  background: var(--color-surface);
+}
+.sh-name-view {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.sh-name-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sh-icon-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: -6px -4px -6px 0;
+  padding: 0;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.sh-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.sh-icon-btn--ok {
+  background: var(--color-accent);
+}
+.sh-name-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sh-name-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sh-name-edit-row .sh-icon-btn {
+  margin: 0;
+  width: 40px;
+  height: 40px;
+}
+.sh-input--inline {
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+  padding: 8px 12px;
+}
+
 /* GM がしばらくメッセージを受け取っていない人。 */
 .sh-tile--away {
   opacity: 0.45;

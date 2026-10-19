@@ -325,12 +325,14 @@ describe("LobbyGm", () => {
     // 参加者がいれば、ゲーム中に画面を閉じないよう 1 行だけ伝える
     expect(screen.getByText("画面を閉じないでね")).toBeTruthy();
     expect(screen.queryByText(m.start_waiting())).toBeNull();
-    // ボタンは番号とリンクのコピー、遊び方、開始、交代、解散だけで、ラウンド数と制限時間を変える入力も無い
-    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
+    // ボタンは番号とリンクのコピー、自分の名前の鉛筆、遊び方、開始、交代、解散だけで、ラウンド数と制限時間を変える入力も無い
+    expect(
+      screen.getAllByRole("button").map((b) => b.textContent || b.getAttribute("aria-label")),
+    ).toEqual([
       "482913",
       m.copy_link(),
-      m.rules_button(),
       m.rename_button(),
+      m.rules_button(),
       m.start_button(),
       m.transfer_button(),
       m.dissolve_button(),
@@ -552,35 +554,61 @@ describe("ロビーで名前を変える", () => {
       onRename={onRename}
     />
   );
+  const edit = () => {
+    fireEvent.click(screen.getByRole("button", { name: m.rename_button() }));
+    return screen.getByPlaceholderText(m.name_label()) as HTMLInputElement;
+  };
 
-  it("自分で付けた名前を入れたシートを開き、変えた名前を渡して閉じる", async () => {
+  it("自分の札の鉛筆で、自分で付けた名前を入れた欄に変わり、決めると渡して元に戻る", async () => {
     const onRename = vi.fn(async () => {});
     render(lobbyPlayer(onRename));
-    fireEvent.click(screen.getByRole("button", { name: m.rename_button() }));
-    const sheet = screen.getByRole("dialog", { name: m.rename_title() });
-    const input = within(sheet).getByPlaceholderText(m.name_label()) as HTMLInputElement;
+    // 鉛筆は自分の札にだけ付く
+    expect(screen.getAllByRole("button", { name: m.rename_button() })).toHaveLength(1);
+    const input = edit();
     expect(input.value).toBe("はるか");
     fireEvent.change(input, { target: { value: "  みお " } });
-    fireEvent.click(within(sheet).getByRole("button", { name: m.rename_save() }));
+    fireEvent.submit(input.form!);
     await vi.waitFor(() => expect(onRename).toHaveBeenCalledWith("みお"));
-    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await vi.waitFor(() => expect(screen.queryByPlaceholderText(m.name_label())).toBeNull());
   });
 
-  it("空の名前は送らず、失敗したらシートに理由を出す", async () => {
+  it("Esc と × でやめ、同じ名前なら送らずに閉じる", () => {
+    const onRename = vi.fn(async () => {});
+    render(lobbyPlayer(onRename));
+    fireEvent.keyDown(edit(), { key: "Escape" });
+    expect(screen.queryByPlaceholderText(m.name_label())).toBeNull();
+    edit();
+    fireEvent.click(screen.getByRole("button", { name: m.cancel() }));
+    expect(screen.queryByPlaceholderText(m.name_label())).toBeNull();
+    fireEvent.click(edit().form!.querySelector("button[type=submit]")!);
+    expect(onRename).not.toHaveBeenCalled();
+    expect(screen.queryByPlaceholderText(m.name_label())).toBeNull();
+  });
+
+  it("空の名前は送らず、失敗したら欄のまま理由を出す", async () => {
     const onRename = vi.fn(async () => {
       throw new Error("network");
     });
     render(lobbyPlayer(onRename));
-    fireEvent.click(screen.getByRole("button", { name: m.rename_button() }));
-    const sheet = screen.getByRole("dialog", { name: m.rename_title() });
-    const input = within(sheet).getByPlaceholderText(m.name_label());
+    const input = edit();
     fireEvent.change(input, { target: { value: "   " } });
-    fireEvent.click(within(sheet).getByRole("button", { name: m.rename_save() }));
-    expect(within(sheet).getByRole("alert").textContent).toBe(m.error_name());
+    fireEvent.click(screen.getByRole("button", { name: m.rename_save() }));
+    expect(screen.getByRole("alert").textContent).toBe(m.error_name());
     expect(onRename).not.toHaveBeenCalled();
     fireEvent.change(input, { target: { value: "みお" } });
-    fireEvent.click(within(sheet).getByRole("button", { name: m.rename_save() }));
-    expect(await within(sheet).findByRole("alert")).toBeTruthy();
-    expect(screen.getByRole("dialog", { name: m.rename_title() })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: m.rename_save() }));
+    await vi.waitFor(() => expect(onRename).toHaveBeenCalled());
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    expect(screen.getByPlaceholderText(m.name_label())).toBeTruthy();
+  });
+
+  it("GM は GM の札の鉛筆で名前を変える", async () => {
+    const onRename = vi.fn(async () => {});
+    render(lobbyGm({ onRename }));
+    const input = edit();
+    expect(input.value).toBe("ゆうき");
+    fireEvent.change(input, { target: { value: "けんた" } });
+    fireEvent.click(screen.getByRole("button", { name: m.rename_save() }));
+    await vi.waitFor(() => expect(onRename).toHaveBeenCalledWith("けんた"));
   });
 });

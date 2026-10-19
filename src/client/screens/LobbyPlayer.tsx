@@ -5,7 +5,6 @@ import { Screen } from "../ui/Screen";
 import { TopBar } from "../ui/TopBar";
 import { RoomBadge } from "../ui/RoomCode";
 import { PlayerTiles, type LobbyMember } from "./LobbyGm";
-import { RenameButton } from "./Rename";
 import { RulesButton } from "./Rules";
 
 export interface LobbyPlayerProps {
@@ -63,16 +62,20 @@ export function LobbyPlayer({
         </div>
       </Card>
 
-      <PlayerTiles gmName={gmName} players={players} meId={me.pid} />
+      <PlayerTiles
+        gmName={gmName}
+        players={players}
+        meId={me.pid}
+        self={{ name: me.name, onRename }}
+      />
 
       <div className="sh-actions">
         <div className="sh-row sh-row--even">
           <RulesButton rounds={rounds} limitSec={limitSec} />
-          <RenameButton name={me.name} onRename={onRename} />
+          <Button variant="quiet" onClick={onLeave}>
+            {m.leave_button()}
+          </Button>
         </div>
-        <Button variant="quiet" onClick={onLeave}>
-          {m.leave_button()}
-        </Button>
       </div>
     </Screen>
   );
