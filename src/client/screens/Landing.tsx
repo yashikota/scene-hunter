@@ -56,117 +56,119 @@ export function Landing() {
         <LanguageSelect locale={locale} onLocale={setLocale} />
       </header>
 
-      <section className="lp-hero">
-        <Floaters />
-        <div className="lp-hero-text">
-          <mo.img
-            src="/camera.webp"
-            alt=""
-            width={120}
-            height={120}
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0, y: [0, -8, 0] }}
-            transition={{
-              scale: { type: "spring", stiffness: 260, damping: 11 },
-              rotate: { type: "spring", stiffness: 260, damping: 11 },
-              y: { duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 0.9 },
-            }}
-          />
-          <mo.h1
-            className="sh-brand lp-title"
-            initial={{ opacity: 0, y: 20, scale: 0.8 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ ...SPRING, delay: 0.15 }}
-          >
-            {m.app_name()}
-          </mo.h1>
-          <mo.p
-            className="lp-tagline"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...SPRING, delay: 0.3 }}
-          >
-            <Phrase>{m.lp_tagline()}</Phrase>
-          </mo.p>
-          <Cta delay={0.45} />
-        </div>
-        <mo.div
-          className="lp-hero-art"
-          initial={{ opacity: 0, rotate: 8, scale: 0.85 }}
-          animate={{ opacity: 1, rotate: -2, scale: 1 }}
-          transition={{ type: "spring", stiffness: 140, damping: 14, delay: 0.35 }}
-        >
-          <RulesArt step={2} />
-        </mo.div>
-      </section>
-
-      <Section title={m.lp_about_title()}>
-        <About />
-      </Section>
-
-      <Section title={m.lp_roles_title()}>
-        <Roles />
-      </Section>
-
-      <Section title={m.lp_flow_title()}>
-        <Flow />
-      </Section>
-
-      <Section title={m.lp_howto_title()}>
-        <ol className="lp-steps">
-          {Array.from({ length: RULE_STEPS }, (_, i) => (
-            <mo.li key={i} className="lp-step" {...RISE}>
-              <RulesArt step={i} />
-              <h3 className="lp-step-title">
-                <span className="sh-rule-num">{i + 1}</span>
-                <Phrase>{titles[i]}</Phrase>
-              </h3>
-              <p className="lp-step-text">
-                <Phrase>{rules[i]}</Phrase>
-              </p>
-            </mo.li>
-          ))}
-        </ol>
-      </Section>
-
-      <Section title={m.lp_score_title()}>
-        <mo.div className="lp-card" {...RISE}>
-          <p className="lp-lead">
-            <Phrase>{m.lp_score_lead()}</Phrase>
-          </p>
-          <ScoreDemo />
-        </mo.div>
-      </Section>
-
-      <Section title={m.lp_features_title()}>
-        <ul className="lp-features">
-          {FEATURES.map(({ icon, title, body }, i) => (
-            <mo.li
-              key={i}
-              className="lp-feature"
-              {...RISE}
-              transition={{ ...RISE.transition, delay: i * 0.08 }}
+      <main>
+        <section className="lp-hero">
+          <Floaters />
+          <div className="lp-hero-text">
+            <mo.img
+              src="/camera.webp"
+              alt=""
+              width={120}
+              height={120}
+              initial={{ scale: 0, rotate: -30 }}
+              animate={{ scale: 1, rotate: 0, y: [0, -8, 0] }}
+              transition={{
+                scale: { type: "spring", stiffness: 260, damping: 11 },
+                rotate: { type: "spring", stiffness: 260, damping: 11 },
+                y: { duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 0.9 },
+              }}
+            />
+            <mo.h1
+              className="sh-brand lp-title"
+              initial={{ opacity: 0, y: 20, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ ...SPRING, delay: 0.15 }}
             >
-              <span className="lp-feature-icon" aria-hidden="true">
-                {icon}
-              </span>
-              <h3>
-                <Phrase>{title()}</Phrase>
-              </h3>
-              <p>
-                <Phrase>{body()}</Phrase>
-              </p>
-            </mo.li>
-          ))}
-        </ul>
-      </Section>
+              {m.app_name()}
+            </mo.h1>
+            <mo.p
+              className="lp-tagline"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...SPRING, delay: 0.3 }}
+            >
+              <Phrase>{m.lp_tagline()}</Phrase>
+            </mo.p>
+            <Cta delay={0.45} />
+          </div>
+          <mo.div
+            className="lp-hero-art"
+            initial={{ opacity: 0, rotate: 8, scale: 0.85 }}
+            animate={{ opacity: 1, rotate: -2, scale: 1 }}
+            transition={{ type: "spring", stiffness: 140, damping: 14, delay: 0.35 }}
+          >
+            <RulesArt step={2} />
+          </mo.div>
+        </section>
 
-      <mo.section className="lp-final" {...RISE}>
-        <h2 className="sh-display">
-          <Phrase>{m.lp_final_title()}</Phrase>
-        </h2>
-        <Cta />
-      </mo.section>
+        <Section title={m.lp_about_title()}>
+          <About />
+        </Section>
+
+        <Section title={m.lp_roles_title()}>
+          <Roles />
+        </Section>
+
+        <Section title={m.lp_flow_title()}>
+          <Flow />
+        </Section>
+
+        <Section title={m.lp_howto_title()}>
+          <ol className="lp-steps">
+            {Array.from({ length: RULE_STEPS }, (_, i) => (
+              <mo.li key={i} className="lp-step" {...RISE}>
+                <RulesArt step={i} />
+                <h3 className="lp-step-title">
+                  <span className="sh-rule-num">{i + 1}</span>
+                  <Phrase>{titles[i]}</Phrase>
+                </h3>
+                <p className="lp-step-text">
+                  <Phrase>{rules[i]}</Phrase>
+                </p>
+              </mo.li>
+            ))}
+          </ol>
+        </Section>
+
+        <Section title={m.lp_score_title()}>
+          <mo.div className="lp-card" {...RISE}>
+            <p className="lp-lead">
+              <Phrase>{m.lp_score_lead()}</Phrase>
+            </p>
+            <ScoreDemo />
+          </mo.div>
+        </Section>
+
+        <Section title={m.lp_features_title()}>
+          <ul className="lp-features">
+            {FEATURES.map(({ icon, title, body }, i) => (
+              <mo.li
+                key={i}
+                className="lp-feature"
+                {...RISE}
+                transition={{ ...RISE.transition, delay: i * 0.08 }}
+              >
+                <span className="lp-feature-icon" aria-hidden="true">
+                  {icon}
+                </span>
+                <h3>
+                  <Phrase>{title()}</Phrase>
+                </h3>
+                <p>
+                  <Phrase>{body()}</Phrase>
+                </p>
+              </mo.li>
+            ))}
+          </ul>
+        </Section>
+
+        <mo.section className="lp-final" {...RISE}>
+          <h2 className="sh-display">
+            <Phrase>{m.lp_final_title()}</Phrase>
+          </h2>
+          <Cta />
+        </mo.section>
+      </main>
     </div>
   );
 }
@@ -263,7 +265,7 @@ function Roles() {
       tone: "gm",
       items: [m.lp_role_gm_1(), m.lp_role_gm_2(), m.lp_role_gm_3(), m.lp_role_gm_4()],
       art: (
-        <svg viewBox="0 0 40 40" width={44} height={44}>
+        <svg viewBox="0 0 40 40" width={44} height={44} aria-hidden="true" focusable="false">
           <path d="M6 30 l3 -18 l7 8 l4 -12 l4 12 l7 -8 l3 18 Z" className="lp-crown lp-ink" />
         </svg>
       ),
@@ -273,7 +275,7 @@ function Roles() {
       tone: "player",
       items: [m.lp_role_player_1(), m.lp_role_player_2(), m.lp_role_player_3()],
       art: (
-        <svg viewBox="0 0 40 40" width={44} height={44}>
+        <svg viewBox="0 0 40 40" width={44} height={44} aria-hidden="true" focusable="false">
           <rect x={11} y={4} width={18} height={32} rx={4} className="lp-phone lp-ink" />
           <circle cx={20} cy={18} r={5} className="ra-sun" />
         </svg>
@@ -440,6 +442,7 @@ function ScoreDemo() {
           min={0}
           max={LIMIT_SEC}
           value={sec}
+          aria-valuetext={m.seconds({ count: sec })}
           onChange={(e) => setSec(Number(e.target.value))}
         />
       </label>

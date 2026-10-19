@@ -71,7 +71,7 @@ export function ResultsWait({
                   flexDirection: "column",
                 }}
               >
-                <Thumb url={p.url} alt={p.label} height={100} dim={!p.valid} />
+                <Thumb url={p.url} height={100} dim={!p.valid} />
                 <span
                   style={{
                     padding: 6,

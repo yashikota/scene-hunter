@@ -38,7 +38,7 @@ test("部屋を作り、番号とリンクで 2 人が入り、3 ラウンド遊
     // 最終結果：全員に順位が出る
     for (const p of [gm, ...players]) {
       await expect(p.page.getByRole("heading", { name: "最終結果" })).toBeVisible();
-      await expect(p.page.getByLabel("1 位").first()).toBeVisible();
+      await expect(p.page.getByRole("listitem").filter({ hasText: "1 位" }).first()).toBeVisible();
     }
     // GM はロビーに戻せる
     await expect(gm.page.getByRole("button", { name: "ロビーに戻る" })).toBeVisible();

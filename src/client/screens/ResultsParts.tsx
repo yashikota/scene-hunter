@@ -1,15 +1,18 @@
 import { m } from "../paraglide/messages";
 import { Card } from "../ui/Card";
 
-/** 高さを決めた写真の枠。幅いっぱいに写真を切り抜いて収め、dim で薄くする（無効な写真）。写真が無ければ空の枠。 */
+/**
+ * 高さを決めた写真の枠。幅いっぱいに写真を切り抜いて収め、dim で薄くする（無効な写真）。写真が無ければ空の枠。
+ * alt を省くと飾りの扱い（すぐ横に撮った人の名前を書く一覧で、名前を 2 度読ませない）。
+ */
 export function Thumb({
   url,
-  alt,
+  alt = "",
   height,
   dim = false,
 }: {
   url?: string;
-  alt: string;
+  alt?: string;
   height: number;
   dim?: boolean;
 }) {

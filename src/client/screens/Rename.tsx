@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { m } from "../paraglide/messages";
 import { cleanName, errorMessage, NAME_MAX } from "./entryErrors";
 
@@ -40,11 +40,18 @@ export function EditableName({
   onRename(name: string): Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
+  const pencil = useRef<HTMLButtonElement>(null);
+  const closed = useRef(false);
+  // 書き換えを終えたら、消えた入力欄の代わりに鉛筆へフォーカスを戻す
+  useEffect(() => {
+    if (!editing && closed.current) pencil.current?.focus();
+  }, [editing]);
   if (!editing) {
     return (
       <span className="sh-name-view">
         <span className="sh-name-text">{display}</span>
         <button
+          ref={pencil}
           type="button"
           className="sh-icon-btn"
           aria-label={m.rename_button()}
@@ -55,7 +62,11 @@ export function EditableName({
       </span>
     );
   }
-  return <NameEditor name={name} onRename={onRename} onDone={() => setEditing(false)} />;
+  const done = () => {
+    closed.current = true;
+    setEditing(false);
+  };
+  return <NameEditor name={name} onRename={onRename} onDone={done} />;
 }
 
 function NameEditor({
@@ -115,6 +126,8 @@ function NameEditor({
           autoFocus
           maxLength={NAME_MAX}
           placeholder={m.name_label()}
+          aria-invalid={error !== null}
+          aria-describedby={error ? `${id}-error` : undefined}
           value={name}
           disabled={busy}
           onChange={(e) => setName(e.target.value)}
@@ -140,7 +153,7 @@ function NameEditor({
         </button>
       </div>
       {error && (
-        <p role="alert" className="sh-error" style={{ margin: 0 }}>
+        <p id={`${id}-error`} role="alert" className="sh-error" style={{ margin: 0 }}>
           {error}
         </p>
       )}

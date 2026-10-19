@@ -72,7 +72,7 @@ export function PlayerTurnGm(props: PlayerTurnGmProps) {
           )}
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <span style={{ fontWeight: 800 }}>{m.photo_taking()}</span>
+          <h1 style={{ fontSize: "inherit", fontWeight: 800, margin: 0 }}>{m.photo_taking()}</h1>
           <span className="sh-timer" role="timer" style={{ fontSize: 28 }}>
             {remainingSec(turnStartedLocalAt, limitSec, now)}
             <small> {m.sec_suffix()}</small>

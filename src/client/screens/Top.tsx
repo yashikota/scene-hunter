@@ -143,6 +143,8 @@ function TopForm({
             autoComplete="off"
             maxLength={6}
             placeholder={m.code_label()}
+            aria-invalid={error !== null}
+            aria-describedby={error ? `${ids}-error` : undefined}
             value={code}
             onChange={(e) => {
               setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
@@ -155,7 +157,7 @@ function TopForm({
             }}
           />
           {error && (
-            <p role="alert" className="sh-error">
+            <p id={`${ids}-error`} role="alert" className="sh-error">
               {error}
             </p>
           )}

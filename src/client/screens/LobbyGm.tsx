@@ -59,7 +59,7 @@ export function PlayerTiles({
         <h2 className="sh-display" style={{ fontSize: 17 }}>
           {m.players_heading()}
         </h2>
-        <span className="sh-sub" style={{ fontSize: 13 }}>
+        <span className="sh-sub" style={{ fontSize: 13 }} aria-live="polite">
           {m.players_count({ count: activePlayers(players).length + 1 })}
         </span>
       </div>
@@ -153,7 +153,7 @@ export function LobbyGm({
   };
 
   return (
-    <Screen>
+    <Screen title={m.room_badge({ code })}>
       <TopBar right={<span className="sh-badge">{m.you_are_gm()}</span>} />
 
       <Card
@@ -165,7 +165,7 @@ export function LobbyGm({
         </span>
         <RoomCode code={code} />
         <Button variant="quiet" onClick={() => void copyLink()} style={{ marginTop: 8 }}>
-          {copied ? m.link_copied() : m.copy_link()}
+          <span aria-live="polite">{copied ? m.link_copied() : m.copy_link()}</span>
         </Button>
         {manual && (
           <input

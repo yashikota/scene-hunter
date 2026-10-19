@@ -192,11 +192,14 @@ body {
   letter-spacing: normal;
 }
 
-.sh-btn:focus-visible,
-.sh-input:focus-visible,
-.sh-select:focus-visible {
+/* キーボードで動かしたときのフォーカスの印。押せるもの全部に、同じ青い枠を付ける */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 3px solid var(--color-timer);
   outline-offset: 2px;
+}
+/* 画面が変わったときにスクリプトでフォーカスを移す見出しやダイアログには、枠を付けない */
+[tabindex="-1"]:focus {
+  outline: none;
 }
 
 .sh-select {
@@ -590,10 +593,6 @@ body {
 }
 .sh-copy:active {
   transform: translateY(1px);
-}
-.sh-copy:focus-visible {
-  outline: 3px solid var(--color-timer);
-  outline-offset: 2px;
 }
 .sh-input--big {
   font-size: 24px;

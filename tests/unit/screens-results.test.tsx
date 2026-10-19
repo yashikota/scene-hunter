@@ -61,14 +61,10 @@ describe("ResultsPick", () => {
     const { ui, onToggle } = pick({ picks: ["b", "a"] });
     render(ui);
     expect(
-      within(screen.getByRole("button", { name: /はるか/ })).getByLabelText(
-        m.rank_label({ rank: 1 }),
-      ),
+      within(screen.getByRole("button", { name: /はるか/ })).getByText(m.rank_label({ rank: 1 })),
     ).toBeTruthy();
     expect(
-      within(screen.getByRole("button", { name: /そうた/ })).getByLabelText(
-        m.rank_label({ rank: 2 }),
-      ),
+      within(screen.getByRole("button", { name: /そうた/ })).getByText(m.rank_label({ rank: 2 })),
     ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /みお/ }));
     expect(onToggle).toHaveBeenCalledWith("c");
@@ -122,7 +118,7 @@ describe("ResultsPick", () => {
     const none = pick({ photos: [], picks: [], missing: ["そうた", "はるか"] });
     render(none.ui);
     expect(screen.getByRole("alert").textContent).toBe(m.no_submissions());
-    expect(screen.queryByRole("heading", { name: m.results_pick_title() })).toBeNull();
+    expect(screen.queryByText(m.results_pick_hint())).toBeNull();
     expect(screen.getByText("そうた")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: m.to_results_button() }));
     expect(none.onConfirm).toHaveBeenCalledTimes(1);
@@ -152,7 +148,9 @@ describe("ResultsWait", () => {
     );
     expect(screen.getByText(m.results_wait_body({ name: "ゆうき" }))).toBeTruthy();
     expect(screen.getByText(m.you_tag({ name: "はるか" }))).toBeTruthy();
-    expect(screen.getAllByRole("img")).toHaveLength(PHOTOS.length + 1);
+    // 撮った人の写真は、すぐ下に名前があるので飾り（alt なし）。名前を 2 度読ませない
+    expect(document.querySelectorAll("img")).toHaveLength(PHOTOS.length + 1);
+    expect(screen.getAllByRole("img")).toHaveLength(1);
     expect(document.body.textContent).not.toMatch(/秒|×0\./);
     // 押せるのは上端の部屋の番号（コピー）だけ
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
@@ -236,8 +234,8 @@ describe("ResultsReveal", () => {
     const onNext = vi.fn();
     const { unmount } = render(reveal({ isGm: true, onNext }));
     expect(screen.getByText("3,345")).toBeTruthy();
-    expect(screen.getByLabelText(m.rank_up({ count: 1 }))).toBeTruthy();
-    expect(screen.getByLabelText(m.rank_down({ count: 1 }))).toBeTruthy();
+    expect(screen.getByText(m.rank_up({ count: 1 }))).toBeTruthy();
+    expect(screen.getByText(m.rank_down({ count: 1 }))).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: m.next_round_button() }));
     expect(onNext).toHaveBeenCalled();
     unmount();
@@ -313,10 +311,14 @@ describe("Final", () => {
   it("表彰台は 2・1・3 の順で、4 位以降は一覧に並ぶ", () => {
     render(final());
     const podium = screen.getAllByRole("list")[0]!;
-    const names = within(podium)
-      .getAllByRole("listitem")
-      .map((li) => li.textContent);
-    expect(names).toEqual(["そうた4,610" + "2", "はるか5,120" + "1", "けんた3,980" + "3"]);
+    const items = within(podium).getAllByRole("listitem");
+    // 読み上げは 1 位から、見た目の列は 2・1・3
+    expect(items.map((li) => li.querySelector(".sh-sr-only")?.textContent)).toEqual([
+      `${m.rank_points({ rank: 1, points: "5,120" })} はるか`,
+      `${m.rank_points({ rank: 2, points: "4,610" })} そうた`,
+      `${m.rank_points({ rank: 3, points: "3,980" })} けんた`,
+    ]);
+    expect(items.map((li) => li.style.gridColumn.split(" ")[0])).toEqual(["2", "1", "3"]);
     expect(screen.getByText(m.you_tag({ name: "みお" }))).toBeTruthy();
     expect(screen.getByText("2,040")).toBeTruthy();
   });

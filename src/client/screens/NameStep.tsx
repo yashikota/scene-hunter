@@ -49,14 +49,14 @@ export function NameStep({ code, onSubmit, onBack }: NameStepProps) {
   const busy = status === "busy";
 
   return (
-    <Screen variant="top">
+    <Screen variant="top" title={code ? m.join_button() : undefined}>
       <form onSubmit={submit} noValidate className="sh-stack">
         {code ? (
           <RoomCode code={code} />
         ) : (
-          <p className="sh-display" style={{ fontSize: 28, textAlign: "center", margin: 0 }}>
+          <h1 className="sh-display" style={{ fontSize: 28, textAlign: "center", margin: 0 }}>
             {m.create_button()}
-          </p>
+          </h1>
         )}
         <label htmlFor={`${id}-name`} className="sh-sr-only">
           {m.name_label()}
@@ -75,16 +75,18 @@ export function NameStep({ code, onSubmit, onBack }: NameStepProps) {
           autoFocus
           maxLength={NAME_MAX}
           placeholder={m.name_label()}
+          aria-invalid={error !== null}
+          aria-describedby={error ? `${id}-error` : undefined}
           value={name}
           onChange={(e) => setName(e.target.value)}
           onFocus={(e) => e.currentTarget.select()}
         />
         {error && (
-          <p role="alert" className="sh-error">
+          <p id={`${id}-error`} role="alert" className="sh-error">
             {error}
           </p>
         )}
-        <Button type="submit" variant="primary" disabled={busy}>
+        <Button type="submit" variant="primary" disabled={busy} aria-busy={busy}>
           {busy ? (code ? m.joining() : m.creating()) : code ? m.join_button() : m.create_button()}
         </Button>
         <Button variant="quiet" onClick={onBack} disabled={busy}>

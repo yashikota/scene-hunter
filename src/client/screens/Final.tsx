@@ -29,6 +29,10 @@ const PODIUM = [
   { index: 0, height: 128, bg: "var(--color-gold)", at: 1.9 },
   { index: 2, height: 72, bg: "var(--color-surface)", at: 0.3 },
 ] as const;
+/** 表彰台を順位の順に並べ、見た目の列（1 から）を添える。 */
+const PODIUM_BY_RANK = PODIUM.map((p, i) => ({ ...p, column: i + 1 })).sort(
+  (a, b) => a.index - b.index,
+);
 /** 1 位の台が伸びきって、紙吹雪を出すまでの秒数。 */
 const CHAMPION_AT = 2.5;
 
@@ -84,13 +88,16 @@ export function Final({
           listStyle: "none",
         }}
       >
-        {PODIUM.map(({ index, height, bg, at: rise }) => {
+        {PODIUM_BY_RANK.map(({ index, height, bg, at: rise, column }) => {
           const t = totals[index];
-          if (!t) return <li key={index} aria-hidden="true" />;
+          // 読み上げは 1 位から。見た目の 2・1・3 の並びは、列の指定で作る
+          const place = { gridColumn: column, gridRow: 1 };
+          if (!t) return <li key={index} aria-hidden="true" style={place} />;
           return (
             <li
               key={t.pid}
               style={{
+                ...place,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -99,6 +106,9 @@ export function Final({
                 minWidth: 0,
               }}
             >
+              <span className="sh-sr-only">
+                {m.rank_points({ rank: t.rank, points: formatNumber(t.total) })} {name(t.pid)}
+              </span>
               {index === 0 && (
                 <mo.svg
                   viewBox="0 0 40 26"
@@ -122,6 +132,7 @@ export function Final({
                 </mo.svg>
               )}
               <mo.span
+                aria-hidden="true"
                 style={{ fontSize: 14, fontWeight: 800, overflowWrap: "anywhere" }}
                 initial={{ opacity: 0, y: -14 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -130,6 +141,7 @@ export function Final({
                 {name(t.pid)}
               </mo.span>
               <mo.span
+                aria-hidden="true"
                 className="sh-display"
                 style={{ fontSize: 18, fontVariantNumeric: "tabular-nums" }}
                 initial={{ opacity: 0 }}
@@ -146,7 +158,7 @@ export function Final({
               </mo.span>
               <mo.div
                 className={`sh-display sh-podium ${index === 0 ? "sh-podium--1" : ""}`}
-                aria-label={m.rank_label({ rank: t.rank })}
+                aria-hidden="true"
                 initial={{ scaleY: 0 }}
                 animate={{ scaleY: 1 }}
                 transition={{ type: "spring", stiffness: 220, damping: 16, delay: at(rise) }}

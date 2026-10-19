@@ -10,11 +10,10 @@ export function Dissolved({ code, onLeave }: { code: string; onLeave(): void }) 
     <Screen>
       <TopBar right={<RoomBadge code={code} />} />
       <h1
-        role="status"
         className="sh-display"
         style={{ fontSize: 24, textAlign: "center", margin: "auto 0", lineHeight: 1.4 }}
       >
-        {m.dissolved_title()}
+        <span role="status">{m.dissolved_title()}</span>
       </h1>
       <Button variant="primary" onClick={onLeave}>
         {m.back_to_top()}

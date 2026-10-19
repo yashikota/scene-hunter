@@ -49,7 +49,8 @@ export function HintList({ hints, shown, turnStartedLocalAt, now }: HintListProp
           </span>
         </div>
       )}
-      <ol className="sh-hints">
+      {/* 公開されたヒントは、見ていなくても読み上げで知らせる */}
+      <ol className="sh-hints" aria-live="polite">
         {Array.from({ length: HINT_COUNT }, (_, i) => {
           const text = hints[i];
           const locked = i >= shown;
@@ -58,6 +59,8 @@ export function HintList({ hints, shown, turnStartedLocalAt, now }: HintListProp
             <mo.li
               key={`${i}-${locked}`}
               className={locked ? "sh-hint sh-hint--locked" : "sh-hint"}
+              // 番号だけの、まだ出ていないヒントは読み上げない
+              aria-hidden={text === undefined ? true : undefined}
               initial={locked ? false : { opacity: 0, x: -24, scale: 0.9 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               transition={SPRING}

@@ -45,9 +45,9 @@ export function LobbyPlayer({
           textAlign: "center",
         }}
       >
-        <span className="sh-display sh-pre" style={{ fontSize: 22, lineHeight: 1.4 }}>
+        <h1 className="sh-display sh-pre" style={{ fontSize: 22, lineHeight: 1.4 }}>
           {m.waiting_for_gm()}
-        </span>
+        </h1>
         <div
           style={{
             display: "flex",

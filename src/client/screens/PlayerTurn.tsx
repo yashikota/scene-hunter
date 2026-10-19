@@ -13,6 +13,9 @@ import { PlayerSubmitted } from "./PlayerSubmitted";
 import { HintList } from "./HintList";
 import { remainingSec } from "./turnTime";
 
+/** 残りがこの秒数になったら、読み上げで知らせる。 */
+const WARN_SEC = 10;
+
 export interface PlayerTurnProps {
   code: string;
   round: number;
@@ -111,7 +114,7 @@ export function PlayerTurn(props: PlayerTurnProps) {
 
   if (sent && sent.status !== "draft") {
     return (
-      <Screen>
+      <Screen title={m.round_label({ round, rounds })}>
         <TopBar
           left={m.round_label({ round, rounds })}
           right={<span>{m.time_left({ count: remaining })}</span>}
@@ -142,12 +145,16 @@ export function PlayerTurn(props: PlayerTurnProps) {
   return (
     <>
       <div hidden={blocked}>
-        <Screen>
+        <Screen title={m.round_label({ round, rounds })}>
           <TopBar left={m.round_label({ round, rounds })} right={<RoomBadge code={code} />} />
           <div style={{ textAlign: "center" }}>
             <span className="sh-timer" role="timer" style={{ fontSize: 56 }}>
               {remaining}
               <small> {m.sec_suffix()}</small>
+            </span>
+            {/* 毎秒は読み上げない。残りが少なくなったときに 1 度だけ知らせる */}
+            <span className="sh-sr-only" aria-live="polite">
+              {remaining > 0 && remaining <= WARN_SEC ? m.time_left({ count: WARN_SEC }) : ""}
             </span>
           </div>
           <HintList

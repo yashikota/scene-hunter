@@ -65,5 +65,12 @@ export function CountUp({
     });
     return () => controls.stop();
   }, [from, to, delay, duration, still]);
-  return <>{format(value)}</>;
+  if (value === to) return <>{format(to)}</>;
+  // 数えている途中の数は読み上げず、最後の数だけを読ませる
+  return (
+    <>
+      <span aria-hidden="true">{format(value)}</span>
+      <span className="sh-sr-only">{format(to)}</span>
+    </>
+  );
 }

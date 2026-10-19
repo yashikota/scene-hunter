@@ -53,9 +53,12 @@ export function ResultsPick({
         right={<span className="sh-badge">{m.you_are_gm()}</span>}
       />
       {none ? (
-        <p role="alert" className="sh-error">
-          {m.no_submissions()}
-        </p>
+        <>
+          <h1 className="sh-sr-only">{m.results_pick_title()}</h1>
+          <p role="alert" className="sh-error">
+            {m.no_submissions()}
+          </p>
+        </>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <h1 className="sh-display" style={{ fontSize: 22 }}>
@@ -108,7 +111,7 @@ export function ResultsPick({
                     color: "var(--color-ink)",
                   }}
                 >
-                  <Thumb url={p.url} alt={p.label} height={100} dim={!p.valid} />
+                  <Thumb url={p.url} height={100} dim={!p.valid} />
                   <span
                     style={{
                       padding: 6,
@@ -122,7 +125,6 @@ export function ResultsPick({
                   </span>
                   {picked && (
                     <span
-                      aria-label={m.rank_label({ rank: order + 1 })}
                       className="sh-display"
                       style={{
                         position: "absolute",
@@ -140,7 +142,8 @@ export function ResultsPick({
                         justifyContent: "center",
                       }}
                     >
-                      {order + 1}
+                      <span aria-hidden="true">{order + 1}</span>
+                      <span className="sh-sr-only">{m.rank_label({ rank: order + 1 })}</span>
                     </span>
                   )}
                 </button>

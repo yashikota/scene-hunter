@@ -88,7 +88,7 @@ function RulesSteps({
             onDragEnd={swipe}
           >
             <RulesArt step={step} />
-            <p className="sh-rule-text" aria-live="polite">
+            <p className="sh-rule-text" aria-hidden="true">
               <mo.span
                 className="sh-rule-num"
                 initial={{ scale: 0, rotate: -90 }}
@@ -102,6 +102,10 @@ function RulesSteps({
           </mo.div>
         </AnimatePresence>
       </div>
+      {/* カードは送るたびに作り直すので、読み上げはカードの外の、消えない場所から出す */}
+      <p className="sh-sr-only" aria-live="polite">
+        {`${step + 1} / ${RULE_STEPS}: ${rules[step]}`}
+      </p>
       <div className="sh-rule-dots" aria-hidden="true">
         {rules.map((_, i) => (
           <mo.span

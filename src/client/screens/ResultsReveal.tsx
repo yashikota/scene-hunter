@@ -118,7 +118,6 @@ export function ResultsReveal({
               score={s}
               delay={still ? 0 : revealDelay(s.rank!, picked.length)}
               name={named(s.pid)}
-              alt={label(s.pid)}
               url={photoUrls[s.pid]}
             />
           ))}
@@ -202,13 +201,11 @@ function PickedCard({
   score: s,
   delay,
   name,
-  alt,
   url,
 }: {
   score: RoundScore;
   delay: number;
   name: string;
-  alt: string;
   url?: string;
 }) {
   const ref = useRef<HTMLLIElement>(null);
@@ -224,10 +221,11 @@ function PickedCard({
       }
       onAnimationComplete={() => first && burstFrom(ref.current)}
     >
-      <span aria-label={m.rank_label({ rank: s.rank! })} className="sh-display sh-picked-rank">
-        {s.rank}
+      <span className="sh-display sh-picked-rank">
+        <span aria-hidden="true">{s.rank}</span>
+        <span className="sh-sr-only">{m.rank_label({ rank: s.rank! })}</span>
       </span>
-      <Thumb url={url} alt={alt} height={56} />
+      <Thumb url={url} height={56} />
       <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
         <span style={{ fontSize: 15, fontWeight: 800, overflowWrap: "anywhere" }}>
           {name}
@@ -264,7 +262,6 @@ function Delta({ delta }: { delta: number }) {
         : m.rank_same();
   return (
     <span
-      aria-label={label}
       style={{
         fontSize: 12,
         fontWeight: 800,
@@ -272,7 +269,8 @@ function Delta({ delta }: { delta: number }) {
         color: delta > 0 ? "var(--color-timer)" : "var(--color-sub)",
       }}
     >
-      {text}
+      <span aria-hidden="true">{text}</span>
+      <span className="sh-sr-only">{label}</span>
     </span>
   );
 }
