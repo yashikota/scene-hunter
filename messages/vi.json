@@ -130,6 +130,8 @@
   "copy_code": "Sao chép số phòng {code}",
   "code_copied": "Đã sao chép",
   "rules_button": "Cách chơi",
+  "rules_next": "Tiếp",
+  "rules_prev": "Quay lại",
   "rules_1": "GM chụp một bức ảnh làm đề",
   "rules_2": "Gợi ý của AI hiện thêm mỗi 10 giây (tối đa 5)",
   "rules_3": "Tìm cùng khung cảnh, chụp và nộp trong {sec} giây. Có thể chụp lại trước khi nộp",

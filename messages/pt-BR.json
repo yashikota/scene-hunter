@@ -148,6 +148,8 @@
   "copy_code": "Copiar o número da sala {code}",
   "code_copied": "Copiado",
   "rules_button": "Como jogar",
+  "rules_next": "Próximo",
+  "rules_prev": "Voltar",
   "rules_1": "O GM tira uma foto como tema",
   "rules_2": "Dicas da IA aparecem a cada 10 segundos (até 5)",
   "rules_3": "Encontre a mesma cena, fotografe e envie em {sec} segundos. Dá para refazer antes de enviar",

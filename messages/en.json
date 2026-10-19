@@ -148,6 +148,8 @@
   "copy_code": "Copy room number {code}",
   "code_copied": "Copied",
   "rules_button": "How to play",
+  "rules_next": "Next",
+  "rules_prev": "Back",
   "rules_1": "The GM takes a photo as the topic",
   "rules_2": "AI hints appear every 10 seconds (up to 5)",
   "rules_3": "Find the same scene, shoot it and submit within {sec} seconds. You can retake before submitting",

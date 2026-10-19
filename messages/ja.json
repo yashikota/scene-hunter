@@ -130,6 +130,8 @@
   "copy_code": "部屋の番号 {code} をコピー",
   "code_copied": "コピーしました",
   "rules_button": "遊び方",
+  "rules_next": "次へ",
+  "rules_prev": "戻る",
   "rules_1": "GM がお題の写真を撮る",
   "rules_2": "AI のヒントが 10 秒ごとに増える（最大 5 つ）",
   "rules_3": "{sec} 秒のうちに同じ景色を撮って提出する。出す前なら撮り直せる",

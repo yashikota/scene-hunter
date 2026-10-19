@@ -130,6 +130,8 @@
   "copy_code": "방 번호 {code} 복사",
   "code_copied": "복사했어요",
   "rules_button": "게임 방법",
+  "rules_next": "다음",
+  "rules_prev": "이전",
   "rules_1": "GM이 주제 사진을 찍어요",
   "rules_2": "AI 힌트가 10초마다 하나씩 늘어나요(최대 5개)",
   "rules_3": "{sec}초 안에 같은 장면을 찍어 제출해요. 제출 전에는 다시 찍을 수 있어요",

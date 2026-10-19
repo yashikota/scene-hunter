@@ -130,6 +130,8 @@
   "copy_code": "複製房間號碼 {code}",
   "code_copied": "已複製",
   "rules_button": "玩法",
+  "rules_next": "下一步",
+  "rules_prev": "上一步",
   "rules_1": "GM 拍一張照片當作題目",
   "rules_2": "AI 提示每 10 秒增加一則（最多 5 則）",
   "rules_3": "在 {sec} 秒內拍下同樣的景色並提交。提交前可以重拍",

@@ -443,15 +443,42 @@ describe("LobbyGm の解散", () => {
 });
 
 describe("遊び方", () => {
-  it("ロビーの「遊び方」で、ラウンド数と制限時間を入れたルールを出す", () => {
+  it("ロビーの「遊び方」で、ラウンド数と制限時間を入れたルールを 1 つずつ見せる", () => {
     render(lobbyGm({ rounds: 5, limitSec: 90 }));
     fireEvent.click(screen.getByRole("button", { name: m.rules_button() }));
     const sheet = screen.getByRole("dialog", { name: m.rules_button() });
-    expect(within(sheet).getAllByRole("listitem")).toHaveLength(7);
+    const next = () => fireEvent.click(within(sheet).getByRole("button", { name: m.rules_next() }));
+    expect(within(sheet).getByText(m.rules_1())).toBeTruthy();
+    expect(
+      (within(sheet).getByRole("button", { name: m.rules_prev() }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    next();
+    next();
     expect(within(sheet).getByText(m.rules_3({ sec: 90 }))).toBeTruthy();
+    expect(within(sheet).queryByText(m.rules_1())).toBeNull();
+    fireEvent.click(within(sheet).getByRole("button", { name: m.rules_prev() }));
+    expect(within(sheet).getByText(m.rules_2())).toBeTruthy();
+    for (let i = 0; i < 5; i++) next();
     expect(within(sheet).getByText(m.rules_7({ rounds: 5 }))).toBeTruthy();
+    // 最後のステップでは「次へ」が「閉じる」に替わる
+    expect(within(sheet).queryByRole("button", { name: m.rules_next() })).toBeNull();
     fireEvent.click(within(sheet).getByRole("button", { name: m.close() }));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("矢印キーと横のスワイプでもステップを送る", () => {
+    render(lobbyGm());
+    fireEvent.click(screen.getByRole("button", { name: m.rules_button() }));
+    const sheet = screen.getByRole("dialog", { name: m.rules_button() });
+    const next = within(sheet).getByRole("button", { name: m.rules_next() });
+    fireEvent.keyDown(next, { key: "ArrowRight" });
+    expect(within(sheet).getByText(m.rules_2())).toBeTruthy();
+    fireEvent.pointerDown(next, { clientX: 200 });
+    fireEvent.pointerUp(next, { clientX: 120 });
+    expect(within(sheet).getByText(m.rules_3({ sec: 60 }))).toBeTruthy();
+    fireEvent.pointerDown(next, { clientX: 100 });
+    fireEvent.pointerUp(next, { clientX: 180 });
+    expect(within(sheet).getByText(m.rules_2())).toBeTruthy();
   });
 });
 

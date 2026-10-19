@@ -148,6 +148,8 @@
   "copy_code": "Copier le numéro de salle {code}",
   "code_copied": "Copié",
   "rules_button": "Règles du jeu",
+  "rules_next": "Suivant",
+  "rules_prev": "Retour",
   "rules_1": "Le GM prend une photo comme sujet",
   "rules_2": "Les indices de l’IA arrivent toutes les 10 secondes (5 au maximum)",
   "rules_3": "Trouvez la même scène, photographiez-la et envoyez-la en {sec} secondes. Vous pouvez reprendre la photo avant l’envoi",

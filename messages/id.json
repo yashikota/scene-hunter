@@ -130,6 +130,8 @@
   "copy_code": "Salin nomor ruang {code}",
   "code_copied": "Disalin",
   "rules_button": "Cara bermain",
+  "rules_next": "Berikutnya",
+  "rules_prev": "Kembali",
   "rules_1": "GM memotret foto sebagai tema",
   "rules_2": "Petunjuk AI muncul setiap 10 detik (maksimal 5)",
   "rules_3": "Temukan pemandangan yang sama, potret, dan kirim dalam {sec} detik. Kamu bisa memotret ulang sebelum mengirim",

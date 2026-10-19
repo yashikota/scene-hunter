@@ -655,16 +655,372 @@ body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-/* 遊び方のシートの番号付きの一覧。 */
+/* 遊び方のシート：動く絵と 1 文を 1 ステップずつ見せる。 */
 .sh-rules {
-  margin: 0;
-  padding-left: 1.4em;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 14px;
+  gap: 12px;
+  touch-action: pan-y;
+  user-select: none;
 }
-.sh-rules li::marker {
+.sh-rule {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+@keyframes sh-rule-next {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+@keyframes sh-rule-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+.sh-rule--next {
+  animation: sh-rule-next 260ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.sh-rule--prev {
+  animation: sh-rule-prev 260ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.sh-rule-text {
+  margin: 0;
+  /* 3 行まではステップを送ってもボタンの位置が動かないようにする */
+  min-height: 4.5em;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 15px;
+  font-weight: 800;
+}
+.sh-rule-num {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: var(--border);
+  border-radius: 50%;
+  background: var(--color-gold);
   font-family: var(--font-display), sans-serif;
-  color: var(--color-timer);
+  font-weight: var(--font-display-weight);
+  font-size: 14px;
+  line-height: 1;
+}
+.sh-rule-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.sh-rule-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 2px solid var(--color-ink);
+  background: var(--color-surface);
+  transition:
+    width 250ms ease,
+    background-color 250ms ease;
+}
+.sh-rule-dots .is-seen {
+  background: var(--color-sub);
+}
+.sh-rule-dots .is-current {
+  width: 22px;
+  background: var(--color-accent);
+}
+
+/* 遊び方の絵（RulesArt）。線と面の色はトークンから取り、コマの間は transition でつなぐ。 */
+.ra {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 240 / 132;
+  background: var(--color-bg);
+  border: var(--border);
+  border-radius: var(--radius-sm);
+}
+.ra * {
+  transform-box: fill-box;
+  transform-origin: center;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.ra-sky {
+  fill: #bfe0ff;
+}
+.ra-sun {
+  fill: var(--color-gold);
+  stroke: var(--color-ink);
+  stroke-width: 1.5;
+}
+.ra-mtn {
+  fill: #7cc77a;
+  stroke: var(--color-ink);
+  stroke-width: 1.5;
+}
+.ra-frame {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+.ra-frame--gold {
+  stroke: var(--color-accent);
+  stroke-width: 4;
+}
+.ra-stroke {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+}
+.ra-dash {
+  stroke-dasharray: 3 5;
+}
+.ra-device {
+  fill: var(--color-surface);
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+  filter: drop-shadow(3px 3px 0 var(--color-ink));
+}
+.ra-flash {
+  fill: #fff;
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+.ra-flash--on {
+  opacity: 1;
+  transition-duration: 60ms;
+}
+.ra-shutter {
+  fill: var(--color-accent);
+  stroke: var(--color-ink);
+  stroke-width: 2;
+  transition: transform 150ms ease;
+}
+.ra-press {
+  transform: scale(0.7);
+}
+.ra-star {
+  fill: var(--color-gold);
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+.ra-track {
+  fill: var(--color-surface);
+}
+.ra-fill {
+  transform-origin: left center;
+  transition: transform 650ms linear;
+}
+.ra-fill--timer {
+  fill: var(--color-timer);
+}
+.ra-fill--accent {
+  fill: var(--color-accent);
+}
+.ra-bubble {
+  fill: var(--color-surface);
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+.ra-dot {
+  fill: var(--color-accent);
+}
+.ra-text {
+  fill: #c9ced4;
+}
+.ra-ok {
+  fill: var(--color-accent);
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+.ra-medal--1 {
+  fill: var(--color-gold);
+}
+.ra-medal--2 {
+  fill: #dfe4ea;
+}
+.ra-medal--3 {
+  fill: #f2b98a;
+}
+.ra-medal,
+.ra-col,
+.ra-plus,
+.ra-clock,
+.ra-cup,
+.ra-round {
+  stroke: var(--color-ink);
+  stroke-width: 2;
+}
+.ra-num,
+.ra-pts {
+  font-family: var(--font-display), sans-serif;
+  font-size: 14px;
+  text-anchor: middle;
+  fill: var(--color-ink);
+}
+.ra-pts {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  transition: transform 450ms ease;
+}
+.ra-num--sub {
+  fill: var(--color-sub);
+  font-size: 12px;
+}
+.ra-col {
+  transform-origin: bottom center;
+  transition:
+    transform 450ms cubic-bezier(0.34, 1.4, 0.64, 1),
+    opacity 220ms ease;
+}
+.ra-clock {
+  fill: var(--color-surface);
+}
+.ra-hand {
+  transform-box: view-box;
+  transform-origin: 208px 64px;
+  transition: transform 650ms linear;
+}
+.ra-plus {
+  fill: var(--color-accent);
+}
+.ra-slot {
+  fill: var(--color-surface);
+  stroke: var(--color-ink);
+  stroke-width: 2;
+  stroke-dasharray: 4 4;
+}
+.ra-round {
+  fill: var(--color-surface);
+  transition: fill 250ms ease;
+}
+.ra-round--done {
+  fill: var(--color-timer);
+}
+.ra-cup {
+  fill: var(--color-gold);
+}
+
+/* 出てくる、消える。transform を持つ要素は .ra-on と .ra-off で行き来する。 */
+.ra-pop,
+.ra-fly,
+.ra-rise,
+.ra-spark,
+.ra-num,
+.ra-slot,
+.ra-mtn,
+.ra-sun {
+  transition:
+    transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 220ms ease;
+}
+.ra-off {
+  opacity: 0;
+}
+.ra-pop.ra-off {
+  transform: scale(0.2);
+}
+.ra-pop--left {
+  transform-origin: left center;
+}
+.ra-fly.ra-off {
+  transform: translate(-60px, 10px) scale(0.4) rotate(-12deg);
+}
+.ra-fly.ra-on {
+  transform: rotate(4deg);
+}
+.ra-rise.ra-off {
+  transform: translateY(14px);
+}
+.ra-spark.ra-on {
+  animation: ra-twinkle 900ms ease-in-out infinite alternate;
+}
+@keyframes ra-twinkle {
+  to {
+    opacity: 0.3;
+  }
+}
+.ra-trophy.ra-on {
+  animation: ra-bob 1.2s ease-in-out infinite alternate;
+}
+@keyframes ra-bob {
+  to {
+    transform: translateY(-3px);
+  }
+}
+.ra-pan {
+  transition: transform 650ms ease-in-out;
+}
+.ra-lift,
+.ra-rest {
+  transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.ra-lift {
+  transform: translateY(-4px);
+}
+.ra-dim {
+  opacity: 0.35;
+  transition: opacity 300ms ease;
+}
+
+/* シートは下から出し、外側は暗くしながら出す。 */
+@keyframes sh-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sh-sheet-in {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+.sh-sheet-backdrop {
+  animation: sh-fade-in 180ms ease-out;
+}
+.sh-sheet {
+  animation: sh-sheet-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+/* 画面が替わるとき、ふわっと出す。 */
+@keyframes sh-screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.sh-screen {
+  animation: sh-screen-in 260ms ease-out;
+}
+
+/* ロビーに入ってきた人の札をはずませて出す。 */
+@keyframes sh-tile-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+}
+.sh-tile {
+  animation: sh-tile-in 320ms cubic-bezier(0.3, 1.3, 0.6, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sh-rule--next,
+  .sh-rule--prev,
+  .sh-sheet-backdrop,
+  .sh-sheet,
+  .sh-screen,
+  .sh-tile,
+  .ra * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
