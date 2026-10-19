@@ -214,7 +214,12 @@ export function LobbyGm({
         </div>
       </div>
 
-      <Sheet open={confirming} title={m.dissolve_confirm()} onCancel={() => setConfirming(false)}>
+      <Sheet
+        open={confirming}
+        center
+        title={m.dissolve_confirm()}
+        onCancel={() => setConfirming(false)}
+      >
         <div className="sh-row sh-row--even">
           <Button variant="quiet" onClick={() => setConfirming(false)} autoFocus>
             {m.cancel()}
