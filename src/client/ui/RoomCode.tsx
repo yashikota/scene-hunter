@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { m } from "../paraglide/messages";
 import { copyText, useCopied } from "./copy";
-import { formatCode } from "./TopBar";
 
 /**
  * 部屋の番号を押すと、番号（6 桁の数字）をコピーするボタン。コピーできたら、しばらく
@@ -25,18 +24,18 @@ function CopyCode({
       type="button"
       className={className}
       onClick={() => void copy()}
-      aria-label={m.copy_code({ code: formatCode(code) })}
+      aria-label={m.copy_code({ code: code })}
     >
       <span aria-live="polite">{copied ? m.code_copied() : children}</span>
     </button>
   );
 }
 
-/** 画面の上端に置く小さな番号（「部屋 482 913」）。 */
+/** 画面の上端に置く小さな番号（「部屋 482913」）。 */
 export function RoomBadge({ code }: { code: string }) {
   return (
     <CopyCode code={code} className="sh-badge sh-copy">
-      {m.room_badge({ code: formatCode(code) })}
+      {m.room_badge({ code: code })}
     </CopyCode>
   );
 }
@@ -45,7 +44,7 @@ export function RoomBadge({ code }: { code: string }) {
 export function RoomCode({ code }: { code: string }) {
   return (
     <CopyCode code={code} className="sh-display sh-code sh-copy">
-      {formatCode(code)}
+      {code}
     </CopyCode>
   );
 }

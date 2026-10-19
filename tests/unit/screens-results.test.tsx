@@ -156,7 +156,7 @@ describe("ResultsWait", () => {
     expect(document.body.textContent).not.toMatch(/秒|×0\./);
     // 押せるのは上端の部屋の番号（コピー）だけ
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
-      m.room_badge({ code: "482 913" }),
+      m.room_badge({ code: "482913" }),
     ]);
   });
 
@@ -244,7 +244,7 @@ describe("ResultsReveal", () => {
     render(reveal());
     // 押せるのは上端の部屋の番号（コピー）だけ
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
-      m.room_badge({ code: "482 913" }),
+      m.room_badge({ code: "482913" }),
     ]);
     expect(screen.getByText(m.wait_next_gm())).toBeTruthy();
   });

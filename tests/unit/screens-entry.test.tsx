@@ -178,7 +178,7 @@ describe("/r/{code} を直接開く（まだ入っていない部屋）", () => 
     const router = open("/r/246810");
     expect(await screen.findByLabelText(m.name_label())).toBeTruthy();
     expect(router.state.location.pathname).toBe("/r/246810");
-    expect(screen.getByText("246 810")).toBeTruthy();
+    expect(screen.getByText("246810")).toBeTruthy();
   });
 
   it("名前の入力でやめると、この URL のまま番号を入れたトップに戻る（確かめ直さない）", async () => {
@@ -256,7 +256,7 @@ describe("NameStep", () => {
     const input = screen.getByLabelText(m.name_label()) as HTMLInputElement;
     expect(input.value).toBe("はるか");
     expect(document.activeElement).toBe(input);
-    expect(screen.getByText("482 913")).toBeTruthy();
+    expect(screen.getByText("482913")).toBeTruthy();
     fireEvent.change(input, { target: { value: " そうた " } });
     fireEvent.click(screen.getByRole("button", { name: m.join_button() }));
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledWith("そうた", expect.anything()));
@@ -326,7 +326,7 @@ describe("LobbyGm", () => {
     expect(screen.queryByText(m.start_waiting())).toBeNull();
     // ボタンは番号とリンクのコピー、遊び方、開始、交代、解散だけで、ラウンド数と制限時間を変える入力も無い
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
-      "482 913",
+      "482913",
       m.copy_link(),
       m.rules_button(),
       m.start_button(),
@@ -379,15 +379,15 @@ describe("部屋の番号のコピー", () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     stubClipboard({ writeText });
     render(lobbyGm());
-    const code = screen.getByRole("button", { name: m.copy_code({ code: "482 913" }) });
+    const code = screen.getByRole("button", { name: m.copy_code({ code: "482913" }) });
     await act(async () => fireEvent.click(code));
     expect(writeText).toHaveBeenCalledWith("482913");
     expect(code.textContent).toBe(m.code_copied());
     await act(() => vi.advanceTimersByTimeAsync(2000));
-    expect(code.textContent).toBe("482 913");
+    expect(code.textContent).toBe("482913");
   });
 
-  it("上端の「部屋 482 913」も押すとコピーする", async () => {
+  it("上端の「部屋 482913」も押すとコピーする", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     stubClipboard({ writeText });
     render(
@@ -402,7 +402,7 @@ describe("部屋の番号のコピー", () => {
       />,
     );
     await act(async () =>
-      fireEvent.click(screen.getByRole("button", { name: m.copy_code({ code: "482 913" }) })),
+      fireEvent.click(screen.getByRole("button", { name: m.copy_code({ code: "482913" }) })),
     );
     expect(writeText).toHaveBeenCalledWith("482913");
   });
@@ -529,7 +529,7 @@ describe("LobbyPlayer", () => {
     expect(screen.getByText("ゆうき（GM）")).toBeTruthy();
     expect(screen.getByText("3 ラウンド")).toBeTruthy();
     expect(screen.getByText("60 秒")).toBeTruthy();
-    expect(screen.getByText("部屋 482 913")).toBeTruthy();
+    expect(screen.getByText("部屋 482913")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: m.leave_button() }));
     expect(onLeave).toHaveBeenCalled();
   });

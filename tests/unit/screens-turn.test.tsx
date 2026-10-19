@@ -100,7 +100,7 @@ describe("PlayerTurn", () => {
     render(playerTurn());
     // ほかに押せるのは上端の部屋の番号（コピー）だけ
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
-      m.room_badge({ code: "482 913" }),
+      m.room_badge({ code: "482913" }),
       m.shutter_button(),
     ]);
     expect(screen.getByRole("button", { name: m.shutter_button() })).toBeTruthy();

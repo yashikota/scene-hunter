@@ -17,6 +17,3 @@ export function TopBar({ left, right }: { left?: ReactNode; right?: ReactNode })
     </header>
   );
 }
-
-/** 部屋の番号を 3 桁ずつに分けて読みやすくする（482913 → 482 913）。 */
-export const formatCode = (code: string): string => `${code.slice(0, 3)} ${code.slice(3)}`;
