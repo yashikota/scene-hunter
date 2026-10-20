@@ -5,7 +5,7 @@
 set -euo pipefail
 
 BUCKET="${R2_BUCKET:-scene-hunter-storage}"
-PROD_ORIGIN="${PROD_ORIGIN:-https://scene-hunter.scene-hunter.workers.dev}"
+PROD_ORIGIN="${PROD_ORIGIN:-https://game.scene-hunter.workers.dev}"
 DEV_ORIGIN="http://localhost:5173"
 
 # ブラウザは署名付き URL に PUT（content-type: image/jpeg）で上げ、GET で読む。

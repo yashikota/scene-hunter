@@ -4,7 +4,7 @@ import { defineConfig, devices } from "@playwright/test";
 // Workers AI をそのまま使う。Relay が作られ（cron が 12 時間後に消す）、AI もヒントの回数分だけ使うので、CI では
 // 流さず、デプロイの後に手で流す。
 
-const BASE_URL = process.env.SH_PROD_URL ?? "https://scene-hunter.scene-hunter.workers.dev";
+const BASE_URL = process.env.SH_PROD_URL ?? "https://game.scene-hunter.workers.dev";
 
 export default defineConfig({
   testDir: "tests/prod",

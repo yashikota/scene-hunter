@@ -27,7 +27,7 @@ export default defineConfig({
     bindings: { kv: true, storage: true, ...(e2eDev ? { ai: false } : {}) },
   },
   cloudflare: {
-    name: "scene-hunter",
+    name: "game",
     // 本番は workers.dev で公開する。preview_urls は Void がデプロイ前の版を確かめるのに使う。
     workers_dev: true,
     preview_urls: true,

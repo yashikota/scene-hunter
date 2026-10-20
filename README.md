@@ -3,8 +3,8 @@
 ゲームマスター（GM）が撮った景色を、AI のヒントを頼りに探して撮る、写真さがしのパーティーゲーム。
 同じ場所に集まった数人から数十人が、1 人 1 台のスマートフォンのブラウザで遊ぶ。
 
-- 本番：<https://scene-hunter.scene-hunter.workers.dev/>
-- 遊び方の紹介：<https://scene-hunter.scene-hunter.workers.dev/lp>
+- 本番：<https://game.scene-hunter.workers.dev/>
+- 遊び方の紹介：<https://game.scene-hunter.workers.dev/lp>
 
 ## 構成
 

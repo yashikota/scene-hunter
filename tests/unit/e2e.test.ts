@@ -49,7 +49,7 @@ describe("isE2e", () => {
 
   it("localhost 以外の宛先なら SH_E2E があっても false", () => {
     for (const url of [
-      "https://scene-hunter.scene-hunter.workers.dev/api/rooms",
+      "https://game.scene-hunter.workers.dev/api/rooms",
       "http://localhost.example.com/api/rooms",
       "http://10.0.0.1/api/rooms",
       "not a url",
@@ -185,7 +185,7 @@ describe("deps（SH_E2E が無いとき）", () => {
     await stubProductionSecrets();
     vi.stubEnv("SH_E2E", "1");
     const binding = { limit: async () => ({ success: true }) };
-    const c = ctx("https://scene-hunter.scene-hunter.workers.dev/api/rooms", {
+    const c = ctx("https://game.scene-hunter.workers.dev/api/rooms", {
       KV: {},
       STORAGE: {},
       RL_JOIN: binding,
@@ -237,7 +237,7 @@ describe("/api/e2e/blob", () => {
     const { GET, PUT } = await import("../../routes/api/e2e/blob.dev");
     await stubProductionSecrets();
     vi.stubEnv("SH_E2E", "1");
-    const url = "https://scene-hunter.scene-hunter.workers.dev/api/e2e/blob?m=GET&key=k";
+    const url = "https://game.scene-hunter.workers.dev/api/e2e/blob?m=GET&key=k";
     for (const handler of [PUT, GET]) {
       expect(await handler(ctx(url, { STORAGE: {} }))).toMatchObject({ status: 404 });
     }

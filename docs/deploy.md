@@ -1,6 +1,6 @@
 # デプロイ手順
 
-本番：<https://scene-hunter.scene-hunter.workers.dev>（Cloudflare アカウント `scene-hunter`、ID `4723b654d7c87a32f3a5b3e260da5eec`）
+本番：<https://game.scene-hunter.workers.dev>（Cloudflare アカウント `scene-hunter`、ID `4723b654d7c87a32f3a5b3e260da5eec`）
 
 Void がデプロイ時に作るリソース（ID は `void.lock.json`）：
 
@@ -95,7 +95,7 @@ cd ../sh-deploy
 pnpm install --frozen-lockfile
 env -u SH_E2E CLOUDFLARE_WORKERS_SUBDOMAIN=scene-hunter pnpm exec void deploy --platform cloudflare
 env -u SH_E2E pnpm deploy:settings   # void.config.ts の observability を Worker に反映する
-curl https://scene-hunter.scene-hunter.workers.dev/api/health   # {"ok":true}
+curl https://game.scene-hunter.workers.dev/api/health   # {"ok":true}
 pnpm exec playwright install chromium && pnpm e2e:prod   # 本番で 1 ゲーム通す（Relay を 1 つ作り、AI を 3 回使う）
 cd -
 git worktree remove ../sh-deploy
@@ -120,7 +120,7 @@ Void はブラウザでログインする（`void cloudflare login`）。ブラ�
 ```sh
 curl -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' \
   -d '{"enabled":true,"previews_enabled":true}' \
-  "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/scene-hunter/subdomain"
+  "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/game/subdomain"
 ```
 
 ## 既知の問題
