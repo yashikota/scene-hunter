@@ -6,6 +6,7 @@ import { createRoomStore } from "../../src/server/roomStore";
 import {
   AuthError,
   NotFoundError,
+  checkName,
   claimGm,
   closeRoom,
   createRoom,
@@ -202,6 +203,17 @@ describe("createRoom", () => {
     const { d, kvMap } = setup();
     await createRoom(d, { ...input, pubkey });
     expect(JSON.parse(kvMap.get("room:111111")!).gmPid).toBe("pid-1");
+  });
+});
+
+describe("checkName", () => {
+  it("見えない文字（ゼロ幅、文字の向きの記号、制御文字）を落とし、絵文字の ZWJ は残す", () => {
+    expect(checkName("は\u200Bる\u202Eか\u0007")).toBe("はるか");
+    expect(checkName("👨\u200D👩")).toBe("👨\u200D👩");
+  });
+
+  it("見えない文字だけの名前は空として断る", () => {
+    expect(() => checkName("\u200B\u2066")).toThrow(RangeError);
   });
 });
 

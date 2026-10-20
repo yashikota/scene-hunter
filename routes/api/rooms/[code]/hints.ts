@@ -4,6 +4,7 @@ import { ai } from "void/ai";
 import { allow } from "../../../../src/server/limits";
 import {
   bearer,
+  clientIp,
   e2eMode,
   errorResponse,
   limiter,
@@ -22,7 +23,9 @@ export const POST = defineHandler.withValidator({
   try {
     const d = await roomDeps(c);
     const { rec } = await authorize(d, bearer(c), "gm", code);
-    if (!(await allow(limiter(c, "RL_HINTS"), code))) return tooMany(c);
+    // AI は高いので、部屋ごとに加えて IP ごとにも数える（部屋を次々に作ってヒントを呼ぶのを抑える）。
+    const rl = limiter(c, "RL_HINTS");
+    if (!(await allow(rl, code)) || !(await allow(rl, `ip:${clientIp(c)}`))) return tooMany(c);
     const parsed = parsePhotoKey(body.key);
     if (!parsed || parsed.code !== code || parsed.pid !== rec.gmPid) {
       return c.json({ error: "bad_request", message: "invalid photo key" }, 400);
