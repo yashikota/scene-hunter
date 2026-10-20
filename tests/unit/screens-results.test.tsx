@@ -152,10 +152,8 @@ describe("ResultsWait", () => {
     expect(document.querySelectorAll("img")).toHaveLength(PHOTOS.length + 1);
     expect(screen.getAllByRole("img")).toHaveLength(1);
     expect(document.body.textContent).not.toMatch(/秒|×0\./);
-    // 押せるのは上端の部屋の番号（コピー）だけ
-    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
-      m.room_badge({ code: "482913" }),
-    ]);
+    // 押せるものは無い（上端の部屋の番号はただの表示）
+    expect(screen.queryAllByRole("button")).toEqual([]);
   });
 
   it("誰も提出しなかったら、そのことをエラーで出す", () => {
@@ -240,10 +238,8 @@ describe("ResultsReveal", () => {
     expect(onNext).toHaveBeenCalled();
     unmount();
     render(reveal());
-    // 押せるのは上端の部屋の番号（コピー）だけ
-    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
-      m.room_badge({ code: "482913" }),
-    ]);
+    // 押せるものは無い（上端の部屋の番号はただの表示）
+    expect(screen.queryAllByRole("button")).toEqual([]);
     expect(screen.getByText(m.wait_next_gm())).toBeTruthy();
   });
 

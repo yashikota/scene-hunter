@@ -344,11 +344,10 @@ describe("LobbyGm", () => {
     // 参加者がいれば、ゲーム中に画面を閉じないよう 1 行だけ伝える
     expect(screen.getByText("画面を閉じないでね")).toBeTruthy();
     expect(screen.queryByText(m.start_waiting())).toBeNull();
-    // ボタンは番号とリンクのコピー、自分の名前の鉛筆、遊び方、開始、交代、解散だけで、ラウンド数と制限時間を変える入力も無い
+    // ボタンは番号の横のリンクのコピー、自分の名前の鉛筆、遊び方、開始、交代、解散だけで、ラウンド数と制限時間を変える入力も無い
     expect(
       screen.getAllByRole("button").map((b) => b.textContent || b.getAttribute("aria-label")),
     ).toEqual([
-      "482913",
       m.copy_link(),
       m.rename_button(),
       m.rules_button(),
@@ -397,38 +396,13 @@ describe("部屋の番号のコピー", () => {
     vi.useRealTimers();
   });
 
-  it("番号を押すと 6 桁の数字を書き、「コピーしました」を 2 秒だけ出す", async () => {
-    vi.useFakeTimers({ toFake: ["setTimeout"] });
+  it("番号は押せない。番号の横のボタンでリンクを書く", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     stubClipboard({ writeText });
     render(lobbyGm());
-    const code = screen.getByRole("button", { name: m.copy_code({ code: "482913" }) });
-    await act(async () => fireEvent.click(code));
-    expect(writeText).toHaveBeenCalledWith("482913");
-    expect(code.textContent).toBe(m.code_copied());
-    await act(() => vi.advanceTimersByTimeAsync(2000));
-    expect(code.textContent).toBe("482913");
-  });
-
-  it("上端の「部屋 482913」も押すとコピーする", async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    stubClipboard({ writeText });
-    render(
-      <LobbyPlayer
-        code="482913"
-        me={{ ...players[0]!, name: players[0]!.label }}
-        onRename={async () => {}}
-        gmName="ゆうき"
-        players={players}
-        rounds={3}
-        limitSec={60}
-        onLeave={() => {}}
-      />,
-    );
-    await act(async () =>
-      fireEvent.click(screen.getByRole("button", { name: m.copy_code({ code: "482913" }) })),
-    );
-    expect(writeText).toHaveBeenCalledWith("482913");
+    expect(screen.getByText("482913").closest("button")).toBeNull();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: m.copy_link() })));
+    expect(writeText).toHaveBeenCalledWith(`${location.origin}/r/482913`);
   });
 
   it("リンクの「コピーしました」も 2 秒で元に戻る", async () => {

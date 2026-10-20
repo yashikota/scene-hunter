@@ -105,6 +105,26 @@ export interface LobbyGmProps {
   onRename(name: string): Promise<void>;
 }
 
+const svg = (d: string) => (
+  <svg
+    viewBox="0 0 24 24"
+    width={22}
+    height={22}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2.4}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d={d} />
+  </svg>
+);
+/** 2 枚重ねの紙（コピー）と、コピーできたときのチェック。 */
+const COPY_ICON = svg("M9 9h10v11H9zM5 15V4h10");
+const CHECK_ICON = svg("M5 12.5l4.5 4.5L19 7");
+
 /** 共有するリンク。開くと番号が入ったトップになる。 */
 export const shareLink = (code: string) => `${location.origin}/r/${code}`;
 
@@ -163,10 +183,23 @@ export function LobbyGm({
         <span className="sh-sub" style={{ fontSize: 13, fontWeight: 800 }}>
           {m.code_label()}
         </span>
-        <RoomCode code={code} />
-        <Button variant="quiet" onClick={() => void copyLink()} style={{ marginTop: 8 }}>
-          <span aria-live="polite">{copied ? m.link_copied() : m.copy_link()}</span>
-        </Button>
+        <div className="sh-code-row">
+          <RoomCode code={code} />
+          <button
+            type="button"
+            className="sh-icon-btn"
+            onClick={() => void copyLink()}
+            aria-label={copied ? m.link_copied() : m.copy_link()}
+          >
+            {copied ? CHECK_ICON : COPY_ICON}
+          </button>
+        </div>
+        <span className="sh-sr-only" aria-live="polite">
+          {copied ? m.link_copied() : ""}
+        </span>
+        <p className="sh-sub" style={{ margin: "4px 0 0", fontSize: 14, fontWeight: 800 }}>
+          {m.rounds_chip({ count: rounds })} · {m.seconds({ count: limitSec })}
+        </p>
         {manual && (
           <input
             ref={linkRef}
@@ -182,12 +215,6 @@ export function LobbyGm({
 
       <PlayerTiles gmName={gmName} players={players} self={{ name: gmName, onRename }} />
 
-      <p
-        className="sh-sub"
-        style={{ margin: 0, fontSize: 14, fontWeight: 800, textAlign: "center" }}
-      >
-        {m.rounds_chip({ count: rounds })} · {m.seconds({ count: limitSec })}
-      </p>
       <RulesButton rounds={rounds} limitSec={limitSec} />
 
       {failed && (

@@ -98,11 +98,7 @@ describe("PlayerTurn", () => {
 
   it("撮る前は撮影のボタンだけを置く", () => {
     render(playerTurn());
-    // ほかに押せるのは上端の部屋の番号（コピー）だけ
-    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([
-      m.room_badge({ code: "482913" }),
-      m.shutter_button(),
-    ]);
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual([m.shutter_button()]);
     expect(screen.getByRole("button", { name: m.shutter_button() })).toBeTruthy();
   });
 
