@@ -18,6 +18,36 @@ if (process.env.SH_E2E && (command === "build" || command === "deploy")) {
 }
 const e2eDev = process.env.SH_E2E === "1" && command === "dev";
 
+/**
+ * 本番の画面と静的ファイルに付けるセキュリティのヘッダー。
+ * - CSP：スクリプトは自分のオリジンだけ。写真は R2、通信は R2 と MoQ Relay、フォントは Google Fonts に限る。
+ *   style の 'unsafe-inline' は React の style 属性と Motion が差し込む <style>、worker の blob: は canvas-confetti のため。
+ * - iframe に入れさせない。部屋の番号が入った URL を、ほかのサイトへ Referer で渡さない。
+ * dev では付けない。Vite が差し込むインラインのスクリプト（React の HMR の準備）を CSP が止め、画面が出なくなるため。
+ */
+const R2_ORIGIN = "https://4723b654d7c87a32f3a5b3e260da5eec.r2.cloudflarestorage.com";
+const MOQ_HOST = "draft-16.cloudflare.mediaoverquic.com";
+const SECURITY_HEADERS = [
+  `Content-Security-Policy: ${[
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src https://fonts.gstatic.com",
+    `img-src 'self' data: blob: ${R2_ORIGIN}`,
+    `connect-src 'self' ${R2_ORIGIN} https://${MOQ_HOST} wss://${MOQ_HOST}`,
+    "worker-src 'self' blob:",
+    "media-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join("; ")}`,
+  "X-Content-Type-Options: nosniff",
+  "Referrer-Policy: same-origin",
+  "Permissions-Policy: camera=(self), microphone=(), geolocation=()",
+  "Cross-Origin-Opener-Policy: same-origin",
+];
+
 export default defineConfig({
   target: "cloudflare",
   // void/kv と void/storage の import ではなく素の binding を使うので、明示する。
@@ -26,6 +56,7 @@ export default defineConfig({
   inference: {
     bindings: { kv: true, storage: true, ...(e2eDev ? { ai: false } : {}) },
   },
+  ...(command === "dev" ? {} : { routing: { headers: { "/*": SECURITY_HEADERS } } }),
   cloudflare: {
     name: "game",
     // 本番は workers.dev で公開する。preview_urls は Void がデプロイ前の版を確かめるのに使う。
@@ -44,7 +75,7 @@ export default defineConfig({
       rateLimit("RL_CREATE", "1001", 2), // IP
       // 会場の Wi-Fi では全員が 1 つの IP に見える。数十人が 1 分のうちに入れるよう広げる（GM の交代の入り直しも数える）。
       rateLimit("RL_JOIN", "1002", 60), // IP
-      rateLimit("RL_HINTS", "1003", 3), // 部屋
+      rateLimit("RL_HINTS", "1003", 3), // 部屋と IP
       rateLimit("RL_UPLOAD", "1004", 5), // 部屋とプレイヤー
     ],
   },
