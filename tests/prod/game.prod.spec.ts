@@ -36,7 +36,7 @@ test("本番：部屋を作り、2 人が入り、3 ラウンド遊んで最終�
 
     for (const p of [gm, ...players]) {
       await expect(p.page.getByRole("heading", { name: "最終結果" })).toBeVisible();
-      await expect(p.page.getByLabel("1 位").first()).toBeVisible();
+      await expect(p.page.getByRole("listitem").filter({ hasText: "1 位" }).first()).toBeVisible();
     }
   } finally {
     await closeAll([gm, ...players]);
