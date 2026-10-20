@@ -1,4 +1,5 @@
 import { LOCALES, type Locale } from "../../shared/locales";
+import { MIN_PLAYERS } from "../game/gmMachine";
 import { m } from "../paraglide/messages";
 
 /** 本番のオリジン。canonical と hreflang、sitemap には絶対 URL が要る。 */
@@ -41,7 +42,7 @@ export function lpHead(l: Locale): LpHead {
       gamePlatform: "Web browser",
       applicationCategory: "GameApplication",
       operatingSystem: "Android",
-      numberOfPlayers: { "@type": "QuantitativeValue", minValue: 2 },
+      numberOfPlayers: { "@type": "QuantitativeValue", minValue: MIN_PLAYERS + 1 },
       offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
     },
   };

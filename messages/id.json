@@ -28,7 +28,6 @@
   "you_tag": "{name} (kamu)",
   "seconds": "{count} detik",
   "start_button": "Mulai permainan",
-  "start_waiting": "Menunggu pemain",
   "transfer_button": "Ganti GM",
   "transfer_title": "Siapa GM berikutnya?",
   "cancel": "Batal",
@@ -169,7 +168,7 @@
   "lp_about_lead": "Game pesta untuk orang-orang yang berkumpul di tempat yang sama. Main di rumah, kelas, atau acara, masing-masing dengan ponselnya.",
   "lp_about_1": "Berkumpul di satu tempat",
   "lp_about_2": "Satu ponsel per orang",
-  "lp_about_3": "Dari 2 sampai puluhan orang",
+  "lp_about_3": "Dari 3 sampai puluhan orang",
   "lp_roles_title": "Dua peran",
   "lp_role_gm": "Game Master (GM)",
   "lp_role_gm_1": "Membuat ruang dan mengundang semua",
@@ -190,5 +189,6 @@
   "lp_flow_r4": "Hasil",
   "lp_flow_repeat": "Ulangi {rounds} ronde",
   "lp_flow_3": "Hasil akhir",
-  "lp_meta_title": "Scene Hunter | Game pesta berburu foto dengan petunjuk AI"
+  "lp_meta_title": "Scene Hunter | Game pesta berburu foto dengan petunjuk AI",
+  "start_need_players": "Butuh {count} orang lagi untuk mulai"
 }

@@ -28,7 +28,6 @@
   "you_tag": "{name} (bạn)",
   "seconds": "{count} giây",
   "start_button": "Bắt đầu",
-  "start_waiting": "Đang chờ người chơi",
   "transfer_button": "Đổi GM",
   "transfer_title": "Chuyển GM cho ai?",
   "cancel": "Hủy",
@@ -169,7 +168,7 @@
   "lp_about_lead": "Trò chơi tiệc dành cho những người ở cùng một nơi. Chơi ở nhà, lớp học hay sự kiện, mỗi người một chiếc điện thoại.",
   "lp_about_1": "Tụ tập ở cùng một nơi",
   "lp_about_2": "Mỗi người một điện thoại",
-  "lp_about_3": "Từ 2 đến vài chục người",
+  "lp_about_3": "Từ 3 đến vài chục người",
   "lp_roles_title": "Hai vai trò",
   "lp_role_gm": "Quản trò (GM)",
   "lp_role_gm_1": "Tạo phòng và mời mọi người",
@@ -190,5 +189,6 @@
   "lp_flow_r4": "Kết quả",
   "lp_flow_repeat": "Lặp lại {rounds} vòng",
   "lp_flow_3": "Kết quả chung cuộc",
-  "lp_meta_title": "Scene Hunter | Trò chơi tiệc săn ảnh với gợi ý AI"
+  "lp_meta_title": "Scene Hunter | Trò chơi tiệc săn ảnh với gợi ý AI",
+  "start_need_players": "Cần thêm {count} người để bắt đầu"
 }

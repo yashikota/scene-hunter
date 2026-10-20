@@ -37,7 +37,6 @@
   "you_tag": "{name} (toi)",
   "seconds": "{count} s",
   "start_button": "Lancer la partie",
-  "start_waiting": "En attente de joueurs",
   "transfer_button": "Passer le rôle de MJ",
   "transfer_title": "À qui passer le rôle de MJ ?",
   "cancel": "Annuler",
@@ -187,7 +186,7 @@
   "lp_about_lead": "Un jeu d’ambiance pour des personnes réunies au même endroit. À la maison, en classe ou lors d’un événement, chacun avec son téléphone.",
   "lp_about_1": "Se réunir au même endroit",
   "lp_about_2": "Un téléphone chacun",
-  "lp_about_3": "De 2 à plusieurs dizaines de personnes",
+  "lp_about_3": "De 3 à plusieurs dizaines de personnes",
   "lp_roles_title": "Deux rôles",
   "lp_role_gm": "Maître du jeu (GM)",
   "lp_role_gm_1": "Crée la salle et invite tout le monde",
@@ -208,5 +207,6 @@
   "lp_flow_r4": "Résultats",
   "lp_flow_repeat": "Répéter {rounds} manches",
   "lp_flow_3": "Résultats finaux",
-  "lp_meta_title": "Scene Hunter | Jeu de soirée de chasse aux photos avec indices IA"
+  "lp_meta_title": "Scene Hunter | Jeu de soirée de chasse aux photos avec indices IA",
+  "start_need_players": "Encore {count} pour commencer"
 }

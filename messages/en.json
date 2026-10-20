@@ -37,7 +37,6 @@
   "you_tag": "{name} (you)",
   "seconds": "{count} sec",
   "start_button": "Start the game",
-  "start_waiting": "Waiting for players",
   "transfer_button": "Hand over GM",
   "transfer_title": "Who should be the next GM?",
   "cancel": "Cancel",
@@ -187,7 +186,7 @@
   "lp_about_lead": "A party game for people in the same place. Play at home, in class or at an event, each with your own phone.",
   "lp_about_1": "Gather in one place",
   "lp_about_2": "One phone each",
-  "lp_about_3": "From 2 people to dozens",
+  "lp_about_3": "From 3 people to dozens",
   "lp_roles_title": "Two roles",
   "lp_role_gm": "Game Master (GM)",
   "lp_role_gm_1": "Creates the room and invites everyone",
@@ -208,5 +207,6 @@
   "lp_flow_r4": "Results",
   "lp_flow_repeat": "Repeat for {rounds} rounds",
   "lp_flow_3": "Final results",
-  "lp_meta_title": "Scene Hunter | A photo-hunting party game with AI hints"
+  "lp_meta_title": "Scene Hunter | A photo-hunting party game with AI hints",
+  "start_need_players": "{count} more needed to start"
 }

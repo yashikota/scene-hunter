@@ -1,6 +1,7 @@
 import { AnimatePresence } from "motion/react";
 import * as mo from "motion/react-m";
 import { useRef, useState } from "react";
+import { MIN_PLAYERS } from "../game/gmMachine";
 import { activePlayers } from "../game/playerView";
 import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
@@ -225,10 +226,16 @@ export function LobbyGm({
 
       <div className="sh-actions">
         <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: "center" }}>
-          {/* 参加者がそろったら、ゲーム中に GM の画面を閉じないよう先に伝える */}
-          {active.length === 0 ? m.start_waiting() : m.keep_screen_on()}
+          {/* 始められる人数（GM を入れて 3 人）までの残りを出し、そろったら、ゲーム中に GM の画面を閉じないよう先に伝える */}
+          {active.length < MIN_PLAYERS
+            ? m.start_need_players({ count: MIN_PLAYERS - active.length })
+            : m.keep_screen_on()}
         </p>
-        <Button variant="primary" onClick={onStart} disabled={active.length === 0 || transferring}>
+        <Button
+          variant="primary"
+          onClick={onStart}
+          disabled={active.length < MIN_PLAYERS || transferring}
+        >
           {m.start_button()}
         </Button>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>

@@ -3,6 +3,12 @@ import type { Locale } from "../../shared/locales";
 import type { GmEventBody, GmSnapshot, LobbyPlayer, Phase, Total } from "../../shared/protocol";
 import { scoreRound, type RoundScore } from "../../shared/scoring";
 
+/**
+ * ゲームを始めるのに要る、GM のほかのプレイヤーの数（GM を入れて 3 人から）。通信が切れたらしい人は数えない。
+ * 開始のボタン（LobbyGm）で確かめる。開始を決めるのは GM の端末なので、状態機械では縛らない。
+ */
+export const MIN_PLAYERS = 2;
+
 export type { Phase } from "../../shared/protocol";
 
 /** ヒントの数と、ヒントを 1 つずつ出す間隔。 */

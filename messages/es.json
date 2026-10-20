@@ -37,7 +37,6 @@
   "you_tag": "{name} (tú)",
   "seconds": "{count} s",
   "start_button": "Empezar la partida",
-  "start_waiting": "Esperando jugadores",
   "transfer_button": "Ceder el GM",
   "transfer_title": "¿A quién le pasas el GM?",
   "cancel": "Cancelar",
@@ -187,7 +186,7 @@
   "lp_about_lead": "Un juego de fiesta para gente reunida en el mismo lugar. Se juega en casa, en clase o en un evento, cada uno con su móvil.",
   "lp_about_1": "Reuníos en un mismo lugar",
   "lp_about_2": "Un móvil por persona",
-  "lp_about_3": "De 2 a decenas de personas",
+  "lp_about_3": "De 3 a decenas de personas",
   "lp_roles_title": "Dos papeles",
   "lp_role_gm": "Máster del juego (GM)",
   "lp_role_gm_1": "Crea la sala e invita a todos",
@@ -208,5 +207,6 @@
   "lp_flow_r4": "Resultados",
   "lp_flow_repeat": "Repetir {rounds} rondas",
   "lp_flow_3": "Resultado final",
-  "lp_meta_title": "Scene Hunter | Juego de fiesta para buscar fotos con pistas de IA"
+  "lp_meta_title": "Scene Hunter | Juego de fiesta para buscar fotos con pistas de IA",
+  "start_need_players": "Se necesitan {count} más para empezar"
 }

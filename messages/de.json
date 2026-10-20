@@ -37,7 +37,6 @@
   "you_tag": "{name} (du)",
   "seconds": "{count} Sek.",
   "start_button": "Spiel starten",
-  "start_waiting": "Warte auf Mitspielende",
   "transfer_button": "GM abgeben",
   "transfer_title": "Wer soll der nächste GM sein?",
   "cancel": "Abbrechen",
@@ -187,7 +186,7 @@
   "lp_about_lead": "Ein Partyspiel für Leute am selben Ort. Zu Hause, im Unterricht oder auf einem Event, jede Person mit ihrem eigenen Handy.",
   "lp_about_1": "Am selben Ort treffen",
   "lp_about_2": "Ein Handy pro Person",
-  "lp_about_3": "Von 2 bis zu Dutzenden Leuten",
+  "lp_about_3": "Von 3 bis zu Dutzenden Leuten",
   "lp_roles_title": "Zwei Rollen",
   "lp_role_gm": "Game Master (GM)",
   "lp_role_gm_1": "Erstellt den Raum und lädt alle ein",
@@ -208,5 +207,6 @@
   "lp_flow_r4": "Ergebnisse",
   "lp_flow_repeat": "{rounds} Runden wiederholen",
   "lp_flow_3": "Endergebnis",
-  "lp_meta_title": "Scene Hunter | Foto-Suchspiel für Partys mit KI-Hinweisen"
+  "lp_meta_title": "Scene Hunter | Foto-Suchspiel für Partys mit KI-Hinweisen",
+  "start_need_players": "Noch {count} zum Starten"
 }

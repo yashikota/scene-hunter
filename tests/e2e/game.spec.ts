@@ -134,23 +134,25 @@ for (const { name, drop } of drops) {
 test("誰も出さないまま時間切れになっても、エラーを出して結果へ進める", async ({ browser }) => {
   const gm = await newPerson(browser, "ジーエム");
   const alice = await newPerson(browser, "アリス");
+  const bob = await newPerson(browser, "ボブ");
   try {
     const code = await createRoom(gm);
-    await joinByCode(alice, code);
-    await expectLobbyCount(gm, 2);
+    for (const p of [alice, bob]) await joinByCode(p, code);
+    await expectLobbyCount(gm, 3);
     await gm.page.getByRole("button", { name: "ゲームを始める" }).click();
     await gmShoot(gm);
     await expect(alice.page.getByText("e2e hint 1", { exact: false })).toBeVisible();
 
     // 制限時間（60 秒）が過ぎると、GM とプレイヤーに「誰も提出しませんでした」が出る
-    for (const p of [gm, alice]) {
+    for (const p of [gm, alice, bob]) {
       await expect(p.page.getByRole("alert")).toHaveText("誰も提出しませんでした", {
         timeout: 90_000,
       });
     }
     await gm.page.getByRole("button", { name: "結果へ" }).click();
-    for (const p of [gm, alice]) await expect(p.page.getByText("ラウンド 1 の結果")).toBeVisible();
+    for (const p of [gm, alice, bob])
+      await expect(p.page.getByText("ラウンド 1 の結果")).toBeVisible();
   } finally {
-    await closeAll([gm, alice]);
+    await closeAll([gm, alice, bob]);
   }
 });

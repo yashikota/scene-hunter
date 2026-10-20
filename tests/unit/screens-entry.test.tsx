@@ -343,7 +343,7 @@ describe("LobbyGm", () => {
     expect(screen.getByText("3 ラウンド · 60 秒")).toBeTruthy();
     // 参加者がいれば、ゲーム中に画面を閉じないよう 1 行だけ伝える
     expect(screen.getByText("画面を閉じないでね")).toBeTruthy();
-    expect(screen.queryByText(m.start_waiting())).toBeNull();
+    expect(screen.queryByText(/始められます/)).toBeNull();
     // ボタンは番号の横のリンクのコピー、自分の名前の鉛筆、遊び方、開始、交代、解散だけで、ラウンド数と制限時間を変える入力も無い
     expect(
       screen.getAllByRole("button").map((b) => b.textContent || b.getAttribute("aria-label")),
@@ -360,12 +360,19 @@ describe("LobbyGm", () => {
     expect(screen.queryByRole("slider")).toBeNull();
   });
 
-  it("参加者がいなければ開始できない", () => {
-    render(lobbyGm({ players: [] }));
-    expect(screen.getByText(m.start_waiting())).toBeTruthy();
-    expect(
-      (screen.getByRole("button", { name: m.start_button() }) as HTMLButtonElement).disabled,
-    ).toBe(true);
+  it("GM を入れて 3 人そろうまでは開始できず、あと何人かを出す。通信が切れた人は数えない", () => {
+    const start = () =>
+      (screen.getByRole("button", { name: m.start_button() }) as HTMLButtonElement).disabled;
+    const [a, b] = [players[0]!, players[1]!];
+    const { rerender } = render(lobbyGm({ players: [] }));
+    expect(screen.getByText(m.start_need_players({ count: 2 }))).toBeTruthy();
+    expect(start()).toBe(true);
+    rerender(lobbyGm({ players: [a, { ...b, away: true }] }));
+    expect(screen.getByText(m.start_need_players({ count: 1 }))).toBeTruthy();
+    expect(start()).toBe(true);
+    rerender(lobbyGm({ players: [a, b] }));
+    expect(screen.getByText("画面を閉じないでね")).toBeTruthy();
+    expect(start()).toBe(false);
   });
 
   it("GM の交代は参加者を選んで渡す", async () => {

@@ -28,7 +28,6 @@
   "you_tag": "{name} (나)",
   "seconds": "{count}초",
   "start_button": "게임 시작",
-  "start_waiting": "참가자를 기다리는 중",
   "transfer_button": "GM 넘기기",
   "transfer_title": "누구에게 GM을 넘길까요?",
   "cancel": "취소",
@@ -169,7 +168,7 @@
   "lp_about_lead": "같은 장소에 모여서 즐기는 파티 게임이에요. 집이나 교실, 행사장에서 한 사람당 휴대폰 한 대로 플레이해요.",
   "lp_about_1": "같은 장소에 모이기",
   "lp_about_2": "한 사람당 휴대폰 한 대",
-  "lp_about_3": "2명부터 수십 명까지",
+  "lp_about_3": "3명부터 수십 명까지",
   "lp_roles_title": "두 가지 역할",
   "lp_role_gm": "게임 마스터(GM)",
   "lp_role_gm_1": "방을 만들고 모두를 초대해요",
@@ -190,5 +189,6 @@
   "lp_flow_r4": "결과 발표",
   "lp_flow_repeat": "{rounds}라운드 반복",
   "lp_flow_3": "최종 결과",
-  "lp_meta_title": "Scene Hunter | AI 힌트로 풍경을 찾는 사진 파티 게임"
+  "lp_meta_title": "Scene Hunter | AI 힌트로 풍경을 찾는 사진 파티 게임",
+  "start_need_players": "{count}명 더 있으면 시작할 수 있어요"
 }

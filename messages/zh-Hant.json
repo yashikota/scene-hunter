@@ -28,7 +28,6 @@
   "you_tag": "{name}（你）",
   "seconds": "{count} 秒",
   "start_button": "開始遊戲",
-  "start_waiting": "等待玩家加入",
   "transfer_button": "移交 GM",
   "transfer_title": "要把 GM 交給誰？",
   "cancel": "取消",
@@ -169,7 +168,7 @@
   "lp_about_lead": "大家聚在同一個地方玩的派對遊戲。在家裡、教室或活動現場，每人拿一支手機就能玩。",
   "lp_about_1": "聚在同一個地方",
   "lp_about_2": "每人一支手機",
-  "lp_about_3": "2 人到幾十人",
+  "lp_about_3": "3 人到幾十人",
   "lp_roles_title": "兩種角色",
   "lp_role_gm": "遊戲主持人（GM）",
   "lp_role_gm_1": "建立房間並邀請大家",
@@ -190,5 +189,6 @@
   "lp_flow_r4": "公布結果",
   "lp_flow_repeat": "重複 {rounds} 回合",
   "lp_flow_3": "最終結果",
-  "lp_meta_title": "Scene Hunter | 靠 AI 提示尋找風景的拍照派對遊戲"
+  "lp_meta_title": "Scene Hunter | 靠 AI 提示尋找風景的拍照派對遊戲",
+  "start_need_players": "再來 {count} 人就能開始"
 }

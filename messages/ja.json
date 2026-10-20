@@ -28,7 +28,6 @@
   "you_tag": "{name}（あなた）",
   "seconds": "{count} 秒",
   "start_button": "ゲームを始める",
-  "start_waiting": "参加者を待っています",
   "transfer_button": "GM を交代",
   "transfer_title": "誰に GM を渡しますか",
   "cancel": "やめる",
@@ -169,7 +168,7 @@
   "lp_about_lead": "同じ場所に集まって遊ぶパーティーゲームです。家や教室、イベント会場などで、1 人 1 台のスマホを持って遊びます。",
   "lp_about_1": "同じ場所に集まる",
   "lp_about_2": "1 人 1 台のスマホ",
-  "lp_about_3": "2 人から数十人まで",
+  "lp_about_3": "3 人から数十人まで",
   "lp_roles_title": "2 つの役割",
   "lp_role_gm": "ゲームマスター（GM）",
   "lp_role_gm_1": "部屋を作って、みんなを招く",
@@ -190,5 +189,6 @@
   "lp_flow_r4": "結果発表",
   "lp_flow_repeat": "{rounds} ラウンドくり返す",
   "lp_flow_3": "最終結果",
-  "lp_meta_title": "Scene Hunter | AI のヒントで景色をさがす写真パーティーゲーム"
+  "lp_meta_title": "Scene Hunter | AI のヒントで景色をさがす写真パーティーゲーム",
+  "start_need_players": "あと {count} 人で始められます"
 }
