@@ -10,7 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as LpRouteImport } from './routes/lp'
+import { Route as LpIndexRouteImport } from './routes/lp.index'
+import { Route as LpLangRouteImport } from './routes/lp.$lang'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 
 const IndexRoute = IndexRouteImport.update({
@@ -18,9 +19,14 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LpRoute = LpRouteImport.update({
-  id: '/lp',
-  path: '/lp',
+const LpIndexRoute = LpIndexRouteImport.update({
+  id: '/lp/',
+  path: '/lp/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LpLangRoute = LpLangRouteImport.update({
+  id: '/lp/$lang',
+  path: '/lp/$lang',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RCodeRoute = RCodeRouteImport.update({
@@ -31,32 +37,36 @@ const RCodeRoute = RCodeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/lp': typeof LpRoute
+  '/lp/$lang': typeof LpLangRoute
   '/r/$code': typeof RCodeRoute
+  '/lp/': typeof LpIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/lp': typeof LpRoute
+  '/lp/$lang': typeof LpLangRoute
   '/r/$code': typeof RCodeRoute
+  '/lp': typeof LpIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/lp': typeof LpRoute
+  '/lp/$lang': typeof LpLangRoute
   '/r/$code': typeof RCodeRoute
+  '/lp/': typeof LpIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/lp' | '/r/$code'
+  fullPaths: '/' | '/lp/$lang' | '/r/$code' | '/lp/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/lp' | '/r/$code'
-  id: '__root__' | '/' | '/lp' | '/r/$code'
+  to: '/' | '/lp/$lang' | '/r/$code' | '/lp'
+  id: '__root__' | '/' | '/lp/$lang' | '/r/$code' | '/lp/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  LpRoute: typeof LpRoute
+  LpLangRoute: typeof LpLangRoute
   RCodeRoute: typeof RCodeRoute
+  LpIndexRoute: typeof LpIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -68,11 +78,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lp': {
-      id: '/lp'
+    '/lp/': {
+      id: '/lp/'
       path: '/lp'
-      fullPath: '/lp'
-      preLoaderRoute: typeof LpRouteImport
+      fullPath: '/lp/'
+      preLoaderRoute: typeof LpIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lp/$lang': {
+      id: '/lp/$lang'
+      path: '/lp/$lang'
+      fullPath: '/lp/$lang'
+      preLoaderRoute: typeof LpLangRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/r/$code': {
@@ -87,8 +104,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  LpRoute: LpRoute,
+  LpLangRoute: LpLangRoute,
   RCodeRoute: RCodeRoute,
+  LpIndexRoute: LpIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

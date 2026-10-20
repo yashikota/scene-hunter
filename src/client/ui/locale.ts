@@ -22,7 +22,7 @@ export function loadSavedLocale(): Locale | null {
   }
 }
 
-function saveLocale(locale: Locale): void {
+export function saveLocale(locale: Locale): void {
   try {
     localStorage.setItem(LOCALE_KEY, locale);
   } catch {

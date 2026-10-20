@@ -1,13 +1,14 @@
-import { Link } from "@tanstack/react-router";
 import * as mo from "motion/react-m";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import type { Locale } from "../../shared/locales";
 import { BASE_POINTS, speedMultiplier, streakBonus } from "../../shared/scoring";
 import { m } from "../paraglide/messages";
 import { formatMultiplier, formatNumber } from "../ui/format";
 import { LanguageSelect } from "../ui/LanguageSelect";
-import { useBrowserLocale } from "../ui/locale";
+import { saveLocale, switchLocale, useBrowserLocale } from "../ui/locale";
 import { Phrase, useBudoux } from "../ui/Phrase";
 import { SPRING } from "../ui/motion";
+import { applyLpHead, lpPath } from "../ui/seo";
 import { RULE_STEPS, RulesArt } from "./RulesArt";
 
 /** 遊び方の例に使う制限時間とラウンド数（部屋を作るときの決まった値）。 */
@@ -22,10 +23,29 @@ const RISE = {
   transition: { type: "spring", stiffness: 160, damping: 20 },
 } as const;
 
-/** 紹介のページ（/lp）。遊び方を動く絵で見せ、点数の計算はその場で試せる。 */
+/** /lp：前に選んだ言語か、ブラウザの言語で出す。言語を選ぶと、その言語のページ（/lp/{言語}）へ移る。 */
 export function Landing() {
-  const [locale, setLocale] = useBrowserLocale();
+  const [locale] = useBrowserLocale();
+  return <LandingPage locale={locale} />;
+}
+
+/** /lp/{言語}：言語を決めたページ。検索エンジン向けに、ビルドのときに HTML へ書き出す（scripts/prerender-lp.mjs）。 */
+export function LandingIn({ lang }: { lang: Locale }) {
+  // 書き出し（サーバー）では document が無いので、言語の切り替えは画面でだけ行う
+  useState(() => typeof document !== "undefined" && switchLocale(lang));
+  return <LandingPage locale={lang} />;
+}
+
+/** 言語を選び直したら覚えておき、その言語のページへ移る（検索エンジンにも言語ごとの URL を見せるため）。 */
+function goLocale(l: Locale): void {
+  saveLocale(l);
+  location.assign(lpPath(l));
+}
+
+/** 紹介のページ。遊び方を動く絵で見せ、点数の計算はその場で試せる。 */
+function LandingPage({ locale }: { locale: Locale }) {
   useBudoux();
+  useEffect(() => applyLpHead(locale), [locale]);
   const rules = [
     m.rules_1(),
     m.rules_2(),
@@ -53,7 +73,7 @@ export function Landing() {
             {m.app_name()}
           </span>
         </span>
-        <LanguageSelect locale={locale} onLocale={setLocale} />
+        <LanguageSelect locale={locale} onLocale={goLocale} />
       </header>
 
       <main>
@@ -412,9 +432,9 @@ function Cta({ delay = 0 }: { delay?: number }) {
       transition={{ ...SPRING, delay }}
     >
       <mo.div whileHover={{ scale: 1.05, rotate: -1 }} whileTap={{ scale: 0.95 }}>
-        <Link to="/" className="sh-btn sh-btn--primary lp-cta-btn">
+        <a href="/" className="sh-btn sh-btn--primary lp-cta-btn">
           {m.lp_cta()}
-        </Link>
+        </a>
       </mo.div>
       <span className="sh-sub">
         <Phrase>{m.lp_cta_note()}</Phrase>

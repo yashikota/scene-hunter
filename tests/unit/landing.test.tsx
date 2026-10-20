@@ -43,11 +43,10 @@ describe("紹介のページ（/lp）", () => {
     expect(screen.getByText("200")).toBeTruthy();
   });
 
-  it("「今すぐ遊ぶ」でトップへ進む", async () => {
-    const router = await open();
-    const [cta] = screen.getAllByRole("link", { name: m.lp_cta() });
-    fireEvent.click(cta!);
-    await screen.findByRole("button", { name: m.create_button() });
-    expect(router.state.location.pathname).toBe("/");
+  it("「今すぐ遊ぶ」はトップへのリンク（書き出した HTML でも動くよう、ふつうのリンクにする）", async () => {
+    await open();
+    for (const cta of screen.getAllByRole("link", { name: m.lp_cta() })) {
+      expect(cta.getAttribute("href")).toBe("/");
+    }
   });
 });

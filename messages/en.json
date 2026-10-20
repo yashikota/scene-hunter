@@ -207,5 +207,6 @@
   "lp_flow_r3": "The GM picks",
   "lp_flow_r4": "Results",
   "lp_flow_repeat": "Repeat for {rounds} rounds",
-  "lp_flow_3": "Final results"
+  "lp_flow_3": "Final results",
+  "lp_meta_title": "Scene Hunter | A photo-hunting party game with AI hints"
 }

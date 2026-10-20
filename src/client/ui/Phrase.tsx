@@ -12,7 +12,7 @@ type Parse = (text: string) => string[];
 let parsers: Partial<Record<Locale, Parse>> | null = null;
 let loading: Promise<void> | null = null;
 
-function load(): Promise<void> {
+export function loadBudoux(): Promise<void> {
   loading ??= import("budoux").then((b) => {
     const ja = b.loadDefaultJapaneseParser();
     const hans = b.loadDefaultSimplifiedChineseParser();
@@ -31,7 +31,7 @@ export function useBudoux(): void {
   const [, setReady] = useState(parsers !== null);
   useEffect(() => {
     let alive = true;
-    void load().then(() => alive && setReady(true));
+    void loadBudoux().then(() => alive && setReady(true));
     return () => {
       alive = false;
     };

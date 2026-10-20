@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /r/
+Disallow: /api/
+
+Sitemap: https://game.scene-hunter.workers.dev/sitemap.xml

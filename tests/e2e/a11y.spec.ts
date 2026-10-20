@@ -72,11 +72,22 @@ for (const screen of SCREENS) {
   });
 }
 
-test("a11y: 紹介のページ", async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/lp");
-  await page.locator("main").first().waitFor();
-  expect(await audit(page)).toEqual([]);
+for (const path of ["/lp", "/lp/en"]) {
+  test(`a11y: 紹介のページ ${path}`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto(path);
+    await page.locator("main").first().waitFor();
+    expect(await audit(page)).toEqual([]);
+  });
+}
+
+test("紹介のページ：言語を選ぶと、その言語の URL へ移り、タイトルも変わる", async ({ page }) => {
+  await page.goto("/lp/ja");
+  await expect(page).toHaveTitle(/写真パーティーゲーム/);
+  await page.getByRole("combobox").selectOption("en");
+  await expect(page).toHaveURL(/\/lp\/en$/);
+  await expect(page).toHaveTitle(/party game/);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
 });
 
 test("a11y: 遊び方のシートは、キーボードだけで開いて送って閉じられる", async ({ page }) => {

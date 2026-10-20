@@ -207,5 +207,6 @@
   "lp_flow_r3": "Der GM wählt",
   "lp_flow_r4": "Ergebnisse",
   "lp_flow_repeat": "{rounds} Runden wiederholen",
-  "lp_flow_3": "Endergebnis"
+  "lp_flow_3": "Endergebnis",
+  "lp_meta_title": "Scene Hunter | Foto-Suchspiel für Partys mit KI-Hinweisen"
 }

@@ -189,5 +189,6 @@
   "lp_flow_r3": "GM 選擇",
   "lp_flow_r4": "公布結果",
   "lp_flow_repeat": "重複 {rounds} 回合",
-  "lp_flow_3": "最終結果"
+  "lp_flow_3": "最終結果",
+  "lp_meta_title": "Scene Hunter | 靠 AI 提示尋找風景的拍照派對遊戲"
 }
