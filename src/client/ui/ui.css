@@ -893,6 +893,17 @@ body {
 .ra-text {
   fill: #c9ced4;
 }
+.ra-scan {
+  fill: var(--color-accent);
+  transition:
+    transform 600ms linear,
+    opacity 200ms ease;
+}
+.ra-mark {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+}
 .ra-ok {
   fill: var(--color-accent);
   stroke: var(--color-ink);

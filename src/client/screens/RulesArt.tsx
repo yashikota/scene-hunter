@@ -145,17 +145,39 @@ function Shoot() {
   );
 }
 
-/** 2. ヒントが 10 秒ごとに 1 つずつ増え、後ほど長く（具体的に）なる。 */
+/**
+ * 2. AI がお題の写真をなぞって特徴（太陽、山の頂）に印を付け、それを 5 つのヒントにする。
+ * ヒントは 10 秒ごとに 1 つずつ届き、後ほど長く（具体的に）なる。
+ */
 function Hints() {
-  const f = useFrame(8, 6);
-  const shown = Math.min(f, 5);
+  const f = useFrame(9, 8);
+  const shown = Math.max(0, Math.min(f - 3, 5));
   return (
     <>
-      {[56, 84, 112, 140, 168].map((w, i) => (
+      <Photo x={10} y={22} w={72} h={58} />
+      <rect
+        x={10}
+        y={22}
+        width={3}
+        height={58}
+        className={`ra-scan ${on(f === 1 || f === 2)}`}
+        style={{ transform: `translateX(${[0, 32, 69][f] ?? 69}px)` }}
+      />
+      {[
+        [63, 39],
+        [35, 47],
+      ].map(([cx, cy], i) => (
+        <circle key={i} cx={cx} cy={cy} r={8} className={`ra-pop ra-mark ${on(f > i)}`} />
+      ))}
+      <g className={`ra-pop ${on(f >= 3)}`}>
+        <path d="M88 51 h10" className="ra-stroke" />
+        <path d="M95 46 l5 5 l-5 5" className="ra-stroke" />
+      </g>
+      {[36, 52, 68, 84, 100].map((w, i) => (
         <g key={i} className={`ra-pop ra-pop--left ${on(i < shown)}`}>
-          <rect x={22} y={8 + i * 19} width={w + 16} height={15} rx={7.5} className="ra-bubble" />
-          <circle cx={31} cy={15.5 + i * 19} r={3} className="ra-dot" />
-          <rect x={40} y={13.5 + i * 19} width={w - 10} height={4} rx={2} className="ra-text" />
+          <rect x={106} y={8 + i * 19} width={w + 16} height={15} rx={7.5} className="ra-bubble" />
+          <circle cx={115} cy={15.5 + i * 19} r={3} className="ra-dot" />
+          <rect x={124} y={13.5 + i * 19} width={w - 10} height={4} rx={2} className="ra-text" />
         </g>
       ))}
       <Bar x={22} y={112} w={196} p={shown / 5} />
