@@ -55,7 +55,7 @@
     }
   ],
   "leave_button": "Salir de la sala",
-  "unsupported_android": "Chrome en Android",
+  "unsupported_phone": "Chrome en Android, o Safari en iPhone (iOS 26.4 o posterior)",
   "unsupported_desktop": "Chrome o Edge en el ordenador",
   "page_link": "Enlace a esta página",
   "copy": "Copiar",
@@ -179,7 +179,7 @@
   "lp_feat_3_title": "11 idiomas",
   "lp_feat_3_body": "Elige el idioma de cada sala. Las pistas de IA también llegan en ese idioma",
   "lp_feat_4_title": "Solo con tu móvil",
-  "lp_feat_4_body": "Ábrelo en Chrome para Android. No hace falta instalar nada",
+  "lp_feat_4_body": "Ábrelo en el navegador del móvil. No hace falta instalar nada",
   "lp_final_title": "¿Listos? A buscar escenas",
   "lp_link": "Ver cómo se juega",
   "lp_about_title": "¿De qué va el juego?",

@@ -55,7 +55,7 @@
     }
   ],
   "leave_button": "Leave room",
-  "unsupported_android": "Chrome on Android",
+  "unsupported_phone": "Chrome on Android, or Safari on iPhone (iOS 26.4 or later)",
   "unsupported_desktop": "Chrome or Edge on a computer",
   "page_link": "Link to this page",
   "copy": "Copy",
@@ -179,7 +179,7 @@
   "lp_feat_3_title": "11 languages",
   "lp_feat_3_body": "Pick a language per room. AI hints arrive in that language too",
   "lp_feat_4_title": "Just your phone",
-  "lp_feat_4_body": "Open it in Chrome on Android. No app to install",
+  "lp_feat_4_body": "Just open it in your phone’s browser. No app to install",
   "lp_final_title": "Ready? Go hunt some scenes",
   "lp_link": "See how to play",
   "lp_about_title": "What kind of game?",

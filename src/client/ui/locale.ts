@@ -50,5 +50,5 @@ export function useBrowserLocale(): [Locale, (l: Locale) => void] {
   ];
 }
 
-/** WebTransport が使えるブラウザか（Chrome 系だけ）。 */
+/** WebTransport が使えるブラウザか（Chrome 系、Firefox、iOS 26.4 以降の Safari）。 */
 export const isSupportedBrowser = (): boolean => typeof WebTransport !== "undefined";

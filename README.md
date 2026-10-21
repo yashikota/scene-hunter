@@ -14,7 +14,7 @@ Worker が受け持つのは、部屋の作成と参加証の発行、写真の�
 
 ```mermaid
 flowchart LR
-  subgraph phones["同じ場所にいる端末（Chrome / Edge）"]
+  subgraph phones["同じ場所にいるスマートフォン"]
     GM["GM の端末<br/>ゲームの状態を持つ"]
     P1["プレイヤー"]
     P2["プレイヤー"]

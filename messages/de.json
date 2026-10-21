@@ -55,7 +55,7 @@
     }
   ],
   "leave_button": "Raum verlassen",
-  "unsupported_android": "Chrome auf Android",
+  "unsupported_phone": "Chrome auf Android oder Safari auf dem iPhone (ab iOS 26.4)",
   "unsupported_desktop": "Chrome oder Edge am Computer",
   "page_link": "Link zu dieser Seite",
   "copy": "Kopieren",
@@ -179,7 +179,7 @@
   "lp_feat_3_title": "11 Sprachen",
   "lp_feat_3_body": "Wähle die Sprache pro Raum. Auch die KI-Hinweise kommen in dieser Sprache",
   "lp_feat_4_title": "Nur dein Handy",
-  "lp_feat_4_body": "Einfach in Chrome auf Android öffnen. Keine App nötig",
+  "lp_feat_4_body": "Einfach im Browser des Smartphones öffnen. Keine App nötig",
   "lp_final_title": "Bereit? Ab auf Szenenjagd",
   "lp_link": "So wird gespielt ansehen",
   "lp_about_title": "Was für ein Spiel ist das?",

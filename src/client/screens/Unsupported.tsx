@@ -3,7 +3,7 @@ import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
 import { Screen } from "../ui/Screen";
 
-/** WebTransport が無いブラウザ（Safari、Firefox など）。対応ブラウザで開き直せるよう、このページのリンクを渡す。 */
+/** WebTransport が無いブラウザ（iOS 26.4 より前の Safari など）。対応ブラウザで開き直せるよう、このページのリンクを渡す。 */
 export function Unsupported() {
   const link = typeof location === "undefined" ? "" : location.href;
   const [copied, setCopied] = useState(false);
@@ -61,7 +61,7 @@ export function Unsupported() {
           gap: 8,
         }}
       >
-        {[m.unsupported_android(), m.unsupported_desktop()].map((t) => (
+        {[m.unsupported_phone(), m.unsupported_desktop()].map((t) => (
           <li
             key={t}
             className="sh-card"

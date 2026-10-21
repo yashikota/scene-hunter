@@ -41,7 +41,7 @@ export function lpHead(l: Locale): LpHead {
       genre: "Party game",
       gamePlatform: "Web browser",
       applicationCategory: "GameApplication",
-      operatingSystem: "Android",
+      operatingSystem: "Android, iOS",
       numberOfPlayers: { "@type": "QuantitativeValue", minValue: MIN_PLAYERS + 1 },
       offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
     },

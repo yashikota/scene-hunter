@@ -55,7 +55,7 @@
     }
   ],
   "leave_button": "Sair da sala",
-  "unsupported_android": "Chrome no Android",
+  "unsupported_phone": "Chrome no Android, ou Safari no iPhone (iOS 26.4 ou mais recente)",
   "unsupported_desktop": "Chrome ou Edge no computador",
   "page_link": "Link desta página",
   "copy": "Copiar",
@@ -179,7 +179,7 @@
   "lp_feat_3_title": "11 idiomas",
   "lp_feat_3_body": "Escolha o idioma de cada sala. As dicas da IA também chegam nesse idioma",
   "lp_feat_4_title": "Só o celular",
-  "lp_feat_4_body": "Abra no Chrome do Android. Não precisa instalar app",
+  "lp_feat_4_body": "É só abrir no navegador do celular. Não precisa instalar app",
   "lp_final_title": "Prontos? Hora de caçar cenas",
   "lp_link": "Ver como jogar",
   "lp_about_title": "Que jogo é esse?",

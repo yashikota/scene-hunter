@@ -55,7 +55,7 @@
     }
   ],
   "leave_button": "Quitter le salon",
-  "unsupported_android": "Chrome sur Android",
+  "unsupported_phone": "Chrome sur Android, ou Safari sur iPhone (iOS 26.4 ou ultérieur)",
   "unsupported_desktop": "Chrome ou Edge sur ordinateur",
   "page_link": "Lien de cette page",
   "copy": "Copier",
@@ -179,7 +179,7 @@
   "lp_feat_3_title": "11 langues",
   "lp_feat_3_body": "Choisissez la langue de chaque salle. Les indices de l’IA arrivent aussi dans cette langue",
   "lp_feat_4_title": "Juste votre téléphone",
-  "lp_feat_4_body": "Ouvrez-le dans Chrome sur Android. Aucune appli à installer",
+  "lp_feat_4_body": "Ouvrez-le simplement dans le navigateur de votre téléphone. Aucune appli à installer",
   "lp_final_title": "Prêts ? Partez à la chasse aux scènes",
   "lp_link": "Voir comment jouer",
   "lp_about_title": "C’est quel genre de jeu ?",
