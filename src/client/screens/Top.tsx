@@ -8,7 +8,8 @@ import { Card } from "../ui/Card";
 import { LanguageSelect } from "../ui/LanguageSelect";
 import { isSupportedBrowser, useBrowserLocale } from "../ui/locale";
 import { Screen } from "../ui/Screen";
-import { CODE_RE, errorMessage } from "./entryErrors";
+import { ROOM_CODE_RE } from "../../shared/entry";
+import { errorMessage } from "./entryErrors";
 import { NameStep } from "./NameStep";
 import { Unsupported } from "./Unsupported";
 
@@ -101,7 +102,7 @@ function TopForm({
     // 番号の入ったリンクから来たときは、そのまま部屋を確かめて名前の入力へ進む。
     // 確かめ済み（名前の入力から「戻る」で来た）なら進まない。進むと戻れなくなる
     if (
-      !CODE_RE.test(initialCode) ||
+      !ROOM_CODE_RE.test(initialCode) ||
       (deps.isFound ?? isRoomFound)(initialCode) ||
       autoChecked.current === initialCode
     )
@@ -113,7 +114,7 @@ function TopForm({
   const join = (e: FormEvent) => {
     e.preventDefault();
     if (status !== "idle") return;
-    if (!CODE_RE.test(code)) return setError(m.error_code());
+    if (!ROOM_CODE_RE.test(code)) return setError(m.error_code());
     void find(code);
   };
 

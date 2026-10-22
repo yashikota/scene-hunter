@@ -11,7 +11,7 @@ import { LobbyPlayer } from "../screens/LobbyPlayer";
 import { NameStep } from "../screens/NameStep";
 import { ResultsScreen } from "../screens/ResultsScreen";
 import { Top } from "../screens/Top";
-import { CODE_RE } from "../screens/entryErrors";
+import { ROOM_CODE_RE } from "../../shared/entry";
 import { TurnScreen } from "../screens/TurnScreen";
 import { Unsupported } from "../screens/Unsupported";
 import { isSupportedBrowser, useBrowserLocale } from "../ui/locale";
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/r/$code")({
 function RoomRoute() {
   const { code } = Route.useParams();
   // 部屋の番号は 6 桁の数字だけ。それ以外の URL はトップに回す
-  if (!CODE_RE.test(code)) return <Navigate to="/" replace />;
+  if (!ROOM_CODE_RE.test(code)) return <Navigate to="/" replace />;
   // 番号が変わったら（このページから別の部屋を作ったときなど）状態を持ち越さない
   return <RoomEntry key={code} code={code} />;
 }

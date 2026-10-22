@@ -8,6 +8,7 @@ import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Screen } from "../ui/Screen";
 import { copyText, useCopied } from "../ui/copy";
+import { Icon, ICON } from "../ui/Icon";
 import { RoomCode } from "../ui/RoomCode";
 import { Sheet } from "../ui/Sheet";
 import { TopBar } from "../ui/TopBar";
@@ -106,26 +107,6 @@ export interface LobbyGmProps {
   onRename(name: string): Promise<void>;
 }
 
-const svg = (d: string) => (
-  <svg
-    viewBox="0 0 24 24"
-    width={22}
-    height={22}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={2.4}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    focusable="false"
-  >
-    <path d={d} />
-  </svg>
-);
-/** 2 枚重ねの紙（コピー）と、コピーできたときのチェック。 */
-const COPY_ICON = svg("M9 9h10v11H9zM5 15V4h10");
-const CHECK_ICON = svg("M5 12.5l4.5 4.5L19 7");
-
 /** 共有するリンク。開くと番号が入ったトップになる。 */
 export const shareLink = (code: string) => `${location.origin}/r/${code}`;
 
@@ -192,7 +173,7 @@ export function LobbyGm({
             onClick={() => void copyLink()}
             aria-label={copied ? m.link_copied() : m.copy_link()}
           >
-            {copied ? CHECK_ICON : COPY_ICON}
+            <Icon d={copied ? ICON.check : ICON.copy} size={22} />
           </button>
         </div>
         <span className="sh-sr-only" aria-live="polite">

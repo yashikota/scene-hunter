@@ -1,6 +1,7 @@
 import { issueCert, issueTransfer, verifyTransfer } from "../../shared/cert";
 import type { Cert, Role, TransferCert } from "../../shared/cert";
 import { importPublicKey } from "../../shared/crypto";
+import { cleanName, NAME_MAX, ROOM_CODE_RE } from "../../shared/entry";
 import type { Locale } from "../../shared/locales";
 import { issueRoomToken, verifyRoomToken } from "../hmac";
 import type { RoomTokenPayload } from "../hmac";
@@ -48,16 +49,9 @@ const MAX_CREATE_ATTEMPTS = 3;
 const DEFAULT_ROUNDS = 3;
 const DEFAULT_LIMIT_SEC = 60;
 
-/**
- * 制御文字と、見えない書式文字（ゼロ幅の空白、文字の向きを変える記号など）。名前で別の人や GM を装えないよう取り除く。
- * 絵文字をつなぐ ZWJ（U+200D）は残す。
- */
-const INVISIBLE = /(?!\u200D)[\p{Cc}\p{Cf}]/gu;
-
 export function checkName(raw: string): string {
-  const name = raw.normalize("NFC").replace(INVISIBLE, "").trim();
-  const len = [...name].length;
-  if (len < 1 || len > 12) throw new RangeError("name must be 1-12 characters");
+  const name = cleanName(raw);
+  if (name === null) throw new RangeError(`name must be 1-${NAME_MAX} characters`);
   return name;
 }
 
@@ -92,10 +86,8 @@ async function issueMember(
   return { roomToken, cert };
 }
 
-const ROOM_CODE = /^\d{6}$/;
-
 export function checkCode(code: string): void {
-  if (!ROOM_CODE.test(code)) throw new NotFoundError("room not found");
+  if (!ROOM_CODE_RE.test(code)) throw new NotFoundError("room not found");
 }
 
 /** トークンを検証し、部屋の記録を返す。GM の操作では、いまの GM 本人であることも確かめる。 */
@@ -186,7 +178,7 @@ export async function roomExists(
   store: Pick<RoomDeps["store"], "get">,
   code: string,
 ): Promise<boolean> {
-  if (!ROOM_CODE.test(code)) return false;
+  if (!ROOM_CODE_RE.test(code)) return false;
   return (await store.get(code)) !== null;
 }
 
@@ -195,7 +187,7 @@ export async function joinRoom(
   code: string,
   input: { name: string; pubkey: string },
 ): Promise<Joined | { error: "not_found" }> {
-  if (!ROOM_CODE.test(code)) return { error: "not_found" };
+  if (!ROOM_CODE_RE.test(code)) return { error: "not_found" };
   const name = checkName(input.name);
   await checkPubkey(input.pubkey);
   const rec = await d.store.get(code);

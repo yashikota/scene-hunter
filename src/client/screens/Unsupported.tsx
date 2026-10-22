@@ -1,19 +1,15 @@
-import { useState } from "react";
 import { m } from "../paraglide/messages";
 import { Button } from "../ui/Button";
+import { copyText, useCopied } from "../ui/copy";
 import { Screen } from "../ui/Screen";
 
 /** WebTransport が無いブラウザ（iOS 26.4 より前の Safari など）。対応ブラウザで開き直せるよう、このページのリンクを渡す。 */
 export function Unsupported() {
   const link = typeof location === "undefined" ? "" : location.href;
-  const [copied, setCopied] = useState(false);
+  const [copied, flashCopied] = useCopied();
+  // コピーできないブラウザでは、入力欄から手で選んでもらう
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-    } catch {
-      // コピーできないブラウザでは、入力欄から手で選んでもらう
-    }
+    if (await copyText(link)) flashCopied();
   };
   return (
     <Screen variant="top" style={{ gap: 20 }}>

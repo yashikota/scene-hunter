@@ -1,28 +1,9 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { m } from "../paraglide/messages";
-import { cleanName, errorMessage, NAME_MAX } from "./entryErrors";
-
-const PENCIL = "M4 20h4L19 9l-4-4L4 16v4M13.5 6.5l4 4";
-const CHECK = "M5 12.5l4.5 4.5L19 7.5";
-const CROSS = "M6 6l12 12M18 6L6 18";
-
-function Icon({ d }: { d: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width={18}
-      height={18}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d={d} />
-    </svg>
-  );
-}
+import { cleanName } from "../../shared/entry";
+import { Icon, ICON } from "../ui/Icon";
+import { NameInput } from "../ui/NameInput";
+import { errorMessage } from "./entryErrors";
 
 /**
  * ロビーの自分の札の中身。名前の横の鉛筆を押すと、その場で名前を入れ直せる。
@@ -57,7 +38,7 @@ export function EditableName({
           aria-label={m.rename_button()}
           onClick={() => setEditing(true)}
         >
-          <Icon d={PENCIL} />
+          <Icon d={ICON.pencil} />
         </button>
       </span>
     );
@@ -109,29 +90,14 @@ function NameEditor({
       onKeyDown={(e) => e.key === "Escape" && !busy && onDone()}
     >
       <div className="sh-name-edit-row">
-        <label htmlFor={`${id}-name`} className="sh-sr-only">
-          {m.name_label()}
-        </label>
-        <input
+        <NameInput
           id={`${id}-name`}
-          className="sh-input sh-input--inline"
-          // 名前の欄だけのフォームは、パスワードマネージャーにログインの欄と見なされやすい。保存も補完も止める
-          name="sh-player-name"
-          autoComplete="off"
-          data-1p-ignore=""
-          data-lpignore="true"
-          data-bwignore=""
-          data-form-type="other"
+          className="sh-input--inline"
+          errorId={error ? `${id}-error` : null}
           enterKeyHint="done"
-          autoFocus
-          maxLength={NAME_MAX}
-          placeholder={m.name_label()}
-          aria-invalid={error !== null}
-          aria-describedby={error ? `${id}-error` : undefined}
           value={name}
           disabled={busy}
-          onChange={(e) => setName(e.target.value)}
-          onFocus={(e) => e.currentTarget.select()}
+          onValue={setName}
         />
         <button
           type="submit"
@@ -140,7 +106,7 @@ function NameEditor({
           disabled={busy}
           aria-busy={busy}
         >
-          {busy ? <span className="sh-spinner" aria-hidden="true" /> : <Icon d={CHECK} />}
+          {busy ? <span className="sh-spinner" aria-hidden="true" /> : <Icon d={ICON.check} />}
         </button>
         <button
           type="button"
@@ -149,7 +115,7 @@ function NameEditor({
           disabled={busy}
           onClick={onDone}
         >
-          <Icon d={CROSS} />
+          <Icon d={ICON.cross} />
         </button>
       </div>
       {error && (

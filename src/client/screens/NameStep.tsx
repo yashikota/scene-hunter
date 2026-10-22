@@ -5,7 +5,9 @@ import { Button } from "../ui/Button";
 import { Screen } from "../ui/Screen";
 import { RoomCode } from "../ui/RoomCode";
 import { Connecting } from "./Connecting";
-import { cleanName, errorMessage, NAME_MAX } from "./entryErrors";
+import { cleanName } from "../../shared/entry";
+import { NameInput } from "../ui/NameInput";
+import { errorMessage } from "./entryErrors";
 
 export interface NameStepProps {
   /** 入る部屋の番号。部屋を作るときは無し。 */
@@ -58,28 +60,13 @@ export function NameStep({ code, onSubmit, onBack }: NameStepProps) {
             {m.create_button()}
           </h1>
         )}
-        <label htmlFor={`${id}-name`} className="sh-sr-only">
-          {m.name_label()}
-        </label>
-        <input
+        <NameInput
           id={`${id}-name`}
-          className="sh-input sh-input--big"
-          // 名前の欄だけのフォームは、パスワードマネージャーにログインの欄と見なされやすい。保存も補完も止める
-          name="sh-player-name"
-          autoComplete="off"
-          data-1p-ignore=""
-          data-lpignore="true"
-          data-bwignore=""
-          data-form-type="other"
+          className="sh-input--big"
+          errorId={error ? `${id}-error` : null}
           enterKeyHint="go"
-          autoFocus
-          maxLength={NAME_MAX}
-          placeholder={m.name_label()}
-          aria-invalid={error !== null}
-          aria-describedby={error ? `${id}-error` : undefined}
           value={name}
-          onChange={(e) => setName(e.target.value)}
-          onFocus={(e) => e.currentTarget.select()}
+          onValue={setName}
         />
         {error && (
           <p id={`${id}-error`} role="alert" className="sh-error">
