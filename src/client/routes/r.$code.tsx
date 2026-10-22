@@ -41,11 +41,12 @@ function RoomEntry({ code }: { code: string }) {
         <Top
           initialCode={code}
           onEntered={(c) => {
-            // 番号を打ち直したり部屋を作ったりしたら、その部屋の URL へ移る
+            // 番号を打ち直したら、その部屋の URL へ移る
             if (c !== code) return void navigate({ to: "/r/$code", params: { code: c } });
             if (loadMe(c)) setEntered(true);
             else setNaming(true);
           }}
+          onCreate={() => void navigate({ to: "/new" })}
         />
       );
     }

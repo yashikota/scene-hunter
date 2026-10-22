@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NewRouteImport } from './routes/new'
 import { Route as LpIndexRouteImport } from './routes/lp.index'
 import { Route as LpLangRouteImport } from './routes/lp.$lang'
 import { Route as RCodeRouteImport } from './routes/r.$code'
@@ -17,6 +18,11 @@ import { Route as RCodeRouteImport } from './routes/r.$code'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewRoute = NewRouteImport.update({
+  id: '/new',
+  path: '/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LpIndexRoute = LpIndexRouteImport.update({
@@ -37,12 +43,14 @@ const RCodeRoute = RCodeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/new': typeof NewRoute
   '/lp/$lang': typeof LpLangRoute
   '/r/$code': typeof RCodeRoute
   '/lp/': typeof LpIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/new': typeof NewRoute
   '/lp/$lang': typeof LpLangRoute
   '/r/$code': typeof RCodeRoute
   '/lp': typeof LpIndexRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/new': typeof NewRoute
   '/lp/$lang': typeof LpLangRoute
   '/r/$code': typeof RCodeRoute
   '/lp/': typeof LpIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/lp/$lang' | '/r/$code' | '/lp/'
+  fullPaths: '/' | '/new' | '/lp/$lang' | '/r/$code' | '/lp/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/lp/$lang' | '/r/$code' | '/lp'
-  id: '__root__' | '/' | '/lp/$lang' | '/r/$code' | '/lp/'
+  to: '/' | '/new' | '/lp/$lang' | '/r/$code' | '/lp'
+  id: '__root__' | '/' | '/new' | '/lp/$lang' | '/r/$code' | '/lp/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  NewRoute: typeof NewRoute
   LpLangRoute: typeof LpLangRoute
   RCodeRoute: typeof RCodeRoute
   LpIndexRoute: typeof LpIndexRoute
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/new': {
+      id: '/new'
+      path: '/new'
+      fullPath: '/new'
+      preLoaderRoute: typeof NewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lp/': {
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  NewRoute: NewRoute,
   LpLangRoute: LpLangRoute,
   RCodeRoute: RCodeRoute,
   LpIndexRoute: LpIndexRoute,

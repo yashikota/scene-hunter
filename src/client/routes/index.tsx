@@ -7,5 +7,10 @@ export const Route = createFileRoute("/")({
 
 function TopRoute() {
   const navigate = useNavigate();
-  return <Top onEntered={(c) => void navigate({ to: "/r/$code", params: { code: c } })} />;
+  return (
+    <Top
+      onEntered={(c) => void navigate({ to: "/r/$code", params: { code: c } })}
+      onCreate={() => void navigate({ to: "/new" })}
+    />
+  );
 }

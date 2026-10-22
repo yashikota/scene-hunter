@@ -97,7 +97,7 @@ type Entry = { id: string; render(locale: Locale): ReactNode };
 const ago = (ms: number) => Date.now() - ms;
 
 export const ENTRIES: Entry[] = [
-  { id: "top", render: () => <Top onEntered={noop} deps={neverDeps} /> },
+  { id: "top", render: () => <Top onEntered={noop} onCreate={noop} deps={neverDeps} /> },
   { id: "name-join", render: () => <NameStep code={CODE} onSubmit={never} onBack={noop} /> },
   { id: "name-create", render: () => <NameStep onSubmit={never} onBack={noop} /> },
   { id: "unsupported", render: () => <Unsupported /> },

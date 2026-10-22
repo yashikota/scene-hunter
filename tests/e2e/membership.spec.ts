@@ -116,3 +116,30 @@ test("ロビーで名前を変えると、ほかの人の画面にも新しい�
     await closeAll([gm, alice]);
   }
 });
+
+test("紹介のページから部屋を作りに行き、ブラウザで戻るとトップに戻る", async ({ browser }) => {
+  const gm = await newPerson(browser, "ジーエム");
+  const { page } = gm;
+  try {
+    await page.goto("/lp/ja");
+    await page.getByRole("link", { name: "今すぐ遊ぶ" }).first().click();
+    await page.waitForURL(/\/$/);
+    await page.getByRole("button", { name: "部屋を作る" }).click();
+    await page.waitForURL(/\/new$/);
+    await expect(page.getByPlaceholder("名前")).toBeVisible();
+
+    await page.goBack();
+    await page.waitForURL(/\/$/);
+    await expect(page.getByRole("button", { name: "部屋を作る" })).toBeVisible();
+
+    // 部屋を作った後に戻っても、名前の入力（/new）には戻らずトップへ
+    await page.getByRole("button", { name: "部屋を作る" }).click();
+    await page.getByPlaceholder("名前").fill(gm.name);
+    await page.getByRole("button", { name: "部屋を作る" }).click();
+    await page.waitForURL(/\/r\/\d{6}$/);
+    await page.goBack();
+    await page.waitForURL(/\/$/);
+  } finally {
+    await closeAll([gm]);
+  }
+});

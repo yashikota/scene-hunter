@@ -9,7 +9,7 @@ import { LobbyPlayer } from "../../src/client/screens/LobbyPlayer";
 import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 import { routeTree } from "../../src/client/routeTree.gen";
 import { NameStep } from "../../src/client/screens/NameStep";
-import { Top } from "../../src/client/screens/Top";
+import { CreateRoom, Top } from "../../src/client/screens/Top";
 import { LOCALE_NAMES, LOCALES } from "../../src/shared/locales";
 
 const setLanguages = (langs: string[]) =>
@@ -50,7 +50,7 @@ afterEach(() => {
 describe("Top", () => {
   it("WebTransport が無いブラウザでは非対応の画面を出す", () => {
     expect(typeof (globalThis as { WebTransport?: unknown }).WebTransport).toBe("undefined");
-    render(<Top onEntered={() => {}} />);
+    render(<Top onCreate={() => {}} onEntered={() => {}} />);
     expect(screen.getByRole("heading", { name: m.unsupported_title() })).toBeTruthy();
     expect(screen.queryByRole("button", { name: m.join_button() })).toBeNull();
   });
@@ -60,7 +60,7 @@ describe("Top", () => {
 
     it("言語のプルダウンに 11 言語が LOCALE_NAMES の表記で並び、ブラウザの言語が選ばれている", () => {
       setLanguages(["ko-KR", "en"]);
-      render(<Top onEntered={() => {}} />);
+      render(<Top onCreate={() => {}} onEntered={() => {}} />);
       const select = screen.getByRole("combobox") as unknown as HTMLSelectElement;
       expect([...select.options].map((o) => o.textContent)).toEqual(
         LOCALES.map((l) => LOCALE_NAMES[l]),
@@ -73,11 +73,11 @@ describe("Top", () => {
 
     it("選び直した言語を覚え、次に開いたときはブラウザの言語より優先する", () => {
       setLanguages(["ko-KR"]);
-      const { unmount } = render(<Top onEntered={() => {}} />);
+      const { unmount } = render(<Top onCreate={() => {}} onEntered={() => {}} />);
       fireEvent.change(screen.getByRole("combobox"), { target: { value: "de" } });
       expect(localStorage.getItem("sh:locale")).toBe("de");
       unmount();
-      render(<Top onEntered={() => {}} />);
+      render(<Top onCreate={() => {}} onEntered={() => {}} />);
       expect((screen.getByRole("combobox") as unknown as HTMLSelectElement).value).toBe("de");
       expect(document.documentElement.lang).toBe("de");
     });
@@ -85,34 +85,42 @@ describe("Top", () => {
     it("覚えた言語が壊れていたら、ブラウザの言語で出す", () => {
       setLanguages(["ko-KR"]);
       localStorage.setItem("sh:locale", "xx");
-      render(<Top onEntered={() => {}} />);
+      render(<Top onCreate={() => {}} onEntered={() => {}} />);
       expect((screen.getByRole("combobox") as unknown as HTMLSelectElement).value).toBe("ko");
     });
 
     it("トップには名前の入力が無い", () => {
-      render(<Top onEntered={() => {}} />);
+      render(<Top onCreate={() => {}} onEntered={() => {}} />);
       expect(screen.queryByLabelText(m.name_label())).toBeNull();
       expect(screen.getByLabelText(m.code_label())).toBeTruthy();
     });
 
-    it("部屋を作るを押すと名前を聞き、選んだ言語で部屋を作る", async () => {
-      const create = vi.fn(async () => "482913");
-      const onEntered = vi.fn();
-      render(<Top onEntered={onEntered} deps={{ create, find: vi.fn() }} />);
-      fireEvent.change(screen.getByRole("combobox"), { target: { value: "fr" } });
+    it("部屋を作るを押すと、名前の入力（/new）へ移る", () => {
+      const onCreate = vi.fn();
+      render(<Top onEntered={() => {}} onCreate={onCreate} />);
       fireEvent.click(screen.getByRole("button", { name: m.create_button() }));
+      expect(onCreate).toHaveBeenCalledOnce();
+    });
+
+    it("名前を聞き、トップで選んだ言語で部屋を作る", async () => {
+      const create = vi.fn(async () => "482913");
+      const onCreated = vi.fn();
+      const top = render(<Top onEntered={() => {}} onCreate={() => {}} />);
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "fr" } });
+      top.unmount();
+      render(<CreateRoom onCreated={onCreated} onBack={() => {}} deps={{ create }} />);
       const name = screen.getByLabelText(m.name_label());
       expect(document.activeElement).toBe(name);
       fireEvent.change(name, { target: { value: " はるか " } });
       fireEvent.click(screen.getByRole("button", { name: m.create_button() }));
-      await vi.waitFor(() => expect(onEntered).toHaveBeenCalledWith("482913"));
+      await vi.waitFor(() => expect(onCreated).toHaveBeenCalledWith("482913"));
       expect(create).toHaveBeenCalledWith("はるか", "fr");
     });
 
     it("入るを押すと部屋があるか確かめ、あれば次へ進む（名前は聞かない）", async () => {
       const find = vi.fn(async () => {});
       const onEntered = vi.fn();
-      render(<Top onEntered={onEntered} deps={{ create: vi.fn(), find }} />);
+      render(<Top onCreate={() => {}} onEntered={onEntered} deps={{ create: vi.fn(), find }} />);
       fireEvent.change(screen.getByLabelText(m.code_label()), { target: { value: "482913" } });
       fireEvent.click(screen.getByRole("button", { name: m.join_button() }));
       await vi.waitFor(() => expect(onEntered).toHaveBeenCalledWith("482913"));
@@ -124,7 +132,7 @@ describe("Top", () => {
         throw Object.assign(new Error("not found"), { status: 404 });
       });
       const onEntered = vi.fn();
-      render(<Top onEntered={onEntered} deps={{ create: vi.fn(), find }} />);
+      render(<Top onCreate={() => {}} onEntered={onEntered} deps={{ create: vi.fn(), find }} />);
       fireEvent.change(screen.getByLabelText(m.code_label()), { target: { value: "482913" } });
       fireEvent.click(screen.getByRole("button", { name: m.join_button() }));
       expect((await screen.findByRole("alert")).textContent).toBe(m.error_not_found());
@@ -135,7 +143,7 @@ describe("Top", () => {
     it("確かめている間は全画面の待ちにせず、ボタンを回すだけ。番号を直すと確かめを捨てる", async () => {
       const find = vi.fn(() => new Promise<never>(() => {}));
       const onEntered = vi.fn();
-      render(<Top onEntered={onEntered} deps={{ create: vi.fn(), find }} />);
+      render(<Top onCreate={() => {}} onEntered={onEntered} deps={{ create: vi.fn(), find }} />);
       fireEvent.change(screen.getByLabelText(m.code_label()), { target: { value: "482913" } });
       fireEvent.click(screen.getByRole("button", { name: m.join_button() }));
       const button = screen.getByRole("button", { name: m.join_button() }) as HTMLButtonElement;
@@ -148,7 +156,7 @@ describe("Top", () => {
 
     it("6 桁でない番号では確かめない", () => {
       const find = vi.fn();
-      render(<Top onEntered={() => {}} deps={{ create: vi.fn(), find }} />);
+      render(<Top onCreate={() => {}} onEntered={() => {}} deps={{ create: vi.fn(), find }} />);
       fireEvent.change(screen.getByLabelText(m.code_label()), { target: { value: "4829" } });
       fireEvent.click(screen.getByRole("button", { name: m.join_button() }));
       expect(screen.getByRole("alert").textContent).toBe(m.error_code());
@@ -163,14 +171,21 @@ describe("Top に番号を渡して開く", () => {
   it("Top は initialCode を入れ、すぐに部屋を確かめて次へ進む", async () => {
     const find = vi.fn(async () => {});
     const onEntered = vi.fn();
-    render(<Top initialCode="123456" onEntered={onEntered} deps={{ create: vi.fn(), find }} />);
+    render(
+      <Top
+        onCreate={() => {}}
+        initialCode="123456"
+        onEntered={onEntered}
+        deps={{ create: vi.fn(), find }}
+      />,
+    );
     expect((screen.getByLabelText(m.code_label()) as HTMLInputElement).value).toBe("123456");
     await vi.waitFor(() => expect(onEntered).toHaveBeenCalledWith("123456"));
   });
 
   it("番号が無いときは空のままで、確かめない", () => {
     const find = vi.fn();
-    render(<Top onEntered={() => {}} deps={{ create: vi.fn(), find }} />);
+    render(<Top onCreate={() => {}} onEntered={() => {}} deps={{ create: vi.fn(), find }} />);
     expect((screen.getByLabelText(m.code_label()) as HTMLInputElement).value).toBe("");
     expect(find).not.toHaveBeenCalled();
   });

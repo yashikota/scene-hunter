@@ -33,9 +33,30 @@ export interface TopProps {
    * ただし、確かめ済みの部屋（名前の入力から戻ってきたとき）なら確かめず、番号を入れておくだけにする。
    */
   initialCode?: string;
-  /** 部屋を作った（資格を保存した）、または入る部屋があると確かめた。次は /r/{code}。 */
+  /** 入る部屋があると確かめた。次は /r/{code}。 */
   onEntered(code: string): void;
+  /** 「部屋を作る」を押した。名前の入力（/new）へ移る。 */
+  onCreate(): void;
   deps?: TopDeps;
+}
+
+export interface CreateRoomProps {
+  /** 部屋を作って資格を保存した。次は /r/{code}。 */
+  onCreated(code: string): void;
+  onBack(): void;
+  deps?: Pick<TopDeps, "create">;
+}
+
+/** 部屋を作る：名前を聞いて部屋を作る。言語はトップで選んだもの（覚えた言語）を使う。 */
+export function CreateRoom({ onCreated, onBack, deps = defaultDeps }: CreateRoomProps) {
+  const [locale] = useBrowserLocale();
+  if (!isSupportedBrowser()) return <Unsupported />;
+  return (
+    <NameStep
+      onSubmit={async (name) => onCreated(await deps.create(name, locale))}
+      onBack={onBack}
+    />
+  );
 }
 
 export function Top(props: TopProps) {
@@ -48,13 +69,14 @@ export function Top(props: TopProps) {
 function TopForm({
   initialCode = "",
   onEntered,
+  onCreate,
   deps = defaultDeps,
   locale,
   onLocale,
 }: TopProps & { locale: Locale; onLocale(l: Locale): void }) {
   const ids = useId();
   const [code, setCode] = useState(initialCode);
-  const [status, setStatus] = useState<"idle" | "checking" | "naming">("idle");
+  const [status, setStatus] = useState<"idle" | "checking">("idle");
   const [error, setError] = useState<string | null>(null);
   /** いまの確かめの番号。やめたり番号を変えたりした後に届いた結果は捨てる。 */
   const attempt = useRef(0);
@@ -94,15 +116,6 @@ function TopForm({
     if (!CODE_RE.test(code)) return setError(m.error_code());
     void find(code);
   };
-
-  if (status === "naming") {
-    return (
-      <NameStep
-        onSubmit={async (name) => onEntered(await deps.create(name, locale))}
-        onBack={() => setStatus("idle")}
-      />
-    );
-  }
 
   const checking = status === "checking";
   return (
@@ -177,7 +190,7 @@ function TopForm({
         <div style={{ flexGrow: 1, height: 2, background: "currentColor", opacity: 0.25 }} />
       </div>
 
-      <Button onClick={() => setStatus("naming")} disabled={checking}>
+      <Button onClick={onCreate} disabled={checking}>
         {m.create_button()}
       </Button>
       <a href="/lp" className="sh-link">
