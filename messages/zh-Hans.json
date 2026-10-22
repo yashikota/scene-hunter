@@ -37,6 +37,7 @@
   "waiting_for_gm": "等待 GM 开始",
   "rounds_chip": "{count} 回合",
   "leave_button": "离开房间",
+  "leave_confirm": "要离开房间吗？",
   "unsupported_phone": "Android 版 Chrome、iPhone 版 Safari（iOS 26.4 及以上）",
   "unsupported_desktop": "电脑版 Chrome 或 Edge",
   "page_link": "本页链接",

@@ -713,6 +713,17 @@ body {
   flex-direction: column;
   gap: 12px;
 }
+.sh-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sh-sheet-head .sh-icon-btn {
+  margin: -4px -4px -4px 0;
+  width: 36px;
+  height: 36px;
+}
 .sh-row--even {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }

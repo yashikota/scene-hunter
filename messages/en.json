@@ -55,6 +55,7 @@
     }
   ],
   "leave_button": "Leave room",
+  "leave_confirm": "Leave the room?",
   "unsupported_phone": "Chrome on Android, or Safari on iPhone (iOS 26.4 or later)",
   "unsupported_desktop": "Chrome or Edge on a computer",
   "page_link": "Link to this page",

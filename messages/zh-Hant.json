@@ -37,6 +37,7 @@
   "waiting_for_gm": "等待 GM 開始",
   "rounds_chip": "{count} 回合",
   "leave_button": "離開房間",
+  "leave_confirm": "要離開房間嗎？",
   "unsupported_phone": "Android 的 Chrome、iPhone 的 Safari（iOS 26.4 以上）",
   "unsupported_desktop": "電腦的 Chrome 或 Edge",
   "page_link": "本頁連結",

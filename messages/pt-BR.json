@@ -55,6 +55,7 @@
     }
   ],
   "leave_button": "Sair da sala",
+  "leave_confirm": "Sair da sala?",
   "unsupported_phone": "Chrome no Android, ou Safari no iPhone (iOS 26.4 ou mais recente)",
   "unsupported_desktop": "Chrome ou Edge no computador",
   "page_link": "Link desta página",

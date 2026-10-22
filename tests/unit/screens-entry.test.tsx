@@ -482,6 +482,16 @@ describe("遊び方", () => {
     expect(within(sheet).getByText(m.rules_7({ rounds: 5 }))).toBeTruthy();
     // 最後のステップでは「次へ」が「閉じる」に替わる
     expect(within(sheet).queryByRole("button", { name: m.rules_next() })).toBeNull();
+    const closes = within(sheet).getAllByRole("button", { name: m.close() });
+    expect(closes).toHaveLength(2);
+    fireEvent.click(closes[1]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("右上の × で、どのステップからでも閉じる", () => {
+    render(lobbyGm());
+    fireEvent.click(screen.getByRole("button", { name: m.rules_button() }));
+    const sheet = screen.getByRole("dialog", { name: m.rules_button() });
     fireEvent.click(within(sheet).getByRole("button", { name: m.close() }));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
@@ -551,8 +561,12 @@ describe("LobbyPlayer", () => {
     expect(screen.getByText("3 ラウンド")).toBeTruthy();
     expect(screen.getByText("60 秒")).toBeTruthy();
     expect(screen.getByText("部屋 482913")).toBeTruthy();
+    // 押し間違えで抜けないよう、真ん中の確かめを挟む
     fireEvent.click(screen.getByRole("button", { name: m.leave_button() }));
-    expect(onLeave).toHaveBeenCalled();
+    expect(onLeave).not.toHaveBeenCalled();
+    const sheet = screen.getByRole("dialog", { name: m.leave_confirm() });
+    fireEvent.click(within(sheet).getByRole("button", { name: m.leave_button() }));
+    expect(onLeave).toHaveBeenCalledOnce();
   });
 });
 

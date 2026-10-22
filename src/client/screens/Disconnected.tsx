@@ -1,5 +1,5 @@
 import { m } from "../paraglide/messages";
-import { Button } from "../ui/Button";
+import { LeaveButton } from "./LeaveButton";
 import { Card } from "../ui/Card";
 import { formatNumber } from "../ui/format";
 import { Screen } from "../ui/Screen";
@@ -117,9 +117,7 @@ export function Disconnected({
           </span>
         </Card>
       )}
-      <Button variant="quiet" onClick={onLeave}>
-        {m.leave_button()}
-      </Button>
+      <LeaveButton onLeave={onLeave} />
     </Screen>
   );
 }

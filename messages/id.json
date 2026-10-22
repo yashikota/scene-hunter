@@ -37,6 +37,7 @@
   "waiting_for_gm": "Menunggu GM memulai",
   "rounds_chip": "{count} ronde",
   "leave_button": "Keluar ruang",
+  "leave_confirm": "Keluar dari ruang?",
   "unsupported_phone": "Chrome di Android, atau Safari di iPhone (iOS 26.4 ke atas)",
   "unsupported_desktop": "Chrome atau Edge di komputer",
   "page_link": "Tautan halaman ini",

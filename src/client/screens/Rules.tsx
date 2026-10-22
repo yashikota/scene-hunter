@@ -19,7 +19,7 @@ export function RulesButton({ rounds, limitSec }: { rounds: number; limitSec: nu
       <Button variant="quiet" onClick={() => setOpen(true)} aria-haspopup="dialog">
         {m.rules_button()}
       </Button>
-      <Sheet open={open} title={m.rules_button()} onCancel={() => setOpen(false)}>
+      <Sheet open={open} center closable title={m.rules_button()} onCancel={() => setOpen(false)}>
         <RulesSteps rounds={rounds} limitSec={limitSec} onClose={() => setOpen(false)} />
       </Sheet>
     </>

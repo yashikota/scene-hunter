@@ -55,6 +55,7 @@
     }
   ],
   "leave_button": "Quitter le salon",
+  "leave_confirm": "Quitter le salon ?",
   "unsupported_phone": "Chrome sur Android, ou Safari sur iPhone (iOS 26.4 ou ultérieur)",
   "unsupported_desktop": "Chrome ou Edge sur ordinateur",
   "page_link": "Lien de cette page",

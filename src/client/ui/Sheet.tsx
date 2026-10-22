@@ -2,17 +2,22 @@ import { AnimatePresence } from "motion/react";
 import * as mo from "motion/react-m";
 import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
+import { m } from "../paraglide/messages";
+import { Button } from "./Button";
+import { Icon, ICON } from "./Icon";
 import { SMOOTH, SPRING } from "./motion";
 
 /**
  * 画面の下から出す確かめや選択のシート。外側を押すと閉じる（busy のあいだは閉じない）。
  * ブラウザの confirm() は見た目が画面と揃わないので、こちらを使う。
  * open を false にすると、下へ引っ込めてから消す。
- * center は画面の真ん中に出す確かめ（解散のように、操作を止めて答えてほしいもの）。
+ * center は画面の真ん中に出す（解散の確かめや遊び方のように、操作を止めて見てほしいもの）。
+ * closable なら、右上に閉じる（×）ボタンを置く。
  */
 export function Sheet({
   open,
   center = false,
+  closable = false,
   title,
   busy = false,
   onCancel,
@@ -20,6 +25,7 @@ export function Sheet({
 }: {
   open: boolean;
   center?: boolean;
+  closable?: boolean;
   title: string;
   busy?: boolean;
   onCancel(): void;
@@ -54,9 +60,22 @@ export function Sheet({
             exit={hidden}
             transition={center ? SPRING : SMOOTH}
           >
-            <h2 id={titleId} className="sh-display" style={{ fontSize: 17 }}>
-              {title}
-            </h2>
+            <div className="sh-sheet-head">
+              <h2 id={titleId} className="sh-display" style={{ fontSize: 17 }}>
+                {title}
+              </h2>
+              {closable && (
+                <button
+                  type="button"
+                  className="sh-icon-btn"
+                  aria-label={m.close()}
+                  disabled={busy}
+                  onClick={onCancel}
+                >
+                  <Icon d={ICON.cross} />
+                </button>
+              )}
+            </div>
             {children}
           </mo.div>
         </mo.div>
@@ -99,4 +118,32 @@ function useModal(open: boolean, dialog: RefObject<HTMLElement | null>, close: (
       if (opener?.isConnected) opener.focus();
     };
   }, [open, dialog]);
+}
+
+/** 中央に出す「本当に？」の確かめ。やめる（最初のフォーカス）と、する（オレンジ）を並べる。 */
+export function ConfirmSheet({
+  open,
+  title,
+  confirmLabel,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  confirmLabel: string;
+  onConfirm(): void;
+  onCancel(): void;
+}) {
+  return (
+    <Sheet open={open} center title={title} onCancel={onCancel}>
+      <div className="sh-row sh-row--even">
+        <Button variant="quiet" onClick={onCancel} autoFocus>
+          {m.cancel()}
+        </Button>
+        <Button variant="primary" onClick={onConfirm}>
+          {confirmLabel}
+        </Button>
+      </div>
+    </Sheet>
+  );
 }

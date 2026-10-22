@@ -37,6 +37,7 @@
   "waiting_for_gm": "GM의 시작을 기다리는 중",
   "rounds_chip": "{count}라운드",
   "leave_button": "방 나가기",
+  "leave_confirm": "방에서 나갈까요?",
   "unsupported_phone": "Android의 Chrome, iPhone의 Safari(iOS 26.4 이상)",
   "unsupported_desktop": "컴퓨터의 Chrome 또는 Edge",
   "page_link": "이 페이지 링크",

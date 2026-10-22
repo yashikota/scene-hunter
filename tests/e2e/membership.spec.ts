@@ -30,6 +30,10 @@ test("再読み込みしても同じプレイヤーで戻り、部屋を出た�
 
     // 部屋を出るとトップに戻る
     await bob.page.getByRole("button", { name: "部屋を出る" }).click();
+    await bob.page
+      .getByRole("dialog", { name: "部屋を出ますか？" })
+      .getByRole("button", { name: "部屋を出る" })
+      .click();
     await expect(bob.page.getByRole("button", { name: "部屋を作る" })).toBeVisible();
     await expect(bob.page).toHaveURL(/\/$/);
 

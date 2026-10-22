@@ -37,6 +37,7 @@
   "waiting_for_gm": "Chờ GM bắt đầu",
   "rounds_chip": "{count} vòng",
   "leave_button": "Rời phòng",
+  "leave_confirm": "Rời phòng?",
   "unsupported_phone": "Chrome trên Android, hoặc Safari trên iPhone (iOS 26.4 trở lên)",
   "unsupported_desktop": "Chrome hoặc Edge trên máy tính",
   "page_link": "Liên kết của trang này",

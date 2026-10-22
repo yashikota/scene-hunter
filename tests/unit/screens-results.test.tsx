@@ -360,8 +360,12 @@ describe("Disconnected", () => {
     act(() => void vi.advanceTimersByTime(1000));
     expect(screen.getByRole("timer").textContent).toContain("1:13");
     expect(screen.getByText(m.rank_points({ rank: 1, points: "3,345" }))).toBeTruthy();
+    // 押し間違えで抜けないよう、真ん中の確かめを挟む
     fireEvent.click(screen.getByRole("button", { name: m.leave_button() }));
-    expect(onLeave).toHaveBeenCalled();
+    expect(onLeave).not.toHaveBeenCalled();
+    const sheet = screen.getByRole("dialog", { name: m.leave_confirm() });
+    fireEvent.click(within(sheet).getByRole("button", { name: m.leave_button() }));
+    expect(onLeave).toHaveBeenCalledOnce();
   });
 
   it("経過時間は m:ss", () => {

@@ -2,6 +2,7 @@ import type { Total } from "../../shared/protocol";
 import * as mo from "motion/react-m";
 import { useEffect } from "react";
 import { m } from "../paraglide/messages";
+import { LeaveButton } from "./LeaveButton";
 import { Button } from "../ui/Button";
 import { formatNumber } from "../ui/format";
 import { Screen } from "../ui/Screen";
@@ -234,9 +235,7 @@ export function Final({
             >
               {m.final_wait_note()}
             </p>
-            <Button variant="quiet" onClick={onLeave}>
-              {m.leave_button()}
-            </Button>
+            <LeaveButton onLeave={onLeave} />
           </>
         )}
       </mo.div>

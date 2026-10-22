@@ -10,7 +10,7 @@ import { Screen } from "../ui/Screen";
 import { copyText, useCopied } from "../ui/copy";
 import { Icon, ICON } from "../ui/Icon";
 import { RoomCode } from "../ui/RoomCode";
-import { Sheet } from "../ui/Sheet";
+import { ConfirmSheet, Sheet } from "../ui/Sheet";
 import { TopBar } from "../ui/TopBar";
 import { EditableName } from "./Rename";
 import { RulesButton } from "./Rules";
@@ -239,21 +239,13 @@ export function LobbyGm({
         </div>
       </div>
 
-      <Sheet
+      <ConfirmSheet
         open={confirming}
-        center
         title={m.dissolve_confirm()}
+        confirmLabel={m.dissolve_button()}
+        onConfirm={onDissolve}
         onCancel={() => setConfirming(false)}
-      >
-        <div className="sh-row sh-row--even">
-          <Button variant="quiet" onClick={() => setConfirming(false)} autoFocus>
-            {m.cancel()}
-          </Button>
-          <Button variant="primary" onClick={onDissolve}>
-            {m.dissolve_button()}
-          </Button>
-        </div>
-      </Sheet>
+      />
       <TransferSheet
         open={choosing}
         players={active}

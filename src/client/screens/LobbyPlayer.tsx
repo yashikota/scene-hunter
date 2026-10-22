@@ -1,5 +1,5 @@
 import { m } from "../paraglide/messages";
-import { Button } from "../ui/Button";
+import { LeaveButton } from "./LeaveButton";
 import { Card } from "../ui/Card";
 import { Screen } from "../ui/Screen";
 import { TopBar } from "../ui/TopBar";
@@ -72,9 +72,7 @@ export function LobbyPlayer({
       <div className="sh-actions">
         <div className="sh-row sh-row--even">
           <RulesButton rounds={rounds} limitSec={limitSec} />
-          <Button variant="quiet" onClick={onLeave}>
-            {m.leave_button()}
-          </Button>
+          <LeaveButton onLeave={onLeave} />
         </div>
       </div>
     </Screen>
