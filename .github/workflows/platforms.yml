@@ -1,0 +1,43 @@
+name: Platform gameplay
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  gameplay:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, browser: chromium, device: desktop, channel: chrome }
+          - { os: ubuntu-latest, browser: firefox, device: desktop, channel: "" }
+          - { os: ubuntu-latest, browser: chromium, device: android, channel: "" }
+          - { os: windows-latest, browser: chromium, device: desktop, channel: msedge }
+          - { os: windows-latest, browser: firefox, device: desktop, channel: "" }
+          - { os: macos-26, browser: chromium, device: desktop, channel: chrome }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    env:
+      SH_E2E_BROWSER: ${{ matrix.browser }}
+      SH_E2E_DEVICE: ${{ matrix.device }}
+      SH_E2E_CHANNEL: ${{ matrix.channel }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - run: pnpm e2e -- tests/e2e/game.spec.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gameplay-${{ matrix.os }}-${{ matrix.browser }}-${{ matrix.device }}
+          path: |
+            test-results/
+            playwright-report/

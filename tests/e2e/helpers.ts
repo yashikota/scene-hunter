@@ -1,4 +1,4 @@
-import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import { devices, expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
 // e2e テストの共通の操作。1 人 = 1 つのブラウザコンテキスト（鍵と sessionStorage を分ける）。
 
@@ -9,7 +9,11 @@ export interface Person {
 }
 
 export async function newPerson(browser: Browser, name: string): Promise<Person> {
-  const context = await browser.newContext({ locale: "ja-JP", permissions: ["camera"] });
+  const context = await browser.newContext({
+    ...(process.env.SH_E2E_DEVICE === "android" ? devices["Pixel 7"] : {}),
+    locale: "ja-JP",
+    permissions: browser.browserType().name() === "firefox" ? [] : ["camera"],
+  });
   const page = await context.newPage();
   return { name, context, page };
 }

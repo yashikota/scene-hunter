@@ -59,10 +59,29 @@ export default defineConfig({
       args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
     },
   },
-  projects: [{ name: "chromium" }],
+  projects: [
+    {
+      name: process.env.SH_E2E_BROWSER ?? "chromium",
+      use: {
+        browserName: process.env.SH_E2E_BROWSER === "firefox" ? "firefox" : "chromium",
+        ...(process.env.SH_E2E_CHANNEL ? { channel: process.env.SH_E2E_CHANNEL } : {}),
+        ...(process.env.SH_E2E_BROWSER === "firefox"
+          ? {
+              permissions: [],
+              launchOptions: {
+                firefoxUserPrefs: {
+                  "media.navigator.streams.fake": true,
+                  "media.navigator.permission.disabled": true,
+                },
+              },
+            }
+          : {}),
+      },
+    },
+  ],
   webServer: [
     {
-      command: "scripts/e2e-relay.sh",
+      command: "node scripts/e2e-relay.mjs",
       url: `${RELAY_URL}certificate.sha256`,
       // 初回は moq-relay を落とすので長めに待つ
       timeout: 120_000,
