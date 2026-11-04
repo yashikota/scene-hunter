@@ -14,9 +14,13 @@ test("PC は管理者、役割ボタンで切り替え、GM 指定後も再び G
     });
     const gmButton = admin.page.getByRole("button", { name: "ゲームマスターになる", exact: true });
     await expect(adminButton).toHaveAttribute("aria-pressed", "true");
+    await expect(adminButton).toBeDisabled();
+    await expect(gmButton).toBeEnabled();
     await expectLobbyCount(admin, 0);
     await gmButton.click();
     await expect(gmButton).toHaveAttribute("aria-pressed", "true");
+    await expect(gmButton).toBeDisabled();
+    await expect(adminButton).toBeEnabled();
     await expectLobbyCount(admin, 1);
     await adminButton.click();
     await expect(adminButton).toHaveAttribute("aria-pressed", "true");
@@ -26,6 +30,22 @@ test("PC は管理者、役割ボタンで切り替え、GM 指定後も再び G
     await joinByLink(phone, code);
     await expectLobbyCount(admin, 1);
     await expectLobbyCount(phone, 1);
+    // 他の参加者が接続した状態でも、役割変更で配信を切らない。
+    const errors: string[] = [];
+    await phone.page.exposeFunction("recordDisconnect", () => errors.push("disconnected"));
+    await phone.page.evaluate(() => {
+      new MutationObserver(() => {
+        if (document.body.innerText.includes("GM との接続が")) {
+          (window as unknown as { recordDisconnect(): void }).recordDisconnect();
+        }
+      }).observe(document.body, { subtree: true, childList: true, characterData: true });
+    });
+    await gmButton.click();
+    await expectLobbyCount(phone, 2);
+    await adminButton.click();
+    await expectLobbyCount(phone, 1);
+    expect(errors).toEqual([]);
+
     await admin.page.getByRole("button", { name: "ゲームマスターを選ぶ", exact: true }).click();
     const dialog = admin.page.getByRole("dialog");
     await dialog.getByRole("radio", { name: phone.name, exact: true }).check();

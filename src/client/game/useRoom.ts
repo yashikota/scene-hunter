@@ -129,6 +129,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     void navigate({ to: "/" });
   }, [code, navigate]);
 
+  const hosting = me.role === "gm" || (me.role === "admin" && me.gmPid === me.pid);
   const pending = me.pending;
   // 入り直しの最中は MoQ を使わない（GM の接続は交代のときに閉じた）。
   const rejoining = pending?.kind === "rejoin";
@@ -144,7 +145,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
       const privateKey = await importPrivateKey(me.privateKey);
       if (cancelled) return;
       const verifier = new EnvelopeVerifier(serverPub(), code, () => Math.floor(nowMs() / 1000));
-      if (me.role === "gm" || (me.role === "admin" && me.gmPid === me.pid)) {
+      if (hosting) {
         const gm = new GmEngine(me, {
           connector,
           verifier,
@@ -194,7 +195,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
       if (made?.kind === "player") made.player.close(linger.current);
       linger.current = 0;
     };
-  }, [code, me.role, me.pid, me.privateKey, rejoining, connector, updateMe, exit]);
+  }, [code, hosting, me.pid, me.privateKey, rejoining, connector, updateMe, exit]);
 
   // 交代先に選ばれたら、交代証で GM の参加証を取り直す（再読み込みしても保存した交代証で続ける）。
   useEffect(() => {
@@ -260,7 +261,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
   const view = useMemo(
     () => (gm ? gm.view() : (playerView ?? initialView())),
     // gm.view() は gm.state から作るので、gmState が変わったら作り直す
-    [gm, gmState, playerView],
+    [gm, gmState, playerView, me.role],
   );
 
   // GM：ゲームの間は画面を消さない（GM の端末が止まると、撮影の時刻とヒントが狂う）。
@@ -383,8 +384,8 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
           pubkey: cur.pubkey,
           role,
         });
+        gm.changeRole({ ...credentials, role, name: cur.name });
         await gm.flush();
-        gm.close();
         updateMe((m) => ({ ...m, ...credentials, role, gmPid: m.pid }));
       },
       start: () => dispatch({ type: "start", gameId: newGameId() }),

@@ -254,6 +254,13 @@ export class GmEngine {
     this.dispatch({ type: "gmRenamed" });
   }
 
+  /** 同じ端末の役割変更では配信を閉じず、署名付き資格とロビー表示だけを更新する。 */
+  changeRole(me: Pick<Me, "role" | "roomToken" | "name" | "cert">): void {
+    if (this.state.phase !== "lobby" || this.#stopped) return;
+    this.#me = { ...this.#me, ...me };
+    this.dispatch({ type: "gmRenamed" });
+  }
+
   dispatch(action: GmAction): void {
     if (this.#stopped || (this.#me.role === "admin" && action.type === "start")) return;
     const step = gmReduce(this.state, action);

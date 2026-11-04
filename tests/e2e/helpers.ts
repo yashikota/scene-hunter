@@ -39,12 +39,11 @@ export async function createRoom(gm: Person, role: "gm" | "admin" = "gm"): Promi
   await expect(
     page.getByRole("button", { name: "ゲームマスターになる", exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", {
-      name: role === "gm" ? "ゲームマスターになる" : "管理者になる（ゲーム参加不可）",
-      exact: true,
-    })
-    .click();
+  const roleButton = page.getByRole("button", {
+    name: role === "gm" ? "ゲームマスターになる" : "管理者になる（ゲーム参加不可）",
+    exact: true,
+  });
+  if (await roleButton.isEnabled()) await roleButton.click();
   await expect(
     page.getByRole("button", {
       name: role === "gm" ? "ゲームマスターになる" : "管理者になる（ゲーム参加不可）",

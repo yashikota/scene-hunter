@@ -14,6 +14,7 @@ export function RoleSwitch({
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const choose = async (next: "gm" | "admin") => {
+    if (next === role || busy || disabled) return;
     setBusy(true);
     setFailed(false);
     try {
@@ -33,7 +34,7 @@ export function RoleSwitch({
         <Button
           variant={role === "admin" ? "primary" : "quiet"}
           aria-pressed={role === "admin"}
-          disabled={disabled || busy}
+          disabled={disabled || busy || role === "admin"}
           onClick={() => void choose("admin")}
         >
           {m.become_admin_button()}
@@ -41,7 +42,7 @@ export function RoleSwitch({
         <Button
           variant={role === "gm" ? "primary" : "quiet"}
           aria-pressed={role === "gm"}
-          disabled={disabled || busy}
+          disabled={disabled || busy || role === "gm"}
           onClick={() => void choose("gm")}
         >
           {m.become_gm_button()}
