@@ -44,6 +44,8 @@ export interface TrackSink {
 }
 
 export interface MoqConnector {
+  /** 接続確立後に交換するまでの時間。省略時は定期交換しない。 */
+  readonly maxSessionAgeMs?: number;
   connect(url: string): Promise<MoqConnection>;
 }
 
@@ -102,6 +104,7 @@ export class MoqSession {
   #conn?: MoqConnection;
   #opening?: Promise<void>;
   #requests = 0;
+  #rotationTimer?: ReturnType<typeof setTimeout>;
   #closed = false;
   readonly #subs = new Set<Sub>();
   readonly #pubs: Pub[] = [];
@@ -201,6 +204,7 @@ export class MoqSession {
 
   close(): void {
     this.#closed = true;
+    clearTimeout(this.#rotationTimer);
     this.#statusListeners.clear();
     this.#detachAll();
     this.#conn?.close();
@@ -219,10 +223,13 @@ export class MoqSession {
   }
 
   #reconnect(): void {
+    if (this.#closed || this.#opening) return;
+    clearTimeout(this.#rotationTimer);
     // 同じパスを 2 つの接続から publish すると先着が優先されるので、古い接続を先に閉じる。
     this.#detachAll();
-    this.#conn?.close();
+    const previous = this.#conn;
     this.#conn = undefined;
+    previous?.close();
     this.#opening = (async () => {
       let delay = RETRY_MIN_MS;
       while (!this.#closed) {
@@ -274,6 +281,11 @@ export class MoqSession {
       console.warn(
         `MoQ: 張り直した直後のリクエストが ${this.#requests} 件で、予算 ${this.budget} を超えている`,
       );
+    }
+    if (this.connector.maxSessionAgeMs !== undefined) {
+      this.#rotationTimer = setTimeout(() => {
+        if (this.#conn === conn && !this.#closed) this.#reconnect();
+      }, this.connector.maxSessionAgeMs);
     }
     this.#emit("up");
   }
@@ -413,7 +425,13 @@ const MAX_AGE = 60_000 as Moq.Time.Milli;
 
 /** @moq/net を使う本番の connector。WebSocket へのフォールバックはしない。 */
 export function createMoqNetConnector(): MoqConnector {
+  const appleWebKit =
+    typeof navigator !== "undefined" &&
+    /AppleWebKit/.test(navigator.userAgent) &&
+    !/Chrome\/|Chromium\/|Edg\//.test(navigator.userAgent);
   return {
+    // WebKit のフロー制御が枯渇する前に交換し、購読・配信は MoqSession が復元する。
+    maxSessionAgeMs: appleWebKit ? 60_000 : undefined,
     async connect(url) {
       const local = new Moq.Origin.Producer();
       const remote = new Moq.Origin.Producer();
@@ -425,13 +443,9 @@ export function createMoqNetConnector(): MoqConnector {
       // 下の期限つき MoQ handshake でストリーム作成を含めて確認する。
       // https://bugs.webkit.org/show_bug.cgi?id=312697
       // 312697 の RESOLVED INVALID は Apple 内部での調査継続を意味し、修正済みではない。
-      // iPhone 実機での初回接続確認は未完了。60 秒ごとの接続交換もまだ導入していない。
+      // iPhone 実機での初回接続・長時間通信の確認は未完了。
       // 上流の制限解除と対象 Safari / iOS での初回接続・長時間通信を確認したら、
       // この UA 判定と transport の直接生成を削除して通常の connect に戻す。
-      const appleWebKit =
-        typeof navigator !== "undefined" &&
-        /AppleWebKit/.test(navigator.userAgent) &&
-        !/Chrome\/|Chromium\/|Edg\//.test(navigator.userAgent);
       const transport = appleWebKit ? new WebTransport(url) : undefined;
       // Both promises may reject independently when QUIC fails.
       void transport?.closed.catch(() => {});

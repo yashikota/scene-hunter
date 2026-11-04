@@ -9,6 +9,38 @@ const bytes = (s: string) => new TextEncoder().encode(s);
 const text = (b: Uint8Array) => new TextDecoder().decode(b);
 
 describe("MoqSession", () => {
+  it("rotates every minute, restores subscriptions and snapshots, and cancels on close", async () => {
+    vi.useFakeTimers();
+    const relay = new FakeRelay();
+    const gm = relay.connect();
+    gm.publish("gm/1", "state");
+    const s = new MoqSession("https://relay/x", {
+      ...relay.connector,
+      maxSessionAgeMs: 60_000,
+    });
+    try {
+      await s.start();
+      s.subscribe("gm/1", "state", () => {});
+      s.publish("p/me", "state").snapshot(bytes("snapshot"));
+      await vi.advanceTimersByTimeAsync(59_999);
+      expect(relay.connections).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(relay.connections).toHaveLength(2);
+      expect(relay.connections[0].closed).toBe(true);
+      expect(relay.connections[1].subscribes.map((x) => x.path)).toEqual(["gm/1"]);
+      expect(relay.connections[1].publishes).toEqual([{ path: "p/me", track: "state" }]);
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(relay.connections).toHaveLength(3);
+      s.close();
+      await vi.advanceTimersByTimeAsync(120_000);
+      expect(relay.connections).toHaveLength(3);
+    } finally {
+      s.close();
+      gm.close();
+      vi.useRealTimers();
+    }
+  });
+
   it("counts the announce subscription, every subscribe, and every published broadcast/track", async () => {
     const relay = new FakeRelay();
     const s = new MoqSession("https://relay/x", relay.connector);
