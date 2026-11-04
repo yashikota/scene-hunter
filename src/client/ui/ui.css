@@ -1870,3 +1870,42 @@ body {
     animation: none;
   }
 }
+
+/* 管理者と GM を一つのスイッチで切り替える。 */
+.sh-role-switch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+.sh-role-switch-track {
+  display: block;
+  position: relative;
+  width: 52px;
+  height: 30px;
+  border: var(--border);
+  border-radius: 999px;
+  background: var(--color-surface);
+}
+.sh-role-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-ink);
+  border-radius: 50%;
+  background: var(--color-ink);
+}
+.sh-role-switch[aria-checked="true"] .sh-role-switch-track {
+  background: var(--color-accent);
+}
+.sh-role-switch[aria-checked="true"] .sh-role-switch-thumb {
+  left: auto;
+  right: 3px;
+}
+.sh-role-switch[aria-checked="false"] > span:first-child,
+.sh-role-switch[aria-checked="true"] > span:last-child {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}

@@ -207,5 +207,8 @@
   "host_admin_help": "管理者として参加しています。お題の撮影や得点争いには参加しません。",
   "host_gm_help": "ゲームマスターとして、お題の撮影と採点を担当します。",
   "host_choose_gm": "参加者からゲームマスターを選んでください。",
-  "host_assign_gm": "ゲームマスターを選ぶ"
+  "host_assign_gm": "ゲームマスターを選ぶ",
+  "host_admin_option": "管理者（ゲーム参加不可）",
+  "host_gm_option": "ゲームマスター",
+  "status_note": "（{status}）"
 }

@@ -225,5 +225,8 @@
   "host_admin_help": "You are an administrator. You do not photograph prompts or compete for points.",
   "host_gm_help": "As game master, you photograph prompts and score submissions.",
   "host_choose_gm": "Choose a game master from the participants.",
-  "host_assign_gm": "Choose a game master"
+  "host_assign_gm": "Choose a game master",
+  "host_admin_option": "Administrator (cannot play)",
+  "host_gm_option": "Game master",
+  "status_note": " ({status})"
 }

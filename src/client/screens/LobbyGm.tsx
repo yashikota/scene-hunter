@@ -36,8 +36,7 @@ const TILE_IN = {
 export const AwayNote = ({ p }: { p: { away?: boolean; left?: boolean } }) =>
   p.left || p.away ? (
     <span className="sh-sub" style={{ fontSize: 12 }}>
-      {" "}
-      {p.left ? m.status_left() : m.status_away()}
+      {m.status_note({ status: p.left ? m.status_left() : m.status_away() })}
     </span>
   ) : null;
 

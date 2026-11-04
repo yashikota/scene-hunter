@@ -8,24 +8,19 @@ test("PC は管理者、役割ボタンで切り替え、GM 指定後も再び G
     await admin.page.goto("/new");
     await admin.page.getByPlaceholder("名前").fill(admin.name);
     await admin.page.getByRole("button", { name: "部屋を作る" }).click();
-    const adminButton = admin.page.getByRole("button", {
-      name: "管理者になる（ゲーム参加不可）",
+    const roleToggle = admin.page.getByRole("switch", {
+      name: "ゲームマスターになる",
       exact: true,
     });
-    const gmButton = admin.page.getByRole("button", { name: "ゲームマスターになる", exact: true });
-    await expect(adminButton).toHaveAttribute("aria-pressed", "true");
-    await expect(adminButton).toBeDisabled();
-    await expect(gmButton).toBeEnabled();
+    await expect(roleToggle).toHaveAttribute("aria-checked", "false");
     await expectLobbyCount(admin, 0);
-    await gmButton.click();
-    await expect(gmButton).toHaveAttribute("aria-pressed", "true");
-    await expect(gmButton).toBeDisabled();
-    await expect(adminButton).toBeEnabled();
+    await roleToggle.click();
+    await expect(roleToggle).toHaveAttribute("aria-checked", "true");
     await expectLobbyCount(admin, 1);
-    await adminButton.click();
-    await expect(adminButton).toHaveAttribute("aria-pressed", "true");
+    await roleToggle.click();
+    await expect(roleToggle).toHaveAttribute("aria-checked", "false");
     await admin.page.reload();
-    await expect(adminButton).toHaveAttribute("aria-pressed", "true");
+    await expect(roleToggle).toHaveAttribute("aria-checked", "false");
     const code = roomCode(admin.page);
     await joinByLink(phone, code);
     await expectLobbyCount(admin, 1);
@@ -40,9 +35,9 @@ test("PC は管理者、役割ボタンで切り替え、GM 指定後も再び G
         }
       }).observe(document.body, { subtree: true, childList: true, characterData: true });
     });
-    await gmButton.click();
+    await roleToggle.click();
     await expectLobbyCount(phone, 2);
-    await adminButton.click();
+    await roleToggle.click();
     await expectLobbyCount(phone, 1);
     expect(errors).toEqual([]);
 
@@ -54,7 +49,7 @@ test("PC は管理者、役割ボタンで切り替え、GM 指定後も再び G
       timeout: 90000,
     });
     await expect(admin.page.getByRole("heading", { name: "管理者", exact: true })).toBeVisible();
-    await admin.page.getByRole("button", { name: "ゲームマスターになる", exact: true }).click();
+    await admin.page.getByRole("switch", { name: "ゲームマスターになる", exact: true }).click();
     await expect(admin.page.getByText("あなたが GM", { exact: true })).toBeVisible({
       timeout: 90000,
     });
@@ -79,8 +74,8 @@ test("スマホ UA は GM が初期選択になる", async ({ browser }) => {
     await page.getByPlaceholder("名前").fill("phone");
     await page.getByRole("button", { name: "部屋を作る" }).click();
     await expect(
-      page.getByRole("button", { name: "ゲームマスターになる", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
+      page.getByRole("switch", { name: "ゲームマスターになる", exact: true }),
+    ).toHaveAttribute("aria-checked", "true");
     await expect(page.getByText("1 人", { exact: true })).toBeVisible();
   } finally {
     await context.close();
