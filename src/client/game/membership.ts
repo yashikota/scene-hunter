@@ -1,3 +1,4 @@
+import { defaultHostRole } from "./deviceRole";
 import type { Cert, TransferCert } from "../../shared/cert";
 import { exportPrivateKey, exportPublicKey, generateKeyPair } from "../../shared/crypto";
 import { isLocale, type Locale } from "../../shared/locales";
@@ -161,7 +162,12 @@ export async function createAndSave(
   api: Pick<typeof import("../api"), "createRoom"> = { createRoom },
 ): Promise<string> {
   const keys = await newKeys();
-  const joined = await api.createRoom({ name, pubkey: keys.pubkey, locale });
+  const joined = await api.createRoom({
+    name,
+    pubkey: keys.pubkey,
+    locale,
+    role: defaultHostRole(),
+  });
   saveMe(toMe(joined, keys));
   return joined.code;
 }

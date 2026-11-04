@@ -336,11 +336,19 @@ export class PlayerEngine {
 
   /** 従う GM のフレームか。GM の参加証（role が gm）で、従っている pid のものだけ。 */
   #isGm(pid: string): boolean {
-    if (this.#deps.verifier.certOf(pid)?.body.role !== "gm") return false;
+    const role = this.#deps.verifier.certOf(pid)?.body.role;
+    if (role !== "gm" && !(role === "admin" && this.gmPid === pid)) return false;
     return this.gmPid === null || pid === this.gmPid;
   }
 
   #onEvent(e: GmEvent): void {
+    if (
+      this.#deps.verifier.certOf(e.pid)?.body.role === "admin" &&
+      e.type !== "lobby" &&
+      e.type !== "transfer" &&
+      e.type !== "dissolved"
+    )
+      return;
     this.gmPid ??= e.pid;
     if (e.type === "transfer") {
       this.#onTransfer(e).catch((err: unknown) =>
@@ -353,6 +361,11 @@ export class PlayerEngine {
   }
 
   #onSnapshot(s: GmSnapshot): void {
+    if (
+      this.#deps.verifier.certOf(s.pid)?.body.role === "admin" &&
+      (s.phase !== "lobby" || s.hostRole !== "admin")
+    )
+      return;
     this.gmPid ??= s.pid;
     // 受け取り済みのイベントより古いスナップショットは使わない（state と events は別の Track で、順番が前後する）。
     if (this.view.phase !== "connecting" && s.lastEventSeq < this.view.lastSeq) return;

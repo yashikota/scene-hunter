@@ -1,3 +1,4 @@
+import { RoleSwitch } from "./RoleSwitch";
 import type { Room } from "../game/useRoom";
 import { m } from "../paraglide/messages";
 import { Screen } from "../ui/Screen";
@@ -32,6 +33,7 @@ export function Admin({ room, code }: { room: Room; code: string }) {
           {m.admin_phase({ phase: phaseLabels[view.phase] ?? m.reconnecting(), round: view.round })}
         </p>
       </Card>
+      {view.phase === "lobby" && <RoleSwitch role="admin" onSwitch={actions.switchRole} />}
       <PlayerTiles gmName={room.gmName} players={view.players} />
       {view.phase === "lobby" && (
         <Button

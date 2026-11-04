@@ -33,6 +33,7 @@ import { initialView, type PlayerView } from "./playerView";
 // カメラと JPEG への変換（Task 16）は画面側で足す。
 
 export interface RoomActions {
+  switchRole(role: "gm" | "admin"): Promise<void>;
   start(): void;
   /** 撮った写真（encodeJpeg 済み）を出す。GM はお題、プレイヤーは提出。失敗は reject する。 */
   shutter(blob: Blob): Promise<void>;
@@ -109,6 +110,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
   const linger = useRef(0);
   /** shutter イベントを送り終えた写真。送り直しでは shutter を再送せず、アップロードと submit だけやり直す。 */
   const shuttered = useRef(new WeakSet<Blob>());
+  const requestGmRef = useRef<(pid: string) => void>(() => {});
   const meRef = useRef(me);
   meRef.current = me;
 
@@ -142,8 +144,14 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
       const privateKey = await importPrivateKey(me.privateKey);
       if (cancelled) return;
       const verifier = new EnvelopeVerifier(serverPub(), code, () => Math.floor(nowMs() / 1000));
-      if (me.role === "gm") {
-        const gm = new GmEngine(me, { connector, verifier, privateKey, now: nowMs });
+      if (me.role === "gm" || (me.role === "admin" && me.gmPid === me.pid)) {
+        const gm = new GmEngine(me, {
+          connector,
+          verifier,
+          privateKey,
+          now: nowMs,
+          onAdminGmRequest: (pid) => requestGmRef.current(pid),
+        });
         gm.subscribe(rerender);
         // 交代先として GM になったときは、前の GM の epoch を越える
         gm.start(meRef.current.gmEpochFloor ?? 0);
@@ -333,7 +341,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     const askHints = async (key: string) =>
       dispatch(await requestHintsAction(() => api.requestHints(code, me.roomToken, key), nowMs));
     const dissolve = async () => {
-      if (me.role === "admin") {
+      if (me.role === "admin" && !gm) {
         dispatch({ type: "dissolve" });
         await player?.flush();
         await new Promise((r) => setTimeout(r, DISSOLVE_LINGER_MS));
@@ -354,6 +362,31 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
       exit();
     };
     return {
+      switchRole: async (role) => {
+        if (view.phase !== "lobby" || role === me.role) return;
+        if (!gm && me.role === "admin" && role === "gm" && player) {
+          player.send({
+            type: "admin_control",
+            epoch: player.epoch,
+            command: "becomeGm",
+            phase: "lobby",
+            round: view.round,
+            gameId: view.gameId,
+          });
+          await player.flush();
+          return;
+        }
+        if (!gm) return;
+        const cur = loadMe(code) ?? meRef.current;
+        const credentials = await api.switchHostRole(code, cur.roomToken, {
+          name: cur.name,
+          pubkey: cur.pubkey,
+          role,
+        });
+        await gm.flush();
+        gm.close();
+        updateMe((m) => ({ ...m, ...credentials, role, gmPid: m.pid }));
+      },
       start: () => dispatch({ type: "start", gameId: newGameId() }),
       shutter: async (blob) => {
         if (gm) {
@@ -422,7 +455,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
         exit();
       },
     };
-  }, [gm, player, code, me.roomToken, me.role, exit, updateMe]);
+  }, [gm, player, code, me.roomToken, me.role, exit, updateMe, view]);
 
   const label =
     me.role === "gm" ? me.name : (view.players.find((p) => p.pid === me.pid)?.label ?? me.name);
@@ -433,6 +466,11 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
       : pending?.kind === "rejoin"
         ? "rejoining"
         : null;
+  requestGmRef.current = (pid) => {
+    void actions
+      .transfer(pid, false)
+      .catch((e: unknown) => console.error("管理者への GM 交代に失敗", e));
+  };
   return {
     role: me.role,
     me: { pid: me.pid, label, name: me.name },

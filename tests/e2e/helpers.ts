@@ -30,13 +30,27 @@ export function roomCode(page: Page): string {
 }
 
 /** トップから部屋を作り、GM のロビーまで進む。部屋の番号を返す。 */
-export async function createRoom(gm: Person): Promise<string> {
+export async function createRoom(gm: Person, role: "gm" | "admin" = "gm"): Promise<string> {
   const { page } = gm;
   await page.goto("/");
   await page.getByRole("button", { name: "部屋を作る" }).click();
   await page.getByPlaceholder("名前").fill(gm.name);
   await page.getByRole("button", { name: "部屋を作る" }).click();
-  await expect(page.getByText("あなたが GM")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "ゲームマスターになる", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", {
+      name: role === "gm" ? "ゲームマスターになる" : "管理者になる（ゲーム参加不可）",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByRole("button", {
+      name: role === "gm" ? "ゲームマスターになる" : "管理者になる（ゲーム参加不可）",
+      exact: true,
+    }),
+  ).toHaveAttribute("aria-pressed", "true");
   await page.waitForURL(/\/r\/\d{6}$/);
   return roomCode(page);
 }

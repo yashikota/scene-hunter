@@ -11,6 +11,8 @@ export interface RoomRecord {
   /** 現在の GM のプレイヤー ID。交代で書き換わる。 */
   gmPid: string;
   adminPid?: string;
+  /** GM 未指定の管理者がロビーを配信するときは admin。 */
+  hostRole?: "gm" | "admin";
   /** 現在の GM になった時刻（UNIX 秒）。これより前に発行された交代証は使えない。 */
   gmSince: number;
 }
@@ -34,7 +36,11 @@ export function createRoomStore(kv: Pick<KVNamespace, "get" | "put" | "delete">)
     await kv.put(key(rec.code), JSON.stringify(rec), { expirationTtl: ROOM_TTL_SEC });
     const back = await get(rec.code);
     return (
-      back?.relayUid === rec.relayUid && back.gmPid === rec.gmPid && back.gmSince === rec.gmSince
+      back?.relayUid === rec.relayUid &&
+      back.gmPid === rec.gmPid &&
+      back.gmSince === rec.gmSince &&
+      back.adminPid === rec.adminPid &&
+      back.hostRole === rec.hostRole
     );
   }
 

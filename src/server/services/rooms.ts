@@ -104,7 +104,8 @@ export async function authorize(
   if (payload.room !== code) throw new AuthError("token is for another room");
   const rec = await d.store.get(code);
   if (!rec) throw new NotFoundError("room not found");
-  if (payload.role === "gm" && payload.pid !== rec.gmPid) throw new AuthError("no longer the GM");
+  if (payload.role === "gm" && (payload.pid !== rec.gmPid || rec.hostRole === "admin"))
+    throw new AuthError("no longer the GM");
   if (payload.role === "admin" && payload.pid !== rec.adminPid)
     throw new AuthError("not the admin");
   return { payload, rec };
@@ -121,7 +122,14 @@ async function discardRelay(d: RoomDeps, uid: string): Promise<void> {
 
 export async function createRoom(
   d: RoomDeps,
-  input: { name: string; pubkey: string; locale: Locale; rounds?: number; limitSec?: number },
+  input: {
+    name: string;
+    pubkey: string;
+    locale: Locale;
+    rounds?: number;
+    limitSec?: number;
+    role?: "gm" | "admin";
+  },
 ): Promise<Joined> {
   const name = checkName(input.name);
   const rounds = checkInt(input.rounds ?? DEFAULT_ROUNDS, 1, 10, "rounds");
@@ -146,6 +154,7 @@ export async function createRoom(
         limitSec,
         createdAt: d.now(),
         gmPid: pid,
+        ...(input.role === "admin" ? { adminPid: pid, hostRole: "admin" as const } : {}),
         gmSince: Math.floor(d.now() / 1000),
       });
     } finally {
@@ -157,7 +166,7 @@ export async function createRoom(
       room: code,
       pid,
       name,
-      role: "gm",
+      role: input.role ?? "gm",
       pubkey: input.pubkey,
     });
     return {
@@ -223,10 +232,13 @@ export async function transferGm(
   code: string,
   retainAdmin = false,
 ): Promise<TransferCert> {
-  const { payload: p, rec } = await authorize(d, token, "gm", code);
-  if (retainAdmin && rec.adminPid) throw new AuthError("admin already exists");
+  const { payload: p, rec } = await authorize(d, token, "any", code);
+  if (p.pid !== rec.gmPid || (p.role !== "gm" && p.role !== "admin"))
+    throw new AuthError("host required");
+  if (retainAdmin && rec.adminPid && rec.adminPid !== p.pid)
+    throw new AuthError("admin already exists");
   if (toPid === p.pid) throw new RangeError("cannot transfer to self");
-  const iat = Math.floor(d.now() / 1000);
+  const iat = Math.max(Math.floor(d.now() / 1000), rec.gmSince);
   return issueTransfer(d.serverKey, {
     room: p.room,
     from: p.pid,
@@ -251,7 +263,8 @@ export async function claimGm(
   input: { name: string; pubkey: string },
   code: string,
 ): Promise<{ roomToken: string; cert: Cert }> {
-  const { payload: p, rec } = await authorize(d, token, "player", code);
+  const { payload: p, rec } = await authorize(d, token, "any", code);
+  if (p.role !== "player" && p.role !== "admin") throw new AuthError("player or admin required");
   const nowSec = Math.floor(d.now() / 1000);
   if (!(await verifyTransfer(await serverPublicKey(d.serverKey), transfer, p.room, nowSec))) {
     throw new AuthError("invalid transfer");
@@ -267,6 +280,8 @@ export async function claimGm(
     !(await d.store.put({
       ...rec,
       gmPid: p.pid,
+      hostRole: "gm",
+      adminPid: rec.adminPid === p.pid ? undefined : rec.adminPid,
       gmSince: nowSec + 1,
       ...(transfer.body.retainAdmin ? { adminPid: transfer.body.from } : {}),
     }))
@@ -320,7 +335,7 @@ export async function becomeAdmin(
   if (
     !p ||
     p.room !== code ||
-    p.role !== "gm" ||
+    (p.role !== "gm" && p.role !== "admin") ||
     !rec ||
     rec.adminPid !== p.pid ||
     rec.gmPid === p.pid
@@ -334,4 +349,29 @@ export async function becomeAdmin(
     name: checkName(input.name),
     pubkey: input.pubkey,
   });
+}
+
+/** ロビーを配信している本人が、管理者と GM の資格を切り替える。 */
+export async function switchHostRole(
+  d: RoomDeps,
+  token: string,
+  code: string,
+  input: { name: string; pubkey: string; role: "gm" | "admin" },
+) {
+  const { payload: p, rec } = await authorize(d, token, "any", code);
+  if (p.pid !== rec.gmPid || (p.role !== "gm" && p.role !== "admin"))
+    throw new AuthError("host required");
+  if (input.role === "admin" && rec.adminPid && rec.adminPid !== p.pid)
+    throw new AuthError("admin already exists");
+  const name = checkName(input.name);
+  await checkPubkey(input.pubkey);
+  if (
+    !(await d.store.put({
+      ...rec,
+      hostRole: input.role,
+      adminPid: input.role === "admin" ? p.pid : rec.adminPid === p.pid ? undefined : rec.adminPid,
+    }))
+  )
+    throw new Error("could not record role");
+  return issueMember(d, { room: code, pid: p.pid, name, role: input.role, pubkey: input.pubkey });
 }

@@ -168,12 +168,12 @@ test("GMを渡して管理専任になり、人数に入らずゲームを開始
   const a = await newPerson(browser, "参加A");
   const b = await newPerson(browser, "参加B");
   try {
-    const code = await createRoom(admin);
+    const code = await createRoom(admin, "admin");
     for (const p of [gm, a, b]) await joinByLink(p, code);
-    await expectLobbyCount(admin, 4);
-    await admin.page.getByRole("checkbox", { name: "GM交代後は管理専任になる" }).check();
-    await admin.page.getByRole("button", { name: "GM を交代" }).click();
-    await admin.page.getByRole("dialog").getByRole("button", { name: "新GM", exact: true }).click();
+    await expectLobbyCount(admin, 3);
+    await admin.page.getByRole("button", { name: "ゲームマスターを選ぶ", exact: true }).click();
+    await admin.page.getByRole("dialog").getByRole("radio", { name: "新GM", exact: true }).check();
+    await admin.page.getByRole("button", { name: "新GM に GM を渡す", exact: true }).click();
     await expect(admin.page.getByRole("heading", { name: "管理者", exact: true })).toBeVisible({
       timeout: 90000,
     });

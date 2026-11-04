@@ -24,7 +24,7 @@ import { seal } from "../../src/shared/envelope";
 
 type Identity = Awaited<ReturnType<Awaited<ReturnType<typeof makeIdentities>>["mk"]>>;
 
-const meOf = (id: Identity, role: "gm" | "player", seq = 0): Me => ({
+const meOf = (id: Identity, role: "gm" | "player" | "admin", seq = 0): Me => ({
   code: ROOM,
   pid: id.cert.body.pid,
   name: id.cert.body.name,
@@ -1124,5 +1124,49 @@ describe("プレイヤーの Track のグループと seq（偽の Relay）", ()
     expect(saved).toEqual([SEQ_BLOCK, 3, 3 + SEQ_BLOCK]);
     p.close();
     gm.close();
+  });
+});
+
+describe("GM 未指定の管理者ロビー", () => {
+  it("管理者からロビーを受信し、GM が決まるまで開始しない", async () => {
+    const keys = await makeIdentities();
+    const relay = new FakeRelay();
+    const adminId = await keys.mk("admin", "admin");
+    const aliceId = await keys.mk("alice", "player");
+    const admin = new GmEngine(
+      { ...meOf(adminId, "admin"), gmPid: "admin" },
+      {
+        connector: relay.connector,
+        verifier: keys.verifier(),
+        privateKey: adminId.kp.privateKey,
+        now: () => Date.now(),
+      },
+    );
+    const player = new PlayerEngine(
+      { ...meOf(aliceId, "player"), gmPid: "admin" },
+      {
+        connector: relay.connector,
+        verifier: keys.verifier(),
+        privateKey: aliceId.kp.privateKey,
+        serverPub: keys.serverPub,
+        now: () => Date.now(),
+        saveSeq: () => {},
+        saveGmPid: () => {},
+        onTransferToMe: () => {},
+      },
+    );
+    try {
+      admin.start();
+      player.start();
+      await vi.waitFor(() => expect(player.view.phase).toBe("lobby"));
+      await vi.waitFor(() => expect(player.view.players.map((p) => p.pid)).toEqual(["alice"]));
+      expect(player.view.hostRole).toBe("admin");
+      admin.dispatch({ type: "playerJoined", pid: "bob", name: "Bob", at: 0 });
+      admin.dispatch({ type: "start", gameId: "g1" });
+      expect(admin.state.phase).toBe("lobby");
+    } finally {
+      admin.close();
+      player.close();
+    }
   });
 });

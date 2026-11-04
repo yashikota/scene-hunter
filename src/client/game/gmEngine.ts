@@ -107,6 +107,7 @@ export function forgetGm(room: string): void {
 }
 
 export interface GmEngineDeps {
+  onAdminGmRequest?(pid: string): void;
   connector: MoqConnector;
   verifier: EnvelopeVerifier;
   privateKey: CryptoKey;
@@ -254,7 +255,7 @@ export class GmEngine {
   }
 
   dispatch(action: GmAction): void {
-    if (this.#stopped) return;
+    if (this.#stopped || (this.#me.role === "admin" && action.type === "start")) return;
     const step = gmReduce(this.state, action);
     if (step.state === this.state && step.emit.length === 0) return;
     this.state = step.state;
@@ -269,6 +270,7 @@ export class GmEngine {
     const now = this.#deps.now();
     const snap: GmSnapshot = {
       ...snapshotOf(this.state, now),
+      hostRole: this.#me.role === "admin" ? "admin" : "gm",
       pid: this.#me.pid,
       seq: 0,
       epoch: Math.max(1, this.epoch),
@@ -361,7 +363,9 @@ export class GmEngine {
         e.round === this.state.round &&
         e.gameId === this.state.gameId
       ) {
-        if (e.command === "start")
+        if (e.command === "becomeGm") {
+          if (this.state.phase === "lobby") this.#deps.onAdminGmRequest?.(e.pid);
+        } else if (e.command === "start")
           this.dispatch({ type: "start", gameId: crypto.randomUUID().replaceAll("-", "") });
         else this.dispatch({ type: e.command });
       }
@@ -417,7 +421,13 @@ export class GmEngine {
     saveLink(this.#me.code, this.#link);
     // epoch は書く時点のもの（接続が切れて epoch を上げた後に書くフレームも、新しい gm/{epoch} に合わせる）。
     this.#enqueue(
-      () => ({ ...e, pid: this.#me.pid, seq, epoch: this.epoch }),
+      () => ({
+        ...e,
+        ...(e.type === "lobby" ? { hostRole: this.#me.role } : {}),
+        pid: this.#me.pid,
+        seq,
+        epoch: this.epoch,
+      }),
       (bytes) => this.#events?.write(bytes),
     );
   }
@@ -429,6 +439,7 @@ export class GmEngine {
     saveLink(this.#me.code, this.#link);
     const body: Omit<GmSnapshot, "epoch"> = {
       ...snapshotOf(this.state, this.#deps.now()),
+      hostRole: this.#me.role === "admin" ? "admin" : "gm",
       pid: this.#me.pid,
       seq,
       lastEventSeq: this.#link.eventSeq,

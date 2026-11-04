@@ -114,14 +114,21 @@ function RoomView({ room, code }: { room: ReturnType<typeof useRoom>; code: stri
       />
     );
   }
-  if (room.role === "admin" && view.phase !== "connecting" && view.phase !== "dissolved")
+  if (
+    room.role === "admin" &&
+    !room.gm &&
+    view.phase !== "connecting" &&
+    view.phase !== "dissolved"
+  )
     return <Admin room={room} code={code} />;
   switch (view.phase) {
     case "connecting":
       return <Connecting />;
     case "lobby":
-      return room.role === "gm" ? (
+      return room.role === "gm" || room.role === "admin" ? (
         <LobbyGm
+          role={room.role}
+          onSwitchRole={actions.switchRole}
           code={code}
           gmName={room.gmName}
           players={view.players}
@@ -137,6 +144,7 @@ function RoomView({ room, code }: { room: ReturnType<typeof useRoom>; code: stri
           code={code}
           me={room.me}
           gmName={room.gmName}
+          hostRole={view.hostRole}
           players={view.players}
           rounds={view.rounds}
           limitSec={view.limitSec}

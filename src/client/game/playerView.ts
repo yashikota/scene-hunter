@@ -32,6 +32,7 @@ export interface PlayerView {
   locale: Locale;
   players: ViewPlayer[];
   gmPid: string;
+  hostRole?: "gm" | "admin";
   gameId: string | null;
   hints: string[];
   turnStartedLocalAt: number | null;
@@ -102,6 +103,7 @@ function reduce(v: PlayerView, e: GmEvent, localNow: number): PlayerView {
         lastSeq: v.lastSeq,
         players: fromLobby(e.players),
         gmPid: e.gmPid,
+        hostRole: e.hostRole ?? "gm",
         locale: e.locale,
         rounds: e.rounds,
         limitSec: e.limitSec,
@@ -180,6 +182,7 @@ export function applySnapshot(v: PlayerView, s: GmSnapshot, localNow: number): P
     locale: s.locale,
     players: withTotals(fromLobby(s.players), totals),
     gmPid: s.gmPid,
+    hostRole: s.hostRole ?? "gm",
     gameId: s.gameId,
     hints: s.hints,
     turnStartedLocalAt: s.turnElapsedMs === null ? null : localNow - s.turnElapsedMs,

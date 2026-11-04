@@ -66,7 +66,8 @@ test("ロビーで GM を渡すと、渡した先が GM になり、前の GM �
 
     await gm.page.getByRole("button", { name: "GM を交代" }).click();
     const sheet = gm.page.getByRole("dialog", { name: "誰に GM を渡しますか" });
-    await sheet.getByRole("button", { name: "アリス" }).click();
+    await sheet.getByRole("radio", { name: "アリス" }).check();
+    await sheet.getByRole("button", { name: "アリス に GM を渡す" }).click();
 
     // アリスが GM になる
     await expect(alice.page.getByText("あなたが GM")).toBeVisible({ timeout: 30_000 });

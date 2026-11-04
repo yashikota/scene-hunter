@@ -192,10 +192,20 @@
   "lp_flow_3": "最終結果",
   "lp_meta_title": "Scene Hunter | AI のヒントで景色をさがす写真パーティーゲーム",
   "start_need_players": "あと {count} 人で始められます",
-  "admin_after_transfer": "GM交代後は管理専任になる",
   "admin_title": "管理者",
   "admin_phase": "進行: {phase} · ラウンド {round}",
   "admin_next_round": "次のラウンドへ",
   "admin_back_lobby": "ロビーへ戻す",
-  "admin_leave": "管理画面を閉じる"
+  "admin_leave": "管理画面を閉じる",
+  "transfer_target": "次の GM",
+  "transfer_gm_help": "次の GM がお題の撮影と採点を担当します。交代する相手を選んでください。",
+  "transfer_confirm": "{name} に GM を渡す",
+  "transfer_select_hint": "次の GM を選んでください",
+  "host_role_heading": "自分の役割",
+  "become_admin_button": "管理者になる（ゲーム参加不可）",
+  "become_gm_button": "ゲームマスターになる",
+  "host_admin_help": "管理者として参加しています。お題の撮影や得点争いには参加しません。",
+  "host_gm_help": "ゲームマスターとして、お題の撮影と採点を担当します。",
+  "host_choose_gm": "参加者からゲームマスターを選んでください。",
+  "host_assign_gm": "ゲームマスターを選ぶ"
 }

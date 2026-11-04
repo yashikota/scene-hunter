@@ -395,8 +395,38 @@ describe("LobbyGm", () => {
     render(lobbyGm({ onTransfer }));
     fireEvent.click(screen.getByRole("button", { name: m.transfer_button() }));
     const dialog = screen.getByRole("dialog", { name: m.transfer_title() });
-    fireEvent.click(within(dialog).getByRole("button", { name: "そうた" }));
+    expect(
+      (within(dialog).getByRole("button", { name: m.transfer_select_hint() }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    fireEvent.click(within(dialog).getByRole("radio", { name: "そうた" }));
+    expect(onTransfer).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: m.transfer_confirm({ name: "そうた" }) }),
+    );
     await vi.waitFor(() => expect(onTransfer).toHaveBeenCalledWith("c", false));
+  });
+
+  it("管理者は人数に含まれず、GM を指定するまで開始できない", async () => {
+    const onTransfer = vi.fn(async () => {});
+    const onSwitchRole = vi.fn(async () => {});
+    render(lobbyGm({ role: "admin", onTransfer, onSwitchRole }));
+    expect(screen.getByText("3 人", { exact: true })).toBeTruthy();
+    expect(
+      (screen.getByRole("button", { name: m.start_button() }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(
+      screen.getByRole("button", { name: m.become_admin_button() }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: m.become_gm_button() }));
+    expect(onSwitchRole).toHaveBeenCalledWith("gm");
+    fireEvent.click(screen.getByRole("button", { name: m.host_assign_gm() }));
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("radio", { name: "そうた" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: m.transfer_confirm({ name: "そうた" }) }),
+    );
+    await vi.waitFor(() => expect(onTransfer).toHaveBeenCalledWith("c", true));
   });
 
   it("setLocale('en') で描くと英語の文言になる", () => {

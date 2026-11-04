@@ -5,6 +5,9 @@ import { issueRoomToken } from "../../src/server/hmac";
 import { createRoomStore } from "../../src/server/roomStore";
 import {
   AuthError,
+  authorize,
+  becomeAdmin,
+  switchHostRole,
   NotFoundError,
   checkName,
   claimGm,
@@ -507,5 +510,60 @@ describe("管理専任への交代", () => {
     await expect(authorize(d, admin.roomToken, "admin", gm.code)).resolves.toBeDefined();
     await expect(authorize(d, gm.roomToken, "gm", gm.code)).rejects.toThrow();
     await expect(becomeAdmin(d, p.roomToken, gm.code, { name: "bad", pubkey })).rejects.toThrow();
+  });
+});
+
+describe("管理者と GM の切り替え", () => {
+  it("管理者として作成し、資格を GM と相互に切り替えられる", async () => {
+    const { d } = setup();
+    const admin = await createRoom(d, { ...input, pubkey, role: "admin" });
+    expect(admin.cert.body.role).toBe("admin");
+    expect(await d.store.get(admin.code)).toMatchObject({
+      adminPid: admin.pid,
+      gmPid: admin.pid,
+      hostRole: "admin",
+    });
+    await expect(authorize(d, admin.roomToken, "gm", admin.code)).rejects.toThrow(AuthError);
+    const gm = await switchHostRole(d, admin.roomToken, admin.code, {
+      ...input,
+      pubkey,
+      role: "gm",
+    });
+    expect(gm.cert.body.role).toBe("gm");
+    expect((await d.store.get(admin.code))?.adminPid).toBeUndefined();
+    const again = await switchHostRole(d, gm.roomToken, admin.code, {
+      ...input,
+      pubkey,
+      role: "admin",
+    });
+    expect(again.cert.body.role).toBe("admin");
+    await expect(authorize(d, gm.roomToken, "gm", admin.code)).rejects.toThrow(AuthError);
+  });
+
+  it("管理者が GM を指定して残り、その後 GM を引き受けると管理者資格が解除される", async () => {
+    const { d, clock } = setup();
+    const admin = await createRoom(d, { ...input, pubkey, role: "admin" });
+    const player = await joinRoom(d, admin.code, { name: "phone", pubkey });
+    if ("error" in player) throw new Error("join failed");
+    const transfer = await transferGm(d, admin.roomToken, player.pid, admin.code, true);
+    const gm = await claimGm(d, player.roomToken, transfer, { name: "phone", pubkey }, admin.code);
+    const retained = await becomeAdmin(d, admin.roomToken, admin.code, { ...input, pubkey });
+    expect(retained.cert.body.role).toBe("admin");
+    clock.ms += 2000;
+    const back = await transferGm(d, gm.roomToken, admin.pid, admin.code);
+    const claimed = await claimGm(d, retained.roomToken, back, { ...input, pubkey }, admin.code);
+    expect(claimed.cert.body.role).toBe("gm");
+    expect((await d.store.get(admin.code))?.adminPid).toBeUndefined();
+    await expect(authorize(d, retained.roomToken, "any", admin.code)).rejects.toThrow(AuthError);
+  });
+
+  it("一般参加者は役割ボタンの API で昇格できない", async () => {
+    const { d } = setup();
+    const host = await createRoom(d, { ...input, pubkey });
+    const player = await joinRoom(d, host.code, { name: "player", pubkey });
+    if ("error" in player) throw new Error("join failed");
+    await expect(
+      switchHostRole(d, player.roomToken, host.code, { ...input, pubkey, role: "admin" }),
+    ).rejects.toThrow(AuthError);
   });
 });

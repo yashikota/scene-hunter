@@ -14,6 +14,7 @@ import { RoomCode } from "../ui/RoomCode";
 import { ConfirmSheet, Sheet } from "../ui/Sheet";
 import { TopBar } from "../ui/TopBar";
 import { EditableName } from "./Rename";
+import { RoleSwitch } from "./RoleSwitch";
 import { RulesButton } from "./Rules";
 
 export interface LobbyMember {
@@ -44,10 +45,12 @@ export const AwayNote = ({ p }: { p: { away?: boolean; left?: boolean } }) =>
 export function PlayerTiles({
   gmName,
   players,
+  hostRole = "gm",
   meId,
   self,
 }: {
   gmName: string;
+  hostRole?: "gm" | "admin";
   players: readonly LobbyMember[];
   /** プレイヤーとして見ているときの自分の pid。 */
   meId?: string;
@@ -63,13 +66,15 @@ export function PlayerTiles({
           {m.players_heading()}
         </h2>
         <span className="sh-sub" style={{ fontSize: 13 }} aria-live="polite">
-          {m.players_count({ count: activePlayers(players).length + 1 })}
+          {m.players_count({ count: activePlayers(players).length + (hostRole === "gm" ? 1 : 0) })}
         </span>
       </div>
       <ul className="sh-tiles">
-        <mo.li className="sh-tile sh-tile--gm" layout {...TILE_IN}>
-          {meId === undefined ? own(m.gm_tag({ name: gmName })) : m.gm_tag({ name: gmName })}
-        </mo.li>
+        {hostRole === "gm" && (
+          <mo.li className="sh-tile sh-tile--gm" layout {...TILE_IN}>
+            {meId === undefined ? own(m.gm_tag({ name: gmName })) : m.gm_tag({ name: gmName })}
+          </mo.li>
+        )}
         <AnimatePresence mode="popLayout">
           {players.map((p) => (
             <mo.li
@@ -96,6 +101,8 @@ export function PlayerTiles({
 }
 
 export interface LobbyGmProps {
+  role?: "gm" | "admin";
+  onSwitchRole?(role: "gm" | "admin"): Promise<void>;
   code: string;
   gmName: string;
   players: readonly LobbyMember[];
@@ -112,6 +119,8 @@ export interface LobbyGmProps {
 export const shareLink = (code: string) => `${location.origin}/r/${code}`;
 
 export function LobbyGm({
+  role = "gm",
+  onSwitchRole,
   code,
   gmName,
   players,
@@ -123,7 +132,6 @@ export function LobbyGm({
   onRename,
 }: LobbyGmProps) {
   const [choosing, setChoosing] = useState(false);
-  const [retainAdmin, setRetainAdmin] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [failed, setFailed] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -144,7 +152,7 @@ export function LobbyGm({
     setTimeout(() => linkRef.current?.select(), 0);
   };
 
-  const transfer = async (pid: string) => {
+  const transfer = async (pid: string, retainAdmin: boolean) => {
     setTransferring(true);
     setFailed(false);
     try {
@@ -158,7 +166,11 @@ export function LobbyGm({
 
   return (
     <Screen title={m.room_badge({ code })}>
-      <TopBar right={<span className="sh-badge">{m.you_are_gm()}</span>} />
+      <TopBar
+        right={
+          <span className="sh-badge">{role === "admin" ? m.admin_title() : m.you_are_gm()}</span>
+        }
+      />
 
       <Card
         raised
@@ -207,19 +219,17 @@ export function LobbyGm({
         )}
       </Card>
 
-      <label className="sh-sub">
-        <input
-          type="checkbox"
-          checked={retainAdmin}
-          onChange={(e) => setRetainAdmin(e.target.checked)}
-        />
-        {m.admin_after_transfer()}
-      </label>
-      <PlayerTiles gmName={gmName} players={players} self={{ name: gmName, onRename }} />
+      {onSwitchRole && <RoleSwitch role={role} onSwitch={onSwitchRole} disabled={transferring} />}
+      <PlayerTiles
+        gmName={gmName}
+        hostRole={role}
+        players={players}
+        self={{ name: gmName, onRename }}
+      />
 
       <RulesButton rounds={rounds} limitSec={limitSec} />
 
-      {failed && (
+      {failed && !choosing && (
         <p role="alert" className="sh-error">
           {m.error_failed()}
         </p>
@@ -228,25 +238,30 @@ export function LobbyGm({
       <div className="sh-actions">
         <p className="sh-sub" style={{ margin: 0, fontSize: 13, textAlign: "center" }}>
           {/* 始められる人数（GM を入れて 3 人）までの残りを出し、そろったら、ゲーム中に GM の画面を閉じないよう先に伝える */}
-          {active.length < MIN_PLAYERS
-            ? m.start_need_players({ count: MIN_PLAYERS - active.length })
-            : m.keep_screen_on()}
+          {role === "admin"
+            ? m.host_choose_gm()
+            : active.length < MIN_PLAYERS
+              ? m.start_need_players({ count: MIN_PLAYERS - active.length })
+              : m.keep_screen_on()}
         </p>
         <Button
           variant="primary"
           onClick={onStart}
-          disabled={active.length < MIN_PLAYERS || transferring}
+          disabled={role === "admin" || active.length < MIN_PLAYERS || transferring}
         >
           {m.start_button()}
         </Button>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
           <Button
             variant="quiet"
-            onClick={() => setChoosing(true)}
+            onClick={() => {
+              setFailed(false);
+              setChoosing(true);
+            }}
             disabled={active.length === 0 || transferring}
             aria-haspopup="dialog"
           >
-            {m.transfer_button()}
+            {role === "admin" ? m.host_assign_gm() : m.transfer_button()}
           </Button>
           <Button
             variant="quiet"
@@ -266,57 +281,79 @@ export function LobbyGm({
         onConfirm={onDissolve}
         onCancel={() => setConfirming(false)}
       />
-      <TransferSheet
-        open={choosing}
-        players={active}
-        busy={transferring}
-        onPick={transfer}
-        onCancel={() => setChoosing(false)}
-      />
+      {choosing && (
+        <TransferSheet
+          open={choosing}
+          players={active}
+          busy={transferring}
+          failed={failed}
+          onPick={(pid) => void transfer(pid, role === "admin")}
+          onCancel={() => {
+            setChoosing(false);
+            setFailed(false);
+          }}
+        />
+      )}
     </Screen>
   );
 }
 
-/** GM を渡す相手を選ぶシート。 */
+/** 相手と交代後の自分の役割を選び、確定してから GM を渡す。 */
 function TransferSheet({
   open,
   players,
   busy,
+  failed,
   onPick,
   onCancel,
 }: {
   open: boolean;
   players: readonly LobbyMember[];
   busy: boolean;
+  failed: boolean;
   onPick(pid: string): void;
   onCancel(): void;
 }) {
+  const [pid, setPid] = useState("");
+  const selected = players.find((p) => p.pid === pid);
+  const fieldStyle = { border: 0, padding: 0, margin: 0, display: "grid", gap: 8 };
   return (
     <Sheet open={open} title={m.transfer_title()} busy={busy} onCancel={onCancel}>
-      <ul
-        style={{
-          listStyle: "none",
-          margin: 0,
-          padding: 0,
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-        }}
-      >
+      <p className="sh-sub" style={{ margin: 0 }}>
+        {m.transfer_gm_help()}
+      </p>
+      <fieldset disabled={busy} style={fieldStyle}>
+        <legend>{m.transfer_target()}</legend>
         {players.map((p) => (
-          <li key={p.pid}>
-            <Button
-              variant="quiet"
-              disabled={busy}
-              onClick={() => onPick(p.pid)}
-              style={{ width: "100%" }}
-            >
-              {p.label}
-            </Button>
-          </li>
+          <label
+            className="sh-card"
+            key={p.pid}
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: 12 }}
+          >
+            <input
+              type="radio"
+              name="next-gm"
+              value={p.pid}
+              checked={pid === p.pid}
+              onChange={() => setPid(p.pid)}
+            />
+            {p.label}
+          </label>
         ))}
-      </ul>
-      <Button variant="quiet" disabled={busy} onClick={onCancel} autoFocus>
+      </fieldset>
+      {failed && (
+        <p role="alert" className="sh-error">
+          {m.error_failed()}
+        </p>
+      )}
+      <Button
+        variant="primary"
+        disabled={busy || !selected}
+        onClick={() => selected && onPick(selected.pid)}
+      >
+        {selected ? m.transfer_confirm({ name: selected.label }) : m.transfer_select_hint()}
+      </Button>
+      <Button variant="quiet" disabled={busy} onClick={onCancel}>
         {m.cancel()}
       </Button>
     </Sheet>

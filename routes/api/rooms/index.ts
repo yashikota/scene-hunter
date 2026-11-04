@@ -10,6 +10,7 @@ export const POST = defineHandler.withValidator({
     name: v.string(),
     pubkey: v.string(),
     locale: v.picklist(LOCALES),
+    role: v.optional(v.picklist(["gm", "admin"])),
     rounds: v.optional(v.number()),
     limitSec: v.optional(v.number()),
   }),

@@ -40,6 +40,7 @@ const statusOf = (e: unknown): number | undefined =>
 const sleepMs = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 export function createRoom(input: {
+  role?: "gm" | "admin";
   name: string;
   pubkey: string;
   locale: Locale;
@@ -208,6 +209,20 @@ export function becomeAdmin(
   input: { name: string; pubkey: string },
 ): Promise<{ roomToken: string; cert: Cert }> {
   return fetch("/api/rooms/:code/admin", {
+    method: "POST",
+    params: { code },
+    headers: auth(token),
+    body: input,
+    retry: 0,
+  }) as Promise<{ roomToken: string; cert: Cert }>;
+}
+
+export function switchHostRole(
+  code: string,
+  token: string,
+  input: { name: string; pubkey: string; role: "gm" | "admin" },
+): Promise<{ roomToken: string; cert: Cert }> {
+  return fetch("/api/rooms/:code/role", {
     method: "POST",
     params: { code },
     headers: auth(token),

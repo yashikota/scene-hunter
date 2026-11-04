@@ -12,6 +12,7 @@ export interface LobbyPlayerProps {
   /** name は自分で付けた名前（名前を変えるシートに入れておく）。 */
   me: LobbyMember & { name: string };
   gmName: string;
+  hostRole?: "gm" | "admin";
   players: readonly LobbyMember[];
   rounds: number;
   limitSec: number;
@@ -24,6 +25,7 @@ export function LobbyPlayer({
   code,
   me,
   gmName,
+  hostRole,
   players,
   rounds,
   limitSec,
@@ -64,6 +66,7 @@ export function LobbyPlayer({
 
       <PlayerTiles
         gmName={gmName}
+        hostRole={hostRole}
         players={players}
         meId={me.pid}
         self={{ name: me.name, onRename }}
