@@ -446,7 +446,22 @@ export function createMoqNetConnector(): MoqConnector {
       // iPhone 実機での初回接続・長時間通信の確認は未完了。
       // 上流の制限解除と対象 Safari / iOS での初回接続・長時間通信を確認したら、
       // この UA 判定と transport の直接生成を削除して通常の connect に戻す。
-      const transport = appleWebKit ? new WebTransport(url) : undefined;
+      const transport = appleWebKit
+        ? new WebTransport(url, {
+            // @moq/net 0.4.3 の通常接続と同じサブプロトコルを提示する。
+            // 省略すると draft-14 の互換ハンドシェイクになり、Cloudflare Relay が拒否する。
+            protocols: [
+              "moq-lite-06",
+              "moq-lite-05",
+              "moq-lite-04",
+              "moq-lite-03",
+              "moql",
+              ...[22, 21, 20, 19, 18, 17, 16, 15].map((v) => `moq-transport-${v}`),
+            ],
+            allowPooling: false,
+            congestionControl: "low-latency",
+          })
+        : undefined;
       // Both promises may reject independently when QUIC fails.
       void transport?.closed.catch(() => {});
       const controller = new AbortController();
