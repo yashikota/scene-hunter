@@ -8,19 +8,18 @@ test("PC は管理者、役割ボタンで切り替え、GM 指定後も再び G
     await admin.page.goto("/new");
     await admin.page.getByPlaceholder("名前").fill(admin.name);
     await admin.page.getByRole("button", { name: "部屋を作る" }).click();
-    const roleToggle = admin.page.getByRole("switch", {
-      name: "ゲームマスターになる",
-      exact: true,
+    const roleToggle = admin.page.getByRole("button", {
+      name: /^(管理者になる（ゲーム参加不可）|ゲームマスターになる)$/,
     });
-    await expect(roleToggle).toHaveAttribute("aria-checked", "false");
+    await expect(roleToggle).toHaveText("ゲームマスターになる");
     await expectLobbyCount(admin, 0);
     await roleToggle.click();
-    await expect(roleToggle).toHaveAttribute("aria-checked", "true");
+    await expect(roleToggle).toHaveText("管理者になる（ゲーム参加不可）");
     await expectLobbyCount(admin, 1);
     await roleToggle.click();
-    await expect(roleToggle).toHaveAttribute("aria-checked", "false");
+    await expect(roleToggle).toHaveText("ゲームマスターになる");
     await admin.page.reload();
-    await expect(roleToggle).toHaveAttribute("aria-checked", "false");
+    await expect(roleToggle).toHaveText("ゲームマスターになる");
     const code = roomCode(admin.page);
     await joinByLink(phone, code);
     await expectLobbyCount(admin, 1);
@@ -49,7 +48,7 @@ test("PC は管理者、役割ボタンで切り替え、GM 指定後も再び G
       timeout: 90000,
     });
     await expect(admin.page.getByRole("heading", { name: "管理者", exact: true })).toBeVisible();
-    await admin.page.getByRole("switch", { name: "ゲームマスターになる", exact: true }).click();
+    await admin.page.getByRole("button", { name: "ゲームマスターになる", exact: true }).click();
     await expect(admin.page.getByText("あなたが GM", { exact: true })).toBeVisible({
       timeout: 90000,
     });
@@ -74,8 +73,8 @@ test("スマホ UA は GM が初期選択になる", async ({ browser }) => {
     await page.getByPlaceholder("名前").fill("phone");
     await page.getByRole("button", { name: "部屋を作る" }).click();
     await expect(
-      page.getByRole("switch", { name: "ゲームマスターになる", exact: true }),
-    ).toHaveAttribute("aria-checked", "true");
+      page.getByRole("button", { name: "管理者になる（ゲーム参加不可）", exact: true }),
+    ).toHaveText("管理者になる（ゲーム参加不可）");
     await expect(page.getByText("1 人", { exact: true })).toBeVisible();
   } finally {
     await context.close();

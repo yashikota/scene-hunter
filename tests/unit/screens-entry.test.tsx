@@ -415,10 +415,10 @@ describe("LobbyGm", () => {
     expect(
       (screen.getByRole("button", { name: m.start_button() }) as HTMLButtonElement).disabled,
     ).toBe(true);
-    expect(
-      screen.getByRole("switch", { name: m.become_gm_button() }).getAttribute("aria-checked"),
-    ).toBe("false");
-    fireEvent.click(screen.getByRole("switch", { name: m.become_gm_button() }));
+    expect(screen.getByRole("button", { name: m.become_gm_button() }).textContent).toBe(
+      m.become_gm_button(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: m.become_gm_button() }));
     expect(onSwitchRole).toHaveBeenCalledWith("gm");
     fireEvent.click(screen.getByRole("button", { name: m.host_assign_gm() }));
     const dialog = screen.getByRole("dialog");

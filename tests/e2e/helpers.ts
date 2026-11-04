@@ -36,11 +36,13 @@ export async function createRoom(gm: Person, role: "gm" | "admin" = "gm"): Promi
   await page.getByRole("button", { name: "部屋を作る" }).click();
   await page.getByPlaceholder("名前").fill(gm.name);
   await page.getByRole("button", { name: "部屋を作る" }).click();
-  const roleToggle = page.getByRole("switch", { name: "ゲームマスターになる", exact: true });
-  await expect(roleToggle).toBeVisible();
-  if ((await roleToggle.getAttribute("aria-checked")) !== String(role === "gm"))
-    await roleToggle.click();
-  await expect(roleToggle).toHaveAttribute("aria-checked", String(role === "gm"));
+  const roleButton = page.getByRole("button", {
+    name: /^(管理者になる（ゲーム参加不可）|ゲームマスターになる)$/,
+  });
+  const nextLabel = role === "gm" ? "管理者になる（ゲーム参加不可）" : "ゲームマスターになる";
+  await expect(roleButton).toBeVisible();
+  if ((await roleButton.innerText()) !== nextLabel) await roleButton.click();
+  await expect(roleButton).toHaveText(nextLabel);
   await page.waitForURL(/\/r\/\d{6}$/);
   return roomCode(page);
 }

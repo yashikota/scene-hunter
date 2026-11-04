@@ -33,19 +33,11 @@ export function RoleSwitch({
       </h2>
       <Button
         variant="quiet"
-        className="sh-role-switch"
-        role="switch"
-        aria-label={m.become_gm_button()}
-        aria-checked={role === "gm"}
         aria-describedby={descriptionId}
         disabled={disabled || busy}
         onClick={() => void choose(role === "gm" ? "admin" : "gm")}
       >
-        <span>{m.host_admin_option()}</span>
-        <span className="sh-role-switch-track" aria-hidden="true">
-          <span className="sh-role-switch-thumb" />
-        </span>
-        <span>{m.host_gm_option()}</span>
+        {role === "gm" ? m.become_admin_button() : m.become_gm_button()}
       </Button>
       <p
         id={descriptionId}
