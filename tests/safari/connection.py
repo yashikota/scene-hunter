@@ -1,7 +1,5 @@
 """Native Safari + real Cloudflare relay; no WebSocket fallback or UA emulation."""
 import json
-import os
-import time
 from pathlib import Path
 from selenium import webdriver
 
@@ -30,7 +28,19 @@ try:
     driver.get("http://localhost:5173")
     result = driver.execute_async_script("""
       const url = arguments[0], done = arguments[arguments.length - 1];
+      const stages=[];
       (async () => {
+        stages.push({stage:'runtime',userAgent:navigator.userAgent});
+        const probe = new WebTransport(url);
+        probe.closed.catch(()=>{});
+        try {
+          await Promise.race([probe.ready,new Promise((_,r)=>setTimeout(()=>r(new Error('ready timeout')),10000))]);
+          stages.push({stage:'ready'});
+          const stream=await Promise.race([probe.createBidirectionalStream(),new Promise((_,r)=>setTimeout(()=>r(new Error('bidi timeout')),10000))]);
+          stages.push({stage:'bidi'});
+          await stream.writable.abort();
+          await stream.readable.cancel();
+        } finally {probe.close();}
         const {MoqSession, createMoqNetConnector} = await import('/src/client/moq/session.ts');
         const connector = createMoqNetConnector();
         if (connector.maxSessionAgeMs !== 60000) throw new Error('WebKit rotation not enabled');
@@ -52,9 +62,9 @@ try:
             samples.push({seconds:(i+1)*10,received,last,connections});
           }
           if(connections<6) throw new Error('two rotations per peer not observed');
-          return {userAgent:navigator.userAgent,samples};
+          return {userAgent:navigator.userAgent,stages,samples};
         } finally {clearInterval(timer);a.close();b.close();}
-      })().then(done,e=>done({error:String(e)}));
+      })().then(done,e=>done({error:String(e),stages}));
     """, room["moqUrl"])
     (out / "result.json").write_text(json.dumps(result, indent=2))
     if result.get("error"):

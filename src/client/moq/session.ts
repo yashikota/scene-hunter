@@ -458,6 +458,18 @@ export function createMoqNetConnector(): MoqConnector {
         CONNECT_TIMEOUT_MS,
       );
       try {
+        // 作成済み transport の API は ready を待たない。QUIC 接続の成立前に
+        // ストリームを開かないよう、同じ接続期限の中で待つ。
+        if (transport) {
+          await Promise.race([
+            transport.ready,
+            new Promise<never>((_, reject) =>
+              controller.signal.addEventListener("abort", () => reject(controller.signal.reason), {
+                once: true,
+              }),
+            ),
+          ]);
+        }
         const conn = await Moq.Connection.connect({
           url: new URL(url),
           websocket: { enabled: false },
