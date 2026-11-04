@@ -23,10 +23,14 @@ jobs:
           for i in {1..60}; do curl -fsS http://localhost:5173 >/dev/null && break; sleep 1; done
       - name: Native Safari handshake and two session rotations
         run: /tmp/safari-venv/bin/python tests/safari/connection.py
+      - name: Play three rounds in native Safari
+        if: ${{ !cancelled() }}
+        run: /tmp/safari-venv/bin/python tests/safari/game.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: native-safari
           path: |
             test-results/safari/
+            test-results/safari-game/
             web.log

@@ -7,6 +7,7 @@ origin = "https://game.scene-hunter.workers.dev"
 out = Path("test-results/safari")
 out.mkdir(parents=True, exist_ok=True)
 driver = webdriver.Safari()
+driver.command_executor._client_config.timeout = 240
 driver.set_script_timeout(180)
 room = None
 try:
