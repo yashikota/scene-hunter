@@ -1,0 +1,32 @@
+name: Native Safari transport
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  safari:
+    runs-on: macos-26
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: python3 -m venv /tmp/safari-venv && /tmp/safari-venv/bin/pip install selenium==4.38.0
+      - run: sudo safaridriver --enable
+      - name: Start client harness
+        run: |
+          SH_CLIENT_ONLY=1 pnpm dev --host 127.0.0.1 > web.log 2>&1 &
+          for i in {1..60}; do curl -fsS http://localhost:5173 >/dev/null && break; sleep 1; done
+      - name: Native Safari handshake and two session rotations
+        run: /tmp/safari-venv/bin/python tests/safari/connection.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-safari
+          path: |
+            test-results/safari/
+            web.log
