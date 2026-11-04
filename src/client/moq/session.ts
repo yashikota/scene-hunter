@@ -1,7 +1,7 @@
 import * as Moq from "@moq/net";
 
 // MoQ の 1 本の接続（WebTransport セッション）を、リクエストの予算つきで包む。
-// Cloudflare の Relay は 1 セッションで 50 件までしかリクエストを受け付けない（poc/moq-verify/README.md）。
+// Cloudflare の Relay は 1 セッションで 50 件までしかリクエストを受け付けない（初期の実接続検証で確認）。
 // 自分で数えて budget に達したら、新しい接続を張り、生きている購読と publish をすべてやり直す。
 
 /** 1 つの接続の上での操作。本番は @moq/net、テストでは偽物。 */

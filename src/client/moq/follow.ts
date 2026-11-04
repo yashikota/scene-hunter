@@ -9,7 +9,7 @@ import {
 import { EVENTS_TRACK, GM_PREFIX, gmPath, STATE_TRACK } from "./paths";
 import { keepSubscribed, type MoqSession } from "./session";
 
-// プレイヤーが `gm/{epoch}` を追いかける。動きは poc/moq-verify/client.ts の follow をもとにする：
+// プレイヤーが `gm/{epoch}` を追いかける。初期の実接続検証をもとにした追従処理：
 // - 乗り換え先を探す購読（watch）は最大 2 本：announce なしの current + 1 と、
 //   announce で見つけた current より大きい最大の epoch。
 //   （Relay は announce を配り損ねることがあるため、announce なしの探りも併用する）

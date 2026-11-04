@@ -51,7 +51,6 @@ export default defineConfig({
     ignorePatterns: [
       "src/client/paraglide/**",
       "src/client/routeTree.gen.ts",
-      "poc/**",
       "docs/**",
       ".superpowers/**",
     ],
