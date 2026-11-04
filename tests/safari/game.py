@@ -6,6 +6,7 @@ import re
 import time
 from pathlib import Path
 from selenium import webdriver
+from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -16,7 +17,7 @@ out.mkdir(parents=True, exist_ok=True)
 driver = webdriver.Safari()
 driver.command_executor._client_config.timeout = 240
 driver.set_script_timeout(30)
-wait = WebDriverWait(driver, 60)
+wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException, NoSuchElementException))
 stages = []
 code = None
 gm = None
@@ -31,9 +32,10 @@ def click(key):
     def button(_):
         for b in driver.find_elements(By.TAG_NAME, "button"):
             if b.text.strip() == label and b.is_displayed() and b.is_enabled():
-                return b
+                b.click()
+                return True
         return False
-    wait.until(button).click()
+    wait.until(button)
 
 def text(value):
     wait.until(lambda _: value in driver.find_element(By.TAG_NAME, "body").text)
