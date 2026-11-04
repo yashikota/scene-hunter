@@ -1,4 +1,5 @@
 import { AnimatePresence } from "motion/react";
+import { QRCodeSVG } from "qrcode.react";
 import * as mo from "motion/react-m";
 import { useRef, useState } from "react";
 import { MIN_PLAYERS } from "../game/gmMachine";
@@ -179,6 +180,16 @@ export function LobbyGm({
         <span className="sh-sr-only" aria-live="polite">
           {copied ? m.link_copied() : ""}
         </span>
+        <a href={shareLink(code)} aria-label={m.room_badge({ code })}>
+          <QRCodeSVG
+            value={shareLink(code)}
+            size={192}
+            level="M"
+            marginSize={4}
+            title={m.room_badge({ code })}
+            style={{ display: "block", maxWidth: "100%", height: "auto" }}
+          />
+        </a>
         <p className="sh-sub" style={{ margin: "4px 0 0", fontSize: 14, fontWeight: 800 }}>
           {m.rounds_chip({ count: rounds })} · {m.seconds({ count: limitSec })}
         </p>
