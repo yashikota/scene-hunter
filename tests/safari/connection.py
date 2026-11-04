@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
 
 origin = "https://game.scene-hunter.workers.dev"
 out = Path("test-results/safari")
@@ -27,8 +28,8 @@ try:
     if room.get("error"):
         raise RuntimeError(room["error"])
     driver.get("http://localhost:5173")
-    result = driver.execute_async_script("""
-      const url = arguments[0], done = arguments[arguments.length - 1];
+    driver.execute_script("""
+      const url = arguments[0], done = value => {window.__safariResult=value;};
       const stages=[];
       (async () => {
         stages.push({stage:'runtime',userAgent:navigator.userAgent});
@@ -50,18 +51,18 @@ try:
             this.closed.then(v=>stages.push({stage:'moq-closed',closeCode:v.closeCode,reason:v.reason}),e=>stages.push({stage:'moq-closed-error',error:String(e)}));
           }
         };
-        const {MoqSession, createMoqNetConnector} = await import('/src/client/moq/session.ts');
+        const {MoqSession, createMoqNetConnector, keepSubscribed} = await import('/src/client/moq/session.ts');
         const connector = createMoqNetConnector();
         if (connector.maxSessionAgeMs !== 60000) throw new Error('WebKit rotation not enabled');
         let connections = 0;
         const counted = {...connector, connect: async u => {const c=await connector.connect(u); connections++; return c;}};
         const a = new MoqSession(url, counted), b = new MoqSession(url, counted);
-        let timer;
+        let timer, stop;
         try {
           await Promise.all([a.start(), b.start()]);
           const writer = a.publish('safari-ci', 'state');
           let received = 0, last = -1;
-          b.subscribe('safari-ci', 'state', bytes => {last=Number(new TextDecoder().decode(bytes)); received++;});
+          stop=keepSubscribed(b, 'safari-ci', 'state', bytes => {last=Number(new TextDecoder().decode(bytes)); received++;});
           let sent=0;
           timer=setInterval(()=>writer.snapshot(new TextEncoder().encode(String(++sent))),1000);
           const samples=[];
@@ -72,9 +73,10 @@ try:
           }
           if(connections<6) throw new Error('two rotations per peer not observed');
           return {userAgent:navigator.userAgent,stages,samples};
-        } finally {clearInterval(timer);a.close();b.close();}
+        } finally {clearInterval(timer);stop?.();a.close();b.close();}
       })().then(done,e=>done({error:String(e),stages}));
     """, room["moqUrl"])
+    result = WebDriverWait(driver, 200).until(lambda _: driver.execute_script("return window.__safariResult || null"))
     (out / "result.json").write_text(json.dumps(result, indent=2))
     if result.get("error"):
         raise RuntimeError(result["error"])

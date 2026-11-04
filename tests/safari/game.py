@@ -55,7 +55,7 @@ try:
     note("Safari " + driver.capabilities.get("browserVersion", "unknown"))
     gm = driver.current_window_handle
     click("create_button")
-    wait.until(lambda _: driver.find_elements(By.CSS_SELECTOR, "input[placeholder]"))[0].send_keys("Safari GM")
+    wait.until(lambda _: driver.find_elements(By.CSS_SELECTOR, "input[placeholder=\"Your name\"]"))[0].send_keys("Safari GM")
     click("create_button")
     text(messages["you_are_gm"])
     code = re.search(r"/r/(\d{6})", driver.current_url).group(1)
@@ -66,7 +66,7 @@ try:
         driver.switch_to.new_window("tab")
         players.append(driver.current_window_handle)
         driver.get(origin + "/r/" + code)
-        wait.until(lambda _: driver.find_elements(By.CSS_SELECTOR, "input[placeholder]"))[0].send_keys(name)
+        wait.until(lambda _: driver.find_elements(By.CSS_SELECTOR, "input[placeholder=\"Your name\"]"))[0].send_keys(name)
         click("join_button")
         text(messages["waiting_for_gm"])
         camera()
