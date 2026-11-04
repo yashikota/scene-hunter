@@ -486,3 +486,26 @@ describe("closeRoom", () => {
     await expect(closeRoom(s.d, gm.roomToken, "111111")).rejects.toThrow(NotFoundError);
   });
 });
+
+describe("管理専任への交代", () => {
+  it("交代完了まで資格を出さず、元GMだけにAdmin権限を与える", async () => {
+    const { becomeAdmin, transferGm, claimGm, authorize } =
+      await import("../../src/server/services/rooms");
+    const { d } = setup();
+    const gm = await createRoom(d, { ...input, pubkey });
+    const p = await joinRoom(d, gm.code, { name: "next", pubkey });
+    if ("error" in p) throw new Error(p.error);
+    await expect(
+      becomeAdmin(d, gm.roomToken, gm.code, { name: "admin", pubkey }),
+    ).rejects.toThrow();
+    const t = await transferGm(d, gm.roomToken, p.pid, gm.code, true);
+    await claimGm(d, p.roomToken, t, { name: "next", pubkey }, gm.code);
+    const admin = await becomeAdmin(d, gm.roomToken, gm.code, { name: "admin", pubkey });
+    expect(admin.cert.body.role).toBe("admin");
+    expect(await verifyCert(serverPub, admin.cert, gm.code, NOW_SEC)).toBe(true);
+    await expect(authorize(d, admin.roomToken, "gm", gm.code)).rejects.toThrow();
+    await expect(authorize(d, admin.roomToken, "admin", gm.code)).resolves.toBeDefined();
+    await expect(authorize(d, gm.roomToken, "gm", gm.code)).rejects.toThrow();
+    await expect(becomeAdmin(d, p.roomToken, gm.code, { name: "bad", pubkey })).rejects.toThrow();
+  });
+});

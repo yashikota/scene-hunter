@@ -6,7 +6,7 @@ import { defineConfig, devices } from "@playwright/test";
 // 差し替える（src/server/e2e.ts）。秘密情報は使わず、サーバーの鍵は起動のたびにここで作る。
 
 // 5173 は普段の pnpm dev が使うので、e2e は別のポートで起動する。
-const PORT = 5199;
+const PORT = Number(process.env.SH_E2E_PORT ?? 5199);
 const BASE_URL = `http://localhost:${PORT}`;
 const RELAY_URL = "http://localhost:4443/";
 

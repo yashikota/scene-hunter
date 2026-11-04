@@ -7,6 +7,7 @@ const transferSchema = v.object({
   body: v.object({
     room: v.string(),
     from: v.string(),
+    retainAdmin: v.optional(v.boolean()),
     to: v.string(),
     iat: v.number(),
     exp: v.number(),

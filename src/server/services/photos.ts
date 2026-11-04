@@ -35,6 +35,7 @@ export async function requestUpload(
     throw new RangeError(`size must be an integer in 1-${MAX_PHOTO_BYTES}`);
   }
   const { payload } = await authorize(d, token, "any", code);
+  if (payload.role === "admin") throw new RangeError("admin cannot upload photos");
   const key = photoKey({
     code,
     gameId: input.gameId,

@@ -289,6 +289,7 @@ export class PlayerEngine {
 
   /** GM が announce を受け損ねると自分が一覧に載らないので、publish をやり直して announce し直す。 */
   #checkListed(): void {
+    if (this.#me.role === "admin") return;
     const v = this.view;
     const listed = v.players.some((p) => p.pid === this.#me.pid);
     if (listed || v.phase === "connecting" || v.phase === "dissolved") {

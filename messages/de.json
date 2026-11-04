@@ -209,5 +209,11 @@
   "lp_flow_repeat": "{rounds} Runden wiederholen",
   "lp_flow_3": "Endergebnis",
   "lp_meta_title": "Scene Hunter | Foto-Suchspiel für Partys mit KI-Hinweisen",
-  "start_need_players": "Noch {count} zum Starten"
+  "start_need_players": "Noch {count} zum Starten",
+  "admin_after_transfer": "Become Admin after handing over GM",
+  "admin_title": "Admin",
+  "admin_phase": "Phase: {phase} · Round {round}",
+  "admin_next_round": "Next round",
+  "admin_back_lobby": "Back to lobby",
+  "admin_leave": "Leave admin screen"
 }

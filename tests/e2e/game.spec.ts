@@ -48,7 +48,12 @@ test("部屋を作り、番号とリンクで 2 人が入り、3 ラウンド遊
   }
 });
 
-async function playRound(gm: Person, players: Person[], round: number): Promise<void> {
+async function playRound(
+  gm: Person,
+  players: Person[],
+  round: number,
+  admin?: Person,
+): Promise<void> {
   const label = `ROUND ${round} / ${ROUNDS}`;
   // GM：偽のカメラでお題を撮る
   await expect(gm.page.getByText(label)).toBeVisible();
@@ -76,8 +81,8 @@ async function playRound(gm: Person, players: Person[], round: number): Promise<
   for (const p of [gm, ...players]) {
     await expect(p.page.getByText(`ラウンド ${round} の結果`)).toBeVisible();
   }
-  await gm.page
-    .getByRole("button", { name: round === ROUNDS ? "最終結果へ" : "次のラウンドへ" })
+  await (admin ?? gm).page
+    .getByRole("button", { name: !admin && round === ROUNDS ? "最終結果へ" : "次のラウンドへ" })
     .click();
 }
 
@@ -154,5 +159,35 @@ test("誰も出さないまま時間切れになっても、エラーを出し�
       await expect(p.page.getByText("ラウンド 1 の結果")).toBeVisible();
   } finally {
     await closeAll([gm, alice, bob]);
+  }
+});
+
+test("GMを渡して管理専任になり、人数に入らずゲームを開始できる", async ({ browser }) => {
+  const admin = await newPerson(browser, "管理PC");
+  const gm = await newPerson(browser, "新GM");
+  const a = await newPerson(browser, "参加A");
+  const b = await newPerson(browser, "参加B");
+  try {
+    const code = await createRoom(admin);
+    for (const p of [gm, a, b]) await joinByLink(p, code);
+    await expectLobbyCount(admin, 4);
+    await admin.page.getByRole("checkbox", { name: "GM交代後は管理専任になる" }).check();
+    await admin.page.getByRole("button", { name: "GM を交代" }).click();
+    await admin.page.getByRole("dialog").getByRole("button", { name: "新GM", exact: true }).click();
+    await expect(admin.page.getByRole("heading", { name: "管理者", exact: true })).toBeVisible({
+      timeout: 90000,
+    });
+    await expectLobbyCount(gm, 3);
+    await admin.page.reload();
+    await expect(admin.page.getByRole("heading", { name: "管理者", exact: true })).toBeVisible();
+    await admin.page.getByRole("button", { name: "ゲームを始める" }).click();
+    await expect(gm.page.getByText("ROUND 1 / 3")).toBeVisible();
+    await expect(admin.page.locator("video")).toHaveCount(0);
+    for (let round = 1; round <= ROUNDS; round++) await playRound(gm, [a, b], round, admin);
+    await expect(gm.page.getByRole("heading", { name: "最終結果" })).toBeVisible();
+    await admin.page.getByRole("button", { name: "ロビーへ戻す" }).click();
+    await expectLobbyCount(gm, 3);
+  } finally {
+    await closeAll([admin, gm, a, b]);
   }
 });

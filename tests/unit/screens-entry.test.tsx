@@ -396,7 +396,7 @@ describe("LobbyGm", () => {
     fireEvent.click(screen.getByRole("button", { name: m.transfer_button() }));
     const dialog = screen.getByRole("dialog", { name: m.transfer_title() });
     fireEvent.click(within(dialog).getByRole("button", { name: "そうた" }));
-    await vi.waitFor(() => expect(onTransfer).toHaveBeenCalledWith("c"));
+    await vi.waitFor(() => expect(onTransfer).toHaveBeenCalledWith("c", false));
   });
 
   it("setLocale('en') で描くと英語の文言になる", () => {

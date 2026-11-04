@@ -43,7 +43,7 @@ export interface RoomActions {
   nextRound(): void;
   backToLobby(): void;
   /** GM：ロビーで GM を渡す。渡した後は新しい pid のプレイヤーとして入り直す。 */
-  transfer(pid: string): Promise<void>;
+  transfer(pid: string, retainAdmin?: boolean): Promise<void>;
   /** GM：解散のイベントを流してから部屋を閉じ、トップに戻る。 */
   dissolve(): Promise<void>;
   /** プレイヤー：部屋を出てトップに戻る（GM は解散）。 */
@@ -53,7 +53,7 @@ export interface RoomActions {
 }
 
 export interface Room {
-  role: "gm" | "player";
+  role: "gm" | "player" | "admin";
   /** label は画面に出す名前（同じ名前の人がいれば「(2)」が付く）、name は自分で付けた名前。 */
   me: { pid: string; label: string; name: string };
   /** GM の名前（参加証の名前）。まだ分からなければ空文字。 */
@@ -213,7 +213,24 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     if (pending?.kind !== "rejoin") return;
     let stopped = false;
     const timer = setTimeout(() => {
-      rejoinUntilDone(loadMe(code) ?? meRef.current, { stopped: () => stopped })
+      (async () => {
+        if (!pending.retainAdmin)
+          return rejoinUntilDone(loadMe(code) ?? meRef.current, { stopped: () => stopped });
+        while (!stopped) {
+          const cur = loadMe(code) ?? meRef.current;
+          try {
+            const credentials = await api.becomeAdmin(code, cur.roomToken, {
+              name: cur.name,
+              pubkey: cur.pubkey,
+            });
+            return { ...cur, ...credentials, role: "admin" as const, pending: undefined };
+          } catch (e) {
+            if ((e as { status?: number }).status !== 401) throw e;
+            await new Promise((r) => setTimeout(r, 3000));
+          }
+        }
+        return null;
+      })()
         .then((next) => {
           if (stopped) return;
           if (!next) return exit();
@@ -289,7 +306,26 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
   }, [gm, code]);
 
   const actions = useMemo<RoomActions>(() => {
-    const dispatch = (a: GmAction) => gm?.dispatch(a);
+    const dispatch = (a: GmAction) => {
+      if (gm) return gm.dispatch(a);
+      if (
+        me.role === "admin" &&
+        player &&
+        ["start", "nextRound", "backToLobby", "dissolve"].includes(a.type)
+      ) {
+        const v = player.view;
+        if (v.phase === "connecting" || v.phase === "dissolved" || v.phase === "disconnected")
+          return;
+        player.send({
+          type: "admin_control",
+          epoch: player.epoch,
+          command: a.type as "start" | "nextRound" | "backToLobby" | "dissolve",
+          phase: v.phase,
+          round: v.round,
+          gameId: v.gameId,
+        });
+      }
+    };
     const uploader = (token: string) => ({
       requestUpload: (input: { gameId: string; round: number; size: number }) =>
         api.requestUpload(code, token, input),
@@ -297,6 +333,13 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
     const askHints = async (key: string) =>
       dispatch(await requestHintsAction(() => api.requestHints(code, me.roomToken, key), nowMs));
     const dissolve = async () => {
+      if (me.role === "admin") {
+        dispatch({ type: "dissolve" });
+        await player?.flush();
+        await new Promise((r) => setTimeout(r, DISSOLVE_LINGER_MS));
+        await api.closeRoom(code, me.roomToken);
+        return exit();
+      }
       if (!gm) return;
       gm.dispatch({ type: "dissolve" });
       await gm.flush();
@@ -344,9 +387,9 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
       confirmPicks: () => dispatch({ type: "confirmPicks" }),
       nextRound: () => dispatch({ type: "nextRound" }),
       backToLobby: () => dispatch({ type: "backToLobby" }),
-      transfer: async (pid) => {
+      transfer: async (pid, retainAdmin = false) => {
         if (!gm || gm.state.phase !== "lobby") return;
-        const cert = await api.transfer(code, me.roomToken, pid);
+        const cert = await api.transfer(code, me.roomToken, pid, retainAdmin);
         gm.dispatch({ type: "transferred", transfer: cert });
         await gm.flush();
         // 交代のイベントを流したら GM としては何もしない（接続は交代のイベントが届くよう少し残して閉じる）。
@@ -354,7 +397,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
         gm.close(TRANSFER_LINGER_MS);
         forgetGm(code);
         // GM の参加証のままではプレイヤーになれないので、新しい鍵で入り直す（再読み込みしても続ける）。
-        updateMe((cur) => ({ ...cur, pending: { kind: "rejoin", gmPid: pid } }));
+        updateMe((cur) => ({ ...cur, pending: { kind: "rejoin", gmPid: pid, retainAdmin } }));
       },
       dissolve,
       rename: async (name) => {
@@ -379,7 +422,7 @@ export function useRoom(code: string, connector: MoqConnector = defaultConnector
         exit();
       },
     };
-  }, [gm, player, code, me.roomToken, exit, updateMe]);
+  }, [gm, player, code, me.roomToken, me.role, exit, updateMe]);
 
   const label =
     me.role === "gm" ? me.name : (view.players.find((p) => p.pid === me.pid)?.label ?? me.name);

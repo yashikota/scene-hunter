@@ -149,12 +149,17 @@ export async function requestHints(code: string, token: string, key: string): Pr
   }
 }
 
-export function transfer(code: string, token: string, toPid: string): Promise<TransferCert> {
+export function transfer(
+  code: string,
+  token: string,
+  toPid: string,
+  retainAdmin = false,
+): Promise<TransferCert> {
   return fetch("/api/rooms/:code/transfer", {
     method: "POST",
     params: { code },
     headers: auth(token),
-    body: { to: toPid },
+    body: { to: toPid, ...(retainAdmin ? { retainAdmin: true } : {}) },
     retry: 0,
   }) as Promise<TransferCert>;
 }
@@ -195,4 +200,18 @@ export async function closeRoom(code: string, token: string): Promise<void> {
     headers: auth(token),
     retry: 0,
   });
+}
+
+export function becomeAdmin(
+  code: string,
+  token: string,
+  input: { name: string; pubkey: string },
+): Promise<{ roomToken: string; cert: Cert }> {
+  return fetch("/api/rooms/:code/admin", {
+    method: "POST",
+    params: { code },
+    headers: auth(token),
+    body: input,
+    retry: 0,
+  }) as Promise<{ roomToken: string; cert: Cert }>;
 }

@@ -209,5 +209,11 @@
   "lp_flow_repeat": "Répéter {rounds} manches",
   "lp_flow_3": "Résultats finaux",
   "lp_meta_title": "Scene Hunter | Jeu de soirée de chasse aux photos avec indices IA",
-  "start_need_players": "Encore {count} pour commencer"
+  "start_need_players": "Encore {count} pour commencer",
+  "admin_after_transfer": "Become Admin after handing over GM",
+  "admin_title": "Admin",
+  "admin_phase": "Phase: {phase} · Round {round}",
+  "admin_next_round": "Next round",
+  "admin_back_lobby": "Back to lobby",
+  "admin_leave": "Leave admin screen"
 }

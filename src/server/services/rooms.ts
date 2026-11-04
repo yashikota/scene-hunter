@@ -105,6 +105,8 @@ export async function authorize(
   const rec = await d.store.get(code);
   if (!rec) throw new NotFoundError("room not found");
   if (payload.role === "gm" && payload.pid !== rec.gmPid) throw new AuthError("no longer the GM");
+  if (payload.role === "admin" && payload.pid !== rec.adminPid)
+    throw new AuthError("not the admin");
   return { payload, rec };
 }
 
@@ -219,13 +221,16 @@ export async function transferGm(
   token: string,
   toPid: string,
   code: string,
+  retainAdmin = false,
 ): Promise<TransferCert> {
-  const { payload: p } = await authorize(d, token, "gm", code);
+  const { payload: p, rec } = await authorize(d, token, "gm", code);
+  if (retainAdmin && rec.adminPid) throw new AuthError("admin already exists");
   if (toPid === p.pid) throw new RangeError("cannot transfer to self");
   const iat = Math.floor(d.now() / 1000);
   return issueTransfer(d.serverKey, {
     room: p.room,
     from: p.pid,
+    ...(retainAdmin ? { retainAdmin: true } : {}),
     to: toPid,
     iat,
     exp: iat + TOKEN_LIFETIME_SEC,
@@ -258,7 +263,14 @@ export async function claimGm(
   }
   const name = checkName(input.name);
   await checkPubkey(input.pubkey);
-  if (!(await d.store.put({ ...rec, gmPid: p.pid, gmSince: nowSec + 1 }))) {
+  if (
+    !(await d.store.put({
+      ...rec,
+      gmPid: p.pid,
+      gmSince: nowSec + 1,
+      ...(transfer.body.retainAdmin ? { adminPid: transfer.body.from } : {}),
+    }))
+  ) {
     throw new Error("could not record the new GM");
   }
   return issueMember(d, { room: p.room, pid: p.pid, name, role: "gm", pubkey: input.pubkey });
@@ -281,7 +293,8 @@ export async function renameMember(
 }
 
 export async function closeRoom(d: RoomDeps, token: string, code: string): Promise<void> {
-  const { payload: p, rec } = await authorize(d, token, "gm", code);
+  const { payload: p, rec } = await authorize(d, token, "any", code);
+  if (p.role !== "gm" && p.role !== "admin") throw new AuthError("management role required");
 
   await d.relay.delete(rec.relayUid);
   const prefix = `rooms/${p.room}/`;
@@ -292,4 +305,33 @@ export async function closeRoom(d: RoomDeps, token: string, code: string): Promi
     cursor = page.truncated ? page.cursor : undefined;
   } while (cursor);
   await d.store.delete(p.room);
+}
+
+/** GM 交代の完了後、元の GM が自分の資格を管理専任へ交換する。 */
+export async function becomeAdmin(
+  d: RoomDeps,
+  token: string,
+  code: string,
+  input: { name: string; pubkey: string },
+) {
+  checkCode(code);
+  const p = await verifyRoomToken(d.hmacSecret, token, Math.floor(d.now() / 1000));
+  const rec = await d.store.get(code);
+  if (
+    !p ||
+    p.room !== code ||
+    p.role !== "gm" ||
+    !rec ||
+    rec.adminPid !== p.pid ||
+    rec.gmPid === p.pid
+  )
+    throw new AuthError("admin handoff not complete");
+  await checkPubkey(input.pubkey);
+  return issueMember(d, {
+    room: code,
+    pid: p.pid,
+    role: "admin",
+    name: checkName(input.name),
+    pubkey: input.pubkey,
+  });
 }

@@ -58,6 +58,7 @@ const TransferCertSchema = v.object({
   body: v.object({
     room: v.string(),
     from: v.string(),
+    retainAdmin: v.optional(v.boolean()),
     to: v.string(),
     iat: v.number(),
     exp: v.number(),
@@ -152,6 +153,15 @@ export type GmSnapshot = v.InferOutput<typeof GmSnapshotSchema>;
 const player = { pid, seq: nonNegInt };
 
 export const PlayerEventSchema = v.variant("type", [
+  v.object({
+    ...player,
+    type: v.literal("admin_control"),
+    epoch,
+    command: v.picklist(["start", "nextRound", "backToLobby", "dissolve"]),
+    phase: PhaseSchema,
+    round: nonNegInt,
+    gameId: v.nullable(v.string()),
+  }),
   v.object({ ...player, type: v.literal("join"), name: v.string() }),
   v.object({ ...player, type: v.literal("shutter"), round, hash: v.string() }),
   v.object({ ...player, type: v.literal("submit"), round, key: v.string() }),

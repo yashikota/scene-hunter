@@ -10,6 +10,7 @@ export interface RoomRecord {
   createdAt: number;
   /** 現在の GM のプレイヤー ID。交代で書き換わる。 */
   gmPid: string;
+  adminPid?: string;
   /** 現在の GM になった時刻（UNIX 秒）。これより前に発行された交代証は使えない。 */
   gmSince: number;
 }

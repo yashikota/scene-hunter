@@ -191,5 +191,11 @@
   "lp_flow_repeat": "Lặp lại {rounds} vòng",
   "lp_flow_3": "Kết quả chung cuộc",
   "lp_meta_title": "Scene Hunter | Trò chơi tiệc săn ảnh với gợi ý AI",
-  "start_need_players": "Cần thêm {count} người để bắt đầu"
+  "start_need_players": "Cần thêm {count} người để bắt đầu",
+  "admin_after_transfer": "Become Admin after handing over GM",
+  "admin_title": "Admin",
+  "admin_phase": "Phase: {phase} · Round {round}",
+  "admin_next_round": "Next round",
+  "admin_back_lobby": "Back to lobby",
+  "admin_leave": "Leave admin screen"
 }

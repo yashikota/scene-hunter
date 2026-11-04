@@ -209,5 +209,11 @@
   "lp_flow_repeat": "Repetir {rounds} rondas",
   "lp_flow_3": "Resultado final",
   "lp_meta_title": "Scene Hunter | Juego de fiesta para buscar fotos con pistas de IA",
-  "start_need_players": "Se necesitan {count} más para empezar"
+  "start_need_players": "Se necesitan {count} más para empezar",
+  "admin_after_transfer": "Become Admin after handing over GM",
+  "admin_title": "Admin",
+  "admin_phase": "Phase: {phase} · Round {round}",
+  "admin_next_round": "Next round",
+  "admin_back_lobby": "Back to lobby",
+  "admin_leave": "Leave admin screen"
 }

@@ -11,7 +11,7 @@ export interface Me {
   code: string;
   pid: string;
   name: string;
-  role: "gm" | "player";
+  role: "gm" | "player" | "admin";
   roomToken: string;
   cert: Cert;
   /** Ed25519 の秘密鍵（PKCS8 の base64url）。 */
@@ -42,7 +42,7 @@ export interface Me {
 
 export type PendingStep =
   | { kind: "claim"; transfer: TransferCert; fromEpoch: number }
-  | { kind: "rejoin"; gmPid: string };
+  | { kind: "rejoin"; gmPid: string; retainAdmin?: boolean };
 
 const keyOf = (code: string) => `sh:me:${code}`;
 
@@ -65,7 +65,7 @@ export function loadMe(code: string): Me | null {
       o.code !== code ||
       typeof o.pid !== "string" ||
       typeof o.name !== "string" ||
-      (o.role !== "gm" && o.role !== "player") ||
+      (o.role !== "gm" && o.role !== "player" && o.role !== "admin") ||
       typeof o.roomToken !== "string" ||
       typeof o.cert?.body?.pid !== "string" ||
       typeof o.privateKey !== "string" ||

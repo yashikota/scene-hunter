@@ -49,7 +49,7 @@ function isRoomTokenPayload(v: unknown): v is RoomTokenPayload {
   const o = v as Record<string, unknown>;
   return (
     typeof o.room === "string" &&
-    (o.role === "gm" || o.role === "player") &&
+    (o.role === "gm" || o.role === "player" || o.role === "admin") &&
     typeof o.pid === "string" &&
     typeof o.exp === "number"
   );

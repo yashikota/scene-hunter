@@ -209,5 +209,11 @@
   "lp_flow_repeat": "Repeat for {rounds} rounds",
   "lp_flow_3": "Final results",
   "lp_meta_title": "Scene Hunter | A photo-hunting party game with AI hints",
-  "start_need_players": "{count} more needed to start"
+  "start_need_players": "{count} more needed to start",
+  "admin_after_transfer": "Become Admin after handing over GM",
+  "admin_title": "Admin",
+  "admin_phase": "Phase: {phase} · Round {round}",
+  "admin_next_round": "Next round",
+  "admin_back_lobby": "Back to lobby",
+  "admin_leave": "Leave admin screen"
 }

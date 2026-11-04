@@ -1,6 +1,6 @@
 import { sign, verify } from "./crypto";
 
-export type Role = "gm" | "player";
+export type Role = "gm" | "player" | "admin";
 
 export interface CertBody {
   room: string;
@@ -19,6 +19,7 @@ export interface Cert {
 export interface TransferBody {
   room: string;
   from: string;
+  retainAdmin?: boolean;
   to: string;
   iat: number;
   exp: number;
@@ -40,7 +41,7 @@ const isCertBody = (b: any): b is CertBody =>
   isStr(b.pid) &&
   isStr(b.name) &&
   isStr(b.pubkey) &&
-  (b.role === "gm" || b.role === "player") &&
+  (b.role === "gm" || b.role === "player" || b.role === "admin") &&
   isNum(b.iat) &&
   isNum(b.exp);
 

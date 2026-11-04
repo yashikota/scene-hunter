@@ -191,5 +191,11 @@
   "lp_flow_repeat": "{rounds}라운드 반복",
   "lp_flow_3": "최종 결과",
   "lp_meta_title": "Scene Hunter | AI 힌트로 풍경을 찾는 사진 파티 게임",
-  "start_need_players": "{count}명 더 있으면 시작할 수 있어요"
+  "start_need_players": "{count}명 더 있으면 시작할 수 있어요",
+  "admin_after_transfer": "Become Admin after handing over GM",
+  "admin_title": "Admin",
+  "admin_phase": "Phase: {phase} · Round {round}",
+  "admin_next_round": "Next round",
+  "admin_back_lobby": "Back to lobby",
+  "admin_leave": "Leave admin screen"
 }

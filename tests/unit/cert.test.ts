@@ -124,7 +124,7 @@ describe("cert", () => {
     const server = await generateKeyPair();
     const pub = await exportPublicKey(server.publicKey);
     const bads: unknown[] = [
-      body({ role: "admin" as never }),
+      body({ role: "invalid-role" as never }),
       body({ iat: NaN }),
       body({ exp: "2000" as never }),
       body({ name: 1 as never }),

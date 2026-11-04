@@ -6,6 +6,7 @@ import { useRoom } from "../game/useRoom";
 import { Connecting } from "../screens/Connecting";
 import { Disconnected } from "../screens/Disconnected";
 import { Dissolved } from "../screens/Dissolved";
+import { Admin } from "../screens/Admin";
 import { LobbyGm } from "../screens/LobbyGm";
 import { LobbyPlayer } from "../screens/LobbyPlayer";
 import { NameStep } from "../screens/NameStep";
@@ -113,6 +114,8 @@ function RoomView({ room, code }: { room: ReturnType<typeof useRoom>; code: stri
       />
     );
   }
+  if (room.role === "admin" && view.phase !== "connecting" && view.phase !== "dissolved")
+    return <Admin room={room} code={code} />;
   switch (view.phase) {
     case "connecting":
       return <Connecting />;

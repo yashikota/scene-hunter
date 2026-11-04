@@ -353,7 +353,21 @@ export class GmEngine {
   #onPlayer(e: PlayerEvent): void {
     // プレイヤーの参加証を持つ人のメッセージだけを受け付ける（GmInbox が署名と pid の一致を確かめた後）。
     const cert = this.#deps.verifier.certOf(e.pid);
-    if (cert?.body.role !== "player") return;
+    if (cert?.body.role === "admin") {
+      if (
+        e.type === "admin_control" &&
+        e.epoch === this.#link.epoch &&
+        e.phase === this.state.phase &&
+        e.round === this.state.round &&
+        e.gameId === this.state.gameId
+      ) {
+        if (e.command === "start")
+          this.dispatch({ type: "start", gameId: crypto.randomUUID().replaceAll("-", "") });
+        else this.dispatch({ type: e.command });
+      }
+      return;
+    }
+    if (cert?.body.role !== "player" || e.type === "admin_control") return;
     // 部屋を出た人のメッセージは、もう何も受け付けない。
     if (hasLeft(this.state, e.pid)) return;
     const at = this.#deps.now();

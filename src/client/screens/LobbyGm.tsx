@@ -102,7 +102,7 @@ export interface LobbyGmProps {
   rounds: number;
   limitSec: number;
   onStart(): void;
-  onTransfer(pid: string): Promise<void>;
+  onTransfer(pid: string, retainAdmin?: boolean): Promise<void>;
   onDissolve(): void;
   /** 自分（GM）の名前を変える。 */
   onRename(name: string): Promise<void>;
@@ -123,6 +123,7 @@ export function LobbyGm({
   onRename,
 }: LobbyGmProps) {
   const [choosing, setChoosing] = useState(false);
+  const [retainAdmin, setRetainAdmin] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [failed, setFailed] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -147,7 +148,7 @@ export function LobbyGm({
     setTransferring(true);
     setFailed(false);
     try {
-      await onTransfer(pid);
+      await onTransfer(pid, retainAdmin);
     } catch (e) {
       console.error("GM を交代できなかった", e);
       setFailed(true);
@@ -206,6 +207,14 @@ export function LobbyGm({
         )}
       </Card>
 
+      <label className="sh-sub">
+        <input
+          type="checkbox"
+          checked={retainAdmin}
+          onChange={(e) => setRetainAdmin(e.target.checked)}
+        />
+        {m.admin_after_transfer()}
+      </label>
       <PlayerTiles gmName={gmName} players={players} self={{ name: gmName, onRename }} />
 
       <RulesButton rounds={rounds} limitSec={limitSec} />

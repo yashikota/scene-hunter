@@ -191,5 +191,11 @@
   "lp_flow_repeat": "重複 {rounds} 回合",
   "lp_flow_3": "最終結果",
   "lp_meta_title": "Scene Hunter | 靠 AI 提示尋找風景的拍照派對遊戲",
-  "start_need_players": "再來 {count} 人就能開始"
+  "start_need_players": "再來 {count} 人就能開始",
+  "admin_after_transfer": "Become Admin after handing over GM",
+  "admin_title": "Admin",
+  "admin_phase": "Phase: {phase} · Round {round}",
+  "admin_next_round": "Next round",
+  "admin_back_lobby": "Back to lobby",
+  "admin_leave": "Leave admin screen"
 }

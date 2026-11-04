@@ -191,5 +191,11 @@
   "lp_flow_repeat": "{rounds} ラウンドくり返す",
   "lp_flow_3": "最終結果",
   "lp_meta_title": "Scene Hunter | AI のヒントで景色をさがす写真パーティーゲーム",
-  "start_need_players": "あと {count} 人で始められます"
+  "start_need_players": "あと {count} 人で始められます",
+  "admin_after_transfer": "GM交代後は管理専任になる",
+  "admin_title": "管理者",
+  "admin_phase": "進行: {phase} · ラウンド {round}",
+  "admin_next_round": "次のラウンドへ",
+  "admin_back_lobby": "ロビーへ戻す",
+  "admin_leave": "管理画面を閉じる"
 }
