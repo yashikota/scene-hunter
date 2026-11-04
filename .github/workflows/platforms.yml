@@ -25,16 +25,16 @@ jobs:
       SH_E2E_DEVICE: ${{ matrix.device }}
       SH_E2E_CHANNEL: ${{ matrix.channel }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
       - run: pnpm e2e -- tests/e2e/game.spec.ts
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
           name: gameplay-${{ matrix.os }}-${{ matrix.browser }}-${{ matrix.device }}
