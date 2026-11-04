@@ -456,7 +456,7 @@ export function createMoqNetConnector(): MoqConnector {
               "moq-lite-04",
               "moq-lite-03",
               "moql",
-              ...[22, 21, 20, 19, 18, 17, 16, 15].map((v) => `moq-transport-${v}`),
+              ...[22, 21, 20, 19, 18, 17, 16, 15].map((v) => `moqt-${v}`),
             ],
             allowPooling: false,
             congestionControl: "low-latency",
