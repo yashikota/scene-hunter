@@ -284,6 +284,10 @@ export class MoqSession {
     }
     if (this.connector.maxSessionAgeMs !== undefined) {
       this.#rotationTimer = setTimeout(() => {
+        if (this.#conn !== conn || this.#closed) return;
+        // GM は epoch を更新し、プレイヤーは join からグループを再開する。
+        // 通常の切断と同じ通知を通さないと、交換後の配信を発見できなくなる。
+        this.#emit("down");
         if (this.#conn === conn && !this.#closed) this.#reconnect();
       }, this.connector.maxSessionAgeMs);
     }

@@ -19,6 +19,8 @@ describe("MoqSession", () => {
       maxSessionAgeMs: 60_000,
     });
     try {
+      const statuses: string[] = [];
+      s.onStatus((st) => statuses.push(st));
       await s.start();
       s.subscribe("gm/1", "state", () => {});
       s.publish("p/me", "state").snapshot(bytes("snapshot"));
@@ -31,6 +33,7 @@ describe("MoqSession", () => {
       expect(relay.connections[1].publishes).toEqual([{ path: "p/me", track: "state" }]);
       await vi.advanceTimersByTimeAsync(60_000);
       expect(relay.connections).toHaveLength(3);
+      expect(statuses).toEqual(["up", "down", "up", "down", "up"]);
       s.close();
       await vi.advanceTimersByTimeAsync(120_000);
       expect(relay.connections).toHaveLength(3);
