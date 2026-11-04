@@ -41,6 +41,14 @@ try:
           await stream.writable.abort();
           await stream.readable.cancel();
         } finally {probe.close();}
+        const NativeWebTransport=globalThis.WebTransport;
+        globalThis.WebTransport=class extends NativeWebTransport {
+          constructor(url,options) {
+            super(url,options);
+            this.ready.then(()=>stages.push({stage:'moq-ready',protocol:this.protocol,requested:options?.protocols}),e=>stages.push({stage:'moq-ready-error',error:String(e)}));
+            this.closed.then(v=>stages.push({stage:'moq-closed',closeCode:v.closeCode,reason:v.reason}),e=>stages.push({stage:'moq-closed-error',error:String(e)}));
+          }
+        };
         const {MoqSession, createMoqNetConnector} = await import('/src/client/moq/session.ts');
         const connector = createMoqNetConnector();
         if (connector.maxSessionAgeMs !== 60000) throw new Error('WebKit rotation not enabled');
