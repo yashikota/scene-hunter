@@ -417,13 +417,50 @@ export function createMoqNetConnector(): MoqConnector {
     async connect(url) {
       const local = new Moq.Origin.Producer();
       const remote = new Moq.Origin.Producer();
-      const conn = await Moq.Connection.connect({
-        url: new URL(url),
-        websocket: { enabled: false },
-        publish: local.consume(),
-        consume: remote,
-      });
-      return new MoqNetConnection(conn, local, remote);
+      // TODO: iOS / Safari 向けの暫定対応。@moq/net 0.4.3 は長時間通信の
+      // フロー制御の問題で WebKit / iOS を一律に拒否するため、作成済み transport を
+      // 渡す公開 API で UA 判定を回避する。この処理自体は長時間通信の問題を直さない。
+      // https://bugs.webkit.org/show_bug.cgi?id=319818
+      // 別件で双方向ストリーム作成が停止する報告もあり、ready の成功だけでは不十分。
+      // 下の期限つき MoQ handshake でストリーム作成を含めて確認する。
+      // https://bugs.webkit.org/show_bug.cgi?id=312697
+      // 312697 の RESOLVED INVALID は Apple 内部での調査継続を意味し、修正済みではない。
+      // iPhone 実機での初回接続確認は未完了。60 秒ごとの接続交換もまだ導入していない。
+      // 上流の制限解除と対象 Safari / iOS での初回接続・長時間通信を確認したら、
+      // この UA 判定と transport の直接生成を削除して通常の connect に戻す。
+      const appleWebKit =
+        typeof navigator !== "undefined" &&
+        /AppleWebKit/.test(navigator.userAgent) &&
+        !/Chrome\/|Chromium\/|Edg\//.test(navigator.userAgent);
+      const transport = appleWebKit ? new WebTransport(url) : undefined;
+      // Both promises may reject independently when QUIC fails.
+      void transport?.closed.catch(() => {});
+      const controller = new AbortController();
+      const timer = setTimeout(
+        () =>
+          controller.abort(
+            new Error("MoQ handshake timed out (WebTransport / bidirectional stream)"),
+          ),
+        CONNECT_TIMEOUT_MS,
+      );
+      try {
+        const conn = await Moq.Connection.connect({
+          url: new URL(url),
+          websocket: { enabled: false },
+          transport,
+          signal: controller.signal,
+          publish: local.consume(),
+          consume: remote,
+        });
+        return new MoqNetConnection(conn, local, remote);
+      } catch (error) {
+        transport?.close();
+        local.close();
+        remote.close();
+        throw error;
+      } finally {
+        clearTimeout(timer);
+      }
     },
   };
 }
